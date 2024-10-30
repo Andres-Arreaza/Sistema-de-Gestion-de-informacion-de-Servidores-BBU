@@ -11,6 +11,20 @@ api = Blueprint('api', __name__)
 # Allow CORS requests to this API
 CORS(api)
 
+appointments = []
+
+@api.route('/appointments', methods=['GET', 'POST'])
+def manage_appointments():
+    if request.method == 'POST':
+        data = request.json
+        # Check if the appointment time is available
+        for appointment in appointments:
+            if appointment['date'] == data['date']:
+                return jsonify({"message": "Time slot is not available!"}), 400
+        
+        appointments.append(data)
+        return jsonify({"message": "Appointment added!", "appointment": data}), 201
+    return jsonify(appointments)
 
 @api.route('/hello', methods=['POST', 'GET'])
 def handle_hello():
