@@ -82,3 +82,23 @@ class TokenBlockedList(db.Model):
             "jti": self.jti,
             "user_id": self.user_id
         }
+    
+class Especialidades(db.Model):
+    __tablename__ = 'especialidades' # Nombre de la tabla
+
+    id = db.Column(db.Integer, primary_key=True) # ID clave primaria
+    nombre = db.Column(db.String(120), unique=True, nullable=False) # Campo obligatorio para guardar la especialidad
+    descripcion = db.Column(db.String(80), unique=False, nullable=True) # Campo opcional para describir la especialidad
+
+    def __repr__(self):
+        return f'<Especialidades {self.nombre}>'
+
+    #Metodo para serializar, convertir el objeto en formato JSON
+    def serialize(self):
+        return {
+            "id": self.id,
+            "nombre": self.nombre,
+            "descripcion": self.descripcion
+
+            # do not serialize the password, its a security breach
+        }

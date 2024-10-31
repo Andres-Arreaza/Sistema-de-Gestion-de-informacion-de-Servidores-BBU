@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint, current_app 
-from api.models import db, UserProfile, MedicalProfile, TokenBlockedList
+from api.models import db, UserProfile, MedicalProfile, TokenBlockedList, Especialidades
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token
@@ -111,3 +111,62 @@ def user_logout():
         return jsonify({"msg":"Session cerrada"}), 200
     except Exception as e:
         return jsonify({"msg": "Error al cierre de sesión", "error": str(e)}), 500
+
+# Devuelve una lista de todas las especialidades
+@api.route('/especialidades', methods=['GET'])
+def get_especialidades():
+    especialidades = Especialidades.query.all()
+    return jsonify([{
+        'id': especialidad.id,
+        'nombre': especialidad.nombre,
+        'descripcion': especialidad.descripcion
+    }for especialidad in especialidades])
+
+# Crea una nueva especialidad
+@api.route('/especialidades', methods=['POST'])
+def crear_especialidades():
+    data = request.get_json()
+
+    if not data or 'nombre' not in data:
+        return jsonify({'message':'Falta el nombre'}), 400
+    
+    especialidad_existe = Especialidades.query.filter_by(nombre=data['nombre']).first()
+    if especialidad_existe:
+        return jsonify({'message':'Esta especialidad ya existe'}), 409
+    
+    descripcion = data.get('descripcion', None)
+
+    nueva_especialidad = Especialidades(
+        nombre=data['nombre'],
+        descripcion=data['descripcion']
+    )
+    db.session.add(nueva_especialidad)
+    db.session.commit()
+    return jsonify({'message': 'Especialidad created'}), 201
+
+#Actualizar una especialidad existente
+@api.route('/especialidades/<int:id>', methods=['PUT'])
+def update_especialidades(id):
+    especialidades = Especialidades.query.get(id)
+    if not especialidades:
+        return jsonify({'message':'La especialidad no existe'}), 404
+    
+    data = request.get_json()
+    if 'nombre' in data:
+        especialidades.nombre = data['nombre']
+    if 'descripcion' in data:
+        especialidades.descripcion = data.get('descripcion', None)
+
+    db.session.commit()
+    return jsonify({'message':'Especialidad actualizada'}), 200
+
+#Elimina una especialidad 
+@api.route('/especialidades/<int:id>', methods=['DELETE'])
+def delete_especialidades(id):
+    especialidades = Especialidades.query.get(id)
+    if not especialidades:
+        return jsonify({'message':'Especidalidad no existe'}), 404
+    
+    db.session.delete(especialidades)
+    db.session.commit()
+    return jsonify({'message':'Especialidad eliminada'}), 204

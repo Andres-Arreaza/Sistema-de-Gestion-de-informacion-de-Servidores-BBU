@@ -1,9 +1,29 @@
-import React from "react";
+import React, { useContext, useState, useEffect } from "react";
+import { Context } from "../store/appContext";
 import { Link } from "react-router-dom";
 import logoImgUrl from "../../img/logo_akh.png";
 import "../../styles/navbar.css";
 
 export const Navbar = () => {
+	const { store, actions } = useContext(Context);
+	const [specialities, setSpecialities] = useState([]);
+
+	useEffect(() => {
+		// Función para obtener especialidades desde la API
+		async function gettingSpecialities() {
+			const response = await actions.getSpecialities(); // Llamamos a la acción de obtener datos
+			console.log("Datos recibidos desde API:", response);
+			if (Array.isArray(response)) {
+				setSpecialities(response); // Actualizamos el estado local solo si es un array válido
+			}
+		}
+		gettingSpecialities();
+	}, [actions]);
+
+	// Verificamos los datos en el estado local 'specialities'
+	console.log("Datos en el estado local 'specialities':", specialities);
+
+
 	return (
 		<nav className="navbar navbar-light bg-light">
 			<div className="container">
@@ -20,9 +40,16 @@ export const Navbar = () => {
 						<div className="dropdown">
 							<button className="btn btn-dark dropdown-toggle navbar-buttons" data-bs-toggle="dropdown" aria-expanded="false" >Especialidades</button>
 							<ul className="dropdown-menu">
-								<li className="dropdown-item">Pediatria</li>
-								<li className="dropdown-item">Cardiologia</li>
-								<li className="dropdown-item">Neurologia</li>
+								{Array.isArray(specialities) && specialities.length > 0 ? (
+									specialities.map((speciality, index) => (
+										<li className="dropdown-item" key={index}>
+											{speciality.nombre}
+										</li>
+
+									))
+								) : (
+									<li className="dropdown-item">No hay especialidades disponibles</li>
+								)}
 							</ul>
 
 						</div>
