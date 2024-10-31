@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 
- export const Schedule = () => {
+export const Schedule = () => {
     const [appointments, setAppointments] = useState([]);
     const [name, setName] = useState('');
     const [date, setDate] = useState('');
@@ -12,7 +11,8 @@ import axios from 'axios';
     }, []);
 
     const fetchAppointments = async () => {
-        const response = await axios.get('http://localhost:5000/api/appointments');
+        const response = await fetch('http://localhost/api/appointments');
+
         setAppointments(response.data);
     };
 
@@ -21,7 +21,7 @@ import axios from 'axios';
         const newAppointment = { name, date };
 
         try {
-            await axios.post('http://localhost:5000/api/appointments', newAppointment);
+            await fetch('http://localhost/api/appointments', newAppointment);
             setAppointments([...appointments, newAppointment]);
             setName('');
             setDate('');
@@ -36,33 +36,37 @@ import axios from 'axios';
     };
 
     return (
-        <div>
-            <h1>Appointment Scheduler</h1>
-            <form onSubmit={addAppointment}>
-                <input
-                    type="text"
-                    placeholder="Name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                />
-                <input
-                    type="datetime-local"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    required
-                />
-                <button type="submit">Add Appointment</button>
-            </form>
-            {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
-            <h2>Appointments</h2>
-            <ul>
-                {appointments.map((appointment, index) => (
-                    <li key={index}>
-                        {appointment.name} - {new Date(appointment.date).toLocaleString()}
-                    </li>
-                ))}
-            </ul>
+        <div className="container">
+            <div className='row'>
+                <div className='col-md-4'>
+                    <h5>Appointment Scheduler</h5>
+                    <form onSubmit={addAppointment}>
+                        <input
+                            type="text"
+                            placeholder="Name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                        />
+                        <input
+                            type="datetime-local"
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                            required
+                        />
+                        <button type="submit">Add Appointment</button>
+                    </form>
+                    {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+                    <h6>Appointments</h6>
+                    <ul>
+                        {appointments.map((appointment, index) => (
+                            <li key={index}>
+                                {appointment.name} - {new Date(appointment.date).toLocaleString()}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
         </div>
     );
 };
