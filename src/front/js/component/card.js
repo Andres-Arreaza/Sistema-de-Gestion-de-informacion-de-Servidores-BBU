@@ -21,7 +21,7 @@ export const SpecialitiesCard = () => {
                             <Link to={'/'}>
                                 <button className="btn btn-dark card-buttons">View profile</button>
                             </Link>
-                            <Link to={'/api/appointments'}>
+                            <Link to={'/appointments'}>
                                 <button className="btn btn-dark card-buttons">Appointment</button>
                             </Link>
                         </div>

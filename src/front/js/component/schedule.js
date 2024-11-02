@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BackendURL } from './backendURL';
 
 export const Schedule = () => {
     const [appointments, setAppointments] = useState([]);
@@ -11,7 +12,7 @@ export const Schedule = () => {
     }, []);
 
     const fetchAppointments = async () => {
-        const response = await fetch('http://localhost/api/appointments');
+        const response = await fetch(BackendURL+'/appointments');
 
         setAppointments(response.data);
     };
@@ -21,7 +22,7 @@ export const Schedule = () => {
         const newAppointment = { name, date };
 
         try {
-            await fetch('http://localhost/api/appointments', newAppointment);
+            await fetch(BackendURL+'/appointments', newAppointment);
             setAppointments([...appointments, newAppointment]);
             setName('');
             setDate('');
