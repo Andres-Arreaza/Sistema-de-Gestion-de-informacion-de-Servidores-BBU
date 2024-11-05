@@ -4,7 +4,10 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 from flask import Flask, request, jsonify, url_for, Blueprint
 from api.models import db, User, Doctor, RoleEnum
 from flask_cors import CORS
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required
 
 api = Blueprint('api', __name__)
 
@@ -91,4 +94,29 @@ def get_doctors():
         return jsonify({"msg": "doctors don't exist"}), 400
     results=list(map(lambda item:item.serialize(), doctors))
     return jsonify (results), 200
+
+@api.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    email=data.get("email", None)
+    password=data.get("password", None)
+    user=User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"msg": "user not found"}), 404
+    valid_password=  check_password_hash(user.password, password)
+    if not valid_password:
+        return jsonify({"msg": "invalid email or password"}), 400
+    access_token=create_access_token(identity={"id": user.id, "role": user.role.value})
+    result={}
+    result["access_token"]=access_token
+    if user.role.value == RoleEnum.DOCTOR.value:
+        doctor=Doctor.query.filter_by(user_id=user.id).first()
+        if not doctor:
+            return jsonify({"msg": "doctor not found"}), 404
+        result["doctor"]=doctor.serialize()
+        return jsonify(result), 200
+    result["user"]=user.serialize()
+    return jsonify(result), 200
+
+
 

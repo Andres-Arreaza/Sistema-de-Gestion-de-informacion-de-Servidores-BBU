@@ -38,7 +38,8 @@ class User(db.Model):
     city = db.Column(db.String(80), nullable=False)
     role = db.Column(db.Enum(RoleEnum), nullable=False)
 
-    appointments = db.relationship("Appointment")
+    appointments = db.relationship("Appointment", back_populates="patient", lazy=True)
+    doctors=db.relationship("Doctor", back_populates="user", lazy=True)
 
     def __repr__(self):
         return f'<User {self.id}, {self.email}>'
@@ -64,17 +65,16 @@ class Doctor(db.Model):
     medical_consultant_price = db.Column(db.Float, nullable=False)
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id")) 
-    users= db.relationship("User")
-    appointments = db.relationship("Appointment")
+    user= db.relationship(User)
+    appointments = db.relationship("Appointment", back_populates="doctor", lazy=True)
 
     def __repr__(self):
         return f'<Doctor {self.id}>'
 
     def serialize(self):
-        doctor=User.query.filter_by(id=self.user_id).first()
         return {
             "id": self.id,
-            "info":doctor.serialize() if doctor else None,
+            "info":self.user.serialize() if self.user else None,
             "speciality": self.speciality,
             "time_availability": self.time_availability,
             "medical_consultant_price": self.medical_consultant_price,
@@ -88,8 +88,8 @@ class Appointment(db.Model):
     patient_id = db.Column(db.Integer, db.ForeignKey("users.id")) 
     doctor_id = db.Column(db.Integer, db.ForeignKey("doctors.id"))    
 
-    doctor = db.relationship("Doctor", back_populates="appointments")
-    patient = db.relationship("User", back_populates="appointments")
+    doctor = db.relationship(Doctor)
+    patient = db.relationship(User)
 
 
     def __repr__(self):
@@ -98,8 +98,8 @@ class Appointment(db.Model):
     def serialize(self):
         return {
             "id": self.id,
-            "patient_id": self.patient_id, 
-            "doctor_id": self.doctor_id
+            "patient": self.patient.serialize() if self.patient else None, 
+            "doctor": self.doctor.serialize() if self.doctor else None
         }
 
 class TokenBlockedList(db.Model):
