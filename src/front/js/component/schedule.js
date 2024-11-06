@@ -12,9 +12,16 @@ export const Schedule = () => {
     }, []);
 
     const fetchAppointments = async () => {
-        const response = await fetch(BackendURL+'/appointments');
-
-        setAppointments(response.data);
+        try {
+            const response = await fetch(`https://hallowed-corpse-r4rvjwwg65wr2wqr9-3000.app.github.dev/appointments`);
+            if (!response.ok) {
+                throw new Error('Error fetching appointments');
+            }
+            const data = await response.json();
+            setAppointments(data);
+        } catch (error) {
+            setErrorMessage('Error fetching appointments. Please try again.');
+        }
     };
 
     const addAppointment = async (e) => {
@@ -22,17 +29,28 @@ export const Schedule = () => {
         const newAppointment = { name, date };
 
         try {
-            await fetch(BackendURL+'/appointments', newAppointment);
-            setAppointments([...appointments, newAppointment]);
+            const response = await fetch(`https://hallowed-corpse-r4rvjwwg65wr2wqr9-3000.app.github.dev/appointments`, {
+                method: 'POST',
+                body: JSON.stringify(newAppointment),
+                headers: {
+                    "Content-Type": "application/json"
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error adding appointment');
+            }
+            const appointment = await newAppointment.json();
+
+            // Assuming the response contains the added appointment
+            const addedAppointment = await response.json();
+            setAppointments([...appointments, addedAppointment]);
             setName('');
             setDate('');
             setErrorMessage(''); // Clear any previous error message
         } catch (error) {
-            if (error.response && error.response.status === 400) {
-                setErrorMessage(error.response.data.message);
-            } else {
-                setErrorMessage('Error adding appointment. Please try again.');
-            }
+            setErrorMessage(error.message || 'Error adding appointment. Please try again.');
         }
     };
 

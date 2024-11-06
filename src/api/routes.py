@@ -21,14 +21,21 @@ appointments = []
 def manage_appointments():
     if request.method == 'POST':
         data = request.json
-        # Check if the appointment time is available
-        for appointment in appointments:
-            if appointment['date'] == data['date']:
-                return jsonify({"message": "Time slot is not available!"}), 400
+        # Validate request data
+        if 'name' not in data or 'date' not in data:
+            return jsonify({"message": "Missing name or date in request"}), 400
         
-        appointments.append(data)
+        existing_appointment = appointment.query.filter_by(date=data['date']).first()  # Assuming you have an Appointment model
+        if existing_appointment:
+            return jsonify({"message": "Time slot is not available!"}), 400
+        
+        new_appointment = appointment(name=data['name'], date=data['date'])  # Assuming you have an Appointment model
+        db.session.add(new_appointment)
+        db.session.commit()
         return jsonify({"message": "Appointment added!", "appointment": data}), 201
-    return jsonify(appointments)
+
+    appointments = appointment.query.all() 
+    return jsonify([appointment.serialize() for appointment in appointments]), 200
 
 @api.route('/hello', methods=['POST', 'GET'])
 def handle_hello():
