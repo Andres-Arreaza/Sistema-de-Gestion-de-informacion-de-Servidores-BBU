@@ -20,15 +20,19 @@ const getState = ({ getStore, getActions, setStore }) => {
 							password: password
 						})
 					})
+					if(resp.status==400){
+						return false
+					}
 					const data = await resp.json()
 					console.log(data)
-					localStorage.setItem("token", data.token)
+					localStorage.setItem("token", data.access_token)
 					setStore({ user: data.user, auth: true })
 					// setStore({ message: data.message })
 					// don't forget to return something, that is how the async resolves
 					return true;
 				} catch (error) {
 					console.log("Error loading message from backend", error)
+					return false
 				}
 			},
 			log_out: () => {

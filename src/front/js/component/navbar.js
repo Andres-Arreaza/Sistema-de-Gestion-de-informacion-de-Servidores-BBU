@@ -13,7 +13,7 @@ export const Navbar = () => {
 				<div className="ml-auto">
 					{store.auth == false ?
 						<div>
-							<Link to="/">
+							<Link to="/login">
 								<button className="btn btn-outline-success mx-3">Login</button>
 							</Link>
 							<Link to="/single">
