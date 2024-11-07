@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint, current_app 
-from api.models import db, UserProfile, MedicalProfile, TokenBlockedList, Especialidades
+from api.models import db, UserProfile, MedicalProfile, TokenBlockedList, Especialidades, Doctors
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token
@@ -120,7 +120,7 @@ def get_especialidades():
         'id': especialidad.id,
         'nombre': especialidad.nombre,
         'descripcion': especialidad.descripcion
-    }for especialidad in especialidades])
+    } for especialidad in especialidades])
 
 # Crea una nueva especialidad
 @api.route('/especialidades', methods=['POST'])
@@ -170,3 +170,13 @@ def delete_especialidades(id):
     db.session.delete(especialidades)
     db.session.commit()
     return jsonify({'message':'Especialidad eliminada'}), 204
+
+#Obtener el doctor por especialidad
+@api.route('/doctors', methods=['GET'])
+def get_doctors_by_speciality():
+        speciality_id = request.args.get('speciality')
+        if speciality_id: 
+            doctors = Doctors.query.filter_by(speciality=speciality_id).all()
+        else:
+            doctors = Doctors.query.all()
+        return jsonify(doctor.serialize() for doctor in doctors), 200

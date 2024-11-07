@@ -7,6 +7,13 @@ import "../../styles/navbar.css";
 export const Navbar = () => {
 	const { store, actions } = useContext(Context);
 	const [specialities, setSpecialities] = useState([]);
+	const [selectedSpecialitiesId, setSelectSpecialitiesId] = useState(null);
+
+	const handleSpecialitySelectId = (id) => {
+		setSelectSpecialitiesId(id);
+		actions.getDoctorBySpeciality(id);
+	}
+
 
 	useEffect(() => {
 		// Función para obtener especialidades desde la API
@@ -38,11 +45,11 @@ export const Navbar = () => {
 				<div className="container d-flex align-items-center justify-content-between p-2 background">
 					<div className="specialties-buttons d-flex gap-3">
 						<div className="dropdown">
-							<button className="btn btn-dark dropdown-toggle navbar-buttons" data-bs-toggle="dropdown" aria-expanded="false" >Especialidades</button>
+							<button className="btn btn-dark dropdown-toggle navbar-buttons" data-bs-toggle="dropdown" aria-expanded="false">Especialidades</button>
 							<ul className="dropdown-menu">
 								{Array.isArray(specialities) && specialities.length > 0 ? (
 									specialities.map((speciality, index) => (
-										<li className="dropdown-item" key={index}>
+										<li className="dropdown-item" key={index} onClick={() => handleSpecialitySelectId(speciality.id)}>
 											{speciality.nombre}
 										</li>
 
@@ -53,10 +60,6 @@ export const Navbar = () => {
 							</ul>
 
 						</div>
-
-						<button className="btn btn-dark navbar-buttons">Opciones</button>
-						<button className="btn btn-dark navbar-buttons">Opciones</button>
-						<button className="btn btn-dark navbar-buttons">Opciones</button>
 					</div>
 					<div className="search-bar d-flex align-items-center">
 						<input type="text" placeholder="Nombre del doctor" className="form-control" />

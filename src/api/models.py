@@ -102,3 +102,25 @@ class Especialidades(db.Model):
 
             # do not serialize the password, its a security breach
         }
+    
+class Doctors(db.Model):
+    __tablename__ = 'doctors' # Nombre de la tabla
+
+    id = db.Column(db.Integer, primary_key=True) # ID clave primaria
+    doctor_name = db.Column(db.String(80), unique=False, nullable=False)
+    
+    especialidad_id = db.Column(db.Integer, db.ForeignKey('especialidades.id'), nullable=False) 
+    speciality_id = db.relationship("Especialidades", backref="doctors")
+
+    def __repr__(self):
+        return f'<Doctors {self.doctor_name}>'
+
+    #Metodo para serializar, convertir el objeto en formato JSON
+    def serialize(self):
+        return {
+            "id": self.id,
+            "doctor_name": self.doctor_name,
+            "speciality_id": self.especiality_id
+
+            # do not serialize the password, its a security breach
+        }  

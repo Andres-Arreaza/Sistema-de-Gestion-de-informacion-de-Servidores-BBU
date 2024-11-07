@@ -2,7 +2,8 @@ const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
 			message: null,
-			specialities: []
+			specialities: [],
+			doctors: []
 		},
 		actions: {
 			// Use getActions to call a function within a fuction
@@ -13,14 +14,13 @@ const getState = ({ getStore, getActions, setStore }) => {
 			getSpecialities: async () => {
 				try {
 					// fetching data from the backend
-					const resp = await fetch(process.env.BACKEND_URL + "/api/especialidades")
+					const response = await fetch(process.env.BACKEND_URL + "/api/especialidades")
 
-					if (!resp.ok) {
+					if (!response.ok) {
 						throw new Error('Especialidad no obtenida')
 					}
 
-					const data = await resp.json()
-					console.log(data)
+					const data = await response.json()
 
 					return data;
 
@@ -33,6 +33,24 @@ const getState = ({ getStore, getActions, setStore }) => {
 			setSpecialities: (specialities) => {
 				setStore({ specialities })
 			},
+
+			getDoctorBySpeciality: async (id) => {
+				try {
+					const url = id
+						? `${process.env.BACKEND_URL}/api/doctors?speciality=${id}`
+						: `${process.env.BACKEND_URL}/api/doctors`;
+
+					const response = await fetch(url);
+					if (!response.ok) {
+						throw new Error('Especialidad no obtenida');
+					}
+					const data = await response.json();
+					setStore({ doctors: data });
+					return data;
+				} catch (error) {
+					console.log("Error fetching doctors", error);
+				}
+			}
 		}
 	};
 };
