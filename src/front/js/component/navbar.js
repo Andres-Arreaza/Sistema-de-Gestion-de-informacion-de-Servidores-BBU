@@ -48,7 +48,7 @@ export const Navbar = () => {
 							<button className="btn btn-dark dropdown-toggle navbar-buttons" data-bs-toggle="dropdown" aria-expanded="false">Especialidades</button>
 							<ul className="dropdown-menu">
 								{Array.isArray(specialities) && specialities.length > 0 ? (
-									specialities.map((speciality, indspecialitiesex) => (
+									specialities.map((speciality, index) => (
 										<li className="dropdown-item" key={index} onClick={() => handleSpecialitySelectId(speciality.id)}>
 											{speciality.nombre}
 										</li>
