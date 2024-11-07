@@ -10,8 +10,6 @@ from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
 
 api = Blueprint('api', __name__)
-
-# Allow CORS requests to this API
 CORS(api)
 
 
@@ -45,7 +43,6 @@ def register():
         print(RoleEnum.PATIENT.value)
         return jsonify({"error": "Invalid role"}), 400
    
-    # Crea el usuario
     hashed_password = generate_password_hash(password)
     print(hashed_password)
     user = User(
@@ -61,14 +58,11 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-
-    # Si el rol es 'doctor', crea la entrada correspondiente en la tabla Doctor
     if role == RoleEnum.DOCTOR.value:
         speciality = data.get('speciality')
         time_availability = data.get('time_availability')
         medical_consultant_price = data.get('medical_consultant_price')
-
-        # Verificar si el doctor ya existe para evitar duplicados
+        
         if Doctor.query.filter_by(user_id=user.id).first():
             return jsonify({"error": "Doctor already exists for this user"}), 400
 
@@ -84,7 +78,6 @@ def register():
         return jsonify(doctor.serialize()), 201
     
     return jsonify(user.serialize()), 201
-
 
 
 @api.route('/doctors', methods=['GET'])
@@ -121,11 +114,5 @@ def login():
 @api.route("/protected", methods=["GET"])
 @jwt_required()
 def protected():
-    # Access the identity of the current user with get_jwt_identity
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
-
-
-
-
-

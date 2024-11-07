@@ -1,4 +1,3 @@
-  
 import os
 from flask_admin import Admin
 from .models import db, User, Doctor, Appointment, TokenBlockedList
@@ -15,8 +14,6 @@ def setup_admin(app):
     admin.add_view(ModelView(Doctor, db.session))
     admin.add_view(ModelView(Appointment, db.session))
     admin.add_view(ModelView(TokenBlockedList, db.session))
-
-
 
 
 
