@@ -4,7 +4,9 @@ const getState = ({ getStore, getActions, setStore }) => {
 		store: {
 			message: null,
 			specialities: [],
-			doctors: []
+			allDoctors: [],
+			doctors: [],
+			auth: false
 		},
 		actions: {
 			// Use getActions to call a function within a fuction
@@ -21,15 +23,14 @@ const getState = ({ getStore, getActions, setStore }) => {
 							password: password
 						})
 					})
-					if(resp.status==400){
+					if (resp.status == 400) {
 						return false
 					}
 					const data = await resp.json()
 					console.log(data)
 					localStorage.setItem("token", data.access_token)
 					setStore({ user: data.user, auth: true })
-					// setStore({ message: data.message })
-					// don't forget to return something, that is how the async resolves
+
 					return true;
 				} catch (error) {
 					console.log("Error loading message from backend", error)
@@ -61,6 +62,48 @@ const getState = ({ getStore, getActions, setStore }) => {
 
 			setSpecialities: (specialities) => {
 				setStore({ specialities })
+			},
+
+			getSpecialities: async () => {
+				try {
+					const response = await fetch(process.env.BACKEND_URL + "/api/specialities", {
+						method: "GET",
+						headers: {
+							"Content-Type": "application/json"
+						},
+					})
+					if (!response.ok) {
+						throw new Error("Failed to fetch specialities");
+					}
+					const data = await response.json()
+					if (Array.isArray(data) && data.length > 0) {
+						setStore({ specialities: data });
+						return data
+					} else {
+						throw new Error("No specialities found in the response")
+					}
+
+				} catch (error) {
+					console.log("Error fetching specialities")
+					return [];
+				}
+			},
+
+			getAllDoctors: async () => {
+				try {
+					const response = await fetch(process.env.BACKEND_URL + "/api/doctors")
+					if (!response.ok) {
+						throw new Error("Failed to get all doctors");
+					}
+					const data = await response.json()
+					
+
+					setStore({ allDoctors: data });
+					return data;
+				} catch (error) {
+					console.log("Error fetching all doctors", error)
+				}
+
 			},
 
 			getDoctorBySpeciality: async (id) => {
