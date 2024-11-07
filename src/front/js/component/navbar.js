@@ -16,7 +16,7 @@ export const Navbar = () => {
 							<Link to="/login">
 								<button className="btn btn-outline-success mx-3">Login</button>
 							</Link>
-							<Link to="/single">
+							<Link to="/signup">
 								<button className="btn btn-outline-success">Sign_up</button>
 							</Link>
 						</div>

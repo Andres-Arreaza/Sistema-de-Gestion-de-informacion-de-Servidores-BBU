@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import { Context } from "../../store/appContext";
-import "../../../styles/home.css";
+// import "../../../styles/home.css";
 import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2'
 
@@ -20,7 +20,7 @@ export const SingleLogin = () => {
         }
         let resp = await actions.getLogin(email, password)
         if (resp) {
-            //navigate("/")
+            navigate("/")
         } else {
             mensajeError("Something went wrong")
         }
