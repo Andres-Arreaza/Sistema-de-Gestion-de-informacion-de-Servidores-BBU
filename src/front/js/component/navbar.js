@@ -1,8 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { Context } from "../store/appContext";
 import { Link } from "react-router-dom";
-import logoImgUrl from "../../img/logo_akh.png";
-import "../../styles/navbar.css";
+import { Context } from "../store/appContext";
 
 export const Navbar = () => {
 	const { store, actions } = useContext(Context);
@@ -35,7 +34,7 @@ export const Navbar = () => {
 		<nav className="navbar navbar-light bg-light">
 			<div className="container">
 				<Link to="/">
-					<img src={logoImgUrl} style={{ height: "100px" }} />
+					<span className="navbar-brand mb-0 h1">Home</span>
 				</Link>
 				<div>
 					<button className="btn btn-dark signin-buttons">Sign in</button>
@@ -59,7 +58,18 @@ export const Navbar = () => {
 								)}
 							</ul>
 
+				<div className="ml-auto">
+					{store.auth == false ?
+						<div>
+							<Link to="/login">
+								<button className="btn btn-outline-success mx-3">Login</button>
+							</Link>
+							<Link to="/single">
+								<button className="btn btn-outline-success">Sign_up</button>
+							</Link>
 						</div>
+
+						
 					</div>
 					<div className="search-bar d-flex align-items-center">
 						<input type="text" placeholder="Nombre del doctor" className="form-control" />
