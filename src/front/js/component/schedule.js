@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { BackendURL } from './backendURL';
 
 export const Schedule = () => {
     const [appointments, setAppointments] = useState([]);
@@ -41,10 +40,9 @@ export const Schedule = () => {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Error adding appointment');
             }
-            const appointment = await newAppointment.json();
 
-            // Assuming the response contains the added appointment
-            const addedAppointment = await response.json();
+
+            const addedAppointment = await newAppointment.json();
             setAppointments([...appointments, addedAppointment]);
             setName('');
             setDate('');
