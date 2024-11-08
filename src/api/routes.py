@@ -60,7 +60,8 @@ def register():
             user_id=user.id,
             speciality=speciality,
             time_availability=time_availability,
-            medical_consultant_price=medical_consultant_price
+            medical_consultant_price=medical_consultant_price)
+
 @api.route('/appointments', methods=['GET', 'POST'])
 def manage_appointments():
     if request.method == 'POST':
@@ -74,17 +75,15 @@ def manage_appointments():
         return jsonify({"message": "Appointment added!", "appointment": data}), 201
     return jsonify(appointments)
 
-#Registro UserProfile y MedicalProfile
-
 @api.route('/signup', methods=['POST'])
 def signup_user():
     try:
         body = request.get_json()
-        exist_user=UserProfile.query.filter_by(email=body["email"]).first()
+        exist_user=User.query.filter_by(email=body["email"]).first()
         if exist_user:
             return jsonify({"msg": "User exists already"}), 404
         pw_hash=current_app.bcrypt.generate_password_hash(body["password"]).decode("utf-8")
-        new_user=UserProfile(
+        new_user=User(
             email=body["email"],
             # password=pw_hash,
             password=pw_hash,
@@ -103,17 +102,16 @@ def signup_user():
     except Exception as e:
         return jsonify({"msg": "Error al crear el usuario", "error": str(e)}), 500
 
-
 @api.route('/signup/medical', methods=['POST'])
 @jwt_required()
 def signup_medical():
     try:
         body = request.get_json()
         user_id=get_jwt_identity()
-        exist_user=UserProfile.query.get(user_id)
+        exist_user=User.query.get(user_id)
         if not exist_user:
             return jsonify({"msg": "User not found"}), 404
-        new_medical=MedicalProfile(
+        new_medical=Doctor(
             user_id=user_id,
             # password=pw_hash,
             specialty= body["specialty"],
@@ -121,12 +119,12 @@ def signup_medical():
             time_availability=body["time_availability"],
             medical_consultation_price=body["medical_consultation_price"]
         )
-        db.session.add(doctor)
+        db.session.add(Doctor)
         db.session.commit()
 
-        return jsonify(doctor.serialize()), 201
-    
-    return jsonify(user.serialize()), 201
+        return jsonify(Doctor.serialize()), 201
+    except Exception as e:
+        return jsonify(User.serialize()), 201
 
 
 @api.route('/doctors', methods=['GET'])
