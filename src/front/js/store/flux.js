@@ -15,7 +15,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 			getLogin: async (email, password) => {
 				try {
 					// fetching data from the backend
-					const resp = await fetch(process.env.BACKEND_URL + "api/login", {
+					const resp = await fetch(process.env.BACKEND_URL + "/api/login", {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({
@@ -45,7 +45,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 			sign_up: async (email, password) => {
 				try {
 					// fetching data from the backend
-					await fetch(process.env.BACKEND_URL + "api/signup", {
+					await fetch(process.env.BACKEND_URL + "/api/signup", {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({
@@ -96,7 +96,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 						throw new Error("Failed to get all doctors");
 					}
 					const data = await response.json()
-					
+
 
 					setStore({ allDoctors: data });
 					return data;
@@ -123,6 +123,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log("Error fetching doctors", error);
 				}
 			}
+			
 		}
 	};
 };

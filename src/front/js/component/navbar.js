@@ -69,6 +69,12 @@ export const Navbar = () => {
 						</div>
 					</div>
 
+					<div>
+						<Link to={"/appointment"}>
+                                        <button className="btn btn-dark card-buttons">Appointment</button>
+                                    </Link>
+					</div>
+
 					<div className="search-bar d-flex align-items-center ms-auto">
 						<input type="text" placeholder="Nombre del doctor" className="form-control" />
 						<span className="btn">

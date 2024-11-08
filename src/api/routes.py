@@ -12,7 +12,7 @@ from flask_jwt_extended import jwt_required
 
 api = Blueprint('api', __name__)
 CORS(api)
-
+appointments = []
 
 @api.route('/register', methods=['POST'])
 def register():
@@ -60,14 +60,71 @@ def register():
             user_id=user.id,
             speciality=speciality,
             time_availability=time_availability,
-            medical_consultant_price=medical_consultant_price
+            medical_consultant_price=medical_consultant_price)
+
+@api.route('/appointments', methods=['GET', 'POST'])
+def manage_appointments():
+    if request.method == 'POST':
+        data = request.json
+        # Check if the appointment time is available
+        for appointment in appointments:
+            if appointment['date'] == data['date']:
+                return jsonify({"message": "Time slot is not available!"}), 400
+        
+        appointments.append(data)
+        return jsonify({"message": "Appointment added!", "appointment": data}), 201
+    return jsonify(appointments)
+
+@api.route('/signup', methods=['POST'])
+def signup_user():
+    try:
+        body = request.get_json()
+        exist_user=User.query.filter_by(email=body["email"]).first()
+        if exist_user:
+            return jsonify({"msg": "User exists already"}), 404
+        pw_hash=current_app.bcrypt.generate_password_hash(body["password"]).decode("utf-8")
+        new_user=User(
+            email=body["email"],
+            # password=pw_hash,
+            password=pw_hash,
+            first_name=body["first_name"],
+            last_name=body["last_name"],
+            city=body["city"],
+            country=body["country"],
+            address=body["address"],
+            photo=body["photo"],
+            birthday=body["birthday"],
+            is_active=True
         )
-        db.session.add(doctor)
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({"msg": "User created"}), 201
+    except Exception as e:
+        return jsonify({"msg": "Error al crear el usuario", "error": str(e)}), 500
+
+@api.route('/signup/medical', methods=['POST'])
+@jwt_required()
+def signup_medical():
+    try:
+        body = request.get_json()
+        user_id=get_jwt_identity()
+        exist_user=User.query.get(user_id)
+        if not exist_user:
+            return jsonify({"msg": "User not found"}), 404
+        new_medical=Doctor(
+            user_id=user_id,
+            # password=pw_hash,
+            specialty= body["specialty"],
+            university= body["university"],
+            time_availability=body["time_availability"],
+            medical_consultation_price=body["medical_consultation_price"]
+        )
+        db.session.add(Doctor)
         db.session.commit()
 
-        return jsonify(doctor.serialize()), 201
-    
-    return jsonify(user.serialize()), 201
+        return jsonify(Doctor.serialize()), 201
+    except Exception as e:
+        return jsonify(User.serialize()), 201
 
 
 @api.route('/doctors', methods=['GET'])
