@@ -12,7 +12,7 @@ export const Schedule = () => {
 
     const fetchAppointments = async () => {
         try {
-            const response = await fetch(`https://hallowed-corpse-r4rvjwwg65wr2wqr9-3001.app.github.dev/api/appointments`, { method: 'GET', });
+            const response = await fetch(`https://hallowed-corpse-r4rvjwwg65wr2wqr9-3001.app.github.dev/api/appointments`,);
             if (!response.ok) {
                 throw new Error('Error fetching appointments');
             }
