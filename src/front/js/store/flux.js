@@ -2,7 +2,10 @@
 const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
-			user: {},
+			message: null,
+			specialities: [],
+			allDoctors: [],
+			doctors: [],
 			auth: false
 		},
 		actions: {
@@ -20,15 +23,14 @@ const getState = ({ getStore, getActions, setStore }) => {
 							password: password
 						})
 					})
-					if(resp.status==400){
+					if (resp.status == 400) {
 						return false
 					}
 					const data = await resp.json()
 					console.log(data)
 					localStorage.setItem("token", data.access_token)
 					setStore({ user: data.user, auth: true })
-					// setStore({ message: data.message })
-					// don't forget to return something, that is how the async resolves
+
 					return true;
 				} catch (error) {
 					console.log("Error loading message from backend", error)
@@ -54,9 +56,73 @@ const getState = ({ getStore, getActions, setStore }) => {
 					return true;
 				} catch (error) {
 					console.log("Error loading message from backend", error)
+					return [];
 				}
 			},
 
+			setSpecialities: (specialities) => {
+				setStore({ specialities })
+			},
+
+			getSpecialities: async () => {
+				try {
+					const response = await fetch(process.env.BACKEND_URL + "/api/specialities", {
+						method: "GET",
+						headers: {
+							"Content-Type": "application/json"
+						},
+					})
+					if (!response.ok) {
+						throw new Error("Failed to fetch specialities");
+					}
+					const data = await response.json()
+					if (Array.isArray(data) && data.length > 0) {
+						setStore({ specialities: data });
+						return data
+					} else {
+						throw new Error("No specialities found in the response")
+					}
+
+				} catch (error) {
+					console.log("Error fetching specialities")
+					return [];
+				}
+			},
+
+			getAllDoctors: async () => {
+				try {
+					const response = await fetch(process.env.BACKEND_URL + "/api/doctors")
+					if (!response.ok) {
+						throw new Error("Failed to get all doctors");
+					}
+					const data = await response.json()
+					
+
+					setStore({ allDoctors: data });
+					return data;
+				} catch (error) {
+					console.log("Error fetching all doctors", error)
+				}
+
+			},
+
+			getDoctorBySpeciality: async (id) => {
+				try {
+					const url = id
+						? `${process.env.BACKEND_URL}/api/doctors?speciality=${id}`
+						: `${process.env.BACKEND_URL}/api/doctors`;
+
+					const response = await fetch(url);
+					if (!response.ok) {
+						throw new Error('Especialidad no obtenida');
+					}
+					const data = await response.json();
+					setStore({ doctors: data });
+					return data;
+				} catch (error) {
+					console.log("Error fetching doctors", error);
+				}
+			}
 		}
 	};
 };

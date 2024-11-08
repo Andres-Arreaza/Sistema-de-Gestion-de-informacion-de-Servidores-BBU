@@ -1,8 +1,9 @@
 """
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
-from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Doctor, RoleEnum
+from flask import Flask, request, jsonify, url_for, Blueprint, current_app 
+from api.models import db, User, Doctor, RoleEnum, TokenBlockedList
+from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
@@ -11,17 +12,6 @@ from flask_jwt_extended import jwt_required
 
 api = Blueprint('api', __name__)
 CORS(api)
-
-
-@api.route('/hello', methods=['POST', 'GET'])
-def handle_hello():
-
-    response_body = {
-        "message": "Hello! I'm a message that came from the backend, check the network tab on the google inspector and you will see the GET request"
-    }
-
-    return jsonify(response_body), 200
-
 
 
 @api.route('/register', methods=['POST'])
@@ -113,6 +103,20 @@ def login():
 
 @api.route("/protected", methods=["GET"])
 @jwt_required()
-def protected():
-    current_user = get_jwt_identity()
-    return jsonify(logged_in_as=current_user), 200
+def user_logout():
+    try:
+        token_data=get_jwt_identity()
+        token_blocked=TokenBlockedList(jti=token_data["jti"])
+        db.session.add(token_blocked)
+        db.session.commit()
+        return jsonify({"msg":"Session cerrada"}), 200
+    except Exception as e:
+        return jsonify({"msg": "Error al cierre de sesión", "error": str(e)}), 500
+
+# Devuelve una lista de todas las especialidades
+@api.route('/specialities', methods=['GET'])
+def get_especialities():
+    specialities = db.session.query(Doctor.speciality).distinct().all()
+
+    specialities_list = [speciality[0] for speciality in specialities]
+    return jsonify(specialities_list), 200
