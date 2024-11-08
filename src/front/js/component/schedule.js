@@ -12,7 +12,7 @@ export const Schedule = () => {
 
     const fetchAppointments = async () => {
         try {
-            const response = await fetch(`https://hallowed-corpse-r4rvjwwg65wr2wqr9-3001.app.github.dev/api/appointments`,);
+            const response = await fetch(process.env.BACKEND_URL +"/api/appointments",);
             if (!response.ok) {
                 throw new Error('Error fetching appointments');
             }
@@ -28,7 +28,7 @@ export const Schedule = () => {
         const newAppointment = { name, date };
 
         try {
-            const response = await fetch(`https://hallowed-corpse-r4rvjwwg65wr2wqr9-3001.app.github.dev/api/appointments`, {
+            const response = await fetch(process.env.BACKEND_URL + "/api/appointments", {
                 method: 'POST',
                 body: JSON.stringify(newAppointment),
                 headers: {
@@ -55,6 +55,7 @@ export const Schedule = () => {
 
             setName('');
             setDate('');
+            fetchAppointments();
             setErrorMessage(''); // Clear any previous error message
         } catch (error) {
             setErrorMessage(error.message || 'Error adding appointment. Please try again.');
