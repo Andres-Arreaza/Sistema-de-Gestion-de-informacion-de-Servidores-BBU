@@ -12,7 +12,7 @@ export const Schedule = () => {
 
     const fetchAppointments = async () => {
         try {
-            const response = await fetch(`https://hallowed-corpse-r4rvjwwg65wr2wqr9-3000.app.github.dev/appointments`);
+            const response = await fetch(`https://hallowed-corpse-r4rvjwwg65wr2wqr9-3001.app.github.dev/api/appointments`, { method: 'GET', });
             if (!response.ok) {
                 throw new Error('Error fetching appointments');
             }
@@ -28,7 +28,7 @@ export const Schedule = () => {
         const newAppointment = { name, date };
 
         try {
-            const response = await fetch(`https://hallowed-corpse-r4rvjwwg65wr2wqr9-3000.app.github.dev/appointments`, {
+            const response = await fetch(`https://hallowed-corpse-r4rvjwwg65wr2wqr9-3001.app.github.dev/api/appointments`, {
                 method: 'POST',
                 body: JSON.stringify(newAppointment),
                 headers: {
@@ -36,14 +36,23 @@ export const Schedule = () => {
                 },
             });
 
+            const contentType = response.headers.get("content-type");
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Error adding appointment');
+                if (contentType && contentType.includes("application/json")) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Error adding appointment');
+                } else {
+                    throw new Error('Unexpected error occurred.');
+                }
             }
 
+            if (contentType && contentType.includes("application/json")) {
+                const addedAppointment = await response.json();
+                setAppointments([...appointments, addedAppointment]);
+            } else {
+                throw new Error('Unexpected content type.');
+            }
 
-            const addedAppointment = await newAppointment.json();
-            setAppointments([...appointments, addedAppointment]);
             setName('');
             setDate('');
             setErrorMessage(''); // Clear any previous error message
@@ -51,6 +60,7 @@ export const Schedule = () => {
             setErrorMessage(error.message || 'Error adding appointment. Please try again.');
         }
     };
+
 
     return (
         <div className="container">
