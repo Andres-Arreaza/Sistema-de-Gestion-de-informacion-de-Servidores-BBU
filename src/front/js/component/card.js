@@ -6,6 +6,7 @@ import PropTypes from "prop-types";
 import RigoImgUrl from "../../img/rigo-baby.jpg";
 
 export const SpecialitiesCard = () => {
+
     return (
         <div className="container">
             <div className="card w-100 mb-3">
