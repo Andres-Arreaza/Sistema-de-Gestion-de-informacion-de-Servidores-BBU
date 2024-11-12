@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { Context } from '../store/appContext';
 
 export const Schedule = () => {
     const [appointments, setAppointments] = useState([]);
+    const { store, actions } = useContext(Context);
     const [name, setName] = useState('');
     const [date, setDate] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -11,14 +13,12 @@ export const Schedule = () => {
     }, []);
 
     const fetchAppointments = async () => {
-        try {
-            const response = await fetch(process.env.BACKEND_URL +"/api/appointments",);
-            if (!response.ok) {
-                throw new Error('Error fetching appointments');
-            }
-            const data = await response.json();
-            setAppointments(data);
-        } catch (error) {
+        try{
+        let resp = await actions.schedule();
+        if (resp) {
+            //navigate("/")
+        }
+        }catch (error) {
             setErrorMessage('Error fetching appointments. Please try again.');
         }
     };

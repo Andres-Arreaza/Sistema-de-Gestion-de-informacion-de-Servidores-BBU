@@ -12,6 +12,18 @@ const getState = ({ getStore, getActions, setStore }) => {
 			// Use getActions to call a function within a fuction
 
 
+			schedule: async () =>{
+				try {
+					const response = await fetch(process.env.BACKEND_URL +"/api/appointments",);
+					if (!response.ok) {
+						throw new Error('Error fetching appointments');
+					}
+					const data = await response.json();
+					setAppointments(data);
+				} catch (error) {
+					setErrorMessage('Error fetching appointments. Please try again.');
+				}
+			},
 			getLogin: async (email, password) => {
 				try {
 					// fetching data from the backend
