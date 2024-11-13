@@ -11,7 +11,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 		actions: {
 			// Use getActions to call a function within a fuction
 
-
+			
 			schedule: async () =>{
 				try {
 					const response = await fetch(process.env.BACKEND_URL +"/api/appointments",);
