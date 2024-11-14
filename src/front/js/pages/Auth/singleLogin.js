@@ -35,14 +35,21 @@ export const SingleLogin = () => {
     }
 
     return (
-        <div className="text-center mt-3 container">
-            <h1 className="mb-4">Login</h1>
+        <div className="text-center mt-3 container d-flex flex-column justify-content-center align-items-center">
             <div className="row">
-                <div className="col">
-                    <img src="https://caymcorp.wordpress.com/wp-content/uploads/2011/03/candado.jpg" />
+                <div className="col-12">
+                    <h1 className="mb-4 mt-5">LOGIN</h1>
                 </div>
-                <div className="col bg-light">
-                    <form>
+            </div>
+            <div className="row">
+                <div className="col-6">
+                    <img
+                        src="https://caymcorp.wordpress.com/wp-content/uploads/2011/03/candado.jpg"
+                        alt="Candado"
+                    />
+                </div>
+                <div className="col-6">
+                    <form className="pt-4 ps-4 pe-4 pb-4 bg-light">
                         <div className="mb-3">
                             <label htmlFor="exampleInputEmail1" className="form-label">Email address</label>
                             <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" />
@@ -52,11 +59,9 @@ export const SingleLogin = () => {
                             <label htmlFor="exampleInputPassword1" className="form-label">Password</label>
                             <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" className="form-control" id="exampleInputPassword1" />
                         </div>
-
-                        <button type="button" onClick={(e) => login(e)} className="btn btn-outline-success w-50">Login</button>
                     </form>
+                    <button type="button" onClick={(e) => login(e)} className="btn btn-outline-success ps-4 pe-4 mt-4">Login</button>
                 </div>
-
             </div>
         </div>
     );
