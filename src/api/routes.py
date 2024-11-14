@@ -73,7 +73,7 @@ def manage_appointments():
         
         appointments.append(data)
         return jsonify({"message": "Appointment added!", "appointment": data}), 201
-    return jsonify(appointments)
+    return jsonify(appointments), 200
 
 @api.route('/signup', methods=['POST'])
 def signup_user():

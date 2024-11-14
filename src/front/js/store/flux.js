@@ -6,24 +6,55 @@ const getState = ({ getStore, getActions, setStore }) => {
 			specialities: [],
 			allDoctors: [],
 			doctors: [],
-			auth: false
+			auth: false,
+			appointments: []
 		},
 		actions: {
 			// Use getActions to call a function within a fuction
 
-			
-			schedule: async () =>{
+			fetchSchedule: async () =>{
 				try {
 					const response = await fetch(process.env.BACKEND_URL +"/api/appointments",);
 					if (!response.ok) {
 						throw new Error('Error fetching appointments');
 					}
 					const data = await response.json();
-					setAppointments(data);
+					setStore({appointments:data});
+					return data;
 				} catch (error) {
-					setErrorMessage('Error fetching appointments. Please try again.');
+					setErrorMessage('error en flux');
 				}
 			},
+			addApoint:async (newAppointment) =>{
+				try {
+					const response = await fetch(process.env.BACKEND_URL + "/api/appointments", {
+						method: 'POST',
+						body: JSON.stringify(newAppointment),
+						headers: {
+							"Content-Type": "application/json"
+						},
+					});
+		
+					const contentType = response.headers.get("content-type");
+					if (!response.ok) {
+						if (contentType && contentType.includes("application/json")) {
+							const errorData = await response.json();
+							throw new Error(errorData.message || 'Error adding appointment');
+						} else {
+							throw new Error('Unexpected error occurred.');
+						}
+					}
+		
+					if (contentType && contentType.includes("application/json")) {
+						const addedAppointment = await response.json();
+						return addedAppointment;
+					} else {
+						throw new Error('Unexpected content type.');
+					}}catch (error) {
+						console.log(error.message || 'Error adding appointment. Please try again.');
+					}
+			},
+			
 			getLogin: async (email, password) => {
 				try {
 					// fetching data from the backend
