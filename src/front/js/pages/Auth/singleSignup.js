@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, act } from "react";
 import { Context } from "../../store/appContext";
+import { Navigate, useNavigate } from "react-router-dom";
 
 const SingleSignup = () => {
+    const { store, actions } = useContext(Context)
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [firstName, setFirstName] = useState("")
@@ -13,7 +15,38 @@ const SingleSignup = () => {
     const [speciality, setSpeciality] = useState("")
     const [timeAvailability, setTimeAvailability] = useState("")
     const [medicalConsultantPrice, setMedicalConsultantPrice] = useState("")
+    const navigate = useNavigate()
 
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        if (email != "" && password != "" && firstName != "" && lastName != "" && country != "" && city != "" && age != "" && role != "") {
+            let data = {
+                email: email,
+                password: password,
+                first_name: firstName,
+                last_name: lastName,
+                country: country,
+                city: city,
+                age: age,
+                role: role
+            }
+            if (role == "DOCTOR") {
+                data["speciality"] = speciality
+                data["time_availability"] = timeAvailability
+                data["medical_consultant_price"] = medicalConsultantPrice
+            }
+            let resp = await actions.sign_up(data)
+            if (resp) {
+                let login = await actions.getLogin(email, password)
+                if (login) {
+                    navigate("/")
+                }
+            }
+        }
+        else {
+            alert("Faltan datos");
+        }
+    }
 
     const paises = [
         "Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Antigua y Barbuda",
@@ -50,71 +83,73 @@ const SingleSignup = () => {
     ];
 
     return (
-        <div className="container" style={{backgroundImage:'url("https://img.freepik.com/vector-gratis/diseno-plantilla-papel-tapiz-medica-abstracta_53876-61809.jpg?semt=ais_hybrid")', backgroundSize: 'cover'}}>
+        <div className="" style={{ backgroundImage: 'url("https://img.freepik.com/vector-gratis/diseno-plantilla-papel-tapiz-medica-abstracta_53876-61809.jpg?semt=ais_hybrid")', backgroundSize: 'cover' }}>
             <div className="d-flex vh-100 flex-column justify-content-center align-items-center">
                 <h1 className="d-flex justify-content-center mb-5">SIGN UP</h1>
-                <form className="row g-3 bg-light pb-4 ps-3 pe-3">
-                    <div className="col-md-4">
-                        <label htmlFor="inputEmail4" className="form-label">Email</label>
-                        <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="your@email.com" className="form-control" id="inputEmail4" />
+                <form className="container" onSubmit={handleSubmit}>
+                    <div className="row g-3 bg-light pb-4 ps-3 pe-3">
+                        <div className="col-md-4">
+                            <label htmlFor="inputEmail4" className="form-label">Email</label>
+                            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="your@email.com" className="form-control" id="inputEmail4" />
+                        </div>
+                        <div className="col-md-4">
+                            <label htmlFor="inputPassword4" className="form-label">Password</label>
+                            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="1234" className="form-control" id="inputPassword4" />
+                        </div>
+                        <div className="col-md-2">
+                            <label htmlFor="role" className="form-label">Role</label>
+                            <select id="role" value={role} onChange={(e) => setRole(e.target.value)} className="form-select">
+                                <option disabled>Your role</option>
+                                <option value={"PATIENT"}>Patient</option>
+                                <option value={"DOCTOR"}>Doctor</option>
+                            </select>
+                        </div>
+                        <div className="col-md-2">
+                            <label htmlFor="inputState" className="form-label">Country</label>
+                            <select id="inputState" className="form-select" value={country} onChange={(e) => setCountry(e.target.value)}>
+                                <option selected disabled>Your country</option>
+                                {paises.map((item, index) => (
+                                    <option key={index} value={item}>{item}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="col-md-4">
+                            <label htmlFor="inputAddress" className="form-label">First Name</label>
+                            <input value={firstName} onChange={(e) => setFirstName(e.target.value)} type="text" placeholder="Diego Alejandro" className="form-control" id="inputAddress" />
+                        </div>
+                        <div className="col-md-4">
+                            <label htmlFor="inputAddress2" className="form-label">Last Name</label>
+                            <input value={lastName} onChange={(e) => setLastName(e.target.value)} type="text" className="form-control" id="inputAddress2" placeholder="Fontana Lasierra" />
+                        </div>
+                        <div className="col-md-2">
+                            <label htmlFor="inputPassword5" className="form-label">City</label>
+                            <input value={city} onChange={(e) => setCity(e.target.value)} type="text" placeholder="Villa del Viento" className="form-control" id="inputPassword5" />
+                        </div>
+                        <div className="col-md-2">
+                            <label htmlFor="inputPassword6" className="form-label">Age</label>
+                            <input value={age} onChange={(e) => setAge(e.target.value)} type="number" placeholder="31" className="form-control" id="inputPassword6" />
+                        </div>
+                        {role === 'DOCTOR' && (
+                            <>
+                                <div className="col-md-4">
+                                    <label htmlFor="inputCity" className="form-label">Speciality</label>
+                                    <input value={speciality} onChange={(e) => setSpeciality(e.target.value)} type="text" placeholder="Pediatry" className="form-control" id="inputCity" />
+                                </div>
+                                <div className="col-md-4">
+                                    <label htmlFor="inputCity1" className="form-label"> Time_availability</label>
+                                    <input value={timeAvailability} onChange={(e) => setTimeAvailability(e.target.value)} type="text" placeholder="8am - 5pm" className="form-control" id="inputCity1" />
+                                </div>
+                                <div className="col-md-4">
+                                    <label htmlFor="inputCity2" className="form-label">Medical consultant price</label>
+                                    <input value={medicalConsultantPrice} onChange={(e) => setMedicalConsultantPrice(e.target.value)} type="text" placeholder="100" className="form-control" id="inputCity2" />
+                                </div>
+                            </>
+                        )}
                     </div>
-                    <div className="col-md-4">
-                        <label htmlFor="inputPassword4" className="form-label">Password</label>
-                        <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="1234" className="form-control" id="inputPassword4" />
+                    <div className="col-md-12 d-flex justify-content-center mt-4 pb-5">
+                        <button type="submit" className="btn btn-outline-success ps-5 pe-5">Sign up</button>
                     </div>
-                    <div className="col-md-2">
-                        <label htmlFor="inputZip" className="form-label">Role</label>
-                        <select id="inputState" value={role} onChange={(e) => setRole(e.target.value)} className="form-select">
-                            <option selected>Your role </option>
-                            <option>Patient</option>
-                            <option>Doctor</option>
-                        </select>
-                    </div>
-                    <div className="col-md-2">
-                        <label htmlFor="inputState" className="form-label">Country</label>
-                        <select id="inputState" className="form-select">
-                            <option selected>Your country</option>
-                            {paises.map((item, index) => (
-                                <option key={index} value={item}>{item}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="col-md-4">
-                        <label htmlFor="inputAddress" className="form-label">First Name</label>
-                        <input value={firstName} onChange={(e) => setFirstName(e.target.value)} type="text" placeholder="Diego Alejandro" className="form-control" id="inputAddress" />
-                    </div>
-                    <div className="col-md-4">
-                        <label htmlFor="inputAddress2" className="form-label">Last Name</label>
-                        <input value={lastName} onChange={(e) => setLastName(e.target.value)} type="text" className="form-control" id="inputAddress2" placeholder="Fontana Lasierra" />
-                    </div>
-                    <div className="col-md-2">
-                        <label htmlFor="inputPassword4" className="form-label">City</label>
-                        <input value={city} onChange={(e) => setCity(e.target.value)} type="password" placeholder="Villa del Viento" className="form-control" id="inputPassword4" />
-                    </div>
-                    <div className="col-md-2">
-                        <label htmlFor="inputPassword4" className="form-label">Age</label>
-                        <input value={age} onChange={(e) => setAge(e.target.value)} type="password" placeholder="31" className="form-control" id="inputPassword4" />
-                    </div>
-                    {role === 'Doctor' && (
-                        <>
-                            <div className="col-md-4">
-                                <label htmlFor="inputCity" className="form-label">Speciality</label>
-                                <input value={speciality} onChange={(e) => setSpeciality(e.target.value)} type="text" placeholder="Pediatry" className="form-control" id="inputCity" />
-                            </div>
-                            <div className="col-md-4">
-                                <label htmlFor="inputCity" className="form-label"> Time_availability</label>
-                                <input value={timeAvailability} onChange={(e) => setTimeAvailability(e.target.value)} type="text" placeholder="8am - 5pm" className="form-control" id="inputCity" />
-                            </div>
-                            <div className="col-md-4">
-                                <label htmlFor="inputCity" className="form-label">Medical consultant price</label>
-                                <input value={medicalConsultantPrice} onChange={(e) => setMedicalConsultantPrice(e.target.value)} type="text" placeholder="100" className="form-control" id="inputCity" />
-                            </div>
-                        </>
-                    )}
                 </form>
-                <div className="col-md-12 d-flex justify-content-center mt-4 pb-5">
-                    <button type="submit" className="btn btn-outline-success ps-5 pe-5">Sign in</button>
-                </div>
             </div>
         </div>
     )

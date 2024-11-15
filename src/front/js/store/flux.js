@@ -20,7 +20,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 							password: password
 						})
 					})
-					if(resp.status==400){
+					if (resp.status == 400) {
 						return false
 					}
 					const data = await resp.json()
@@ -40,23 +40,20 @@ const getState = ({ getStore, getActions, setStore }) => {
 				setStore({ auth: false })
 			},
 
-			sign_up: async (email, password) => {
+			sign_up: async (data) => {
 				try {
 					// fetching data from the backend
-					await fetch(process.env.BACKEND_URL + "api/signup", {
+					await fetch(process.env.BACKEND_URL + "api/register", {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({
-							email: email,
-							password: password
-						})
+						body: JSON.stringify(data)
 					})
 					return true;
 				} catch (error) {
 					console.log("Error loading message from backend", error)
+					return false;
 				}
 			},
-
 		}
 	};
 };

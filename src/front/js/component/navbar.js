@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Context } from "../store/appContext";
 
 export const Navbar = () => {
-	const { actions, store } = useContext(Context)
+	const { actions, store } = useContext(Context) 
 	return (
 		<nav className="navbar navbar-light bg-light pt-2 pb-2">
 			<div className="container">

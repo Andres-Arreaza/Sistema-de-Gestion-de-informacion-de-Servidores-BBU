@@ -37,6 +37,7 @@ def register():
     last_name = data.get('last_name')
     country = data.get('country')
     city = data.get('city')
+    age = data.get('age')
     role = data.get('role')
 
     if role not in [RoleEnum.PATIENT.value, RoleEnum.DOCTOR.value]:
@@ -52,6 +53,7 @@ def register():
         last_name=last_name,
         country=country,
         city=city,
+        age=age,
         role=role
     )
 
