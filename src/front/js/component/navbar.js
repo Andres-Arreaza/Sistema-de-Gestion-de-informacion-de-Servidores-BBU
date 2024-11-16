@@ -33,7 +33,7 @@ export const Navbar = () => {
 
 
 	return (
-		<nav className="navbar navbar-light bg-light">
+		<nav className="navbar navbar-light bg-light pt-2 pb-2">
 			<div className="container-fluid">
 				<Link to="/">
 					<img src={logoImgUrl} style={{ height: "100px" }} />
@@ -44,8 +44,8 @@ export const Navbar = () => {
 							<Link to="/login">
 								<button className="btn btn-outline-success mx-3">Login</button>
 							</Link>
-							<Link to="/single">
-								<button className="btn btn-outline-success">Sign up</button>
+							<Link to="/signup">
+								<button className="btn btn-outline-success">Sign_up</button>
 							</Link>
 						</div>
 					) : null}
