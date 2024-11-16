@@ -20,6 +20,7 @@ class User(db.Model):
     last_name = db.Column(db.String(80), nullable=False)
     country = db.Column(db.String(80), nullable=False)
     city = db.Column(db.String(80), nullable=False)
+    age = db.Column(db.String(80), nullable=False)
     role = db.Column(db.Enum(RoleEnum), nullable=False)
 
     appointments = db.relationship("Appointment", back_populates="patient", lazy=True)
@@ -36,8 +37,11 @@ class User(db.Model):
             "last_name": self.last_name,
             "country": self.country,
             "city": self.city,
-            "role": self.role.value,
+            "age": self.age,
+            "role": self.role.value
         }
+    def serialize_doctors(self):
+        return [doctor.serialize() for doctor in self.doctors]
 
 
 class Doctor(db.Model):
