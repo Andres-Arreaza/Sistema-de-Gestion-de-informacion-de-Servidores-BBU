@@ -35,7 +35,7 @@ export const SingleLogin = () => {
     }
 
     return (
-        <div className="container" style={{ backgroundImage: 'url("https://img.freepik.com/fotos-premium/largo-corredor-hospital-equipo-medico-blanco-casilleros_124507-44132.jpg")', backgroundSize: 'cover' }}>
+        <div style={{ backgroundImage: 'url("https://img.freepik.com/fotos-premium/largo-corredor-hospital-equipo-medico-blanco-casilleros_124507-44132.jpg")', backgroundSize: 'cover' }}>
             <div className="row">
                 <div className="col-12 vh-100 d-flex flex-column justify-content-center align-items-center">
                     <h1 className="text-center mb-3">LOGIN</h1>
