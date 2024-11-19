@@ -68,7 +68,6 @@ class Doctor(db.Model):
             "medical_consultant_price": self.medical_consultant_price,
         }
 
-
 class Appointment(db.Model):
     __tablename__ = 'appointments'
 
@@ -89,7 +88,7 @@ class Appointment(db.Model):
             "patient": self.patient.serialize() if self.patient else None, 
             "doctor": self.doctor.serialize() if self.doctor else None
         }
-
+    
 class TokenBlockedList(db.Model):
     __tablename__ = 'token_blocked_list'  
     
