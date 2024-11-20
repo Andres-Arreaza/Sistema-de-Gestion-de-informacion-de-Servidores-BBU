@@ -19,11 +19,11 @@ export const Navbar = () => {
 
 	useEffect(() => {
 		async function gettingSpecialities() {
-			if (isDataLoaded) return; // Si los datos ya están cargados, no hacemos la llamada
+			if (isDataLoaded) return;
 			const response = await actions.getSpecialities();
 
 			if (Array.isArray(response) && response.length > 0) {
-				setSpecialities(response); // Actualizamos el estado solo si la respuesta es válida
+				setSpecialities(response); 
 				setIsDataLoaded(true)
 			}
 		}
