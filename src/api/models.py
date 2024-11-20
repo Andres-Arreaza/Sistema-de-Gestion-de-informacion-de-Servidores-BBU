@@ -52,7 +52,7 @@ class Doctor(db.Model):
     time_availability = db.Column(db.String(100), nullable=False)
     medical_consultant_price = db.Column(db.Float, nullable=False)
 
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id")) 
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False) 
     user= db.relationship(User)
     appointments = db.relationship("Appointment", back_populates="doctor", lazy=True)
 

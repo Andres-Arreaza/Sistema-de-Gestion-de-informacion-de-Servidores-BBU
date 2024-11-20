@@ -87,7 +87,7 @@ const SingleSignup = () => {
             <div className="d-flex vh-100 flex-column justify-content-center align-items-center pb-5">
                 <div className="mb-5">
                     <form className="container mb-5" onSubmit={handleSubmit}>
-                        <div className="row g-3 pb-4 ps-3 pe-3" style={{ borderRadius: "15px", border: "4px solid white" }}>
+                        <div className="row g-3 pb-4 ps-3 pe-3" style={{ borderRadius: "15px", border: "3px solid white" }}>
                             <h1 className="d-flex justify-content-center mb-2"><i>SIGN UP</i></h1>
                             <div className="col-md-4">
                                 <label htmlFor="inputEmail4" className="form-label">Email</label>

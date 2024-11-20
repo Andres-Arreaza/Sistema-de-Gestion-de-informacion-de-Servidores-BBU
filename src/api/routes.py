@@ -121,12 +121,12 @@ def signup_medical():
             time_availability=body["time_availability"],
             medical_consultation_price=body["medical_consultation_price"]
         )
-        db.session.add(Doctor)
+        db.session.add(new_medical)
         db.session.commit()
 
-        return jsonify(Doctor.serialize()), 201
+        return jsonify(new_medical.serialize()), 201
     except Exception as e:
-        return jsonify(User.serialize()), 201
+        return jsonify({"error": "unexpected error"}), 500
 
 
 @api.route('/doctors', methods=['GET'])
