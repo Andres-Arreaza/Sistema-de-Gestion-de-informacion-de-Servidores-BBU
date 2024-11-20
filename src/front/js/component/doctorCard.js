@@ -28,7 +28,6 @@ export const DoctorCard = () => {
         return <p>Loading...</p>
     }
 
-
     return (
         <div className="container">
             {store.allDoctors.length > 0 ? (
