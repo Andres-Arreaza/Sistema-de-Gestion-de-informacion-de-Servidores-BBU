@@ -64,10 +64,6 @@ def register():
             time_availability=time_availability,
             medical_consultant_price=medical_consultant_price)
         
-        db.session.add(doctor)
-        db.session.commit()
-        return jsonify({"Msg": "User created"}), 201
-        
 @api.route('/appointments', methods=['GET', 'POST'])
 def manage_appointments():
     if request.method == 'POST':
