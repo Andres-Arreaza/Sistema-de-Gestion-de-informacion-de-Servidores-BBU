@@ -1,7 +1,7 @@
 """
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
-from flask import Flask, request, jsonify, url_for, Blueprint, current_app 
+from flask import Flask, request, jsonify, url_for, Blueprint, current_app
 from api.models import db, User, Doctor, RoleEnum, TokenBlockedList
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
@@ -9,15 +9,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
-
 api = Blueprint('api', __name__)
 CORS(api)
 appointments = []
-
 @api.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    exist=User.query.filter_by(email=data.get("email")).first()
+    exist=User.query.filter_by(email=data.get("email")).first() # 10 responde 1
     if exist:
         return jsonify({"Msg": "Email already exists"}), 400
 
@@ -29,13 +27,12 @@ def register():
     city = data.get('city')
     age = data.get('age')
     role = data.get('role')
-
     if role not in [RoleEnum.PATIENT.value, RoleEnum.DOCTOR.value]:
         print(RoleEnum.PATIENT.value)
         return jsonify({"Error": "Invalid role"}), 400
    
     hashed_password = generate_password_hash(password)
-    print(hashed_password)
+    # print(hashed_password)
     user = User(
         email=email,
         password=hashed_password,
@@ -46,7 +43,6 @@ def register():
         age=age,
         role=role
     )
-
     db.session.add(user)
     db.session.commit()
 
@@ -81,7 +77,6 @@ def manage_appointments():
         appointments.append(data)
         return jsonify({"Msg": "Appointment added!", "appointment": data}), 201
     return jsonify(appointments), 200
-
 @api.route('/signup', methods=['POST'])
 def signup_user():
     try:
@@ -133,12 +128,11 @@ def signup_medical():
 
 @api.route('/doctors', methods=['GET'])
 def get_doctors():
-    doctors=Doctor.query.all() 
+    doctors=Doctor.query.all()
     if doctors==[]:
         return jsonify({"Msg": "There aren't doctors"}), 400
     results=list(map(lambda item:item.serialize(), doctors))
     return jsonify (results), 200
-
 @api.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -161,7 +155,6 @@ def login():
         return jsonify(result), 200
     result["user"]=user.serialize()
     return jsonify(result), 200
-
 @api.route("/protected", methods=["GET"])
 @jwt_required()
 def user_logout():
@@ -178,6 +171,5 @@ def user_logout():
 @api.route('/specialities', methods=['GET'])
 def get_especialities():
     specialities = db.session.query(Doctor.speciality).distinct().all()
-
     specialities_list = [speciality[0] for speciality in specialities]
     return jsonify(specialities_list), 200
