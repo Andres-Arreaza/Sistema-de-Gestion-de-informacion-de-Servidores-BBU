@@ -6,6 +6,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 			specialities: [],
 			allDoctors: [],
 			doctors: [],
+			searchText: [],
 			auth: false,
 			appointments: [],
 			selectedSpeciality: null,
@@ -134,24 +135,25 @@ const getState = ({ getStore, getActions, setStore }) => {
 			},
 
 			getAllDoctors: async () => {
-				const store = getStore();
-				console.log("Llamando a getAllDoctors");
-				if (store.allDoctors.length > 0) {
-					console.log("Evita llamada innecesaria: ya hay doctores en el estado")
-					return;
-				}
+				console.log("Ejecutando getAllDoctors...");
 				try {
-					const response = await fetch(process.env.BACKEND_URL + "/api/doctors")
+					const response = await fetch(process.env.BACKEND_URL + "/api/doctors");
+					console.log("Respuesta de la API:", response);
+
 					if (!response.ok) {
-						throw new Error("Failed to get all doctors");
+						throw new Error("Error al obtener doctores");
 					}
-					const data = await response.json()
-					setStore({ allDoctors: data });
+
+					const data = await response.json();
+					console.log("Datos de doctores obtenidos:", data);
+
+					setStore({ allDoctors: data, doctors: data });
+					console.log("Estado actualizado de doctores:", getStore().allDoctors);
+
 					return data;
 				} catch (error) {
-					console.log("Error fetching all doctors", error)
+					console.error("Error en getAllDoctors:", error);
 				}
-
 			},
 
 			getDoctorBySpeciality: async (speciality) => {
@@ -171,6 +173,22 @@ const getState = ({ getStore, getActions, setStore }) => {
 				} catch (error) {
 					console.log("Error fetching doctors", error);
 				}
+			},
+
+			searchDoctors: (searchText) => {
+				const store = getStore();
+				console.log("Texto de busqueda", searchText);
+				console.log("List completa de doctores", store.allDoctors);
+
+				const filteredDoctors = store.allDoctors.filter(doctor => {
+					const fullName = `${doctor.info.first_name} ${doctor.info.last_name}`.toLowerCase();
+					return fullName.includes(searchText.toLowerCase());
+				});
+				console.log("Doctores filtrados", filteredDoctors);
+				setStore({
+					doctors: filteredDoctors,
+					searchText
+				});
 			}
 		}
 	};

@@ -10,7 +10,7 @@ export const Navbar = () => {
 	const [specialities, setSpecialities] = useState([]);
 	const [isDataLoaded, setIsDataLoaded] = useState(false);
 	const [selectedSpeciality, setSelectSpecialitiesId] = useState(null);
-
+	const [searchText, setSearchText] = useState('');
 
 	const handleSpecialitySelectId = (speciality) => {
 		console.log("Especialidad seleccionada:", speciality);
@@ -27,7 +27,12 @@ export const Navbar = () => {
 		}
 	};
 
-
+	const handleSearch = (e) => {
+		if (e.key === 'Enter' || e.type === 'click') {
+			console.log("Texto ingresado para buscar:", searchText);
+			actions.searchDoctors(searchText)
+		}
+	}
 
 	useEffect(() => {
 		async function gettingSpecialities() {
@@ -41,6 +46,14 @@ export const Navbar = () => {
 		}
 
 		gettingSpecialities();
+	}, []);
+
+	useEffect(() => {
+		async function loadDoctors() {
+			console.log("Cargando doctores...");
+			await actions.getAllDoctors();
+		}
+		loadDoctors();
 	}, []);
 
 
@@ -96,8 +109,8 @@ export const Navbar = () => {
 						</div>
 
 						<div className="search-bar d-flex align-items-center ms-auto">
-							<input type="text" placeholder="Doctor's name" className="form-control" />
-							<span className="btn">
+							<input type="text" placeholder="Doctor's name" className="form-control" value={searchText} onChange={(e) => setSearchText(e.target.value)} onKeyUp={(e) => handleSearch(e)} />
+							<span className="btn" onClick={handleSearch}>
 								<i className="fa fa-search me-4"></i>
 							</span>
 						</div>
