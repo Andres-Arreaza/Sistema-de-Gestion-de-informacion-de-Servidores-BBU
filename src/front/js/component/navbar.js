@@ -13,23 +13,19 @@ export const Navbar = () => {
 	const [searchText, setSearchText] = useState('');
 
 	const handleSpecialitySelectId = (speciality) => {
-		console.log("Especialidad seleccionada:", speciality);
 		if (speciality === selectedSpeciality) {
-			console.log("Deseleccionando especialidad:", speciality);
-			setSelectSpecialitiesId(null); // Desmarca la especialidad
-			actions.setSelectedSpeciality(null); // Actualiza el store
-			actions.getDoctorBySpeciality(null); // Llama a la API para obtener todos los doctores
+			setSelectSpecialitiesId(null);
+			actions.setSelectedSpeciality(null);
+			actions.getDoctorBySpeciality(null);
 		} else {
-			console.log("Seleccionando especialidad:", speciality);
-			setSelectSpecialitiesId(speciality); // Marca la especialidad seleccionada
-			actions.setSelectedSpeciality(speciality); // Actualiza el store
-			actions.getDoctorBySpeciality(speciality); // Llama a la API con la especialidad seleccionada
+			setSelectSpecialitiesId(speciality);
+			actions.setSelectedSpeciality(speciality);
+			actions.getDoctorBySpeciality(speciality);
 		}
 	};
 
 	const handleSearch = (e) => {
 		if (e.key === 'Enter' || e.type === 'click') {
-			console.log("Texto ingresado para buscar:", searchText);
 			actions.searchDoctors(searchText)
 		}
 	}
@@ -50,7 +46,6 @@ export const Navbar = () => {
 
 	useEffect(() => {
 		async function loadDoctors() {
-			console.log("Cargando doctores...");
 			await actions.getAllDoctors();
 		}
 		loadDoctors();
