@@ -76,6 +76,24 @@ export const Navbar = () => {
 							</Link>
 						</div>
 
+						<div>
+							<a href="#who">
+								<button className="btn btn-dark card-buttons">Who we are</button>
+							</a>
+						</div>
+
+						<div>
+							<a href="#work">
+								<button className="btn btn-dark card-buttons">How it works</button>
+							</a>
+						</div>
+
+						<div>
+							<a href="#testimonials">
+								<button className="btn btn-dark card-buttons">Testimonials</button>
+							</a>
+						</div>
+
 						<div className="search-bar d-flex align-items-center ms-auto">
 							<input type="text" placeholder="Doctor's name" className="form-control" />
 							<span className="btn">

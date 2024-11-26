@@ -1,15 +1,18 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import Who from "./Who";
+import Work from "./Work";
+import Testimonials from "./Testimonials";
 
 const StartHome = () => {
     return (
-        <div className="vh-100" style={{ backgroundImage: 'url("https://img.freepik.com/vector-premium/fondo-medico-abstracto-iconos-simbolos-plantilla-concepto-e-idea-tecnologia-sanitaria-medicina-innovacion-salud-ciencia-e-investigacion_120542-595.jpg")', backgroundSize: 'cover' }}>
-            <h1 className="pt-5" style={{ fontSize: "50px" }}><i>AKH MEDICAL</i></h1>
-            <h1 style={{ fontSize: "50px" }}><i>OPEN 24 HOURS</i></h1>
-            <h5 className="pt-5" style={{ fontSize: "40px" }}><i className="fa-regular fa-hospital"></i> YOUR HEALTH IS OUR PRIORITY <i className="fa-brands fa-whatsapp"></i></h5>
+        <div style={{ backgroundImage: 'url("https://img.freepik.com/vector-gratis/vector-fondo-medico-limpio_53876-175203.jpg?semt=ais_hybrid")', backgroundSize: 'cover' }}>
+            <h1 className="pt-5 text-white" style={{ fontSize: "50px" }}><i>AKH MEDICAL</i></h1>
+            <h1 className="text-white" style={{ fontSize: "50px" }}><i>OPEN 24 HOURS</i></h1>
+            <h5 className="pt-5 text-white" style={{ fontSize: "40px" }}><i className="fa-regular fa-hospital"></i> YOUR HEALTH IS OUR PRIORITY <i className="fa-brands fa-whatsapp"></i></h5>
             <div className="container d-flex flex-row justify-content-center text-center">
                 <div className="row">
-                    <div className="col-sm-12 d-flex justify-content-center text-center" style={{ marginTop: "8%" }}>
+                    <div className="col-sm-12 d-flex justify-content-center text-center" style={{ marginTop: "8%", fontSize: "17px" }}>
                         <Link to="/">
                             <button style={{ borderRadius: "10px", border: "2px solid green" }} className="p-4 me-3 bg-white">SPECIALISTS</button>
                         </Link>
@@ -23,7 +26,7 @@ const StartHome = () => {
                         </Link>
                     </div>
                     <div className="row">
-                        <div className="col-sm-12 mt-3 d-flex justify-content-center text-center">
+                        <div className="col-sm-12 mt-3 d-flex justify-content-center text-center" style={{ fontSize: "17px" }}>
                             <Link to="/">
                                 <button style={{ borderRadius: "10px", border: "2px solid green" }} className="p-4 ms-3 me-3 bg-white">ASSESSOR</button>
                             </Link>
@@ -38,6 +41,11 @@ const StartHome = () => {
                         </div>
                     </div>
                 </div>
+            </div>
+            <div>
+                <Who />
+                <Work />
+                <Testimonials/>
             </div>
         </div>
     )
