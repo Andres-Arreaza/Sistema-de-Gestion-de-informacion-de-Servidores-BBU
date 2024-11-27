@@ -156,6 +156,7 @@ def login():
         return jsonify(result), 200
     result["user"]=user.serialize()
     return jsonify(result), 200
+
 @api.route("/protected", methods=["GET"])
 @jwt_required()
 def user_logout():

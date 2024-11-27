@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { Context } from "../store/appContext";
 import { Link } from "react-router-dom";
+import { HashLink } from 'react-router-hash-link';
 import logoImgUrl from "../../img/logo_akh.png";
 import "../../styles/navbar.css";
 
@@ -71,27 +72,27 @@ export const Navbar = () => {
 						</div>
 
 						<div>
-							<Link to={"/appointment"}>
+							<Link to="/appointment">
 								<button className="btn btn-dark card-buttons">Appointment</button>
 							</Link>
 						</div>
 
 						<div>
-							<a href="#who">
+							<HashLink to="/#who">
 								<button className="btn btn-dark card-buttons">Who we are</button>
-							</a>
+							</HashLink>
 						</div>
 
 						<div>
-							<a href="#work">
+							<HashLink to="/#work">
 								<button className="btn btn-dark card-buttons">How it works</button>
-							</a>
+							</HashLink>
 						</div>
 
 						<div>
-							<a href="#testimonials">
+							<HashLink to="/#testimonials">
 								<button className="btn btn-dark card-buttons">Testimonials</button>
-							</a>
+							</HashLink>
 						</div>
 
 						<div className="search-bar d-flex align-items-center ms-auto">

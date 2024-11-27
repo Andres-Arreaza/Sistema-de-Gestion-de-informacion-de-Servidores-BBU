@@ -6,10 +6,10 @@ import Testimonials from "./Testimonials";
 
 const StartHome = () => {
     return (
-        <div style={{ backgroundImage: 'url("https://img.freepik.com/vector-gratis/vector-fondo-medico-limpio_53876-175203.jpg?semt=ais_hybrid")', backgroundSize: 'cover' }}>
-            <h1 className="pt-5 text-white" style={{ fontSize: "50px" }}><i>AKH MEDICAL</i></h1>
-            <h1 className="text-white" style={{ fontSize: "50px" }}><i>OPEN 24 HOURS</i></h1>
-            <h5 className="pt-5 text-white" style={{ fontSize: "40px" }}><i className="fa-regular fa-hospital"></i> YOUR HEALTH IS OUR PRIORITY <i className="fa-brands fa-whatsapp"></i></h5>
+        <div className="vh-100" style={{ backgroundImage: 'url("https://img.freepik.com/vector-gratis/vector-fondo-medico-limpio_53876-175203.jpg?semt=ais_hybrid")', backgroundSize: 'cover' }}>
+            <h1 className="pt-5 text-primary" style={{ fontSize: "50px" }}><i>AKH MEDICAL</i></h1>
+            <h1 className="text-primary" style={{ fontSize: "50px" }}><i>OPEN 24 HOURS</i></h1>
+            <h5 className="pt-5 text-primary" style={{ fontSize: "40px" }}><i className="fa-regular fa-hospital"></i> YOUR HEALTH IS OUR PRIORITY <i className="fa-brands fa-whatsapp"></i></h5>
             <div className="container d-flex flex-row justify-content-center text-center">
                 <div className="row">
                     <div className="col-sm-12 d-flex justify-content-center text-center" style={{ marginTop: "8%", fontSize: "17px" }}>
@@ -45,7 +45,7 @@ const StartHome = () => {
             <div>
                 <Who />
                 <Work />
-                <Testimonials/>
+                <Testimonials />
             </div>
         </div>
     )
