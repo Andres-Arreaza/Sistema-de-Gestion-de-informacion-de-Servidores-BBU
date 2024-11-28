@@ -125,7 +125,6 @@ def signup_medical():
     except Exception as e:
         return jsonify({"Error": "Unexpected error"}), 500
 
-
 @api.route('/doctors', methods=['GET'])
 def get_doctors():
     doctors=Doctor.query.all()
@@ -133,6 +132,16 @@ def get_doctors():
         return jsonify({"Msg": "There aren't doctors"}), 400
     results=list(map(lambda item:item.serialize(), doctors))
     return jsonify (results), 200
+
+@api.route('/doctors/<int:doctor_id>')
+def get_doctor(doctor_id):
+    doctor = Doctor.query.get(doctor_id)
+    if doctor:
+        return jsonify(doctor.serialize()), 200
+    else:
+        return jsonify({'error': 'Doctor not found'}), 404
+
+
 @api.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -155,6 +164,7 @@ def login():
         return jsonify(result), 200
     result["user"]=user.serialize()
     return jsonify(result), 200
+
 @api.route("/protected", methods=["GET"])
 @jwt_required()
 def user_logout():

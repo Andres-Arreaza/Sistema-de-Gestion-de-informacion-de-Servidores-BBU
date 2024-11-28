@@ -9,6 +9,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 			searchText: [],
 			auth: false,
 			appointments: [],
+			selectedDoctor: null,
 			selectedSpeciality: null,
 		},
 		actions: {
@@ -133,6 +134,21 @@ const getState = ({ getStore, getActions, setStore }) => {
 				}
 			},
 
+			getDoctorById: async (id) => {
+				const store = getStore();
+				try {
+					const response = await fetch(`${process.env.BACKEND_URL}/api/doctors/${id}`);
+					if (!response.ok) {
+						throw Error("Doctor not found. Status: ${response.status}`")
+					}
+					const data = await response.json();
+					setStore({ selectedDoctor: data });
+				} catch (error) {
+					console.log("Error fetching doctor details", error)
+					setStore({ selectedDoctor: null })
+				}
+			},
+
 			getAllDoctors: async () => {
 				try {
 					const response = await fetch(process.env.BACKEND_URL + "/api/doctors");
@@ -184,5 +200,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 		}
 	};
 };
+
 
 export default getState;
