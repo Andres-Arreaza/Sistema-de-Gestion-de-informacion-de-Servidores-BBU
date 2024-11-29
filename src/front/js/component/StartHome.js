@@ -23,29 +23,29 @@ const StartHome = () => {
                 <div className="row"> .
                     <div className="col-sm-12 d-flex justify-content-center text-center" style={{ marginTop: "5%", fontSize: "17px" }}>
                         <Link to="/">
-                            <button style={{ borderRadius: "14px", border: "3px solid #6F4F28", backgroundColor: "#fffff0", color: "#4A8F8F" }} className="p-4 me-3 design">SPECIALISTS</button>
+                            <button style={{ borderRadius: "14px", border: "3px solid #6F4F28", backgroundColor: "#fffff0", color: "#4A8F8F" }} className="tooltip-btn p-4 me-3 design">SPECIALISTS</button>
                         </Link>
 
                         <Link to="/">
-                            <button style={{ borderRadius: "14px", border: "3px solid #6F4F28", backgroundColor: "#fffff0", color: "#4A8F8F" }} className="p-4 me-3 design">MEDICAL HISTORY</button>
+                            <button style={{ borderRadius: "14px", border: "3px solid #6F4F28", backgroundColor: "#fffff0", color: "#4A8F8F" }} className="tooltip-btn p-4 me-3 design">MEDICAL HISTORY</button>
                         </Link>
 
                         <Link to="/">
-                            <button style={{ borderRadius: "14px", border: "3px solid #6F4F28", backgroundColor: "#fffff0", color: "#4A8F8F" }} className="p-4 design">HEALTHY PLAN</button>
+                            <button style={{ borderRadius: "14px", border: "3px solid #6F4F28", backgroundColor: "#fffff0", color: "#4A8F8F" }} className="tooltip-btn p-4 design">HEALTHY PLAN</button>
                         </Link>
                     </div>
                     <div className="row">
                         <div className="col-sm-12 mt-3 d-flex justify-content-center text-center" style={{ fontSize: "17px" }}>
                             <Link to="/">
-                                <button style={{ borderRadius: "14px", border: "3px solid #6F4F28", backgroundColor: "#fffff0", color: "#4A8F8F" }} className="p-4 ms-3 me-3 design">ASSESSOR</button>
+                                <button style={{ borderRadius: "14px", border: "3px solid #6F4F28", backgroundColor: "#fffff0", color: "#4A8F8F" }} className="tooltip-btn p-4 ms-3 me-3 design">ASSESSOR</button>
                             </Link>
 
                             <Link to="/">
-                                <button style={{ borderRadius: "14px", border: "3px solid #6F4F28", backgroundColor: "#fffff0", color: "#4A8F8F" }} className="p-4 me-3 design">MEDICAMENT</button>
+                                <button style={{ borderRadius: "14px", border: "3px solid #6F4F28", backgroundColor: "#fffff0", color: "#4A8F8F" }} className="tooltip-btn p-4 me-3 design">MEDICAMENT</button>
                             </Link>
 
                             <Link to="/">
-                                <button style={{ borderRadius: "14px", border: "3px solid #6F4F28", backgroundColor: "#fffff0", color: "#4A8F8F" }} className="p-4 design">PAYMENTS</button>
+                                <button style={{ borderRadius: "14px", border: "3px solid #6F4F28", backgroundColor: "#fffff0", color: "#4A8F8F" }} className="tooltip-btn p-4 design">PAYMENTS</button>
                             </Link>
                         </div>
                     </div>
