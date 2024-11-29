@@ -12,7 +12,7 @@ const Who = () => {
                         <br></br>
                         We are endorsed by the Ministry of Health and we have qualified specialists.
                         <br></br>
-                        We have presence in Colombia, Costa Rica, Panama and Venezuela.
+                        We have presence in Colombia, Costa Rica, Panamá and Venezuela.
                         <br></br>
                         <br></br>
                         Your health is our priority!!
