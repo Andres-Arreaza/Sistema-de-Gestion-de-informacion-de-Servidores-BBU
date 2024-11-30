@@ -134,6 +134,15 @@ def get_doctors():
     results=list(map(lambda item:item.serialize(), doctors))
     return jsonify (results), 200
 
+@api.route('/doctors/<int:doctor_id>')
+def get_doctor(doctor_id):
+    doctor = Doctor.query.get(doctor_id)
+    if doctor:
+        return jsonify(doctor.serialize()), 200
+    else:
+        return jsonify({'error': 'Doctor not found'}), 404
+
+
 @api.route('/login', methods=['POST'])
 def login():
     data = request.get_json()

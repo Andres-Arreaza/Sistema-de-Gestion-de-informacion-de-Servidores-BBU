@@ -6,8 +6,11 @@ const getState = ({ getStore, getActions, setStore }) => {
 			specialities: [],
 			allDoctors: [],
 			doctors: [],
+			searchText: [],
 			auth: false,
-			appointments: []
+			appointments: [],
+			selectedDoctor: null,
+			selectedSpeciality: null,
 		},
 		actions: {
 			// Use getActions to call a function within a fuction
@@ -102,8 +105,8 @@ const getState = ({ getStore, getActions, setStore }) => {
 				}
 			},
 
-			setSpecialities: (specialities) => {
-				setStore({ specialities })
+			setSelectedSpeciality: (speciality) => {
+				setStore({ selectedSpeciality: speciality });
 			},
 
 			getSpecialities: async () => {
@@ -131,43 +134,72 @@ const getState = ({ getStore, getActions, setStore }) => {
 				}
 			},
 
-			getAllDoctors: async () => {
+			getDoctorById: async (id) => {
+				const store = getStore();
 				try {
-					const response = await fetch(process.env.BACKEND_URL + "/api/doctors")
+					const response = await fetch(`${process.env.BACKEND_URL}/api/doctors/${id}`);
 					if (!response.ok) {
-						throw new Error("Failed to get all doctors");
+						throw Error("Doctor not found. Status: ${response.status}`")
 					}
-					const data = await response.json()
-
-
-					setStore({ allDoctors: data });
-					return data;
+					const data = await response.json();
+					setStore({ selectedDoctor: data });
 				} catch (error) {
-					console.log("Error fetching all doctors", error)
+					console.log("Error fetching doctor details", error)
+					setStore({ selectedDoctor: null })
 				}
-
 			},
 
-			getDoctorBySpeciality: async (id) => {
+			getAllDoctors: async () => {
 				try {
-					const url = id
-						? `${process.env.BACKEND_URL}/api/doctors?speciality=${id}`
-						: `${process.env.BACKEND_URL}/api/doctors`;
+					const response = await fetch(process.env.BACKEND_URL + "/api/doctors");
+
+					if (!response.ok) {
+						throw new Error("Error al obtener doctores");
+					}
+
+					const data = await response.json();
+
+					setStore({ allDoctors: data, doctors: data });
+					return data;
+				} catch (error) {
+					console.error("Error en getAllDoctors:", error);
+				}
+			},
+
+			getDoctorBySpeciality: async (speciality) => {
+				try {
+					let url = `${process.env.BACKEND_URL}/api/doctors`;
+					if (speciality) {
+						url += `?speciality=${speciality}`;
+					}
 
 					const response = await fetch(url);
 					if (!response.ok) {
-						throw new Error('Especialidad no obtenida');
+						throw new Error('Failed to fetch doctors');
 					}
+
 					const data = await response.json();
 					setStore({ doctors: data });
-					return data;
 				} catch (error) {
 					console.log("Error fetching doctors", error);
 				}
-			}
+			},
 
+			searchDoctors: (searchText) => {
+				const store = getStore();
+				const filteredDoctors = store.allDoctors.filter(doctor => {
+					const fullName = `${doctor.info.first_name} ${doctor.info.last_name}`.toLowerCase();
+					return fullName.includes(searchText.toLowerCase());
+				});
+
+				setStore({
+					doctors: filteredDoctors,
+					searchText
+				});
+			}
 		}
 	};
 };
+
 
 export default getState;

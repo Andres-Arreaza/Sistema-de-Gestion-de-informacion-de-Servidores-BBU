@@ -10,13 +10,26 @@ export const Navbar = () => {
 	const { store, actions } = useContext(Context);
 	const [specialities, setSpecialities] = useState([]);
 	const [isDataLoaded, setIsDataLoaded] = useState(false);
-	const [selectedSpecialitiesId, setSelectSpecialitiesId] = useState(null);
+	const [selectedSpeciality, setSelectSpecialitiesId] = useState(null);
+	const [searchText, setSearchText] = useState('');
 
 	const handleSpecialitySelectId = (speciality) => {
-		setSelectSpecialitiesId(speciality);
-		actions.getDoctorBySpeciality(speciality);
-	}
+		if (speciality === selectedSpeciality) {
+			setSelectSpecialitiesId(null);
+			actions.setSelectedSpeciality(null);
+			actions.getDoctorBySpeciality(null);
+		} else {
+			setSelectSpecialitiesId(speciality);
+			actions.setSelectedSpeciality(speciality);
+			actions.getDoctorBySpeciality(speciality);
+		}
+	};
 
+	const handleSearch = (e) => {
+		if (e.key === 'Enter' || e.type === 'click') {
+			actions.searchDoctors(searchText)
+		}
+	}
 
 	useEffect(() => {
 		async function gettingSpecialities() {
@@ -30,7 +43,14 @@ export const Navbar = () => {
 		}
 
 		gettingSpecialities();
-	}, [setIsDataLoaded, actions]);
+	}, []);
+
+	useEffect(() => {
+		async function loadDoctors() {
+			await actions.getAllDoctors();
+		}
+		loadDoctors();
+	}, []);
 
 
 	return (
@@ -60,8 +80,15 @@ export const Navbar = () => {
 								<ul className="dropdown-menu">
 									{Array.isArray(specialities) && specialities.length > 0 ? (
 										specialities.map((speciality, index) => (
-											<li className="dropdown-item" key={index} onClick={() => handleSpecialitySelectId(speciality)}>
+											<li
+												className={`dropdown-item ${speciality === selectedSpeciality ? 'active' : ''}`}
+												key={index}
+												onClick={() => handleSpecialitySelectId(speciality)}
+											>
 												{speciality}
+												{speciality === selectedSpeciality && (
+													<i className="fa fa-check ms-2" /> // Ícono de check cuando está seleccionado
+												)}
 											</li>
 										))
 									) : (
@@ -96,8 +123,8 @@ export const Navbar = () => {
 						</div>
 
 						<div className="search-bar d-flex align-items-center ms-auto">
-							<input type="text" placeholder="Doctor's name" className="form-control" />
-							<span className="btn">
+							<input type="text" placeholder="Doctor's name" className="form-control" value={searchText} onChange={(e) => setSearchText(e.target.value)} onKeyUp={(e) => handleSearch(e)} />
+							<span className="btn" onClick={handleSearch}>
 								<i className="fa fa-search me-4"></i>
 							</span>
 						</div>

@@ -7,8 +7,9 @@ import { Doctors } from "./pages/doctors";
 import { Demo } from "./pages/demo";
 import { Single } from "./pages/single";
 import injectContext from "./store/appContext";
-import { Schedule } from "./component/schedule";
 
+import { DoctorProfile } from "./component/doctorProfile";
+import { Schedule } from "./component/schedule";
 import { Navbar } from "./component/navbar";
 import { Footer } from "./component/footer";
 import { SingleLogin } from "./pages/Auth/singleLogin";
@@ -32,6 +33,7 @@ const Layout = () => {
                     <Navbar />
                     <Routes>
                         <Route element={<Doctors />} path="/doctors" />
+                        <Route element={<DoctorProfile />} path="/doctors/:id" />
                         <Route element={<Schedule />} path="/appointment" />
                         <Route element={<Demo />} path="/demo" />
                         <Route element={<Single />} path="/single/:theid" />
