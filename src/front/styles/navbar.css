@@ -1,0 +1,21 @@
+.background {
+    background-color: #80CBC4;
+}
+.form-control {
+    border-radius: 100px;
+}
+.navbar-buttons {
+    border-radius: 100px;
+    padding: 8px 16px; 
+    background-color: #fff; 
+    display: inline-flex; 
+    align-items: center;
+    justify-content: center;
+    color: black;
+    border: transparent;
+}
+
+
+.navbar-buttons i {
+    color: #333;
+}
