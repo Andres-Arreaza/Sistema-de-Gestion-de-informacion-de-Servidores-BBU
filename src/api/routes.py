@@ -12,6 +12,7 @@ from flask_jwt_extended import jwt_required
 api = Blueprint('api', __name__)
 CORS(api)
 appointments = []
+
 @api.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -64,7 +65,6 @@ def register():
         db.session.commit()
         return jsonify(doctor.serialize())
     return jsonify(user.serialize())
-
         
 @api.route('/appointments', methods=['GET', 'POST'])
 def manage_appointments():
@@ -77,6 +77,7 @@ def manage_appointments():
         appointments.append(data)
         return jsonify({"Msg": "Appointment added!", "appointment": data}), 201
     return jsonify(appointments), 200
+
 @api.route('/signup', methods=['POST'])
 def signup_user():
     try:

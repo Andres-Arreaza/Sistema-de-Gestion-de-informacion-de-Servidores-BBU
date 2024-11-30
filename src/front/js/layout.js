@@ -14,6 +14,8 @@ import { Navbar } from "./component/navbar";
 import { Footer } from "./component/footer";
 import { SingleLogin } from "./pages/Auth/singleLogin";
 import SingleSignup from "./pages/Auth/singleSignup";
+import StartHome from "./component/StartHome";
+import { Home } from "./pages/Home";
 
 
 //create your first component
@@ -30,7 +32,7 @@ const Layout = () => {
                 <ScrollToTop>
                     <Navbar />
                     <Routes>
-                        <Route element={<Doctors />} path="" />
+                        <Route element={<Doctors />} path="/doctors" />
                         <Route element={<DoctorProfile />} path="/doctors/:id" />
                         <Route element={<Schedule />} path="/appointment" />
                         <Route element={<Demo />} path="/demo" />
@@ -38,6 +40,7 @@ const Layout = () => {
                         <Route element={<h1>Not found!</h1>} />
                         <Route element={<SingleLogin />} path="/login" />
                         <Route element={<SingleSignup />} path="/signup" />
+                        <Route element={<Home />} path="/" />
                     </Routes>
                     {/* <Footer /> */}
                 </ScrollToTop>
