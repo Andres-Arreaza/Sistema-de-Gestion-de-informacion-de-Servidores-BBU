@@ -11,10 +11,8 @@ const StartHome = () => {
         <div className="vh-100" style={{ backgroundImage: 'url("https://www.shutterstock.com/image-illustration/medical-white-blue-cross-pattern-260nw-1919756624.jpg")', backgroundSize: 'cover' }}>
             <h1 className="pt-5" style={{ fontSize: "50px", color: "#4682B4" }}><i>AKH MEDICAL</i></h1>
             <h1 className="" style={{ fontSize: "50px", color: "#4682B4" }}><i>OPEN 24 HOURS</i></h1>
-            {/* <h5 className="pt-5" style={{ fontSize: "40px", color: "#4682B4" }}><i className="fa-regular fa-hospital"></i> YOUR HEALTH IS OUR PRIORITY <i className="fa-brands fa-whatsapp"></i></h5> */}
             <h5 className="pt-5" style={{ fontSize: "40px", color: "#4682B4" }}>
                 <i className="fa-regular fa-hospital"></i> YOUR HEALTH IS OUR PRIORITY
-                {/* Enlace WhatsApp */}
                 <a href="https://wa.me/573147450542" target="_blank" rel="noopener noreferrer">
                     <i className="fa-brands fa-whatsapp" style={{ fontSize: "40px", color: "#25D366" }}></i>
                 </a>
