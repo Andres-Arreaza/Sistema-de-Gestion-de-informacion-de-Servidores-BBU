@@ -23,13 +23,13 @@ const Testimonials = () => {
     ];
 
     return (
-        <div id="testimonials" className="vh-100 container">
+        <div id="testimonials" className="vh-100" style={{ background: "linear-gradient(135deg, #a7c7e7 20%, white 50%, #ffb3a7 90%)" }}>
             <div className="vh-100 d-flex justify-content-center align-items-center">
                 <div className="row">
                     <h1 className="mb-4 text-success">TESTIMONIALS</h1>
                     {testimonialsData.map((testimonial) => (
                         <div className="col-md-4 d-flex justify-content-center" key={testimonial.id}>
-                            <div className="card d-flex justify-content-center" style={{ width: '16rem', height: "100%" }}>
+                            <div className="card d-flex justify-content-center border-gray border-5" style={{ width: '16rem', height: "100%" }}>
                                 <img
                                     src={testimonial.photo}
                                     className="card-img-top"
@@ -42,18 +42,20 @@ const Testimonials = () => {
                                         {testimonial.text}
                                     </p>
                                     <div className="card-footer d-flex justify-content-center">
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-solid fa-star"></i>
+                                        <i className="fa-solid fa-star"></i>
+                                        <i className="fa-solid fa-star"></i>
+                                        <i className="fa-solid fa-star"></i>
+                                        <i className="fa-solid fa-star"></i>
+                                        <i className="fa-solid fa-star"></i>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     ))}
                     <div>
-                        <button className="mt-4 btn btn-outline-success col-sm-2">Create Testimony</button>
+                        <button className="mt-4 btn btn-outline-success col-sm-2 border-3">
+                            <b>Create Testimony</b>
+                        </button>
                     </div>
                 </div>
             </div>

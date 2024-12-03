@@ -1,3 +1,4 @@
+import CreateTestimony from "../pages/CreateTestimony";
 
 const getState = ({ getStore, getActions, setStore }) => {
 	return {
@@ -101,6 +102,30 @@ const getState = ({ getStore, getActions, setStore }) => {
 					return true;
 				} catch (error) {
 					console.log("Error loading message from backend", error)
+					return false;
+				}
+			},
+
+			createTestimony: async (data) => {
+				console.log(data)
+				try {
+					// Enviando datos al backend
+					const response = await fetch(process.env.BACKEND_URL + "/api/testimonials", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify(data)
+					});
+
+					if (response.ok) {
+						const result = await response.json();
+						console.log("Testimony created:", result);
+						return true;
+					} else {
+						console.log("Failed to create testimony:", response.status);
+						return false;
+					}
+				} catch (error) {
+					console.log("Error creating testimony:", error);
 					return false;
 				}
 			},

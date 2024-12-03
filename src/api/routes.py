@@ -12,6 +12,7 @@ from flask_jwt_extended import jwt_required
 api = Blueprint('api', __name__)
 CORS(api)
 appointments = []
+testimonios=[]
 
 @api.route('/register', methods=['POST'])
 def register():
@@ -178,9 +179,32 @@ def user_logout():
     except Exception as e:
         return jsonify({"Msg": "Logout error", "Error": str(e)}), 500
 
-# Devuelve una lista de todas las especialidades
 @api.route('/specialities', methods=['GET'])
 def get_especialities():
     specialities = db.session.query(Doctor.speciality).distinct().all()
     specialities_list = [speciality[0] for speciality in specialities]
     return jsonify(specialities_list), 200
+
+@api.route('/testimonials', methods=['GET'])
+def get_testimonials():
+    return jsonify(testimonios), 200
+
+@api.route('/testimonials', methods=['POST'])
+def create_testimony():
+    data = request.get_json()
+    name = data.get('name')
+    photo = data.get('photo')
+    testimony = data.get('testimony')
+
+    if not name or not photo or not testimony:
+        return jsonify({"error": "Faltan datos"}), 400  
+
+    new_testimony = {
+        "id": len(testimonios) + 1,  
+        "name": name,
+        "photo": photo,
+        "testimony": testimony
+    }
+    testimonios.append(new_testimony)
+
+    return jsonify({"message": "Testimonio creado con éxito", "data": new_testimony}), 201
