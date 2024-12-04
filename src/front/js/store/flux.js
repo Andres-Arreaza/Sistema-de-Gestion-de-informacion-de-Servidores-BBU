@@ -12,6 +12,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 			appointments: [],
 			selectedDoctor: null,
 			selectedSpeciality: null,
+			testimonials: null
 		},
 		actions: {
 			// Use getActions to call a function within a fuction
@@ -108,17 +109,21 @@ const getState = ({ getStore, getActions, setStore }) => {
 
 			createTestimony: async (data) => {
 				console.log(data)
+				const store = getStore()
 				try {
 					// Enviando datos al backend
-					const response = await fetch(process.env.BACKEND_URL + "/api/testimonials", {
+					const response = await fetch(process.env.BACKEND_URL + "/api/testimonial", {
 						method: "POST",
-						headers: { "Content-Type": "application/json" },
+						headers: {
+							"Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("token")
+						},
 						body: JSON.stringify(data)
 					});
 
 					if (response.ok) {
 						const result = await response.json();
 						console.log("Testimony created:", result);
+						setStore({ testimonials: [...store.testimonials, result] })
 						return true;
 					} else {
 						console.log("Failed to create testimony:", response.status);
@@ -127,6 +132,23 @@ const getState = ({ getStore, getActions, setStore }) => {
 				} catch (error) {
 					console.log("Error creating testimony:", error);
 					return false;
+				}
+			},
+
+			getTestimonials: async () => {
+				try {
+					const resp = await fetch(process.env.BACKEND_URL + "/api/testimonials")
+					const data = await resp.json()
+					if (resp.ok) {
+						setStore({ testimonials: data })
+						return true
+					}
+					setStore({ testimonials: false })
+					return false;
+				} catch (error) {
+					console.log("Error loading message from backend", error)
+					setStore({ testimonials: false })
+					return false
 				}
 			},
 

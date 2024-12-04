@@ -2,17 +2,17 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint, current_app
-from api.models import db, User, Doctor, RoleEnum, TokenBlockedList
+from api.models import db, User, Doctor, RoleEnum, TokenBlockedList, Testimonial
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
+import json 
 api = Blueprint('api', __name__)
 CORS(api)
 appointments = []
-testimonios=[]
 
 @api.route('/register', methods=['POST'])
 def register():
@@ -155,7 +155,8 @@ def login():
     valid_password=  check_password_hash(user.password, password)
     if not valid_password:
         return jsonify({"Msg": "Invalid email or password"}), 400
-    access_token=create_access_token(identity={"id": user.id, "role": user.role.value})
+    token_data=json.dumps({"id": user.id, "role": user.role.value})
+    access_token=create_access_token(identity=token_data)
     result={}
     result["access_token"]=access_token
     if user.role.value == RoleEnum.DOCTOR.value:
@@ -187,24 +188,31 @@ def get_especialities():
 
 @api.route('/testimonials', methods=['GET'])
 def get_testimonials():
-    return jsonify(testimonios), 200
+    testimonials=Testimonial.query.all()
+    if testimonials==[]:
+        return jsonify({"Msg": "There aren't testimonials"}), 400
+    results=list(map(lambda item:item.serialize(), testimonials))
+    return jsonify (results), 200
 
-@api.route('/testimonials', methods=['POST'])
-def create_testimony():
-    data = request.get_json()
-    name = data.get('name')
-    photo = data.get('photo')
-    testimony = data.get('testimony')
+@api.route('/testimonial', methods=['POST'])
+@jwt_required()
+def create_testimonial():
+    try:
+        body = request.get_json()
+        token_data=get_jwt_identity()
+        user=json.loads(token_data)
+        print(user)
+        exist_user=User.query.get(user["id"])
+        if not exist_user:
+            return jsonify({"Msg": "User not found"}), 404
+        new_testimonial=Testimonial(
+            patient_id=user["id"],
+            content= body["content"],
+        )
+        db.session.add(new_testimonial)
+        db.session.commit()
 
-    if not name or not photo or not testimony:
-        return jsonify({"error": "Faltan datos"}), 400  
+        return jsonify(new_testimonial.serialize()), 201
+    except Exception as e:
+        return jsonify({"Error": "Unexpected error"}), 500
 
-    new_testimony = {
-        "id": len(testimonios) + 1,  
-        "name": name,
-        "photo": photo,
-        "testimony": testimony
-    }
-    testimonios.append(new_testimony)
-
-    return jsonify({"message": "Testimonio creado con éxito", "data": new_testimony}), 201
