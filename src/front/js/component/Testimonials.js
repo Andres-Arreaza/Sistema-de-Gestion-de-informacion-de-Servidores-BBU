@@ -10,7 +10,6 @@ const Testimonials = () => {
         actions.getTestimonials()
     }, [])
 
-
     return (
         <div id="testimonials" className="vh-100" style={{ background: "linear-gradient(135deg, #a7c7e7 20%, white 50%, #ffb3a7 90%)" }}>
             <div className="vh-100 d-flex justify-content-center align-items-center">
@@ -31,22 +30,27 @@ const Testimonials = () => {
                                         {testimonial.content}
                                     </p>
                                     <div className="card-footer d-flex justify-content-center">
+                                    {Array.from({ length: testimonial.count }, (_, index) => (
+                                    <i key={index} className="fa-solid fa-star" style={{ color: "gold" }}></i>
+
+                                     ))}
+                                        {/* <i className="fa-solid fa-star" style={{ color: "gold" }}></i>
                                         <i className="fa-solid fa-star" style={{ color: "gold" }}></i>
                                         <i className="fa-solid fa-star" style={{ color: "gold" }}></i>
-                                        <i className="fa-solid fa-star" style={{ color: "gold" }}></i>
-                                        <i className="fa-solid fa-star" style={{ color: "gold" }}></i>
-                                        <i className="fa-solid fa-star" style={{ color: "gold" }}></i>
+                                        <i className="fa-solid fa-star" style={{ color: "gold" }}></i> */}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     ))}
                     <div>
-                        <button className="mt-4 btn btn-outline-success col-sm-2 border-3">
-                            <Link className="text-success" to="/testimonials">
-                                <b className="text-success">CREATE TESTIMONY</b>
-                            </Link>
-                        </button>
+                        {store.user &&
+                            <button className="mt-4 btn btn-outline-success col-sm-2 border-3">
+                                <Link className="text-success" to="/testimonials">
+                                    <b className="text-success">CREATE TESTIMONY</b>
+                                </Link>
+                            </button>
+                        }
                     </div>
                 </div>
             </div>

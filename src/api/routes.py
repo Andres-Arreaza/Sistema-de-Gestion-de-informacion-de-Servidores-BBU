@@ -2,12 +2,12 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint, current_app
-from api.models import db, User, Doctor, RoleEnum, TokenBlockedList, Testimonial
+from api.models import db, User, Doctor, RoleEnum, TokenBlockedList, Testimonial, TestimonialCount
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import get_jwt_identity, get_jwt
 from flask_jwt_extended import jwt_required
 import json 
 api = Blueprint('api', __name__)
@@ -168,17 +168,32 @@ def login():
     result["user"]=user.serialize()
     return jsonify(result), 200
 
-@api.route("/protected", methods=["GET"])
+@api.route("/logout", methods=["POST"])
 @jwt_required()
 def user_logout():
     try:
-        token_data=get_jwt_identity()
+        token_data=get_jwt()
         token_blocked=TokenBlockedList(jti=token_data["jti"])
         db.session.add(token_blocked)
         db.session.commit()
         return jsonify({"Msg":"Closed session"}), 200
     except Exception as e:
         return jsonify({"Msg": "Logout error", "Error": str(e)}), 500
+    
+@api.route("/current_user", methods=["GET"])
+@jwt_required()
+def get_current_user():
+    try:
+        token_data=get_jwt_identity()
+        user=json.loads(token_data)
+        print(user)
+        exist_user=User.query.get(user["id"])
+        if not exist_user:
+            return jsonify({"Msg": "User not found"}), 404
+        return jsonify(exist_user.serialize()), 200
+    except Exception as e:
+        return jsonify({"Msg": "cannot get current user", "Error": str(e)}), 500
+
 
 @api.route('/specialities', methods=['GET'])
 def get_especialities():
@@ -197,7 +212,7 @@ def get_testimonials():
 @api.route('/testimonial', methods=['POST'])
 @jwt_required()
 def create_testimonial():
-    try:
+    # try:
         body = request.get_json()
         token_data=get_jwt_identity()
         user=json.loads(token_data)
@@ -208,11 +223,12 @@ def create_testimonial():
         new_testimonial=Testimonial(
             patient_id=user["id"],
             content= body["content"],
+            count= TestimonialCount(int(body["count"])) if  "count" in body else None
         )
         db.session.add(new_testimonial)
         db.session.commit()
 
         return jsonify(new_testimonial.serialize()), 201
-    except Exception as e:
-        return jsonify({"Error": "Unexpected error"}), 500
+    # except Exception as e:
+    #     return jsonify({"Error": "Unexpected error"}), 500
 

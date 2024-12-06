@@ -3,6 +3,7 @@ import CreateTestimony from "../pages/CreateTestimony";
 const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
+			user: null,
 			message: null,
 			specialities: [],
 			allDoctors: [],
@@ -72,23 +73,66 @@ const getState = ({ getStore, getActions, setStore }) => {
 							password: password
 						})
 					})
-					if (resp.status == 400) {
-						return false
+					if (resp.ok) {
+						const data = await resp.json()
+						console.log(data)
+						localStorage.setItem("token", data.access_token)
+						setStore({ user: data.user, auth: true })
+						return true;
 					}
-					const data = await resp.json()
-					console.log(data)
-					localStorage.setItem("token", data.access_token)
-					setStore({ user: data.user, auth: true })
-
-					return true;
+					return false
 				} catch (error) {
 					console.log("Error loading message from backend", error)
 					return false
 				}
 			},
-			log_out: () => {
-				localStorage.removeItem("token")
-				setStore({ auth: false })
+			logOut: async () => {
+				try {
+					const response = await fetch(process.env.BACKEND_URL + "/api/logout", {
+						method: "POST",
+						headers: {
+							"Authorization": "Bearer " + localStorage.getItem("token")
+						},
+					});
+
+					if (response.ok) {
+						const result = await response.json();
+						localStorage.removeItem("token")
+						setStore({ user: false, auth: false })
+						return true;
+					} else {
+						console.log("Failed to logout user:", response.status);
+						return false;
+					}
+				} catch (error) {
+					console.log("Error logout user:", error);
+					return false;
+				}
+			},
+
+			getCurrentUser: async () => {
+				try {
+					const response = await fetch(process.env.BACKEND_URL + "/api/current_user", {
+						method: "GET",
+						headers: {
+							"Authorization": "Bearer " + localStorage.getItem("token")
+						},
+					});
+
+					if (response.ok) {
+						const result = await response.json();
+						setStore({ user: result, auth: true })
+						return true;
+					} else {
+						console.log("Failed get current user:", response.status);
+						setStore({ user: false, auth: false })
+						return false;
+					}
+				} catch (error) {
+					console.log("Error get current user:", error);
+					setStore({ user: false, auth: false })
+					return false;
+				}
 			},
 
 			sign_up: async (data) => {
