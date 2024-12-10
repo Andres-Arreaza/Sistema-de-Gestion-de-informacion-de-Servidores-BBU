@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { Context } from "../store/appContext";
 import { Link } from "react-router-dom";
+import { HashLink } from 'react-router-hash-link';
 import logoImgUrl from "../../img/logo_akh.png";
 import "../../styles/navbar.css";
 
@@ -60,16 +61,16 @@ export const Navbar = () => {
 						<img className="ps-5" src={logoImgUrl} style={{ height: "100px" }} />
 					</Link>
 					<div className="d-flex ms-auto">
-						{store.auth === false ? (
+						{store.user === false || store.user==null? (
 							<div>
 								<Link to="/login">
 									<button className="btn btn-outline-success mx-3">Login</button>
 								</Link>
 								<Link to="/signup">
-									<button className="btn btn-outline-success me-5">Sign_up</button>
+									<button className="btn btn-outline-success me-5">SignUp</button>
 								</Link>
 							</div>
-						) : null}
+						) : <button className="btn btn-outline-danger mx-3" onClick={()=>actions.logOut()}>LogOut</button>}
 					</div>
 
 					<div className="container-fluid d-flex align-items-center justify-content-between p-2 background">
@@ -98,9 +99,27 @@ export const Navbar = () => {
 						</div>
 
 						<div>
-							<Link to={"/appointment"}>
+							<Link to="/appointment">
 								<button className="btn btn-dark card-buttons">Appointment</button>
 							</Link>
+						</div>
+
+						<div>
+							<HashLink to="/#who">
+								<button className="btn btn-dark card-buttons">Who we are</button>
+							</HashLink>
+						</div>
+
+						<div>
+							<HashLink to="/#work">
+								<button className="btn btn-dark card-buttons">How it works</button>
+							</HashLink>
+						</div>
+
+						<div>
+							<HashLink to="/#testimonials">
+								<button className="btn btn-dark card-buttons">Testimonials</button>
+							</HashLink>
 						</div>
 
 						<div className="search-bar d-flex align-items-center ms-auto">
