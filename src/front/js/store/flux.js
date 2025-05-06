@@ -83,7 +83,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     return false;
                 }
             },
-			logOut: async () => {
+            logOut: async () => {
                 try {
                     const response = await fetch(process.env.BACKEND_URL + "/api/logout", {
                         method: "POST",
@@ -109,30 +109,30 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
             },
 
-			getCurrentUser: async () => {
-				try {
-					const response = await fetch(process.env.BACKEND_URL + "/api/current_user", {
-						method: "GET",
-						headers: {
-							"Authorization": "Bearer " + localStorage.getItem("token")
-						},
-					});
+            getCurrentUser: async () => {
+                try {
+                    const response = await fetch(process.env.BACKEND_URL + "/api/current_user", {
+                        method: "GET",
+                        headers: {
+                            "Authorization": "Bearer " + localStorage.getItem("token")
+                        },
+                    });
 
-					if (response.ok) {
-						const result = await response.json();
-						setStore({ user: result, auth: true })
-						return true;
-					} else {
-						console.log("Failed get current user:", response.status);
-						setStore({ user: false, auth: false })
-						return false;
-					}
-				} catch (error) {
-					console.log("Error get current user:", error);
-					setStore({ user: false, auth: false })
-					return false;
-				}
-			},
+                    if (response.ok) {
+                        const result = await response.json();
+                        setStore({ user: result, auth: true })
+                        return true;
+                    } else {
+                        console.log("Failed get current user:", response.status);
+                        setStore({ user: false, auth: false })
+                        return false;
+                    }
+                } catch (error) {
+                    console.log("Error get current user:", error);
+                    setStore({ user: false, auth: false })
+                    return false;
+                }
+            },
 
             sign_up: async (data) => {
                 console.log(data);
@@ -337,7 +337,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                         const errorData = await response.json();
                         throw new Error(errorData.Msg || "Error fetching patients");
                     }
-            
+
                     const data = await response.json();
                     setStore({ patients: data });
                     return data;
@@ -345,9 +345,9 @@ const getState = ({ getStore, getActions, setStore }) => {
                     console.error("Error fetching patients:", error);
                     throw error;
                 }
-            },            
+            },
 
-            fetchDoctorEmailsForLoggedInUser: async () => { 
+            fetchDoctorEmailsForLoggedInUser: async () => {
                 const store = getStore();
                 try {
                     const response = await fetch(process.env.BACKEND_URL + "/api/doctor-emails", {
@@ -383,7 +383,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                         const errorData = await response.json();
                         throw new Error(errorData.Msg || "Error fetching medical histories");
                     }
-            
+
                     const data = await response.json();
                     setStore({ medicalHistories: data });
                     return data;
@@ -392,7 +392,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     throw error;
                 }
             },
-            
+
             fetchMedicalHistoriesForLoggedInDoctor: async () => {
                 const store = getStore();
                 try {
@@ -405,7 +405,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                         const errorData = await response.json();
                         throw new Error(errorData.Msg || "Error fetching medical histories");
                     }
-            
+
                     const data = await response.json();
                     setStore({ medicalHistories: data });
                     return data;
@@ -413,7 +413,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     console.error("Error fetching medical histories:", error);
                     throw error;
                 }
-            },            
+            },
 
             fetchMedicalHistoriesForDoctorAndPatient: async (patientId) => {
                 const store = getStore();
@@ -427,7 +427,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                         const errorData = await response.json();
                         throw new Error(errorData.Msg || "Error fetching medical histories");
                     }
-            
+
                     const data = await response.json();
                     setStore({ medicalHistories: data });
                     return data;
@@ -436,7 +436,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     throw error;
                 }
             },
-            
+
             createMedicalHistory: async (medicalHistory) => {
                 const store = getStore();
                 try {
@@ -479,7 +479,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                         const errorData = await response.json();
                         throw new Error(errorData.Msg || "Error fetching doctors");
                     }
-            
+
                     const data = await response.json();
                     setStore({ doctors: data });
                     return data;
@@ -488,7 +488,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     throw error;
                 }
             },
-            
+
             fetchMedicalHistoriesWithDoctor: async (doctorId) => {
                 const store = getStore();
                 try {
@@ -501,7 +501,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                         const errorData = await response.json();
                         throw new Error(errorData.Msg || "Error fetching medical histories");
                     }
-            
+
                     const data = await response.json();
                     setStore({ medicalHistories: data });
                     return data;
@@ -510,25 +510,26 @@ const getState = ({ getStore, getActions, setStore }) => {
                     throw error;
                 }
             },
-            
-            updateProfilePicture: async (formData) => { 
-                try { 
-                    const store = getStore(); 
-                    const response = await fetch(process.env.BACKEND_URL +"/api/profilepic", { 
-                        method: 'POST', 
-                        body: formData, 
-                        headers: { "Authorization": "Bearer " + store.token 
-                        } 
-                    }); 
-                    if (!response.ok) { 
-                        const errorData = await response.json(); 
-                        throw new Error(errorData.message || 'Error updating profile picture'); 
-                    } 
-                    const data = await response.json(); 
-                    setStore({ user: { ...store.user, img_url: data.url } }); 
-                    return data; 
-                } catch (error) { 
-                    console.error('Error updating profile picture:', error); 
+
+            updateProfilePicture: async (formData) => {
+                try {
+                    const store = getStore();
+                    const response = await fetch(process.env.BACKEND_URL + "/api/profilepic", {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            "Authorization": "Bearer " + store.token
+                        }
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Error updating profile picture');
+                    }
+                    const data = await response.json();
+                    setStore({ user: { ...store.user, img_url: data.url } });
+                    return data;
+                } catch (error) {
+                    console.error('Error updating profile picture:', error);
                     return null;
                 }
             }

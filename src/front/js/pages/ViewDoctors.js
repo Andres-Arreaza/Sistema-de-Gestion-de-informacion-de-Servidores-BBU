@@ -18,10 +18,10 @@ const ViewDoctors = () => {
             }
         };
         fetchDoctors();
-    }, []);
+    }, []); 
 
-    useEffect(() => {
-        actions.fetchDoctorsForLoggedInPatient()
+    useEffect(() =>{
+            actions.fetchDoctorsForLoggedInPatient()
     }, []);
 
     const viewMedicalHistories = (doctorId) => {
@@ -29,7 +29,7 @@ const ViewDoctors = () => {
     };
 
     const goBack = () => {
-        navigate(-1);
+        navigate(-1); 
     };
 
     return (
