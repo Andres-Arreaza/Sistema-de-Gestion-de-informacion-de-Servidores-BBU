@@ -1,9 +1,9 @@
 import click
-from api.models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor
+from api.models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, HistorialServidor
 
 """
 Este archivo define comandos CLI en Flask para la gestión de servidores.
-Permite insertar datos de prueba, listar registros y ejecutar tareas administrativas.
+Permite insertar datos de prueba, listar registros y registrar modificaciones de servidores.
 """
 
 def setup_commands(app):
@@ -20,7 +20,7 @@ def setup_commands(app):
             print(f"Servicio creado: {servicio.nombre}")
         print("Todos los servicios de prueba fueron creados.")
 
-    # Comando para insertar capas de prueba
+    # Comandos para insertar datos de prueba en las demás entidades
     @app.cli.command("insert-test-capas")
     @click.argument("count")
     def insert_test_capas(count):
@@ -32,7 +32,6 @@ def setup_commands(app):
             print(f"Capa creada: {capa.nombre}")
         print("Todas las capas de prueba fueron creadas.")
 
-    # Comando para insertar ambientes de prueba
     @app.cli.command("insert-test-ambientes")
     @click.argument("count")
     def insert_test_ambientes(count):
@@ -44,7 +43,6 @@ def setup_commands(app):
             print(f"Ambiente creado: {ambiente.nombre}")
         print("Todos los ambientes de prueba fueron creados.")
 
-    # Comando para insertar dominios de prueba
     @app.cli.command("insert-test-dominios")
     @click.argument("count")
     def insert_test_dominios(count):
@@ -56,7 +54,6 @@ def setup_commands(app):
             print(f"Dominio creado: {dominio.nombre}")
         print("Todos los dominios de prueba fueron creados.")
 
-    # Comando para insertar sistemas operativos de prueba
     @app.cli.command("insert-test-sistemas-operativos")
     @click.argument("count")
     def insert_test_sistemas_operativos(count):
@@ -68,7 +65,6 @@ def setup_commands(app):
             print(f"Sistema Operativo creado: {sistema_operativo.nombre}")
         print("Todos los sistemas operativos de prueba fueron creados.")
 
-    # Comando para insertar estatus de prueba
     @app.cli.command("insert-test-estatus")
     @click.argument("count")
     def insert_test_estatus(count):
@@ -111,3 +107,14 @@ def setup_commands(app):
         db.session.add(servidor)
         db.session.commit()
         print(f"Servidor creado: {servidor.nombre}")
+
+    # Comando para consultar el historial de cambios en servidores
+    @app.cli.command("list-server-history")
+    @click.argument("servidor_id")
+    def list_server_history(servidor_id):
+        historial = HistorialServidor.query.filter_by(servidor_id=servidor_id).order_by(HistorialServidor.fecha_modificacion.desc()).all()
+        if not historial:
+            print(f"No hay historial registrado para el servidor con ID {servidor_id}.")
+            return
+        for registro in historial:
+            print(registro.serialize())

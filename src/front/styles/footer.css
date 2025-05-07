@@ -1,0 +1,11 @@
+/* Footer */
+.footer {
+    background-color: #ffffff;
+    border-top: 2px solid #007953;
+    padding: 20px;
+}
+
+.footer-logo {
+    height: 35px; 
+    margin-bottom: 10px;
+}

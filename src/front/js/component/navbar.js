@@ -1,72 +1,49 @@
-import React, { useContext, useState } from "react";
-import { Context } from "../store/appContext";
-import { Link } from "react-router-dom";
-import { HashLink } from 'react-router-hash-link';
-import logoImgUrl from "../../img/logo_akh.png";
-import "../../styles/navbar.css";
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
 
 export const Navbar = () => {
-	const { store, actions } = useContext(Context);
-	const [profilePicture, setProfilePicture] = useState(null);
+    const location = useLocation();
 
-	const handleFileChange = (e) => {
-		setProfilePicture(e.target.files[0]);
-	}
-
-	const handleUpload = async () => {
-		const formData = new FormData();
-		formData.append("profilePicture", profilePicture);
-
-		const response = await actions.updateProfilePicture(formData);
-		if (response) {
-			alert("Profile picture updated successfully!");
-		} else {
-			alert("Failed to update profile picture.");
-		}
-	};
-
-	return (
-		<div className="ps-0 pe-0">
-			<nav className="navbar navbar-light bg-light pb-0">
-				<div className="container-fluid p-0 m-0">
-					<Link to="/">
-						<img className="" src={logoImgUrl} style={{ width: "250px", height: "100px" }} />
-					</Link>
-					<div className="d-flex ms-auto">
-						{store.user === false || store.user == null ? (
-							<div>
-								<Link to="/login">
-									<button className="btn btn-outline-success mx-3 btn-login">Login</button>
-								</Link>
-								<Link to="/signup">
-									<button className="btn btn-outline-success btn-signup">SignUp</button>
-								</Link>
-							</div>
-						) : <button className="btn btn-outline-danger mx-3 pt-3 pb-3 ps-4 pe-4" style={{borderRadius:"23px", border:"2px solid"}} onClick={() => actions.logOut()}>LogOut</button>	
-						}
-						
-					</div>
-				</div>
-				<div className="container-fluid navbar-buttons d-flex justify-content-start gap-3 p-2 background">
-					<div>
-						<HashLink to="/#who">
-							<button className="btn btn-dark card-buttons btn-who-we-are pt-3 pb-3 ps-4 pe-4">Who we are</button>
-						</HashLink>
-					</div>
-
-					<div>
-						<HashLink to="/#work">
-							<button className="btn btn-dark card-buttons btn-how-it-works pt-3 pb-3 ps-4 pe-4">How it works</button>
-						</HashLink>
-					</div>
-
-					<div>
-						<HashLink to="/#testimonials">
-							<button className="btn btn-dark card-buttons btn-testimonials pt-3 pb-3 ps-4 pe-4">Testimonials</button>
-						</HashLink>
-					</div>
-				</div>
-			</nav>
-		</div>
-	);
+    return (
+        <nav className="navbar navbar-expand-lg">
+            <div className="container">
+                <Link to="/" className="navbar-brand">
+                    <img src="https://banesco-prod-2020.s3.amazonaws.com/wp-content/themes/banescocontigo/assets/images/header/logotype.png" className="navbar-img" alt="Banesco" />
+                </Link>
+                <button
+                    className="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav"
+                >
+                    <span className="navbar-toggler-icon"></span>
+                </button>
+                <div className="collapse navbar-collapse" id="navbarNav">
+                    <ul className="navbar-nav ms-auto">
+                        <li className={`nav-item ${location.pathname === "/service" ? "active" : ""}`}>
+                            <Link className="nav-link" to="/service">Servicio</Link>
+                        </li>
+                        <li className={`nav-item ${location.pathname === "/layer" ? "active" : ""}`}>
+                            <Link className="nav-link" to="/layer">Capa</Link>
+                        </li>
+                        <li className={`nav-item ${location.pathname === "/environment" ? "active" : ""}`}>
+                            <Link className="nav-link" to="/environment">Ambiente</Link>
+                        </li>
+                        <li className={`nav-item ${location.pathname === "/domain" ? "active" : ""}`}>
+                            <Link className="nav-link" to="/domain">Dominio</Link>
+                        </li>
+                        <li className={`nav-item ${location.pathname === "/os" ? "active" : ""}`}>
+                            <Link className="nav-link" to="/os">Sistema Operativo</Link>
+                        </li>
+                        <li className={`nav-item ${location.pathname === "/status" ? "active" : ""}`}>
+                            <Link className="nav-link" to="/status">Estatus</Link>
+                        </li>
+                        <li className={`nav-item servers-button ${location.pathname === "/servers" ? "active" : ""}`}>
+                            <Link className="nav-link" to="/servers">Servidores</Link> {/* Ruta corregida */}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    );
 };

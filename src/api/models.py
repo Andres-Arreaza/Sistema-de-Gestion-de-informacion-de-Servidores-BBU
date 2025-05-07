@@ -14,8 +14,6 @@ class Servicio(db.Model):
     nombre = db.Column(db.String(120), unique=True, nullable=False)
     descripcion = db.Column(db.String(250))
 
-    servidores = db.relationship("Servidor", back_populates="servicio", lazy=True)
-
     def serialize(self):
         return {"id": self.id, "nombre": self.nombre, "descripcion": self.descripcion}
 
@@ -96,6 +94,8 @@ class Servidor(db.Model):
     sistema_operativo = db.relationship(SistemaOperativo)
     estatus = db.relationship(Estatus)
 
+    historial = db.relationship("HistorialServidor", back_populates="servidor", lazy=True)
+
     def serialize(self):
         return {
             "id": self.id,
@@ -106,10 +106,55 @@ class Servidor(db.Model):
             "vlan": self.vlan,
             "descripcion": self.descripcion,
             "link": self.link,
-            "servicio": self.servicio.nombre if self.servicio else None,
-            "capa": self.capa.nombre if self.capa else None,
-            "ambiente": self.ambiente.nombre if self.ambiente else None,
-            "dominio": self.dominio.nombre if self.dominio else None,
-            "sistema_operativo": self.sistema_operativo.nombre if self.sistema_operativo else None,
-            "estatus": self.estatus.nombre if self.estatus else None
+            "servicio_id": self.servicio_id,
+            "capa_id": self.capa_id,
+            "ambiente_id": self.ambiente_id,
+            "dominio_id": self.dominio_id,
+            "sistema_operativo_id": self.sistema_operativo_id,
+            "estatus_id": self.estatus_id,
+            "historial": [registro.serialize() for registro in self.historial]
+        }
+
+class HistorialServidor(db.Model):
+    __tablename__ = 'historial_servidores'
+
+    id = db.Column(db.Integer, primary_key=True)
+    servidor_id = db.Column(db.Integer, db.ForeignKey("servidores.id"), nullable=False)
+    fecha_modificacion = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
+
+    nombre = db.Column(db.String(120), nullable=False)
+    tipo = db.Column(db.Enum(TipoServidorEnum), nullable=False)
+    ip = db.Column(db.String(50), nullable=True)
+    balanceador = db.Column(db.String(120), nullable=True)
+    vlan = db.Column(db.String(50), nullable=True)
+    descripcion = db.Column(db.String(250), nullable=True)
+    link = db.Column(db.String(250), nullable=True)
+
+    servicio_id = db.Column(db.Integer, db.ForeignKey("servicios.id"), nullable=False)
+    capa_id = db.Column(db.Integer, db.ForeignKey("capas.id"), nullable=False)
+    ambiente_id = db.Column(db.Integer, db.ForeignKey("ambientes.id"), nullable=False)
+    dominio_id = db.Column(db.Integer, db.ForeignKey("dominios.id"), nullable=False)
+    sistema_operativo_id = db.Column(db.Integer, db.ForeignKey("sistemas_operativos.id"), nullable=False)
+    estatus_id = db.Column(db.Integer, db.ForeignKey("estatus.id"), nullable=False)
+
+    servidor = db.relationship("Servidor", back_populates="historial")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "servidor_id": self.servidor_id,
+            "fecha_modificacion": self.fecha_modificacion.isoformat(),
+            "nombre": self.nombre,
+            "tipo": self.tipo.value,
+            "ip": self.ip,
+            "balanceador": self.balanceador,
+            "vlan": self.vlan,
+            "descripcion": self.descripcion,
+            "link": self.link,
+            "servicio_id": self.servicio_id,
+            "capa_id": self.capa_id,
+            "ambiente_id": self.ambiente_id,
+            "dominio_id": self.dominio_id,
+            "sistema_operativo_id": self.sistema_operativo_id,
+            "estatus_id": self.estatus_id
         }

@@ -1,17 +1,20 @@
-/* 
-    General Styles used on every website (Don't Repeat Yourself)
-*/
-.tooltip-btn {
-    position: relative;
-    border-radius: 14px;
-    border: 3px solid #6F4F28;
-    background-color: #fffff0;
-    color: #4A8F8F;
-    font-size: 17px;
-    transition: all 0.3s ease; 
+/* Reseteo básico */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
 }
-.tooltip-btn:hover {
-    box-shadow: 0px 5px 30px rgba(148, 0, 211, 0.9);
-    transform: translateY(-2px);  
-    background-color: #f0f0f0;  
+
+/* Para dispositivos móviles */
+@media (max-width: 768px) {
+    .home-container {
+        padding-top: var(--paddings-top-mobile);
+        padding-bottom: var(--paddings-bottom-mobile);
+        margin-top: var(--margins-top-mobile);
+        margin-bottom: var(--margins-bottom-mobile);
+    }
 }
+
+
+
