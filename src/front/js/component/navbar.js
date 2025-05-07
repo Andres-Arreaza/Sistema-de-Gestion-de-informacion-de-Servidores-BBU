@@ -28,7 +28,7 @@ export const Navbar = () => {
                         </li>
                         <li className={`nav-item ${location.pathname === "/environment" ? "active" : ""}`}>
                             <Link className="nav-link" to="/environment">Ambiente</Link>
-                        </li>
+                        </li>   
                         <li className={`nav-item ${location.pathname === "/domain" ? "active" : ""}`}>
                             <Link className="nav-link" to="/domain">Dominio</Link>
                         </li>
@@ -39,7 +39,7 @@ export const Navbar = () => {
                             <Link className="nav-link" to="/status">Estatus</Link>
                         </li>
                         <li className={`nav-item servers-button ${location.pathname === "/servers" ? "active" : ""}`}>
-                            <Link className="nav-link" to="/servers">Servidores</Link> {/* Ruta corregida */}
+                            <Link className="nav-link" to="/servers">Servidores</Link>
                         </li>
                     </ul>
                 </div>

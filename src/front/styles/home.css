@@ -4,24 +4,21 @@
     padding: 50px 20px;
 }
 
+/* Título principal */
 .title {
-    /*width: 1075px;*/
     width: 800px;
     margin: auto;
     font-size: 40px;
     color: #ffffff;
     font-weight: bold;
-
 }
 
+/* Subtítulo */
 .subtitle {
     font-size: 18px;
     color: #ffffff;
     padding: 10px;
 }
-
-
-/* Botones */
 
 /* Botón de búsqueda */
 .search-btn {
@@ -29,16 +26,16 @@
     font-size: 16px;
     background-color: #ffffff;
     border-radius: 5px;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* Hover con sombra más clara */
 .search-btn:hover {
     background-color: #e0f2ff; /* Color más claro en hover */
-    box-shadow: 0px 13px 10px #e0f2ff00; /* Sombra más clara */
-    transform: scale(1.05); /* Aumenta el tamaño un 5% */
+    /*box-shadow: 0px 10px 10px #a0d7ff2e; /* Sombra más clara */
 }
 
+/* Variables globales */
 :root {
     --paddings-top: 60px;
     --paddings-top-mobile: 48px;
