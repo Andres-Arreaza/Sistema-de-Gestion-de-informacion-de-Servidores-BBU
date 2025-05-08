@@ -1,11 +1,37 @@
-/* Estilos de los elementos del menú */
-.navbar-img{
+/* Estilos generales del navbar */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%; 
+    z-index: 1000;
+    background-color: #ffffff; 
+    box-shadow: 0px 4px 10px rgba(0, 68, 119, 0.3);
+    padding: 10px 0;
+}
+
+/* Ajuste para evitar que el contenido se solape con el navbar */
+body {
+    padding-top: 100px;
+}
+
+/* Estilos de la imagen del logo */
+.navbar-img {
     width: 200px;
+    height: auto; 
+    transition: width 0.3s ease;
+}
+
+/* Si quieres que el logo se reduzca aún más en pantallas pequeñas */
+@media (max-width: 768px) {
+    .navbar-img {
+        width: 120px;
+    }
 }
 
 /* Estilos de los enlaces en el navbar */
 .nav-link {
-    color: #000000; /* Letras negras por defecto */
+    color: #000000;
     transition: color 0.3s ease, font-weight 0.3s ease;
 }
 
@@ -20,7 +46,7 @@
 /* Hover con sombra más clara */
 .nav-item:hover {
     background-color: #004477; 
-    box-shadow: 0px 13px 10px #004377a6; /* Sombra azul más clara */
+    box-shadow: 0px 13px 10px #004377a6;
 }
 
 .nav-item:hover .nav-link {
@@ -29,28 +55,112 @@
 
 /* Mantener el hover cuando el link está activo */
 .nav-item.active {
-    background-color: #004477; /* Mismo color que el hover */
-    box-shadow: 0px 4px 10px rgba(0, 68, 119, 0.3); /* Sombra azul más clara */
+    background-color: #004477;
+    box-shadow: 0px 4px 10px rgba(0, 68, 119, 0.3); 
 }
 
 .nav-item.active .nav-link {
-    color: #ffffff; /* Texto blanco cuando está activo */
+    color: #ffffff;
 }
 
-/* Botón "Servidores" en verde */
-.nav-item.servers-button {
-    background-color: #007953; /* Verde Banesco */
+/* Estilos del botón "Administrar" como botón verde */
+.admin-button {
+    background-color: #007953; 
     padding-left: 30px;
     padding-right: 30px;
     border-radius: 5px;
     transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.nav-item.servers-button:hover {
-    background-color: #006445; /* Verde más oscuro en hover */
-    box-shadow: 0px 4px 10px rgba(0, 121, 83, 0.3); /* Sombra verde más clara */
+.admin-button:hover {
+    background-color: #006445;
+    box-shadow: 0px 4px 10px rgba(0, 121, 83, 0.3);
 }
 
-.nav-item.servers-button .nav-link {
-    color: #ffffff; /* Texto blanco */
+.admin-button .nav-link {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+/* Estilos del menú desplegable */
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%); 
+    width: max-content;
+    min-width: 100%;
+    background-color: #ffffff;
+    box-shadow: 0px 4px 10px rgba(0, 68, 119, 0.3);
+    border-radius: 5px;
+    padding: 10px;
+    display: none;
+    margin-top: 2px;
+}
+
+/* Mostrar el menú cuando el usuario pasa el mouse */
+.nav-item:hover .dropdown-menu {
+    display: block;
+}
+
+/* Estilos de los elementos dentro del menú */
+.dropdown-item {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    color: #000000;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+    text-align: center;
+    display: block;
+    border-radius: 5px;
+}
+
+/* Hover del menú desplegable con los mismos estilos que "Búsqueda" */
+.dropdown-item:hover {
+    background-color: #004477;
+    box-shadow: 0px 13px 10px #004377a6;
+    color: #ffffff;
+}
+
+/* Línea separadora dentro del menú */
+.dropdown-divider {
+    height: 1px;
+    background-color: #ccc;
+    margin: 8px 0;
+}
+
+/* Estilos del botón "Crear Servidor" dentro del menú */
+.create-server-button {
+    background-color: #007953;
+    color: #ffffff;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px 10px;
+    margin-bottom: 0;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    display: block;
+}
+
+.create-server-button:hover {
+    background-color: #006445; 
+    box-shadow: 0px 4px 10px rgba(0, 121, 83, 0.3);
+}
+
+/* Estilos del icono Home */
+.home-icon {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+}
+
+.material-symbols-outlined {
+    font-variation-settings:
+    'FILL' 0,
+    'WGT' 400,
+    'GRAD' 0,
+    'OPSZ' 24;
 }

@@ -1,15 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 export const Navbar = () => {
     const location = useLocation();
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     return (
         <nav className="navbar navbar-expand-lg">
             <div className="container">
+                {/* Logo */}
                 <Link to="/" className="navbar-brand">
-                    <img src="https://banesco-prod-2020.s3.amazonaws.com/wp-content/themes/banescocontigo/assets/images/header/logotype.png" className="navbar-img" alt="Banesco" />
+                    <img
+                        src="https://banesco-prod-2020.s3.amazonaws.com/wp-content/themes/banescocontigo/assets/images/header/logotype.png"
+                        className="navbar-img"
+                        alt="Banesco"
+                    />
                 </Link>
+
+                {/* Botón de menú en dispositivos móviles */}
                 <button
                     className="navbar-toggler"
                     type="button"
@@ -18,29 +26,49 @@ export const Navbar = () => {
                 >
                     <span className="navbar-toggler-icon"></span>
                 </button>
+
+                {/* Menú de navegación */}
                 <div className="collapse navbar-collapse" id="navbarNav">
                     <ul className="navbar-nav ms-auto">
-                        <li className={`nav-item ${location.pathname === "/service" ? "active" : ""}`}>
-                            <Link className="nav-link" to="/service">Servicio</Link>
+                        {/* Búsqueda */}
+                        <li className={`nav-item ${location.pathname === "/search" ? "active" : ""}`}>
+                            <Link className="nav-link" to="/search">Búsqueda</Link>
                         </li>
-                        <li className={`nav-item ${location.pathname === "/layer" ? "active" : ""}`}>
-                            <Link className="nav-link" to="/layer">Capa</Link>
+
+                        {/* Administrar con menú desplegable */}
+                        <li
+                            className="nav-item dropdown admin-button"
+                            onMouseEnter={() => setIsDropdownOpen(true)}
+                            onMouseLeave={() => setIsDropdownOpen(false)}
+                        >
+                            <span className="nav-link dropdown-toggle">Administrar</span>
+                            {isDropdownOpen && (
+                                <div className="dropdown-menu">
+                                    <Link className="dropdown-item" to="/service">Servicio</Link>
+                                    <Link className="dropdown-item" to="/layer">Capa</Link>
+                                    <Link className="dropdown-item" to="/environment">Ambiente</Link>
+                                    <Link className="dropdown-item" to="/domain">Dominio</Link>
+                                    <Link className="dropdown-item" to="/os">Sistema Operativo</Link>
+                                    <Link className="dropdown-item" to="/status">Estatus</Link>
+                                    <div className="dropdown-divider"></div>
+                                    <Link className="dropdown-item create-server-button" to="/create-server">Crear Servidor</Link>
+                                </div>
+                            )}
                         </li>
-                        <li className={`nav-item ${location.pathname === "/environment" ? "active" : ""}`}>
-                            <Link className="nav-link" to="/environment">Ambiente</Link>
-                        </li>   
-                        <li className={`nav-item ${location.pathname === "/domain" ? "active" : ""}`}>
-                            <Link className="nav-link" to="/domain">Dominio</Link>
+
+                        {/* Icono Home */}
+                        <li className={`nav-item ${location.pathname === "/" ? "active" : ""}`}>
+                            <Link className="nav-link home-icon" to="/">
+                                <span className="material-symbols-outlined">home</span>
+                            </Link>
                         </li>
-                        <li className={`nav-item ${location.pathname === "/os" ? "active" : ""}`}>
-                            <Link className="nav-link" to="/os">Sistema Operativo</Link>
+
+
+                        {/* Seguridad 
+                        <li className={`nav-item ${location.pathname === "/security" ? "active" : ""}`}>
+                            <Link className="nav-link" to="/security">Seguridad</Link>
                         </li>
-                        <li className={`nav-item ${location.pathname === "/status" ? "active" : ""}`}>
-                            <Link className="nav-link" to="/status">Estatus</Link>
-                        </li>
-                        <li className={`nav-item servers-button ${location.pathname === "/servers" ? "active" : ""}`}>
-                            <Link className="nav-link" to="/servers">Servidores</Link>
-                        </li>
+                        */}
                     </ul>
                 </div>
             </div>
