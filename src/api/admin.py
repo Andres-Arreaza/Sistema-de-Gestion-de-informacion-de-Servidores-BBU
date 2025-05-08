@@ -1,6 +1,6 @@
 import os
 from flask_admin import Admin
-from .models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, HistorialServidor
+from .models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor
 from flask_admin.contrib.sqla import ModelView
 from wtforms_sqlalchemy.fields import QuerySelectField
 
@@ -22,6 +22,49 @@ def sistema_operativo_query():
 
 def estatus_query():
     return Estatus.query.order_by(Estatus.nombre).all()
+
+class BaseView(ModelView):
+    """ Modelo base para vistas en Flask-Admin con fechas de creación, modificación y borrado lógico """
+    column_list = ["nombre", "descripcion", "activo", "fecha_creacion", "fecha_modificacion"]
+    column_sortable_list = ["fecha_creacion", "fecha_modificacion"]
+    column_filters = ["activo", "fecha_creacion", "fecha_modificacion"]
+    column_editable_list = ["activo"]  # 🔹 Permitir edición rápida del estado activo
+
+    def _format_fecha_modificacion(view, context, model, name):
+        """ Mostrar fecha_modificacion solo si existe, de lo contrario mostrar vacío """
+        return model.fecha_modificacion.isoformat() if model.fecha_modificacion else ""
+
+    column_formatters = {
+        "fecha_modificacion": _format_fecha_modificacion
+    }
+
+class ServicioView(BaseView):
+    """ Vista personalizada para gestionar servicios en Flask-Admin """
+    pass
+
+class CapaView(BaseView):
+    """ Vista personalizada para gestionar capas en Flask-Admin """
+    pass
+
+class AmbienteView(BaseView):
+    """ Vista personalizada para gestionar ambientes en Flask-Admin """
+    pass
+
+class DominioView(BaseView):
+    """ Vista personalizada para gestionar dominios en Flask-Admin """
+    pass
+
+class SistemaOperativoView(BaseView):
+    """ Vista personalizada para gestionar sistemas operativos en Flask-Admin """
+    column_list = ["nombre", "version", "descripcion", "activo", "fecha_creacion", "fecha_modificacion"]
+    form_args = {
+        "nombre": {"validators": [lambda form, field: field.data or field.errors.append("El nombre es obligatorio")]},
+        "version": {"validators": [lambda form, field: field.data or field.errors.append("La versión es obligatoria")]}
+    }
+
+class EstatusView(BaseView):
+    """ Vista personalizada para gestionar estatus en Flask-Admin """
+    pass
 
 class ServidorView(ModelView):
     """ Vista personalizada para gestionar servidores en Flask-Admin """
@@ -60,32 +103,17 @@ class ServidorView(ModelView):
         "estatus": {"query_factory": estatus_query, "allow_blank": False, "get_label": "nombre"}
     }
 
-class HistorialServidorView(ModelView):
-    """ Vista para gestionar el historial de modificaciones de servidores """
-    
-    column_list = [
-        "servidor_id", "fecha_modificacion", "nombre", "tipo", "ip", "balanceador",
-        "vlan", "descripcion", "link", "servicio_id", "capa_id", "ambiente_id",
-        "dominio_id", "sistema_operativo_id", "estatus_id"
-    ]
-    
-    column_formatters = {
-        "servidor_id": lambda v, c, m, p: m.servidor.nombre if m.servidor else "",
-        "fecha_modificacion": lambda v, c, m, p: m.fecha_modificacion.isoformat(),
-    }
-
 def setup_admin(app):
-    """ Configurar Flask-Admin para gestionar servidores y su historial """
+    """ Configurar Flask-Admin para gestionar servidores """
     app.secret_key = os.environ.get('FLASK_APP_KEY', 'sample key')
     app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
     admin = Admin(app, name='Gestión de Servidores', template_mode='bootstrap3')
 
     # Agregar modelos al panel de administración
-    admin.add_view(ModelView(Servicio, db.session))
-    admin.add_view(ModelView(Capa, db.session))
-    admin.add_view(ModelView(Ambiente, db.session))
-    admin.add_view(ModelView(Dominio, db.session))
-    admin.add_view(ModelView(SistemaOperativo, db.session))
-    admin.add_view(ModelView(Estatus, db.session))
-    admin.add_view(ServidorView(Servidor, db.session))  # Vista personalizada para servidores
-    admin.add_view(HistorialServidorView(HistorialServidor, db.session))  # Vista para historial de cambios
+    admin.add_view(ServicioView(Servicio, db.session))
+    admin.add_view(CapaView(Capa, db.session))
+    admin.add_view(AmbienteView(Ambiente, db.session))
+    admin.add_view(DominioView(Dominio, db.session))
+    admin.add_view(SistemaOperativoView(SistemaOperativo, db.session))
+    admin.add_view(EstatusView(Estatus, db.session))
+    admin.add_view(ServidorView(Servidor, db.session))

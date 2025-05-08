@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 7f8d41420fb8
+Revision ID: 3849905f0376
 Revises: 
-Create Date: 2025-05-06 16:02:27.017709
+Create Date: 2025-05-08 21:51:51.284972
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '7f8d41420fb8'
+revision = '3849905f0376'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,44 +22,56 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nombre', sa.String(length=120), nullable=False),
     sa.Column('descripcion', sa.String(length=250), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('nombre')
+    sa.Column('fecha_creacion', sa.DateTime(), nullable=False),
+    sa.Column('fecha_modificacion', sa.DateTime(), nullable=True),
+    sa.Column('activo', sa.Boolean(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('capas',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nombre', sa.String(length=120), nullable=False),
     sa.Column('descripcion', sa.String(length=250), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('nombre')
+    sa.Column('fecha_creacion', sa.DateTime(), nullable=False),
+    sa.Column('fecha_modificacion', sa.DateTime(), nullable=True),
+    sa.Column('activo', sa.Boolean(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('dominios',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nombre', sa.String(length=120), nullable=False),
     sa.Column('descripcion', sa.String(length=250), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('nombre')
+    sa.Column('fecha_creacion', sa.DateTime(), nullable=False),
+    sa.Column('fecha_modificacion', sa.DateTime(), nullable=True),
+    sa.Column('activo', sa.Boolean(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('estatus',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nombre', sa.String(length=120), nullable=False),
     sa.Column('descripcion', sa.String(length=250), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('nombre')
+    sa.Column('fecha_creacion', sa.DateTime(), nullable=False),
+    sa.Column('fecha_modificacion', sa.DateTime(), nullable=True),
+    sa.Column('activo', sa.Boolean(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('servicios',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nombre', sa.String(length=120), nullable=False),
     sa.Column('descripcion', sa.String(length=250), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('nombre')
+    sa.Column('fecha_creacion', sa.DateTime(), nullable=False),
+    sa.Column('fecha_modificacion', sa.DateTime(), nullable=True),
+    sa.Column('activo', sa.Boolean(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('sistemas_operativos',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nombre', sa.String(length=120), nullable=False),
-    sa.Column('version', sa.String(length=50), nullable=True),
+    sa.Column('version', sa.String(length=50), nullable=False),
     sa.Column('descripcion', sa.String(length=250), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('nombre')
+    sa.Column('fecha_creacion', sa.DateTime(), nullable=False),
+    sa.Column('fecha_modificacion', sa.DateTime(), nullable=True),
+    sa.Column('activo', sa.Boolean(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('servidores',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -85,38 +97,11 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('nombre')
     )
-    op.create_table('historial_servidores',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('servidor_id', sa.Integer(), nullable=False),
-    sa.Column('fecha_modificacion', sa.DateTime(), nullable=False),
-    sa.Column('nombre', sa.String(length=120), nullable=False),
-    sa.Column('tipo', sa.Enum('FISICO', 'VIRTUAL', name='tiposervidorenum'), nullable=False),
-    sa.Column('ip', sa.String(length=50), nullable=True),
-    sa.Column('balanceador', sa.String(length=120), nullable=True),
-    sa.Column('vlan', sa.String(length=50), nullable=True),
-    sa.Column('descripcion', sa.String(length=250), nullable=True),
-    sa.Column('link', sa.String(length=250), nullable=True),
-    sa.Column('servicio_id', sa.Integer(), nullable=False),
-    sa.Column('servicio_nombre', sa.String(length=120), nullable=False),
-    sa.Column('capa_id', sa.Integer(), nullable=False),
-    sa.Column('capa_nombre', sa.String(length=120), nullable=False),
-    sa.Column('ambiente_id', sa.Integer(), nullable=False),
-    sa.Column('ambiente_nombre', sa.String(length=120), nullable=False),
-    sa.Column('dominio_id', sa.Integer(), nullable=False),
-    sa.Column('dominio_nombre', sa.String(length=120), nullable=False),
-    sa.Column('sistema_operativo_id', sa.Integer(), nullable=False),
-    sa.Column('sistema_operativo_nombre', sa.String(length=120), nullable=False),
-    sa.Column('estatus_id', sa.Integer(), nullable=False),
-    sa.Column('estatus_nombre', sa.String(length=120), nullable=False),
-    sa.ForeignKeyConstraint(['servidor_id'], ['servidores.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
     # ### end Alembic commands ###
 
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table('historial_servidores')
     op.drop_table('servidores')
     op.drop_table('sistemas_operativos')
     op.drop_table('servicios')
