@@ -62,7 +62,7 @@ class Estatus(BaseModel):
     nombre = db.Column(db.String(120), nullable=False)  # 🔹 Campo obligatorio
     descripcion = db.Column(db.String(250), nullable=True)
 
-class Servidor(BaseModel):  # 🔹 Ahora hereda de `BaseModel` para incluir `activo`
+class Servidor(BaseModel):  # 🔹 Ahora hereda de `BaseModel` para incluir `activo`, `fecha_creacion` y `fecha_modificacion`
     __tablename__ = 'servidores'
 
     nombre = db.Column(db.String(120), nullable=False)  # 🔹 Se permite reutilizar nombres eliminados

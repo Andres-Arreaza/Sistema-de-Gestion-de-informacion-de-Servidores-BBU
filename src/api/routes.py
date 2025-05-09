@@ -47,7 +47,8 @@ def create_generic(model):
     nuevo_registro = model(
         nombre=data['nombre'],
         descripcion=data.get('descripcion'),
-        activo=True
+        activo=True,
+        fecha_creacion=datetime.utcnow()
     )
     db.session.add(nuevo_registro)
     db.session.commit()
@@ -74,8 +75,6 @@ def get_generic_by_id(model, record_id):
     record = model.query.get(record_id)
     if not record:
         return jsonify({"msg": f"{model.__name__} con ID {record_id} no encontrado"}), 404
-    if not record.activo:
-        return jsonify({"msg": f"{model.__name__} con ID {record_id} está inactivo"}), 400
     return jsonify(record.serialize()), 200
 
 def delete_generic(model, record_id):
@@ -167,55 +166,67 @@ def update_dominio(dominio_id):
 def delete_dominio(dominio_id):
     return delete_generic(Dominio, dominio_id)
 
-### **Rutas para sistemas-operativos**
+### **Rutas para Sistemas Operativos**
 @api.route('/sistemas-operativos', methods=['POST'])
 def create_sistema_operativo():
+    """ Crear un nuevo sistema operativo por ID, reutilizando nombres eliminados """
     data = request.get_json()
 
     nombre = data.get("nombre", "").strip()
     version = data.get("version", "").strip()
+    descripcion = data.get("descripcion", "").strip()
 
     if not nombre or not version:
         return jsonify({"msg": "El nombre y la versión son obligatorios"}), 400
 
+    # Verificar si ya existe un sistema operativo con el mismo nombre y versión pero inactivo
+    sistema_existente = SistemaOperativo.query.filter_by(nombre=nombre, version=version, activo=False).first()
+
+    if sistema_existente:
+        # Reactivar el sistema operativo en lugar de crear uno nuevo
+        sistema_existente.activo = True
+        sistema_existente.descripcion = descripcion or sistema_existente.descripcion
+        sistema_existente.fecha_modificacion = datetime.utcnow()
+        db.session.commit()
+        return jsonify(sistema_existente.serialize()), 200
+
+    # Crear un nuevo sistema operativo si no existe
     nuevo_sistema_operativo = SistemaOperativo(
         nombre=nombre,
         version=version,
-        descripcion=data.get("descripcion", "").strip(),
-        activo=True
+        descripcion=descripcion,
+        activo=True,
+        fecha_creacion=datetime.utcnow()
     )
+
     db.session.add(nuevo_sistema_operativo)
     db.session.commit()
     return jsonify(nuevo_sistema_operativo.serialize()), 201
 
 @api.route('/sistemas-operativos/<int:so_id>', methods=['PUT'])
 def update_sistema_operativo(so_id):
+    """ Actualizar un sistema operativo por ID """
     data = request.get_json()
     sistema_operativo = SistemaOperativo.query.get(so_id)
 
     if not sistema_operativo:
         return jsonify({"msg": f"Sistema Operativo con ID {so_id} no encontrado"}), 404
 
-    if not sistema_operativo.activo:
-        return jsonify({"msg": f"Sistema Operativo con ID {so_id} está inactivo y no puede ser actualizado"}), 400
+    # Permitir reactivación si está inactivo
+    if not sistema_operativo.activo and data.get("activo", False):
+        sistema_operativo.activo = True
 
-    nombre = data.get("nombre", sistema_operativo.nombre).strip()
-    version = data.get("version", sistema_operativo.version).strip()
-
-    if not nombre or not version:
-        return jsonify({"msg": "El nombre y la versión son obligatorios"}), 400
-
-    sistema_operativo.nombre = nombre
-    sistema_operativo.version = version
+    sistema_operativo.nombre = data.get("nombre", sistema_operativo.nombre).strip()
+    sistema_operativo.version = data.get("version", sistema_operativo.version).strip()
     sistema_operativo.descripcion = data.get("descripcion", sistema_operativo.descripcion).strip()
     sistema_operativo.fecha_modificacion = datetime.utcnow()
 
     db.session.commit()
     return jsonify(sistema_operativo.serialize()), 200
 
-
 @api.route('/sistemas-operativos/<int:so_id>', methods=['DELETE'])
 def delete_sistema_operativo(so_id):
+    """ Borrado lógico de un sistema operativo por ID """
     sistema_operativo = SistemaOperativo.query.get(so_id)
 
     if not sistema_operativo:
@@ -269,7 +280,7 @@ def create_servidor():
     if not nombre or not tipo or not servicio_id or not capa_id or not ambiente_id or not dominio_id or not sistema_operativo_id or not estatus_id:
         return jsonify({"msg": "Todos los campos obligatorios deben estar presentes"}), 400
 
-    # Verificar si ya existe un servidor con el mismo ID pero inactivo
+    # Verificar si ya existe un servidor con el mismo nombre pero inactivo
     servidor_existente = Servidor.query.filter_by(nombre=nombre, activo=False).first()
 
     if servidor_existente:

@@ -71,8 +71,8 @@ class ServidorView(BaseView):  # 🔹 Se cambió a `BaseView` para incluir "acti
     
     column_list = [
         "id", "nombre", "tipo", "ip", "balanceador", "vlan", "descripcion", "link",
-        "servicio", "capa", "ambiente", "dominio", "sistema_operativo", "estatus", "activo", "fecha_modificacion"
-    ]  # 🔹 Se agregó "id" y "fecha_modificacion" para mejor gestión
+        "servicio", "capa", "ambiente", "dominio", "sistema_operativo", "estatus", "activo", "fecha_creacion", "fecha_modificacion"
+    ]  # 🔹 Se agregó "id", "fecha_creacion" y "fecha_modificacion" para mejor gestión
 
     column_filters = ["activo", "tipo", "servicio", "capa", "ambiente", "dominio", "sistema_operativo", "estatus"]
     column_editable_list = ["activo"]  # 🔹 Permitir edición rápida del estado activo
