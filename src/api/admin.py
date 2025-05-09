@@ -25,8 +25,8 @@ def estatus_query():
 
 class BaseView(ModelView):
     """ Modelo base para vistas en Flask-Admin con fechas de creación, modificación y borrado lógico """
-    column_list = ["nombre", "descripcion", "activo", "fecha_creacion", "fecha_modificacion"]
-    column_sortable_list = ["fecha_creacion", "fecha_modificacion"]
+    column_list = ["id", "nombre", "descripcion", "activo", "fecha_creacion", "fecha_modificacion"]
+    column_sortable_list = ["id", "fecha_creacion", "fecha_modificacion"]
     column_filters = ["activo", "fecha_creacion", "fecha_modificacion"]
     column_editable_list = ["activo"]  # 🔹 Permitir edición rápida del estado activo
 
@@ -56,7 +56,7 @@ class DominioView(BaseView):
 
 class SistemaOperativoView(BaseView):
     """ Vista personalizada para gestionar sistemas operativos en Flask-Admin """
-    column_list = ["nombre", "version", "descripcion", "activo", "fecha_creacion", "fecha_modificacion"]
+    column_list = ["id", "nombre", "version", "descripcion", "activo", "fecha_creacion", "fecha_modificacion"]
     form_args = {
         "nombre": {"validators": [lambda form, field: field.data or field.errors.append("El nombre es obligatorio")]},
         "version": {"validators": [lambda form, field: field.data or field.errors.append("La versión es obligatoria")]}
@@ -66,13 +66,16 @@ class EstatusView(BaseView):
     """ Vista personalizada para gestionar estatus en Flask-Admin """
     pass
 
-class ServidorView(ModelView):
+class ServidorView(BaseView):  # 🔹 Se cambió a `BaseView` para incluir "activo"
     """ Vista personalizada para gestionar servidores en Flask-Admin """
     
     column_list = [
-        "nombre", "tipo", "ip", "balanceador", "vlan", "descripcion", "link",
-        "servicio", "capa", "ambiente", "dominio", "sistema_operativo", "estatus"
-    ]
+        "id", "nombre", "tipo", "ip", "balanceador", "vlan", "descripcion", "link",
+        "servicio", "capa", "ambiente", "dominio", "sistema_operativo", "estatus", "activo", "fecha_modificacion"
+    ]  # 🔹 Se agregó "id" y "fecha_modificacion" para mejor gestión
+
+    column_filters = ["activo", "tipo", "servicio", "capa", "ambiente", "dominio", "sistema_operativo", "estatus"]
+    column_editable_list = ["activo"]  # 🔹 Permitir edición rápida del estado activo
 
     # Mostrar los nombres en lugar de los IDs en la vista de administración
     column_formatters = {
@@ -104,10 +107,10 @@ class ServidorView(ModelView):
     }
 
 def setup_admin(app):
-    """ Configurar Flask-Admin para gestionar servidores """
+    """ Configurar Flask-Admin para gestionar modelos """
     app.secret_key = os.environ.get('FLASK_APP_KEY', 'sample key')
     app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
-    admin = Admin(app, name='Gestión de Servidores', template_mode='bootstrap3')
+    admin = Admin(app, name='Gestión de Recursos', template_mode='bootstrap3')
 
     # Agregar modelos al panel de administración
     admin.add_view(ServicioView(Servicio, db.session))
@@ -116,4 +119,4 @@ def setup_admin(app):
     admin.add_view(DominioView(Dominio, db.session))
     admin.add_view(SistemaOperativoView(SistemaOperativo, db.session))
     admin.add_view(EstatusView(Estatus, db.session))
-    admin.add_view(ServidorView(Servidor, db.session))
+    admin.add_view(ServidorView(Servidor, db.session))  # 🔹 Se usa `ServidorView` para incluir "activo"

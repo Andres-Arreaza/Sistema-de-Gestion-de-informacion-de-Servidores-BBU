@@ -254,9 +254,9 @@ def delete_estatus(estatus_id):
 ### **Rutas para Servidor**
 @api.route('/servidores', methods=['POST'])
 def create_servidor():
+    """ Crear un nuevo servidor por ID, reutilizando nombres eliminados """
     data = request.get_json()
 
-    # 🔹 Validar que los campos obligatorios estén presentes
     nombre = data.get("nombre", "").strip()
     tipo = data.get("tipo", "").strip()
     servicio_id = data.get("servicio_id")
@@ -269,6 +269,17 @@ def create_servidor():
     if not nombre or not tipo or not servicio_id or not capa_id or not ambiente_id or not dominio_id or not sistema_operativo_id or not estatus_id:
         return jsonify({"msg": "Todos los campos obligatorios deben estar presentes"}), 400
 
+    # Verificar si ya existe un servidor con el mismo ID pero inactivo
+    servidor_existente = Servidor.query.filter_by(nombre=nombre, activo=False).first()
+
+    if servidor_existente:
+        # Reactivar el servidor en lugar de crear uno nuevo
+        servidor_existente.activo = True
+        servidor_existente.fecha_modificacion = datetime.utcnow()
+        db.session.commit()
+        return jsonify(servidor_existente.serialize()), 200
+
+    # Crear un nuevo servidor si no existe
     nuevo_servidor = Servidor(
         nombre=nombre,
         tipo=tipo,
@@ -282,7 +293,9 @@ def create_servidor():
         ambiente_id=ambiente_id,
         dominio_id=dominio_id,
         sistema_operativo_id=sistema_operativo_id,
-        estatus_id=estatus_id
+        estatus_id=estatus_id,
+        activo=True,
+        fecha_creacion=datetime.utcnow()
     )
 
     db.session.add(nuevo_servidor)
@@ -291,38 +304,30 @@ def create_servidor():
 
 @api.route('/servidores/<int:servidor_id>', methods=['PUT'])
 def update_servidor(servidor_id):
+    """ Actualizar un servidor por ID """
     data = request.get_json()
     servidor = Servidor.query.get(servidor_id)
 
     if not servidor:
         return jsonify({"msg": f"Servidor con ID {servidor_id} no encontrado"}), 404
 
-    # 🔹 Validar que los campos obligatorios estén presentes
-    nombre = data.get("nombre", servidor.nombre).strip()
-    tipo = data.get("tipo", servidor.tipo).strip()
-    servicio_id = data.get("servicio_id", servidor.servicio_id)
-    capa_id = data.get("capa_id", servidor.capa_id)
-    ambiente_id = data.get("ambiente_id", servidor.ambiente_id)
-    dominio_id = data.get("dominio_id", servidor.dominio_id)
-    sistema_operativo_id = data.get("sistema_operativo_id", servidor.sistema_operativo_id)
-    estatus_id = data.get("estatus_id", servidor.estatus_id)
+    # Permitir reactivación si está inactivo
+    if not servidor.activo and data.get("activo", False):
+        servidor.activo = True
 
-    if not nombre or not tipo or not servicio_id or not capa_id or not ambiente_id or not dominio_id or not sistema_operativo_id or not estatus_id:
-        return jsonify({"msg": "Todos los campos obligatorios deben estar presentes"}), 400
-
-    servidor.nombre = nombre
-    servidor.tipo = tipo
+    servidor.nombre = data.get("nombre", servidor.nombre).strip()
+    servidor.tipo = data.get("tipo", servidor.tipo).strip()
     servidor.ip = data.get("ip", servidor.ip)
     servidor.balanceador = data.get("balanceador", servidor.balanceador)
     servidor.vlan = data.get("vlan", servidor.vlan)
     servidor.descripcion = data.get("descripcion", servidor.descripcion)
     servidor.link = data.get("link", servidor.link)
-    servidor.servicio_id = servicio_id
-    servidor.capa_id = capa_id
-    servidor.ambiente_id = ambiente_id
-    servidor.dominio_id = dominio_id
-    servidor.sistema_operativo_id = sistema_operativo_id
-    servidor.estatus_id = estatus_id
+    servidor.servicio_id = data.get("servicio_id", servidor.servicio_id)
+    servidor.capa_id = data.get("capa_id", servidor.capa_id)
+    servidor.ambiente_id = data.get("ambiente_id", servidor.ambiente_id)
+    servidor.dominio_id = data.get("dominio_id", servidor.dominio_id)
+    servidor.sistema_operativo_id = data.get("sistema_operativo_id", servidor.sistema_operativo_id)
+    servidor.estatus_id = data.get("estatus_id", servidor.estatus_id)
     servidor.fecha_modificacion = datetime.utcnow()
 
     db.session.commit()
@@ -330,6 +335,7 @@ def update_servidor(servidor_id):
 
 @api.route('/servidores/<int:servidor_id>', methods=['DELETE'])
 def delete_servidor(servidor_id):
+    """ Borrado lógico de un servidor por ID """
     servidor = Servidor.query.get(servidor_id)
 
     if not servidor:
@@ -338,7 +344,6 @@ def delete_servidor(servidor_id):
     if not servidor.activo:
         return jsonify({"msg": f"Servidor con ID {servidor_id} ya está eliminado"}), 400
 
-    # 🔹 Borrado lógico
     servidor.activo = False
     servidor.fecha_modificacion = datetime.utcnow()
     db.session.commit()
