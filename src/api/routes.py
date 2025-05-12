@@ -135,7 +135,13 @@ def delete_servicio(servicio_id):
 ### **Rutas para Capa**
 @api.route('/capas', methods=['GET'])
 def get_capas():
-    return get_generic(Capa)
+    """ Obtener todas las capas con solo nombre y descripción """
+    capas = Capa.query.filter_by(activo=True).all()
+    return jsonify([{ 
+        "id": capa.id, 
+        "nombre": capa.nombre, 
+        "descripcion": capa.descripcion 
+    } for capa in capas]), 200
 
 @api.route('/capas/<int:capa_id>', methods=['GET'])
 def get_capa(capa_id):
@@ -143,7 +149,28 @@ def get_capa(capa_id):
 
 @api.route('/capas', methods=['POST'])
 def create_capa():
-    return create_generic(Capa)
+    data = request.get_json()
+    nombre_capa = data.get("nombre")
+
+    # 🔹 Verificar si la capa ya existe
+    capa_existente = Capa.query.filter_by(nombre=nombre_capa).first()
+
+    if capa_existente and capa_existente.activo:
+        return jsonify({"error": "El nombre de la capa ya está registrado"}), 400
+
+    # 🔹 Si la capa existe pero está eliminada, reactivarla
+    if capa_existente and not capa_existente.activo:
+        capa_existente.activo = True
+        capa_existente.descripcion = data.get("descripcion", capa_existente.descripcion)
+        db.session.commit()
+        return jsonify({"mensaje": "Capa reactivada exitosamente", "capa": capa_existente.serialize()}), 200
+
+    # 🔹 Crear una nueva capa si no existe
+    nueva_capa = Capa(nombre=nombre_capa, descripcion=data.get("descripcion"), activo=True)
+    db.session.add(nueva_capa)
+    db.session.commit()
+
+    return jsonify({"mensaje": "Capa creada exitosamente", "capa": nueva_capa.serialize()}), 201
 
 @api.route('/capas/<int:capa_id>', methods=['PUT'])
 def update_capa(capa_id):
@@ -156,7 +183,13 @@ def delete_capa(capa_id):
 ### **Rutas para Ambiente**
 @api.route('/ambientes', methods=['GET'])
 def get_ambientes():
-    return get_generic(Ambiente)
+    """ Obtener todos los ambientes con solo nombre y descripción """
+    ambientes = Ambiente.query.filter_by(activo=True).all()
+    return jsonify([{ 
+        "id": ambiente.id, 
+        "nombre": ambiente.nombre, 
+        "descripcion": ambiente.descripcion 
+    } for ambiente in ambientes]), 200
 
 @api.route('/ambientes/<int:ambiente_id>', methods=['GET'])
 def get_ambiente(ambiente_id):
@@ -164,7 +197,28 @@ def get_ambiente(ambiente_id):
 
 @api.route('/ambientes', methods=['POST'])
 def create_ambiente():
-    return create_generic(Ambiente)
+    data = request.get_json()
+    nombre_ambiente = data.get("nombre")
+
+    # 🔹 Verificar si el ambiente ya existe
+    ambiente_existente = Ambiente.query.filter_by(nombre=nombre_ambiente).first()
+
+    if ambiente_existente and ambiente_existente.activo:
+        return jsonify({"error": "El nombre del ambiente ya está registrado"}), 400
+
+    # 🔹 Si el ambiente existe pero está eliminado, reactivarlo
+    if ambiente_existente and not ambiente_existente.activo:
+        ambiente_existente.activo = True
+        ambiente_existente.descripcion = data.get("descripcion", ambiente_existente.descripcion)
+        db.session.commit()
+        return jsonify({"mensaje": "Ambiente reactivado exitosamente", "ambiente": ambiente_existente.serialize()}), 200
+
+    # 🔹 Crear un nuevo ambiente si no existe
+    nuevo_ambiente = Ambiente(nombre=nombre_ambiente, descripcion=data.get("descripcion"), activo=True)
+    db.session.add(nuevo_ambiente)
+    db.session.commit()
+
+    return jsonify({"mensaje": "Ambiente creado exitosamente", "ambiente": nuevo_ambiente.serialize()}), 201
 
 @api.route('/ambientes/<int:ambiente_id>', methods=['PUT'])
 def update_ambiente(ambiente_id):
@@ -177,7 +231,13 @@ def delete_ambiente(ambiente_id):
 ### **Rutas para Dominio**
 @api.route('/dominios', methods=['GET'])
 def get_dominios():
-    return get_generic(Dominio)
+    """ Obtener todos los dominios con solo nombre y descripción """
+    dominios = Dominio.query.filter_by(activo=True).all()
+    return jsonify([{ 
+        "id": dominio.id, 
+        "nombre": dominio.nombre, 
+        "descripcion": dominio.descripcion 
+    } for dominio in dominios]), 200
 
 @api.route('/dominios/<int:dominio_id>', methods=['GET'])
 def get_dominio(dominio_id):
@@ -185,7 +245,28 @@ def get_dominio(dominio_id):
 
 @api.route('/dominios', methods=['POST'])
 def create_dominio():
-    return create_generic(Dominio)
+    data = request.get_json()
+    nombre_dominio = data.get("nombre")
+
+    # 🔹 Verificar si el dominio ya existe
+    dominio_existente = Dominio.query.filter_by(nombre=nombre_dominio).first()
+
+    if dominio_existente and dominio_existente.activo:
+        return jsonify({"error": "El nombre del dominio ya está registrado"}), 400
+
+    # 🔹 Si el dominio existe pero está eliminado, reactivarlo
+    if dominio_existente and not dominio_existente.activo:
+        dominio_existente.activo = True
+        dominio_existente.descripcion = data.get("descripcion", dominio_existente.descripcion)
+        db.session.commit()
+        return jsonify({"mensaje": "Dominio reactivado exitosamente", "dominio": dominio_existente.serialize()}), 200
+
+    # 🔹 Crear un nuevo dominio si no existe
+    nuevo_dominio = Dominio(nombre=nombre_dominio, descripcion=data.get("descripcion"), activo=True)
+    db.session.add(nuevo_dominio)
+    db.session.commit()
+
+    return jsonify({"mensaje": "Dominio creado exitosamente", "dominio": nuevo_dominio.serialize()}), 201
 
 @api.route('/dominios/<int:dominio_id>', methods=['PUT'])
 def update_dominio(dominio_id):

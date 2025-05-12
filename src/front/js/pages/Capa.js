@@ -1,95 +1,95 @@
 import React, { useEffect, useState } from "react";
 
-const Servicio = () => {
-    const [servicios, setServicios] = useState([]);
+const Capa = () => {
+    const [capas, setCapas] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
     const [confirmModalVisible, setConfirmModalVisible] = useState(false);
     const [alerta, setAlerta] = useState({ mensaje: "", tipo: "" });
-    const [servicioActual, setServicioActual] = useState({ id: null, nombre: "", descripcion: "" });
-    const [servicioAEliminar, setServicioAEliminar] = useState(null);
+    const [capaActual, setCapaActual] = useState({ id: null, nombre: "", descripcion: "" });
+    const [capaAEliminar, setCapaAEliminar] = useState(null);
 
-    // 🔹 Obtener servicios desde la API
-    const fetchServicios = () => {
-        fetch(process.env.BACKEND_URL + "/api/servicios")
+    // 🔹 Obtener capas desde la API
+    const fetchCapas = () => {
+        fetch(process.env.BACKEND_URL + "/api/capas")
             .then((response) => {
-                if (!response.ok) throw new Error("Error al obtener servicios.");
+                if (!response.ok) throw new Error("Error al obtener capas.");
                 return response.json();
             })
             .then((data) => {
-                console.log("Servicios recibidos:", data);
-                setServicios(data);
+                console.log("Capas recibidas:", data);
+                setCapas(data);
             })
-            .catch((error) => console.error("Error al obtener servicios:", error));
+            .catch((error) => console.error("Error al obtener capas:", error));
     };
 
     useEffect(() => {
-        fetchServicios();
+        fetchCapas();
     }, []);
 
     // 🔹 Manejar cambios en el formulario
     const handleChange = (e) => {
-        setServicioActual({ ...servicioActual, [e.target.name]: e.target.value });
+        setCapaActual({ ...capaActual, [e.target.name]: e.target.value });
     };
 
-    // 🔹 Crear o actualizar servicio
+    // 🔹 Crear o actualizar capa
     const handleSubmit = (e) => {
         e.preventDefault();
-        const metodo = servicioActual.id ? "PUT" : "POST";
-        const url = servicioActual.id
-            ? `${process.env.BACKEND_URL}/api/servicios/${servicioActual.id}`
-            : `${process.env.BACKEND_URL}/api/servicios`;
+        const metodo = capaActual.id ? "PUT" : "POST";
+        const url = capaActual.id
+            ? `${process.env.BACKEND_URL}/api/capas/${capaActual.id}`
+            : `${process.env.BACKEND_URL}/api/capas`;
 
         fetch(url, {
             method: metodo,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(servicioActual),
+            body: JSON.stringify(capaActual),
         })
             .then((response) => response.json())
             .then((data) => {
                 if (data.error) {
                     setAlerta({ mensaje: `${data.error}`, tipo: "error" });
                 } else {
-                    fetchServicios();
+                    fetchCapas();
                     setModalVisible(false);
-                    setAlerta({ mensaje: servicioActual.id ? "✅ Servicio actualizado" : "✅ Servicio creado", tipo: "success" });
+                    setAlerta({ mensaje: capaActual.id ? "✅ Capa actualizada" : "✅ Capa creada", tipo: "success" });
                 }
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
             .catch((error) => {
-                console.error("Error al guardar servicio:", error);
-                setAlerta({ mensaje: "❌ Error al guardar el servicio", tipo: "error" });
+                console.error("Error al guardar capa:", error);
+                setAlerta({ mensaje: "❌ Error al guardar la capa", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             });
     };
 
     // 🔹 Mostrar modal de confirmación antes de eliminar
-    const handleDeleteConfirm = (servicio) => {
-        setServicioAEliminar(servicio);
+    const handleDeleteConfirm = (capa) => {
+        setCapaAEliminar(capa);
         setConfirmModalVisible(true);
     };
 
-    // 🔹 Eliminar servicio (borrado lógico)
+    // 🔹 Eliminar capa (borrado lógico)
     const handleDelete = () => {
-        if (!servicioAEliminar) return;
+        if (!capaAEliminar) return;
 
-        fetch(`${process.env.BACKEND_URL}/api/servicios/${servicioAEliminar.id}`, { method: "DELETE" })
+        fetch(`${process.env.BACKEND_URL}/api/capas/${capaAEliminar.id}`, { method: "DELETE" })
             .then((response) => response.json())
             .then(() => {
-                fetchServicios();
+                fetchCapas();
                 setConfirmModalVisible(false);
-                setAlerta({ mensaje: "✅ Servicio eliminado", tipo: "success" });
+                setAlerta({ mensaje: "✅ Capa eliminada", tipo: "success" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
             .catch((error) => {
-                console.error("Error al eliminar servicio:", error);
-                setAlerta({ mensaje: "❌ Error al eliminar el servicio", tipo: "error" });
+                console.error("Error al eliminar capa:", error);
+                setAlerta({ mensaje: "❌ Error al eliminar la capa", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             });
     };
 
     return (
-        <div className="servicio-container">
-            <h1 className="servicio-title">SERVICIOS</h1>
+        <div className="capa-container">
+            <h1 className="capa-title">CAPAS</h1>
 
             {/* 🔹 Mensaje de alerta */}
             {alerta.mensaje && (
@@ -99,21 +99,21 @@ const Servicio = () => {
             )}
 
             {/* 🔹 Botón para abrir el modal de creación */}
-            <button className="crear-servicio-btn" onClick={() => {
-                setServicioActual({ id: null, nombre: "", descripcion: "" });
+            <button className="crear-capa-btn" onClick={() => {
+                setCapaActual({ id: null, nombre: "", descripcion: "" });
                 setModalVisible(true);
             }}>
-                Crear Servicio
+                Crear Capa
             </button>
 
             {/* 🔹 Modal de creación/edición */}
             {modalVisible && (
                 <div className="modal-overlay" onClick={() => setModalVisible(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h2>{servicioActual.id ? "Editar Servicio" : "Crear Nuevo Servicio"}</h2>
+                        <h2>{capaActual.id ? "Editar Capa" : "Crear Nueva Capa"}</h2>
                         <form onSubmit={handleSubmit}>
-                            <input type="text" name="nombre" placeholder="Nombre del servicio" value={servicioActual.nombre} onChange={handleChange} required />
-                            <input type="text" name="descripcion" placeholder="Descripción" value={servicioActual.descripcion} onChange={handleChange} required />
+                            <input type="text" name="nombre" placeholder="Nombre de la capa" value={capaActual.nombre} onChange={handleChange} required />
+                            <input type="text" name="descripcion" placeholder="Descripción" value={capaActual.descripcion} onChange={handleChange} required />
                             <div className="modal-buttons">
                                 <button type="submit" className="guardar-btn">Guardar</button>
                                 <button type="button" className="cerrar-btn" onClick={() => setModalVisible(false)}>Cerrar</button>
@@ -127,8 +127,8 @@ const Servicio = () => {
             {confirmModalVisible && (
                 <div className="modal-overlay" onClick={() => setConfirmModalVisible(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h2>¿Seguro que deseas eliminar este servicio?</h2>
-                        <p>{servicioAEliminar?.nombre}</p>
+                        <h2>¿Seguro que deseas eliminar esta capa?</h2>
+                        <p>{capaAEliminar?.nombre}</p>
                         <div className="modal-delete-buttons">
                             <button className="eliminar-confirm-btn" onClick={handleDelete}>Eliminar</button>
                             <button className="cerrar-modal-btn" onClick={() => setConfirmModalVisible(false)}>Cancelar</button>
@@ -137,30 +137,30 @@ const Servicio = () => {
                 </div>
             )}
 
-            {/* 🔹 Lista de servicios con botones de editar y eliminar al lado del nombre */}
-            <div className="servicio-grid">
-                {servicios.length > 0 ? (
-                    servicios.map((servicio) => (
-                        <div key={servicio.id} className="servicio-item">
-                            <div className="servicio-header">
-                                <strong className="name">{servicio.nombre}</strong>
-                                <div className="servicio-actions">
+            {/* 🔹 Lista de capas con botones de editar y eliminar al lado del nombre */}
+            <div className="capa-grid">
+                {capas.length > 0 ? (
+                    capas.map((capa) => (
+                        <div key={capa.id} className="capa-item">
+                            <div className="capa-header">
+                                <strong className="name">{capa.nombre}</strong>
+                                <div className="capa-actions">
                                     <button className="editar-btn" onClick={() => {
-                                        setServicioActual(servicio);
+                                        setCapaActual(capa);
                                         setModalVisible(true);
                                     }}>✏️</button>
-                                    <button className="eliminar-btn" onClick={() => handleDeleteConfirm(servicio)}>🗑️</button>
+                                    <button className="eliminar-btn" onClick={() => handleDeleteConfirm(capa)}>🗑️</button>
                                 </div>
                             </div>
-                            <p className="descripcion">{servicio.descripcion}</p>
+                            <p className="descripcion">{capa.descripcion}</p>
                         </div>
                     ))
                 ) : (
-                    <p>No hay servicios disponibles.</p>
+                    <p>No hay capas disponibles.</p>
                 )}
             </div>
         </div>
     );
 };
 
-export default Servicio;
+export default Capa;

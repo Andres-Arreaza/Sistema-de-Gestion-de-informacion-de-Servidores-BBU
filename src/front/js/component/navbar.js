@@ -44,10 +44,10 @@ export const Navbar = () => {
                             <span className="nav-link dropdown-toggle">Administrar</span>
                             {isDropdownOpen && (
                                 <div className="dropdown-menu">
-                                    <Link className="dropdown-item" to="/servicio">Servicios</Link> {/* 🔹 Se corrigió la ruta */}
-                                    <Link className="dropdown-item" to="/layer">Capa</Link>
-                                    <Link className="dropdown-item" to="/environment">Ambiente</Link>
-                                    <Link className="dropdown-item" to="/domain">Dominio</Link>
+                                    <Link className="dropdown-item" to="/servicio">Servicios</Link>
+                                    <Link className="dropdown-item" to="/capa">Capa</Link>
+                                    <Link className="dropdown-item" to="/ambiente">Ambiente</Link>
+                                    <Link className="dropdown-item" to="/dominio">Dominio</Link>
                                     <Link className="dropdown-item" to="/os">Sistema Operativo</Link>
                                     <Link className="dropdown-item" to="/status">Estatus</Link>
                                     <div className="dropdown-divider"></div>
