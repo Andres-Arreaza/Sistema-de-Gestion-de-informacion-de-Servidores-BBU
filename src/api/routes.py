@@ -83,9 +83,17 @@ def delete_generic(model, record_id):
     return delete_record(record)
 
 ### **Rutas para Servicio**
+
+#########################################################################
 @api.route('/servicios', methods=['GET'])
 def get_servicios():
-    return get_generic(Servicio)
+    """ Obtener todos los servicios con solo nombre y descripción """
+    servicios = Servicio.query.filter_by(activo=True).all()
+    return jsonify([{
+        "id": servicio.id,
+        "nombre": servicio.nombre,
+        "descripcion": servicio.descripcion
+    } for servicio in servicios]), 200
 
 @api.route('/servicios/<int:servicio_id>', methods=['GET'])
 def get_servicio(servicio_id):
@@ -93,7 +101,28 @@ def get_servicio(servicio_id):
 
 @api.route('/servicios', methods=['POST'])
 def create_servicio():
-    return create_generic(Servicio)
+    data = request.get_json()
+    nombre_servicio = data.get("nombre")
+
+    # 🔹 Verificar si el servicio ya existe
+    servicio_existente = Servicio.query.filter_by(nombre=nombre_servicio).first()
+
+    if servicio_existente and servicio_existente.activo:
+        return jsonify({"error": "El nombre del servicio ya está registrado"}), 400
+
+    # 🔹 Si el servicio existe pero está eliminado, reactivarlo
+    if servicio_existente and not servicio_existente.activo:
+        servicio_existente.activo = True
+        servicio_existente.descripcion = data.get("descripcion", servicio_existente.descripcion)
+        db.session.commit()
+        return jsonify({"mensaje": "Servicio reactivado exitosamente", "servicio": servicio_existente.serialize()}), 200
+
+    # 🔹 Crear un nuevo servicio si no existe
+    nuevo_servicio = Servicio(nombre=nombre_servicio, descripcion=data.get("descripcion"), activo=True)
+    db.session.add(nuevo_servicio)
+    db.session.commit()
+
+    return jsonify({"mensaje": "Servicio creado exitosamente", "servicio": nuevo_servicio.serialize()}), 201
 
 @api.route('/servicios/<int:servicio_id>', methods=['PUT'])
 def update_servicio(servicio_id):

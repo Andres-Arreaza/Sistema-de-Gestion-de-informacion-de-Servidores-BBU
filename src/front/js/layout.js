@@ -9,6 +9,7 @@ import { Footer } from "./component/footer";
 
 import { Home } from "./pages/home";
 import { ServerList } from "./pages/ServerList";
+import Servicio from "./pages/Servicio"; // 🔹 Se agregó la importación
 
 const Layout = () => {
     const basename = process.env.BASENAME || "";
@@ -23,6 +24,7 @@ const Layout = () => {
                     <Routes>
                         <Route element={<Home />} path="/" />
                         <Route element={<ServerList />} path="/servers" />
+                        <Route element={<Servicio />} path="/servicio" /> {/* 🔹 Se agregó la ruta */}
                         <Route element={<h1>Not found!</h1>} path="*" />
                     </Routes>
                     <Footer />

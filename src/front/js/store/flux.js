@@ -31,6 +31,19 @@ const getState = ({ getStore, getActions, setStore }) => {
                 } catch (error) {
                     console.error("Error cargando mensaje:", error);
                 }
+            },
+
+            getServices: async () => {
+                try {
+                    const resp = await fetch(process.env.BACKEND_URL + "/api/servicios");
+                    if (!resp.ok) throw new Error("Error al obtener servicios.");
+
+                    const data = await resp.json();
+                    setStore({ services: data });
+                    return data;
+                } catch (error) {
+                    console.error("Error cargando servicios:", error);
+                }
             }
         }
     };

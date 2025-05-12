@@ -44,7 +44,7 @@ export const Navbar = () => {
                             <span className="nav-link dropdown-toggle">Administrar</span>
                             {isDropdownOpen && (
                                 <div className="dropdown-menu">
-                                    <Link className="dropdown-item" to="/service">Servicio</Link>
+                                    <Link className="dropdown-item" to="/servicio">Servicios</Link> {/* 🔹 Se corrigió la ruta */}
                                     <Link className="dropdown-item" to="/layer">Capa</Link>
                                     <Link className="dropdown-item" to="/environment">Ambiente</Link>
                                     <Link className="dropdown-item" to="/domain">Dominio</Link>
@@ -62,13 +62,6 @@ export const Navbar = () => {
                                 <span className="material-symbols-outlined">home</span>
                             </Link>
                         </li>
-
-
-                        {/* Seguridad 
-                        <li className={`nav-item ${location.pathname === "/security" ? "active" : ""}`}>
-                            <Link className="nav-link" to="/security">Seguridad</Link>
-                        </li>
-                        */}
                     </ul>
                 </div>
             </div>
