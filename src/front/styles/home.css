@@ -1,46 +1,121 @@
-/* Estilos específicos de Home */
-.home-container {
-    text-align: center;
-    padding: 50px 20px;
-}
-
-/* Título principal */
-.title {
-    width: 800px;
-    margin: auto;
-    font-size: 40px;
-    color: #ffffff;
-}
-
-/* Subtítulo */
-.subtitle {
-    font-family: "Caveat", cursive;
-    font-optical-sizing: auto;
-    font-weight: 400; /* Puedes cambiar entre 400 y 700 */
-    font-style: normal;
-    font-size:40px;
-    color: #ffffff;
-}
-
 /* Variables globales */
 :root {
-    --paddings-top: 60px;
-    --paddings-top-mobile: 48px;
-    --paddings-bottom: 60px;
-    --paddings-bottom-mobile: 48px;
-    --margins-top: 0px;
-    --margins-top-mobile: 0px;
-    --margins-bottom: 0px;
-    --margins-bottom-mobile: 0px;
-    --gradient: linear-gradient(93.29deg, #1A61AB -12.85%, #007953 115.58%);
+  --paddings-top: 60px;
+  --paddings-bottom: 60px;
+  --margins-top: 0px;
+  --margins-bottom: 0px;
+  --gradient: linear-gradient(93.29deg, #1a61ab -12.85%, #007953 115.58%);
 }
 
-/* Contenedor principal */
+/* 🔹 Animaciones */
+@keyframes fadeUpSlow {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zoomFadeInSlow {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 🔹 Contenedor con gradiente */
 .home-container {
-    padding-top: var(--paddings-top);
-    padding-bottom: var(--paddings-bottom);
-    margin-top: var(--margins-top);
-    margin-bottom: var(--margins-bottom);
-    background: var(--gradient);
-    text-align: center;
+  padding-top: var(--paddings-top);
+  padding-bottom: var(--paddings-bottom);
+  margin-top: var(--margins-top);
+  margin-bottom: var(--margins-bottom);
+  background: var(--gradient);
+  text-align: center;
+}
+
+/* 🔹 Título principal (Animación de elevación más lenta) */
+.title {
+  width: 800px;
+  margin: auto;
+  font-size: 40px;
+  color: #ffffff;
+  animation: fadeUpSlow 1s ease-out; /* 🔹 Aparece con elevación más lenta */
+}
+
+/* 🔹 Subtítulo (Animación de elevación más lenta) */
+.subtitle {
+  font-family: "Caveat", cursive;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 40px;
+  color: #ffffff;
+  animation: fadeUpSlow 1s ease-out; /* 🔹 Aparece con elevación más lenta */
+}
+
+/* 🔹 Contenedor de servicios (Sin animación) */
+.servicios-container {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: #f8f9fa;
+}
+
+/* 🔹 Título de servicios (Sin animación) */
+.services-title {
+  font-size: 30px;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+/* 🔹 Lista de servicios (Sin animación) */
+.servicios-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+}
+
+/* 🔹 Elementos de la lista de servicios (Sin animación) */
+.servicio-item {
+  background-color: #ffffff;
+  padding: 10px;
+  margin: 5px auto;
+  border-radius: 5px;
+  font-size: 18px;
+  width: 300px;
+  text-align: center;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 🔹 Mensaje cuando no hay servicios (Sin animación) */
+.no-services {
+  font-size: 18px;
+  color: #333;
+  margin-top: 10px;
+}
+
+/* 🔹 Botón de acción (Animación de zoom más lenta) */
+.home-actions {
+  margin-top: 20px;
+}
+
+.home-btn {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 5px;
+  animation: zoomFadeInSlow 1s ease-out; /* 🔹 Aparece con zoom más lento */
+}
+
+/* 🔹 Hover en el botón */
+.home-btn:hover {
+  background-color: #0056b3;
 }

@@ -1,56 +1,17 @@
-/* 🔹 Contenedor principal */
-.servidor-container {
-  padding: 20px;
-  text-align: center;
-  position: relative;
+/* Variables globales */
+:root {
+  --paddings-top: 30px;
+  --paddings-bottom: 30px;
+  --margins-top: 0px;
+  --margins-bottom: 0px;
+  --gradient: linear-gradient(93.29deg, #1a61ab -12.85%, #007953 115.58%);
 }
 
-/* 🔹 Título */
-.servidor-title {
-  font-size: 20px;
-  margin-bottom: 15px;
-}
-
-/* 🔹 Mensaje de alerta */
-.alerta {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 12px 20px;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  opacity: 0;
-  animation: fadeIn 0.5s ease-in-out forwards;
-}
-
-/* 🔹 Alertas positivas (verde) */
-.alerta.success {
-  background-color: #28a745;
-  color: white;
-}
-
-/* 🔹 Alertas negativas (rojo) */
-.alerta.error {
-  background-color: #dc3545;
-  color: white;
-}
-
-/* 🔹 Estilo para el icono de error */
-.alerta .icono {
-  color: white;
-  font-size: 18px;
-  margin-right: 8px;
-}
-
-/* 🔹 Animación de aparición */
-@keyframes fadeIn {
+/* 🔹 Animaciones */
+@keyframes fadeUpSlow {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(15px);
   }
   to {
     opacity: 1;
@@ -58,82 +19,107 @@
   }
 }
 
-/* 🔹 Botón para abrir el modal */
-.crear-servidor-btn {
-  background-color: #007953; /* 🔹 Verde oscuro */
+@keyframes zoomFadeInSlow {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 🔹 Animación de expansión para líneas */
+@keyframes expandLine {
+  from {
+    width: 0%;
+    opacity: 0;
+  }
+  to {
+    width: 30%;
+    opacity: 1;
+  }
+}
+
+/* 🔹 Animación de expansión para segunda línea */
+@keyframes expandLine2 {
+  from {
+    width: 0%;
+    opacity: 0;
+  }
+  to {
+    width: 25%;
+    opacity: 1;
+  }
+}
+
+/* 🔹 Contenedor principal */
+.servidores-container {
+  padding: 0px;
+  text-align: center;
+  position: relative;
+}
+
+/* 🔹 Encabezado del servidor con gradiente */
+.servidores-header {
+  padding-top: var(--paddings-top);
+  padding-bottom: var(--paddings-bottom);
+  margin-top: var(--margins-top);
+  margin-bottom: var(--margins-bottom);
+  background: var(--gradient);
+  text-align: center;
+}
+
+/* 🔹 Título (Animación de elevación más lenta) */
+.servidores-title {
+  font-size: 40px;
+  font-weight: bold;
   color: white;
-  padding: 10px 15px;
-  border: none;
+  margin-bottom: 25px;
+  animation: fadeUpSlow 1s ease-out;
+}
+
+/* 🔹 Botón para abrir el modal (Animación de zoom más lenta) */
+.crear-servidores-btn {
+  background-color: #ffff;
+  color: #006243;
+  padding: 7px 20px;
+  border: 2px solid #006847;
   border-radius: 5px;
   cursor: pointer;
-  margin: 0 auto; /* 🔹 Centrado */
-  display: block;
-  transition: background-color 0.3s ease;
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  animation: zoomFadeInSlow 1s ease-out;
 }
 
-.crear-servidor-btn:hover {
-  background-color: #006445;
-}
-
-/* 🔹 Tabla de servidores */
-.servidor-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  font-size: 12px; /* 🔹 Reduce el tamaño de la letra */
-}
-
-.servidor-table th,
-.servidor-table td {
-  border: 1px solid #ddd;
-  padding: 6px; /* 🔹 Reduce el espacio interno */
-  text-align: left;
-}
-
-.servidor-table th {
+/* 🔹 Nuevo Hover */
+.crear-servidores-btn:hover {
   background-color: #007953;
   color: white;
+  border: 2px solid rgb(0, 153, 104);
+  transform: scale(1.05);
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.25);
 }
 
-.servidor-table tr:nth-child(even) {
-  background-color: #f4f4f4;
+/* 🔹 Línea Blanca Debajo del Botón (Animación de expansión) */
+.linea-blanca {
+  margin: auto;
+  width: 30%;
+  height: 3px;
+  background-color: #ffffff89;
+  margin-bottom: 20px;
+  animation: expandLine 1s ease-out;
 }
 
-.servidor-table tr:hover {
-  background-color: #d6d6d6;
-}
-
-/* 🔹 Mostrar el link completo */
-.servidor-table a {
-  font-size: 12px; /* 🔹 Reduce el tamaño de los enlaces */
-  word-break: break-word; /* 🔹 Evita que los enlaces largos desborden */
-  color: #007bff;
-  text-decoration: none;
-}
-
-.servidor-table a:hover {
-  text-decoration: underline;
-}
-
-/* 🔹 Botones de editar y eliminar */
-.editar-btn,
-.eliminar-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 12px; /* 🔹 Reduce el tamaño de los botones */
-  padding: 4px 6px;
-  transition: background-color 0.3s ease;
-}
-
-.editar-btn:hover {
-  color: #007bff;
-  background-color: #d6d6d6;
-}
-
-.eliminar-btn:hover {
-  color: #dc3545;
-  background-color: #d6d6d6;
+/* 🔹 Segunda línea blanca (Animación de expansión) */
+.linea-blanca-2 {
+  margin: auto;
+  width: 25%;
+  height: 2.5px;
+  background-color: #ffffff89;
+  margin-top: 20px;
+  animation: expandLine2 1s ease-out;
 }
 
 /* 🔹 Modal */
@@ -147,7 +133,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  animation: fadeIn 0.3s ease-in-out;
   z-index: 1000;
 }
 
@@ -160,69 +145,5 @@
   width: 400px;
   max-height: 80vh;
   overflow-y: auto;
-  animation: scaleUp 0.3s ease-in-out;
-  font-size: 12px; /* 🔹 Reduce el tamaño de la letra en el modal */
-}
-
-/* 🔹 Animación de apertura */
-@keyframes scaleUp {
-  from {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* 🔹 Campos del formulario */
-.modal-content input,
-.modal-content select {
-  display: block;
-  width: 100%;
-  padding: 6px;
-  margin: 6px 0;
-  border: 1px solid #ccc;
-  border-radius: 5px;
   font-size: 12px;
-}
-
-/* 🔹 Contenedor de botones en el modal */
-.modal-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-}
-
-/* 🔹 Botón de guardar */
-.guardar-btn {
-  background-color: #007953;
-  color: white;
-  padding: 8px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  font-size: 12px;
-}
-
-.guardar-btn:hover {
-  background-color: #006445;
-}
-
-/* 🔹 Botón de cerrar */
-.cerrar-btn {
-  background-color: #dc3545;
-  color: white;
-  padding: 8px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  font-size: 12px;
-}
-
-.cerrar-btn:hover {
-  background-color: #b52b3a;
 }

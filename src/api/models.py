@@ -93,10 +93,10 @@ class Estatus(BaseModel):
         data.update({"nombre": self.nombre, "descripcion": self.descripcion})
         return data
 
-class Servidor(BaseModel):  # 🔹 Ahora hereda de `BaseModel` para incluir `activo`, `fecha_creacion` y `fecha_modificacion`
+class Servidor(BaseModel): 
     __tablename__ = 'servidores'
 
-    nombre = db.Column(db.String(120), nullable=False)  # 🔹 Se permite reutilizar nombres eliminados
+    nombre = db.Column(db.String(120), nullable=False) 
     tipo = db.Column(db.Enum(TipoServidorEnum), nullable=False)
     ip = db.Column(db.String(50), nullable=True)
     balanceador = db.Column(db.String(120), nullable=True)

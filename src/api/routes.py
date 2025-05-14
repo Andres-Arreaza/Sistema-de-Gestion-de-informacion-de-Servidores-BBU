@@ -406,11 +406,23 @@ def get_servidor(servidor_id):
 # 🔹 Crear un nuevo servidor
 @api.route("/servidores", methods=["POST"])
 def create_servidor():
-    data = request.get_json()
-    nuevo_servidor = Servidor(**data)
-    db.session.add(nuevo_servidor)
-    db.session.commit()
-    return jsonify({"mensaje": "Servidor creado exitosamente", "servidor": nuevo_servidor.serialize()}), 201
+    try:
+        data = request.get_json()
+
+        # 🔹 Validar que todos los campos requeridos están presentes
+        required_fields = ["nombre", "tipo", "ip", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id"]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Falta el campo {field}"}), 400
+
+        nuevo_servidor = Servidor(**data)
+        db.session.add(nuevo_servidor)
+        db.session.commit()
+        return jsonify({"mensaje": "Servidor creado exitosamente", "servidor": nuevo_servidor.serialize()}), 201
+
+    except Exception as e:
+        print(f"Error en create_servidor: {str(e)}")  # 🔹 Muestra el error en la consola
+        return jsonify({"error": "Error interno en el servidor"}), 500  
 
 # 🔹 Actualizar un servidor existente
 @api.route("/servidores/<int:servidor_id>", methods=["PUT"])
