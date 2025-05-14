@@ -15,8 +15,10 @@ export const Home = () => {
         <div>
             {/* 🔹 Sección con gradiente */}
             <div className="home-container">
+                <div className="linea-blanca-3"></div>
                 <h1 className="title">Gerencia de Operaciones de Canales Virtuales y Medios de Pagos</h1>
                 <p className="subtitle">"Gestiona y visualiza los servidores"</p>
+                <div className="linea-blanca-4"></div>
             </div>
 
             {/* 🔹 Sección de servicios debajo del gradiente */}

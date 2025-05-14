@@ -10,7 +10,7 @@ const TablaServidores = ({ setServidorActual, setModalVisible, handleDelete }) =
         const fetchServidores = async () => {
             try {
                 console.log("Obteniendo servidores...");
-                const response = await fetch("http://localhost:3001/admin/servidor/");
+                const response = await fetch("http://localhost:3001/servidores");
 
                 if (!response.ok) {
                     throw new Error(`Error en la API: ${response.status} ${response.statusText}`);
@@ -18,25 +18,37 @@ const TablaServidores = ({ setServidorActual, setModalVisible, handleDelete }) =
 
                 const data = await response.json();
                 console.log("Datos obtenidos:", data);
-                setServidores(data);
+                setServidores(data); // 🔹 Actualizar estado con los datos recibidos
             } catch (error) {
                 console.error("Error al cargar servidores:", error);
             }
         };
 
         fetchServidores();
-    }, []);
+    }, []); // 🔹 Se ejecuta solo al montar el componente
 
     const confirmarEliminacion = (servidor) => {
         setServidorAEliminar(servidor);
         setModalEliminarVisible(true);
     };
 
-    const eliminarServidor = () => {
-        if (servidorAEliminar) {
-            handleDelete(servidorAEliminar.id);
+    const eliminarServidor = async () => {
+        if (!servidorAEliminar) return;
+
+        try {
+            const response = await fetch(`http://localhost:3001/servidores/${servidorAEliminar.id}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error al eliminar servidor: ${response.status} ${response.statusText}`);
+            }
+
+            setServidores(servidores.filter((s) => s.id !== servidorAEliminar.id)); // 🔹 Actualiza la lista
             setModalEliminarVisible(false);
             setServidorAEliminar(null);
+        } catch (error) {
+            console.error("Error al eliminar servidor:", error);
         }
     };
 

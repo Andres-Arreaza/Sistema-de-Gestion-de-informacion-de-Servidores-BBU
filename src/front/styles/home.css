@@ -40,6 +40,25 @@
   text-align: center;
 }
 
+/* 🔹 Línea Blanca Debajo del Botón (Animación de expansión) */
+.linea-blanca-3 {
+  margin: auto;
+  width: 50%;
+  height: 3px;
+  background-color: #ffffff89;
+  margin-bottom: 20px;
+  animation: expandLine3 1s ease-out;
+}
+
+/* 🔹 Segunda línea blanca (Animación de expansión) */
+.linea-blanca-4 {
+  margin: auto;
+  width: 25%;
+  height: 2.5px;
+  background-color: #ffffff89;
+  margin-top: 20px;
+  animation: expandLine4 1s ease-out;
+}
 /* 🔹 Título principal (Animación de elevación más lenta) */
 .title {
   width: 800px;
@@ -118,4 +137,28 @@
 /* 🔹 Hover en el botón */
 .home-btn:hover {
   background-color: #0056b3;
+}
+
+/* 🔹 Animación de expansión para líneas */
+@keyframes expandLine3 {
+  from {
+    width: 0%;
+    opacity: 0;
+  }
+  to {
+    width: 50%;
+    opacity: 1;
+  }
+}
+
+/* 🔹 Animación de expansión para segunda línea */
+@keyframes expandLine4 {
+  from {
+    width: 0%;
+    opacity: 0;
+  }
+  to {
+    width: 25%;
+    opacity: 1;
+  }
 }
