@@ -16,12 +16,12 @@ python-dotenv = "*"
 flask-cors = "*"
 gunicorn = "*"
 cloudinary = "*"
-flask-admin = "*"
 typing-extensions = "*"
 flask-jwt-extended = "*"
 wtforms = "==3.1.2"
 flask-bcrypt = "*"
 wtforms-sqlalchemy = "*"
+flask-admin = "*"
 
 [requires]
 python_version = "3.13.3"

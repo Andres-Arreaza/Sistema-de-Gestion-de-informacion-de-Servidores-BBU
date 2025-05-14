@@ -229,9 +229,9 @@ def delete_ambiente(ambiente_id):
     return delete_generic(Ambiente, ambiente_id)
 
 ### **Rutas para Dominio**
+# 🔹 Obtener todos los dominios con solo nombre y descripción
 @api.route('/dominios', methods=['GET'])
 def get_dominios():
-    """ Obtener todos los dominios con solo nombre y descripción """
     dominios = Dominio.query.filter_by(activo=True).all()
     return jsonify([{ 
         "id": dominio.id, 
@@ -239,234 +239,200 @@ def get_dominios():
         "descripcion": dominio.descripcion 
     } for dominio in dominios]), 200
 
+# 🔹 Obtener un dominio por ID
 @api.route('/dominios/<int:dominio_id>', methods=['GET'])
 def get_dominio(dominio_id):
     return get_generic_by_id(Dominio, dominio_id)
 
+# 🔹 Crear un nuevo dominio
 @api.route('/dominios', methods=['POST'])
 def create_dominio():
     data = request.get_json()
     nombre_dominio = data.get("nombre")
 
-    # 🔹 Verificar si el dominio ya existe
+    # Verificar si el dominio ya existe
     dominio_existente = Dominio.query.filter_by(nombre=nombre_dominio).first()
 
     if dominio_existente and dominio_existente.activo:
         return jsonify({"error": "El nombre del dominio ya está registrado"}), 400
 
-    # 🔹 Si el dominio existe pero está eliminado, reactivarlo
+    # Si el dominio existe pero está eliminado, reactivarlo
     if dominio_existente and not dominio_existente.activo:
         dominio_existente.activo = True
         dominio_existente.descripcion = data.get("descripcion", dominio_existente.descripcion)
         db.session.commit()
         return jsonify({"mensaje": "Dominio reactivado exitosamente", "dominio": dominio_existente.serialize()}), 200
 
-    # 🔹 Crear un nuevo dominio si no existe
+    # Crear un nuevo dominio si no existe
     nuevo_dominio = Dominio(nombre=nombre_dominio, descripcion=data.get("descripcion"), activo=True)
     db.session.add(nuevo_dominio)
     db.session.commit()
 
     return jsonify({"mensaje": "Dominio creado exitosamente", "dominio": nuevo_dominio.serialize()}), 201
 
+# 🔹 Actualizar un dominio por ID
 @api.route('/dominios/<int:dominio_id>', methods=['PUT'])
 def update_dominio(dominio_id):
     return update_generic(Dominio, dominio_id)
 
+# 🔹 Eliminar un dominio por ID
 @api.route('/dominios/<int:dominio_id>', methods=['DELETE'])
 def delete_dominio(dominio_id):
     return delete_generic(Dominio, dominio_id)
 
 ### **Rutas para Sistemas Operativos**
+# 🔹 Obtener todos los sistemas operativos con nombre, año, versión y descripción
+@api.route('/sistemas-operativos', methods=['GET'])
+def get_sistemas_operativos():
+    sistemas = SistemaOperativo.query.filter_by(activo=True).all()
+    return jsonify([{ 
+        "id": sistema.id, 
+        "nombre": sistema.nombre, 
+        "año": sistema.año,
+        "version": sistema.version,
+        "descripcion": sistema.descripcion 
+    } for sistema in sistemas]), 200
+
+# 🔹 Obtener un sistema operativo por ID
+@api.route('/sistemas-operativos/<int:sistema_id>', methods=['GET'])
+def get_sistema_operativo(sistema_id):
+    return get_generic_by_id(SistemaOperativo, sistema_id)
+
+# 🔹 Crear un nuevo sistema operativo
 @api.route('/sistemas-operativos', methods=['POST'])
 def create_sistema_operativo():
-    """ Crear un nuevo sistema operativo por ID, reutilizando nombres eliminados """
     data = request.get_json()
+    nombre_sistema = data.get("nombre")
+    año_sistema = data.get("año")
+    version_sistema = data.get("version")
 
-    nombre = data.get("nombre", "").strip()
-    version = data.get("version", "").strip()
-    descripcion = data.get("descripcion", "").strip()
+    # Verificar si el sistema operativo ya existe
+    sistema_existente = SistemaOperativo.query.filter_by(nombre=nombre_sistema, año=año_sistema, version=version_sistema).first()
 
-    if not nombre or not version:
-        return jsonify({"msg": "El nombre y la versión son obligatorios"}), 400
+    if sistema_existente and sistema_existente.activo:
+        return jsonify({"error": "El sistema operativo ya está registrado"}), 400
 
-    # Verificar si ya existe un sistema operativo con el mismo nombre y versión pero inactivo
-    sistema_existente = SistemaOperativo.query.filter_by(nombre=nombre, version=version, activo=False).first()
-
-    if sistema_existente:
-        # Reactivar el sistema operativo en lugar de crear uno nuevo
+    # Si el sistema operativo existe pero está eliminado, reactivarlo
+    if sistema_existente and not sistema_existente.activo:
         sistema_existente.activo = True
-        sistema_existente.descripcion = descripcion or sistema_existente.descripcion
-        sistema_existente.fecha_modificacion = datetime.utcnow()
+        sistema_existente.descripcion = data.get("descripcion", sistema_existente.descripcion)
         db.session.commit()
-        return jsonify(sistema_existente.serialize()), 200
+        return jsonify({"mensaje": "Sistema operativo reactivado exitosamente", "sistema_operativo": sistema_existente.serialize()}), 200
 
     # Crear un nuevo sistema operativo si no existe
-    nuevo_sistema_operativo = SistemaOperativo(
-        nombre=nombre,
-        version=version,
-        descripcion=descripcion,
-        activo=True,
-        fecha_creacion=datetime.utcnow()
-    )
-
-    db.session.add(nuevo_sistema_operativo)
-    db.session.commit()
-    return jsonify(nuevo_sistema_operativo.serialize()), 201
-
-@api.route('/sistemas-operativos/<int:so_id>', methods=['PUT'])
-def update_sistema_operativo(so_id):
-    """ Actualizar un sistema operativo por ID """
-    data = request.get_json()
-    sistema_operativo = SistemaOperativo.query.get(so_id)
-
-    if not sistema_operativo:
-        return jsonify({"msg": f"Sistema Operativo con ID {so_id} no encontrado"}), 404
-
-    # Permitir reactivación si está inactivo
-    if not sistema_operativo.activo and data.get("activo", False):
-        sistema_operativo.activo = True
-
-    sistema_operativo.nombre = data.get("nombre", sistema_operativo.nombre).strip()
-    sistema_operativo.version = data.get("version", sistema_operativo.version).strip()
-    sistema_operativo.descripcion = data.get("descripcion", sistema_operativo.descripcion).strip()
-    sistema_operativo.fecha_modificacion = datetime.utcnow()
-
-    db.session.commit()
-    return jsonify(sistema_operativo.serialize()), 200
-
-@api.route('/sistemas-operativos/<int:so_id>', methods=['DELETE'])
-def delete_sistema_operativo(so_id):
-    """ Borrado lógico de un sistema operativo por ID """
-    sistema_operativo = SistemaOperativo.query.get(so_id)
-
-    if not sistema_operativo:
-        return jsonify({"msg": f"Sistema Operativo con ID {so_id} no encontrado"}), 404
-
-    if not sistema_operativo.activo:
-        return jsonify({"msg": f"Sistema Operativo con ID {so_id} ya está eliminado"}), 400
-
-    sistema_operativo.activo = False
-    sistema_operativo.fecha_modificacion = datetime.utcnow()
+    nuevo_sistema = SistemaOperativo(nombre=nombre_sistema, año=año_sistema, version=version_sistema, descripcion=data.get("descripcion"), activo=True)
+    db.session.add(nuevo_sistema)
     db.session.commit()
 
-    return jsonify({"msg": f"Sistema Operativo con ID {so_id} eliminado correctamente"}), 200
+    return jsonify({"mensaje": "Sistema operativo creado exitosamente", "sistema_operativo": nuevo_sistema.serialize()}), 201
+
+# 🔹 Actualizar un sistema operativo por ID
+@api.route('/sistemas-operativos/<int:sistema_id>', methods=['PUT'])
+def update_sistema_operativo(sistema_id):
+    return update_generic(SistemaOperativo, sistema_id)
+
+# 🔹 Eliminar un sistema operativo por ID
+@api.route('/sistemas-operativos/<int:sistema_id>', methods=['DELETE'])
+def delete_sistema_operativo(sistema_id):
+    return delete_generic(SistemaOperativo, sistema_id)
 
 ### **Rutas para Estatus**
+# 🔹 Obtener todos los estatus con nombre y descripción
 @api.route('/estatus', methods=['GET'])
 def get_estatus():
-    return get_generic(Estatus)
+    estatus_list = Estatus.query.filter_by(activo=True).all()
+    return jsonify([{ 
+        "id": estatus.id, 
+        "nombre": estatus.nombre, 
+        "descripcion": estatus.descripcion 
+    } for estatus in estatus_list]), 200
 
+# 🔹 Obtener un estatus por ID
 @api.route('/estatus/<int:estatus_id>', methods=['GET'])
 def get_estatus_by_id(estatus_id):
     return get_generic_by_id(Estatus, estatus_id)
 
+# 🔹 Crear un nuevo estatus
 @api.route('/estatus', methods=['POST'])
 def create_estatus():
-    return create_generic(Estatus)
+    data = request.get_json()
+    nombre_estatus = data.get("nombre")
 
+    # Verificar si el estatus ya existe
+    estatus_existente = Estatus.query.filter_by(nombre=nombre_estatus).first()
+
+    if estatus_existente and estatus_existente.activo:
+        return jsonify({"error": "El estatus ya está registrado"}), 400
+
+    # Si el estatus existe pero está eliminado, reactivarlo
+    if estatus_existente and not estatus_existente.activo:
+        estatus_existente.activo = True
+        estatus_existente.descripcion = data.get("descripcion", estatus_existente.descripcion)
+        db.session.commit()
+        return jsonify({"mensaje": "Estatus reactivado exitosamente", "estatus": estatus_existente.serialize()}), 200
+
+    # Crear un nuevo estatus si no existe
+    nuevo_estatus = Estatus(nombre=nombre_estatus, descripcion=data.get("descripcion"), activo=True)
+    db.session.add(nuevo_estatus)
+    db.session.commit()
+
+    return jsonify({"mensaje": "Estatus creado exitosamente", "estatus": nuevo_estatus.serialize()}), 201
+
+# 🔹 Actualizar un estatus por ID
 @api.route('/estatus/<int:estatus_id>', methods=['PUT'])
 def update_estatus(estatus_id):
     return update_generic(Estatus, estatus_id)
 
+# 🔹 Eliminar un estatus por ID
 @api.route('/estatus/<int:estatus_id>', methods=['DELETE'])
 def delete_estatus(estatus_id):
     return delete_generic(Estatus, estatus_id)
 
 ### **Rutas para Servidor**
-@api.route('/servidores', methods=['POST'])
-def create_servidor():
-    """ Crear un nuevo servidor por ID, reutilizando nombres eliminados """
-    data = request.get_json()
+# 🔹 Obtener todos los servidores activos
+@api.route("/servidores", methods=["GET"])
+def get_servidores():
+    servidores = Servidor.query.filter_by(activo=True).all()
+    return jsonify([servidor.serialize() for servidor in servidores]), 200
 
-    nombre = data.get("nombre", "").strip()
-    tipo = data.get("tipo", "").strip()
-    servicio_id = data.get("servicio_id")
-    capa_id = data.get("capa_id")
-    ambiente_id = data.get("ambiente_id")
-    dominio_id = data.get("dominio_id")
-    sistema_operativo_id = data.get("sistema_operativo_id")
-    estatus_id = data.get("estatus_id")
-
-    if not nombre or not tipo or not servicio_id or not capa_id or not ambiente_id or not dominio_id or not sistema_operativo_id or not estatus_id:
-        return jsonify({"msg": "Todos los campos obligatorios deben estar presentes"}), 400
-
-    # Verificar si ya existe un servidor con el mismo nombre pero inactivo
-    servidor_existente = Servidor.query.filter_by(nombre=nombre, activo=False).first()
-
-    if servidor_existente:
-        # Reactivar el servidor en lugar de crear uno nuevo
-        servidor_existente.activo = True
-        servidor_existente.fecha_modificacion = datetime.utcnow()
-        db.session.commit()
-        return jsonify(servidor_existente.serialize()), 200
-
-    # Crear un nuevo servidor si no existe
-    nuevo_servidor = Servidor(
-        nombre=nombre,
-        tipo=tipo,
-        ip=data.get("ip"),
-        balanceador=data.get("balanceador"),
-        vlan=data.get("vlan"),
-        descripcion=data.get("descripcion"),
-        link=data.get("link"),
-        servicio_id=servicio_id,
-        capa_id=capa_id,
-        ambiente_id=ambiente_id,
-        dominio_id=dominio_id,
-        sistema_operativo_id=sistema_operativo_id,
-        estatus_id=estatus_id,
-        activo=True,
-        fecha_creacion=datetime.utcnow()
-    )
-
-    db.session.add(nuevo_servidor)
-    db.session.commit()
-    return jsonify(nuevo_servidor.serialize()), 201
-
-@api.route('/servidores/<int:servidor_id>', methods=['PUT'])
-def update_servidor(servidor_id):
-    """ Actualizar un servidor por ID """
-    data = request.get_json()
+# 🔹 Obtener un servidor por ID
+@api.route("/servidores/<int:servidor_id>", methods=["GET"])
+def get_servidor(servidor_id):
     servidor = Servidor.query.get(servidor_id)
-
     if not servidor:
-        return jsonify({"msg": f"Servidor con ID {servidor_id} no encontrado"}), 404
-
-    # Permitir reactivación si está inactivo
-    if not servidor.activo and data.get("activo", False):
-        servidor.activo = True
-
-    servidor.nombre = data.get("nombre", servidor.nombre).strip()
-    servidor.tipo = data.get("tipo", servidor.tipo).strip()
-    servidor.ip = data.get("ip", servidor.ip)
-    servidor.balanceador = data.get("balanceador", servidor.balanceador)
-    servidor.vlan = data.get("vlan", servidor.vlan)
-    servidor.descripcion = data.get("descripcion", servidor.descripcion)
-    servidor.link = data.get("link", servidor.link)
-    servidor.servicio_id = data.get("servicio_id", servidor.servicio_id)
-    servidor.capa_id = data.get("capa_id", servidor.capa_id)
-    servidor.ambiente_id = data.get("ambiente_id", servidor.ambiente_id)
-    servidor.dominio_id = data.get("dominio_id", servidor.dominio_id)
-    servidor.sistema_operativo_id = data.get("sistema_operativo_id", servidor.sistema_operativo_id)
-    servidor.estatus_id = data.get("estatus_id", servidor.estatus_id)
-    servidor.fecha_modificacion = datetime.utcnow()
-
-    db.session.commit()
+        return jsonify({"error": "Servidor no encontrado"}), 404
     return jsonify(servidor.serialize()), 200
 
-@api.route('/servidores/<int:servidor_id>', methods=['DELETE'])
-def delete_servidor(servidor_id):
-    """ Borrado lógico de un servidor por ID """
+# 🔹 Crear un nuevo servidor
+@api.route("/servidores", methods=["POST"])
+def create_servidor():
+    data = request.get_json()
+    nuevo_servidor = Servidor(**data)
+    db.session.add(nuevo_servidor)
+    db.session.commit()
+    return jsonify({"mensaje": "Servidor creado exitosamente", "servidor": nuevo_servidor.serialize()}), 201
+
+# 🔹 Actualizar un servidor existente
+@api.route("/servidores/<int:servidor_id>", methods=["PUT"])
+def update_servidor(servidor_id):
     servidor = Servidor.query.get(servidor_id)
-
     if not servidor:
-        return jsonify({"msg": f"Servidor con ID {servidor_id} no encontrado"}), 404
+        return jsonify({"error": "Servidor no encontrado"}), 404
 
-    if not servidor.activo:
-        return jsonify({"msg": f"Servidor con ID {servidor_id} ya está eliminado"}), 400
+    data = request.get_json()
+    for key, value in data.items():
+        setattr(servidor, key, value)
+
+    db.session.commit()
+    return jsonify({"mensaje": "Servidor actualizado correctamente", "servidor": servidor.serialize()}), 200
+
+# 🔹 Eliminar un servidor (borrado lógico)
+@api.route("/servidores/<int:servidor_id>", methods=["DELETE"])
+def delete_servidor(servidor_id):
+    servidor = Servidor.query.get(servidor_id)
+    if not servidor:
+        return jsonify({"error": "Servidor no encontrado"}), 404
 
     servidor.activo = False
-    servidor.fecha_modificacion = datetime.utcnow()
     db.session.commit()
-
-    return jsonify({"msg": f"Servidor con ID {servidor_id} eliminado correctamente"}), 200
+    return jsonify({"mensaje": "Servidor eliminado correctamente"}), 200

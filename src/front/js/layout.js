@@ -6,12 +6,16 @@ import injectContext from "./store/appContext";
 
 import { Navbar } from "./component/navbar";
 import { Footer } from "./component/footer";
+import TablaServidores from "./component/TablaServidores";
 
 import { Home } from "./pages/home";
-import { ServerList } from "./pages/ServerList";
 import Servicio from "./pages/Servicio";
 import Capa from "./pages/Capa";
 import Ambiente from "./pages/Ambiente";
+import Dominio from "./pages/Dominio";
+import SistemaOperativo from "./pages/SistemaOperativo";
+import Estatus from "./pages/Estatus";
+import Servidor from "./pages/Servidor";
 
 const Layout = () => {
     const basename = process.env.BASENAME || "";
@@ -25,10 +29,14 @@ const Layout = () => {
                     <Navbar />
                     <Routes>
                         <Route element={<Home />} path="/" />
-                        <Route element={<ServerList />} path="/servers" />
                         <Route element={<Servicio />} path="/servicio" />
                         <Route element={<Capa />} path="/capa" />
                         <Route element={<Ambiente />} path="/ambiente" />
+                        <Route element={<Dominio />} path="/dominio" />
+                        <Route element={<SistemaOperativo />} path="/sistemaOperativo" />
+                        <Route element={<Estatus />} path="/estatus" />
+                        <Route element={<Servidor />} path="/servidor" />
+                        <Route element={<TablaServidores />} path="/tablaServidores" />
                         <Route element={<h1>Not found!</h1>} path="*" />
                     </Routes>
                     <Footer />

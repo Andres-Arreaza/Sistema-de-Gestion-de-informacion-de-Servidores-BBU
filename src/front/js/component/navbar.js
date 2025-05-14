@@ -48,10 +48,10 @@ export const Navbar = () => {
                                     <Link className="dropdown-item" to="/capa">Capa</Link>
                                     <Link className="dropdown-item" to="/ambiente">Ambiente</Link>
                                     <Link className="dropdown-item" to="/dominio">Dominio</Link>
-                                    <Link className="dropdown-item" to="/os">Sistema Operativo</Link>
-                                    <Link className="dropdown-item" to="/status">Estatus</Link>
+                                    <Link className="dropdown-item" to="/sistemaOperativo">Sistema Operativo</Link>
+                                    <Link className="dropdown-item" to="/estatus">Estatus</Link>
                                     <div className="dropdown-divider"></div>
-                                    <Link className="dropdown-item create-server-button" to="/create-server">Crear Servidor</Link>
+                                    <Link className="dropdown-item create-server-button" to="/servidor">Crear Servidor</Link>
                                 </div>
                             )}
                         </li>

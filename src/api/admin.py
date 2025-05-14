@@ -4,7 +4,7 @@ from .models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Est
 from flask_admin.contrib.sqla import ModelView
 from wtforms_sqlalchemy.fields import QuerySelectField
 
-# Funciones para cargar los datos basados en nombre
+# 🔹 Funciones para cargar los datos basados en nombre
 def servicio_query():
     return Servicio.query.order_by(Servicio.nombre).all()
 
@@ -56,9 +56,10 @@ class DominioView(BaseView):
 
 class SistemaOperativoView(BaseView):
     """ Vista personalizada para gestionar sistemas operativos en Flask-Admin """
-    column_list = ["id", "nombre", "version", "descripcion", "activo", "fecha_creacion", "fecha_modificacion"]
+    column_list = ["id", "nombre", "año", "version", "descripcion", "activo", "fecha_creacion", "fecha_modificacion"]
     form_args = {
         "nombre": {"validators": [lambda form, field: field.data or field.errors.append("El nombre es obligatorio")]},
+        "año": {"validators": [lambda form, field: field.data or field.errors.append("El año es obligatorio")]},
         "version": {"validators": [lambda form, field: field.data or field.errors.append("La versión es obligatoria")]}
     }
 
@@ -77,7 +78,7 @@ class ServidorView(BaseView):  # 🔹 Se cambió a `BaseView` para incluir "acti
     column_filters = ["activo", "tipo", "servicio", "capa", "ambiente", "dominio", "sistema_operativo", "estatus"]
     column_editable_list = ["activo"]  # 🔹 Permitir edición rápida del estado activo
 
-    # Mostrar los nombres en lugar de los IDs en la vista de administración
+    # 🔹 Mostrar los nombres en lugar de los IDs en la vista de administración
     column_formatters = {
         "servicio": lambda v, c, m, p: m.servicio.nombre if m.servicio else "",
         "capa": lambda v, c, m, p: m.capa.nombre if m.capa else "",
@@ -87,7 +88,7 @@ class ServidorView(BaseView):  # 🔹 Se cambió a `BaseView` para incluir "acti
         "estatus": lambda v, c, m, p: m.estatus.nombre if m.estatus else ""
     }
 
-    # Hacer que los campos sean seleccionables por nombre al agregar registros
+    # 🔹 Hacer que los campos sean seleccionables por nombre al agregar registros
     form_overrides = {
         "servicio": QuerySelectField,
         "capa": QuerySelectField,
@@ -112,7 +113,7 @@ def setup_admin(app):
     app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
     admin = Admin(app, name='Gestión de Recursos', template_mode='bootstrap3')
 
-    # Agregar modelos al panel de administración
+    # 🔹 Agregar modelos al panel de administración
     admin.add_view(ServicioView(Servicio, db.session))
     admin.add_view(CapaView(Capa, db.session))
     admin.add_view(AmbienteView(Ambiente, db.session))

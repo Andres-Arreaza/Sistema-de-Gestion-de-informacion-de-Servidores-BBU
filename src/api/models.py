@@ -31,11 +31,21 @@ class Servicio(BaseModel):
     nombre = db.Column(db.String(120), nullable=False)  # 🔹 Campo obligatorio
     descripcion = db.Column(db.String(250), nullable=True)
 
+    def serialize(self):
+        data = super().serialize()
+        data.update({"nombre": self.nombre, "descripcion": self.descripcion})
+        return data
+
 class Capa(BaseModel):
     __tablename__ = 'capas'
 
     nombre = db.Column(db.String(120), nullable=False)  # 🔹 Campo obligatorio
     descripcion = db.Column(db.String(250), nullable=True)
+
+    def serialize(self):
+        data = super().serialize()
+        data.update({"nombre": self.nombre, "descripcion": self.descripcion})
+        return data
 
 class Ambiente(BaseModel):
     __tablename__ = 'ambientes'
@@ -43,24 +53,45 @@ class Ambiente(BaseModel):
     nombre = db.Column(db.String(120), nullable=False)  # 🔹 Campo obligatorio
     descripcion = db.Column(db.String(250), nullable=True)
 
+    def serialize(self):
+        data = super().serialize()
+        data.update({"nombre": self.nombre, "descripcion": self.descripcion})
+        return data
+
 class Dominio(BaseModel):
     __tablename__ = 'dominios'
 
     nombre = db.Column(db.String(120), nullable=False)  # 🔹 Campo obligatorio
     descripcion = db.Column(db.String(250), nullable=True)
 
+    def serialize(self):
+        data = super().serialize()
+        data.update({"nombre": self.nombre, "descripcion": self.descripcion})
+        return data
+
 class SistemaOperativo(BaseModel):
     __tablename__ = 'sistemas_operativos'
 
     nombre = db.Column(db.String(120), nullable=False)  # 🔹 Campo obligatorio
+    año = db.Column(db.Integer, nullable=False)  # 🔹 Año de lanzamiento
     version = db.Column(db.String(50), nullable=False)  # 🔹 Campo obligatorio
     descripcion = db.Column(db.String(250), nullable=True)
+
+    def serialize(self):
+        data = super().serialize()
+        data.update({"nombre": self.nombre, "año": self.año, "version": self.version, "descripcion": self.descripcion})
+        return data
 
 class Estatus(BaseModel):
     __tablename__ = 'estatus'
 
     nombre = db.Column(db.String(120), nullable=False)  # 🔹 Campo obligatorio
     descripcion = db.Column(db.String(250), nullable=True)
+
+    def serialize(self):
+        data = super().serialize()
+        data.update({"nombre": self.nombre, "descripcion": self.descripcion})
+        return data
 
 class Servidor(BaseModel):  # 🔹 Ahora hereda de `BaseModel` para incluir `activo`, `fecha_creacion` y `fecha_modificacion`
     __tablename__ = 'servidores'
@@ -97,11 +128,11 @@ class Servidor(BaseModel):  # 🔹 Ahora hereda de `BaseModel` para incluir `act
             "vlan": self.vlan,
             "descripcion": self.descripcion,
             "link": self.link,
-            "servicio_id": self.servicio_id,
-            "capa_id": self.capa_id,
-            "ambiente_id": self.ambiente_id,
-            "dominio_id": self.dominio_id,
-            "sistema_operativo_id": self.sistema_operativo_id,
-            "estatus_id": self.estatus_id
+            "servicio": self.servicio.serialize() if self.servicio else None,
+            "capa": self.capa.serialize() if self.capa else None,
+            "ambiente": self.ambiente.serialize() if self.ambiente else None,
+            "dominio": self.dominio.serialize() if self.dominio else None,
+            "sistema_operativo": self.sistema_operativo.serialize() if self.sistema_operativo else None,
+            "estatus": self.estatus.serialize() if self.estatus else None
         })
         return data
