@@ -49,7 +49,7 @@
     opacity: 0;
   }
   to {
-    width: 25%;
+    width: 20%;
     opacity: 1;
   }
 }
@@ -115,7 +115,7 @@
 /* 🔹 Segunda línea blanca (Animación de expansión) */
 .linea-blanca-2 {
   margin: auto;
-  width: 25%;
+  width: 20%;
   height: 2.5px;
   background-color: #ffffff89;
   margin-top: 20px;

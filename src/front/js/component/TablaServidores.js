@@ -10,7 +10,7 @@ const TablaServidores = ({ setServidorActual, setModalVisible, handleDelete }) =
         const fetchServidores = async () => {
             try {
                 console.log("Obteniendo servidores...");
-                const response = await fetch("http://localhost:3001/servidores");
+                const response = await fetch("http://localhost:3001/api/servidores");
 
                 if (!response.ok) {
                     throw new Error(`Error en la API: ${response.status} ${response.statusText}`);

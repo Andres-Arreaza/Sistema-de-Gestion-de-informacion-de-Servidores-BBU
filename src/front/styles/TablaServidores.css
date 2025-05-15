@@ -51,7 +51,7 @@
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
-  font-size: 18px;
+  font-size: 14px;
   animation: fadeUpSlow 1s ease-out; /* 🔹 Aparece con elevación más lenta */
 }
 

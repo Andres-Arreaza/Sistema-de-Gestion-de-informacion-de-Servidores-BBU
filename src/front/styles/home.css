@@ -30,6 +30,30 @@
   }
 }
 
+/* 🔹 Animación de expansión para líneas */
+@keyframes expandLine3 {
+  from {
+    width: 0%;
+    opacity: 0;
+  }
+  to {
+    width: 50%;
+    opacity: 1;
+  }
+}
+
+/* 🔹 Animación de expansión para segunda línea */
+@keyframes expandLine4 {
+  from {
+    width: 0%;
+    opacity: 0;
+  }
+  to {
+    width: 25%;
+    opacity: 1;
+  }
+}
+
 /* 🔹 Contenedor con gradiente */
 .home-container {
   padding-top: var(--paddings-top);
@@ -65,7 +89,7 @@
   margin: auto;
   font-size: 40px;
   color: #ffffff;
-  animation: fadeUpSlow 1s ease-out; /* 🔹 Aparece con elevación más lenta */
+  animation: fadeUpSlow 1s ease-out;
 }
 
 /* 🔹 Subtítulo (Animación de elevación más lenta) */
@@ -137,28 +161,4 @@
 /* 🔹 Hover en el botón */
 .home-btn:hover {
   background-color: #0056b3;
-}
-
-/* 🔹 Animación de expansión para líneas */
-@keyframes expandLine3 {
-  from {
-    width: 0%;
-    opacity: 0;
-  }
-  to {
-    width: 50%;
-    opacity: 1;
-  }
-}
-
-/* 🔹 Animación de expansión para segunda línea */
-@keyframes expandLine4 {
-  from {
-    width: 0%;
-    opacity: 0;
-  }
-  to {
-    width: 25%;
-    opacity: 1;
-  }
 }
