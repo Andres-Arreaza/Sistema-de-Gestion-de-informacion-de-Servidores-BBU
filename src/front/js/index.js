@@ -13,6 +13,7 @@ import "../styles/Estatus.css";
 import "../styles/Servidor.css";
 import "../styles/TablaServidores.css";
 import "../styles/Loading.css";
+import "../styles/FormularioServidor.css";
 import "../styles/footer.css";
 
 import Layout from "./layout";

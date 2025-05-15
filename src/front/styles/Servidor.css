@@ -188,6 +188,7 @@
   gap: 10px; /* 🔹 Reduce la separación entre ellos */
   width: 100%;
   margin-top: 20px; /* 🔹 Ajuste en la separación superior */
+  margin-left: 20px; /* 🔹 Ajuste en la separación superior */
 }
 
 /* 🔹 Ajuste para los campos seleccionables y descripción */
@@ -222,7 +223,6 @@
   cursor: pointer;
   font-size: 14px;
   transition: background-color 0.3s ease;
-  margin-left: 20px; /* 🔹 Ajuste en la separación superior */
 }
 
 .cerrar-servidores-btn:hover {
