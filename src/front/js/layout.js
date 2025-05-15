@@ -16,6 +16,7 @@ import Dominio from "./pages/Dominio";
 import SistemaOperativo from "./pages/SistemaOperativo";
 import Estatus from "./pages/Estatus";
 import Servidor from "./pages/Servidor";
+import Search from "./pages/Search";
 
 const Layout = () => {
     const basename = process.env.BASENAME || "";
@@ -37,6 +38,7 @@ const Layout = () => {
                         <Route element={<Estatus />} path="/estatus" />
                         <Route element={<Servidor />} path="/servidor" />
                         <Route element={<TablaServidores />} path="/tablaServidores" />
+                        <Route element={<Search />} path="/search" />
                         <Route element={<h1>Not found!</h1>} path="*" />
                     </Routes>
                     <Footer />
