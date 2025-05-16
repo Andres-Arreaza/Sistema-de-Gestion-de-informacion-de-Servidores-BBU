@@ -16,8 +16,10 @@ const Servidores = () => {
         <div className="servidores-container">
             {/* 🔹 Sección con encabezado */}
             <div className="servidores-header">
+                <div className="linea-blanca"></div>
                 <h2 className="servidores-title">Gestión de Servidores</h2>
                 <button className="crear-servidores-btn" onClick={() => setModalVisible(true)}>Crear Servidor</button>
+                <div className="linea-blanca-2"></div>
             </div>
 
             {/* 🔹 Tabla de servidores */}

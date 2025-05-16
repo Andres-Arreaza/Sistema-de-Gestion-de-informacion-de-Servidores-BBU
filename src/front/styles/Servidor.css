@@ -82,7 +82,7 @@
 .crear-servidores-btn {
   background-color: #ffff;
   color: #006243;
-  padding: 12px 30px;
+  padding: 10px 30px;
   border: 2px solid #006847;
   border-radius: 5px;
   cursor: pointer;
@@ -215,9 +215,10 @@
 
 /* 🔹 Botón "Cerrar" */
 .cerrar-servidores-btn {
-  background-color: #ccc;
-  color: black;
+  background-color: #dc3545;
+  color: #d6d6d6;
   padding: 10px 20px;
+  margin-left: 30px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -226,5 +227,6 @@
 }
 
 .cerrar-servidores-btn:hover {
-  background-color: #aaa;
+  background-color: #b52b3a;
+  color: #d6d6d6;
 }
