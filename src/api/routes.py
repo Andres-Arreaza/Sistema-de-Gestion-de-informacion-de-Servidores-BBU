@@ -432,11 +432,17 @@ def update_servidor(servidor_id):
         return jsonify({"error": "Servidor no encontrado"}), 404
 
     data = request.get_json()
+
+    # 🔹 Validar que los atributos existen en el modelo antes de actualizarlos
     for key, value in data.items():
-        setattr(servidor, key, value)
+        if hasattr(servidor, key):  # Verifica que el atributo esté definido en `Servidor`
+            setattr(servidor, key, value)
 
     db.session.commit()
-    return jsonify({"mensaje": "Servidor actualizado correctamente", "servidor": servidor.serialize()}), 200
+
+    response = jsonify({"mensaje": "Servidor actualizado correctamente", "servidor": servidor.serialize()})
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response, 200
 
 # 🔹 Eliminar un servidor (borrado lógico)
 @api.route("/servidores/<int:servidor_id>", methods=["DELETE"])

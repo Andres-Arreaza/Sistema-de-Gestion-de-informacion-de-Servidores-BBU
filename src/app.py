@@ -34,8 +34,8 @@ db.init_app(app)
 app.config["JWT_SECRET_KEY"] = "super-secret"  # Cambia esto!
 jwt = JWTManager(app)
 
-# 🔹 Habilitar CORS para permitir solicitudes desde el frontend
-CORS(app, origins=["http://localhost:3000"])
+# 🔹 Habilitar CORS para todas las rutas
+CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
 
 # Inicialización de componentes
 setup_admin(app)
@@ -66,7 +66,9 @@ def get_sistemas_operativos():
     try:
         sistemas = SistemaOperativo.query.all()
         sistemas_json = [sistema.serialize() for sistema in sistemas]
-        return jsonify(sistemas_json), 200
+        response = jsonify(sistemas_json)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response, 200
     except Exception as e:
         return jsonify({"error": f"Error obteniendo sistemas operativos: {str(e)}"}), 500
 
@@ -76,7 +78,9 @@ def get_servidores():
     try:
         servidores = Servidor.query.all()
         servidores_json = [servidor.serialize() for servidor in servidores]
-        return jsonify(servidores_json), 200
+        response = jsonify(servidores_json)
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response, 200
     except Exception as e:
         return jsonify({"error": f"Error obteniendo servidores: {str(e)}"}), 500
 
@@ -94,10 +98,42 @@ def create_servidor():
         db.session.add(nuevo_servidor)
         db.session.commit()
         
-        return jsonify(nuevo_servidor.serialize()), 201
+        response = jsonify(nuevo_servidor.serialize())
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response, 201
     except Exception as e:
         return jsonify({"error": f"Error al guardar servidor: {str(e)}"}), 500
-        
+
+# 🔹 Ruta para actualizar un servidor
+@app.route("/api/servidores/<int:servidor_id>", methods=["PUT"])
+def update_servidor(servidor_id):
+    servidor = Servidor.query.get(servidor_id)
+    if not servidor:
+        return jsonify({"error": "Servidor no encontrado"}), 404
+
+    data = request.get_json()
+    for key, value in data.items():
+        setattr(servidor, key, value)
+
+    db.session.commit()
+    
+    response = jsonify({"mensaje": "Servidor actualizado correctamente", "servidor": servidor.serialize()})
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response, 200
+
+# 🔹 Ruta para eliminar un servidor
+@app.route("/api/servidores/<int:servidor_id>", methods=["DELETE"])
+def delete_servidor(servidor_id):
+    servidor = Servidor.query.get(servidor_id)
+    if not servidor:
+        return jsonify({"error": "Servidor no encontrado"}), 404
+
+    db.session.delete(servidor)
+    db.session.commit()
+    
+    response = jsonify({"mensaje": "Servidor eliminado correctamente"})
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response, 200
 
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3001))

@@ -155,11 +155,11 @@ const TablaServidores = ({ servidores, setServidores }) => {
                         <h2>¿Seguro que deseas eliminar este servidor?</h2>
                         <p><strong>{servidorAEliminar?.nombre}</strong> será eliminado permanentemente.</p>
                         <div className="modal-delete-buttons">
-                            <button className="cerrar-modal-btn" onClick={() => setModalEliminarVisible(false)}>
-                                Cancelar
-                            </button>
                             <button className="eliminar-confirm-btn" onClick={eliminarServidor}>
                                 Eliminar
+                            </button>
+                            <button className="cerrar-modal-btn" onClick={() => setModalEliminarVisible(false)}>
+                                Cancelar
                             </button>
                         </div>
                     </div>

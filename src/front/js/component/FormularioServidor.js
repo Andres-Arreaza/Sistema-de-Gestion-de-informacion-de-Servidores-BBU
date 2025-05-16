@@ -85,18 +85,35 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
             [e.target.name]: e.target.value
         });
     };
+
     const handleFormSubmit = async (e) => {
         e.preventDefault();
+
+        // 🔹 Generamos la fecha de modificación automáticamente sin mostrarla
+        const updatedFormData = {
+            ...formData,
+            fecha_modificacion: new Date().toISOString()
+        };
+
+        // 🔹 Logs para depuración
+        if (esEdicion) {
+            console.log("Editando servidor con ID:", servidorInicial?.id);
+            console.log("URL:", `http://localhost:3001/api/servidores/${servidorInicial?.id}`);
+        } else {
+            console.log("Creando nuevo servidor");
+            console.log("URL:", "http://localhost:3001/api/servidores");
+        }
+        console.log("Datos enviados al servidor:", updatedFormData);
 
         try {
             const response = await fetch(
                 esEdicion
-                    ? `http://localhost:3001/api/servidores/${servidorInicial.id}`
+                    ? `http://localhost:3001/api/servidores/${servidorInicial?.id}`
                     : "http://localhost:3001/api/servidores",
                 {
                     method: esEdicion ? "PUT" : "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify(updatedFormData)
                 }
             );
 
@@ -190,7 +207,6 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                     </select>
                 </div>
             </div>
-
             {/* Fila 3 */}
             <div className="grid-form-row">
                 <div className="form-field">
