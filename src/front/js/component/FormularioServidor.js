@@ -8,45 +8,49 @@ const FormularioServidor = ({ handleSubmit, setModalVisible }) => {
     const [dominios, setDominios] = useState([]);
     const [sistemasOperativos, setSistemasOperativos] = useState([]);
     const [estatus, setEstatus] = useState([]);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [serviciosRes, capasRes, ambientesRes, dominiosRes, sistemasRes, estatusRes] = await Promise.all([
-                    fetch("http://localhost:3001/api/servicios"),
-                    fetch("http://localhost:3001/api/capas"),
-                    fetch("http://localhost:3001/api/ambientes"),
-                    fetch("http://localhost:3001/api/dominios"),
-                    fetch("http://localhost:3001/api/sistemas_operativos"),
-                    fetch("http://localhost:3001/api/estatus")
-                ]);
+                console.log("Intentando obtener datos desde la API...");
 
-                if (!serviciosRes.ok || !capasRes.ok || !ambientesRes.ok || !dominiosRes.ok || !sistemasRes.ok || !estatusRes.ok) {
-                    throw new Error("Error al obtener los datos.");
-                }
+                const urls = [
+                    { name: "servicios", url: "http://localhost:3001/api/servicios" },
+                    { name: "capas", url: "http://localhost:3001/api/capas" },
+                    { name: "ambientes", url: "http://localhost:3001/api/ambientes" },
+                    { name: "dominios", url: "http://localhost:3001/api/dominios" },
+                    { name: "sistemasOperativos", url: "http://localhost:3001/api/sistemas_operativos" },
+                    { name: "estatus", url: "http://localhost:3001/api/estatus" }
+                ];
 
-                const serviciosData = await serviciosRes.json();
-                const capasData = await capasRes.json();
-                const ambientesData = await ambientesRes.json();
-                const dominiosData = await dominiosRes.json();
-                const sistemasData = await sistemasRes.json();
-                const estatusData = await estatusRes.json();
+                const responses = await Promise.all(urls.map(({ name, url }) =>
+                    fetch(url)
+                        .then(res => {
+                            if (!res.ok) {
+                                throw new Error(`Error en ${name}: ${res.status} ${res.statusText}`);
+                            }
+                            return res.json();
+                        })
+                        .catch(err => {
+                            console.error(`Error al obtener ${name}:`, err);
+                            return [];
+                        })
+                ));
 
-                console.log("Servicios:", serviciosData);
-                console.log("Capas:", capasData);
-                console.log("Ambientes:", ambientesData);
-                console.log("Dominios:", dominiosData);
-                console.log("Sistemas Operativos:", sistemasData);
-                console.log("Estatus:", estatusData);
+                setServicios(responses[0]);
+                setCapas(responses[1]);
+                setAmbientes(responses[2]);
+                setDominios(responses[3]);
+                setSistemasOperativos(responses[4]);
+                setEstatus(responses[5]);
 
-                setServicios(serviciosData);
-                setCapas(capasData);
-                setAmbientes(ambientesData);
-                setDominios(dominiosData);
-                setSistemasOperativos(sistemasData);
-                setEstatus(estatusData);
+                setError(null);
+                console.log("Datos cargados correctamente.");
+
             } catch (error) {
                 console.error("Error al cargar opciones:", error);
+                setError(error.message);
             }
         };
 
@@ -55,6 +59,8 @@ const FormularioServidor = ({ handleSubmit, setModalVisible }) => {
 
     return (
         <form onSubmit={handleSubmit} className="grid-form">
+            {error && <div className="error-message">{error}</div>}
+
             {/* 🔹 Fila 1 */}
             <div className="grid-form-row">
                 <div className="form-field">
