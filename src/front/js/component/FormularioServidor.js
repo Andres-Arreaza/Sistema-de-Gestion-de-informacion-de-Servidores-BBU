@@ -57,8 +57,34 @@ const FormularioServidor = ({ handleSubmit, setModalVisible }) => {
         fetchData();
     }, []);
 
+    const handleFormSubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const response = await fetch("http://localhost:3001/api/servidores", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error en el servidor: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            console.log("Servidor guardado:", result);
+            setModalVisible(false);
+
+        } catch (error) {
+            console.error("Error al guardar el servidor:", error);
+            setError(error.message);
+        }
+    };
+
     return (
-        <form onSubmit={handleSubmit} className="grid-form">
+        <form onSubmit={handleFormSubmit} className="grid-form">
             {error && <div className="error-message">{error}</div>}
 
             {/* 🔹 Fila 1 */}

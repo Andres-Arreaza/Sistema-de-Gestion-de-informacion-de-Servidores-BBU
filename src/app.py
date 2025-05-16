@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db, SistemaOperativo  # 🔹 Importar el modelo
+from api.models import db, SistemaOperativo, Servidor  # 🔹 Importar modelos
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
@@ -60,7 +60,7 @@ def serve_any_other_file(path):
     response.cache_control.max_age = 0  # Evita la caché en memoria
     return response
 
-# 🔹 Ruta corregida para obtener sistemas operativos
+# 🔹 Ruta para obtener sistemas operativos
 @app.route('/api/sistemas_operativos', methods=['GET'])
 def get_sistemas_operativos():
     try:
@@ -69,6 +69,34 @@ def get_sistemas_operativos():
         return jsonify(sistemas_json), 200
     except Exception as e:
         return jsonify({"error": f"Error obteniendo sistemas operativos: {str(e)}"}), 500
+
+# 🔹 Ruta para obtener todos los servidores
+@app.route('/api/servidores', methods=['GET'])
+def get_servidores():
+    try:
+        servidores = Servidor.query.all()
+        servidores_json = [servidor.serialize() for servidor in servidores]
+        return jsonify(servidores_json), 200
+    except Exception as e:
+        return jsonify({"error": f"Error obteniendo servidores: {str(e)}"}), 500
+
+# 🔹 Ruta para crear un nuevo servidor
+@app.route('/api/servidores', methods=['POST'])
+def create_servidor():
+    try:
+        data = request.get_json()
+        
+        # 🔹 Validar que los datos necesarios están presentes
+        if "nombre" not in data or "tipo" not in data or "ip" not in data:
+            return jsonify({"error": "Faltan datos obligatorios"}), 400
+        
+        nuevo_servidor = Servidor(**data)
+        db.session.add(nuevo_servidor)
+        db.session.commit()
+        
+        return jsonify(nuevo_servidor.serialize()), 201
+    except Exception as e:
+        return jsonify({"error": f"Error al guardar servidor: {str(e)}"}), 500
 
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3001))
