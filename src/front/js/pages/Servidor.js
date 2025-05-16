@@ -6,6 +6,7 @@ const Servidores = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [modalEditarVisible, setModalEditarVisible] = useState(false);
     const [servidorActual, setServidorActual] = useState(null);
+    const [servidores, setServidores] = useState([]); // 🔹 Estado global de servidores
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -22,15 +23,15 @@ const Servidores = () => {
                 <div className="linea-blanca-2"></div>
             </div>
 
-            {/* 🔹 Tabla de servidores */}
-            <TablaServidores setServidorActual={setServidorActual} setModalVisible={setModalEditarVisible} />
+            {/* 🔹 Tabla de servidores con actualización automática */}
+            <TablaServidores servidores={servidores} setServidores={setServidores} setServidorActual={setServidorActual} setModalVisible={setModalEditarVisible} />
 
             {/* 🔹 Modal de creación/edición */}
             {(modalVisible || modalEditarVisible) && (
                 <div className="modal-overlay" onClick={() => setModalVisible(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <h2>{modalEditarVisible ? "Editar Servidor" : "Crear Nuevo Servidor"}</h2>
-                        <FormularioServidor handleSubmit={handleSubmit} setModalVisible={setModalVisible} />
+                        <FormularioServidor setServidores={setServidores} setModalVisible={setModalVisible} />
                     </div>
                 </div>
             )}

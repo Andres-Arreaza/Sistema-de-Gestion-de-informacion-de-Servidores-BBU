@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const FormularioServidor = ({ handleSubmit, setModalVisible }) => {
+const FormularioServidor = ({ setServidores, setModalVisible }) => {
     // 🔹 Estados para almacenar datos específicos
     const [servicios, setServicios] = useState([]);
     const [capas, setCapas] = useState([]);
@@ -73,10 +73,13 @@ const FormularioServidor = ({ handleSubmit, setModalVisible }) => {
                 throw new Error(`Error en el servidor: ${response.status} ${response.statusText}`);
             }
 
-            const result = await response.json();
-            console.log("Servidor guardado:", result);
-            setModalVisible(false);
+            const nuevoServidor = await response.json();
+            console.log("Servidor guardado:", nuevoServidor);
 
+            // 🔹 Actualizar la tabla agregando el nuevo servidor
+            setServidores(prev => [...prev, nuevoServidor]);
+
+            setModalVisible(false);
         } catch (error) {
             console.error("Error al guardar el servidor:", error);
             setError(error.message);

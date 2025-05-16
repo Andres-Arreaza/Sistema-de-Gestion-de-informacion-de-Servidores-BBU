@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 
-const TablaServidores = ({ setServidorActual, setModalVisible }) => {
-    const [servidores, setServidores] = useState([]);
-
-    // 🔹 Obtener servidores desde la API al montar el componente
+const TablaServidores = ({ servidores, setServidores, setServidorActual, setModalVisible }) => {
+    // 🔹 Obtener servidores desde la API al montar el componente y cuando `servidores` cambie
     useEffect(() => {
         const fetchServidores = async () => {
             try {
@@ -23,7 +21,7 @@ const TablaServidores = ({ setServidorActual, setModalVisible }) => {
         };
 
         fetchServidores();
-    }, []);
+    }, [servidores]); // 🔹 Se ejecuta cuando `servidores` cambia
 
     return (
         <div>
