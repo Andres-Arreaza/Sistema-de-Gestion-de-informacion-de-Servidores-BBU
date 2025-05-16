@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
+import FormularioServidor from "./FormularioServidor"; // Importamos el formulario
 
-const TablaServidores = ({ servidores, setServidores, setServidorActual }) => {
+const TablaServidores = ({ servidores, setServidores }) => {
     const [modalEliminarVisible, setModalEliminarVisible] = useState(false);
+    const [modalEditarVisible, setModalEditarVisible] = useState(false);
+    const [servidorAEditar, setServidorAEditar] = useState(null);
     const [servidorAEliminar, setServidorAEliminar] = useState(null);
-    const [mensajeEliminacion, setMensajeEliminacion] = useState(""); // 🔹 Estado para alerta roja
+    const [mensajeConfirmacion, setMensajeConfirmacion] = useState(""); // Estado para alerta
 
     useEffect(() => {
         const fetchServidores = async () => {
@@ -28,6 +31,11 @@ const TablaServidores = ({ servidores, setServidores, setServidorActual }) => {
         setModalEliminarVisible(true);
     };
 
+    const confirmarEditar = (servidor) => {
+        setServidorAEditar({ ...servidor }); // 🔹 Clonar objeto para evitar referencia directa
+        setModalEditarVisible(true);
+    };
+
     const eliminarServidor = async () => {
         if (!servidorAEliminar) return;
 
@@ -41,13 +49,13 @@ const TablaServidores = ({ servidores, setServidores, setServidorActual }) => {
             }
 
             setServidores(prev => prev.filter(s => s.id !== servidorAEliminar.id));
-            setModalEliminarVisible(false); // 🔹 Cierra el modal primero
+            setModalEliminarVisible(false);
 
             setTimeout(() => {
-                setMensajeEliminacion(`❌ Servidor "${servidorAEliminar.nombre}" eliminado exitosamente!`);
-            }, 200); // 🔹 Luego muestra la alerta con un ligero retraso
+                setMensajeConfirmacion(`❌ Servidor "${servidorAEliminar.nombre}" eliminado exitosamente!`);
+            }, 200);
 
-            setTimeout(() => setMensajeEliminacion(""), 3000); // 🔹 Oculta la alerta después de 3s
+            setTimeout(() => setMensajeConfirmacion(""), 3000);
         } catch (error) {
             console.error("Error al eliminar el servidor:", error);
         }
@@ -55,9 +63,11 @@ const TablaServidores = ({ servidores, setServidores, setServidorActual }) => {
 
     return (
         <div className="tabla-servidores-container">
-            {/* 🔹 Alerta roja de eliminación sobre la tabla */}
-            {mensajeEliminacion && (
-                <div className="toast-error">{mensajeEliminacion}</div>
+            {/* 🔹 Alerta de confirmación sobre la tabla */}
+            {mensajeConfirmacion && (
+                <div className={`toast-${mensajeConfirmacion.includes("✅") ? "success" : "error"}`}>
+                    {mensajeConfirmacion}
+                </div>
             )}
 
             <h2 className="servidores-disponibles-title">Servidores Disponibles</h2>
@@ -105,7 +115,7 @@ const TablaServidores = ({ servidores, setServidores, setServidorActual }) => {
                                 <td>{servidor.sistema_operativo?.nombre || "N/A"}</td>
                                 <td>{servidor.estatus?.nombre || "N/A"}</td>
                                 <td>
-                                    <button className="editar-btn" onClick={() => setServidorActual(servidor)}>
+                                    <button className="editar-btn" onClick={() => confirmarEditar(servidor)}>
                                         <i className="fas fa-edit"></i>
                                     </button>
                                     <button className="eliminar-btn" onClick={() => confirmarEliminar(servidor)}>
@@ -122,12 +132,28 @@ const TablaServidores = ({ servidores, setServidores, setServidorActual }) => {
                 </tbody>
             </table>
 
+            {/* 🔹 Modal de edición con `FormularioServidor` */}
+            {modalEditarVisible && servidorAEditar && (
+                <div className="modal-overlay" onClick={() => setModalEditarVisible(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h2>Editar Servidor</h2>
+                        <FormularioServidor
+                            servidorInicial={servidorAEditar} // 🔹 Pasamos el servidor actual para prellenar los datos
+                            setServidores={setServidores}
+                            setModalVisible={setModalEditarVisible}
+                            onSuccess={(msg) => setMensajeConfirmacion(msg)}
+                            esEdicion={true} // 🔹 Indicamos que estamos editando
+                        />
+                    </div>
+                </div>
+            )}
+
             {/* 🔹 Modal de confirmación antes de eliminar */}
             {modalEliminarVisible && (
                 <div className="modal-overlay" onClick={() => setModalEliminarVisible(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <h2>¿Seguro que deseas eliminar este servidor?</h2>
-                        <p><strong>{servidorAEliminar?.nombre}</strong> será eliminado.</p>
+                        <p><strong>{servidorAEliminar?.nombre}</strong> será eliminado permanentemente.</p>
                         <div className="modal-delete-buttons">
                             <button className="cerrar-modal-btn" onClick={() => setModalEliminarVisible(false)}>
                                 Cancelar

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const FormularioServidor = ({ setServidores, setModalVisible, onSuccess }) => {
+const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, onSuccess, esEdicion }) => {
     const [servicios, setServicios] = useState([]);
     const [capas, setCapas] = useState([]);
     const [ambientes, setAmbientes] = useState([]);
@@ -9,6 +9,21 @@ const FormularioServidor = ({ setServidores, setModalVisible, onSuccess }) => {
     const [estatus, setEstatus] = useState([]);
     const [error, setError] = useState(null);
     const [mensajeExito, setMensajeExito] = useState("");
+    const [formData, setFormData] = useState({
+        nombre: "",
+        tipo: "FÍSICO",
+        ip: "",
+        balanceador: "",
+        vlan: "",
+        descripcion: "",
+        link: "",
+        servicio_id: "",
+        capa_id: "",
+        ambiente_id: "",
+        dominio_id: "",
+        sistema_operativo_id: "",
+        estatus_id: ""
+    });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -50,35 +65,55 @@ const FormularioServidor = ({ setServidores, setModalVisible, onSuccess }) => {
         };
 
         fetchData();
-    }, []);
 
+        if (esEdicion && servidorInicial) {
+            setFormData({
+                ...servidorInicial,
+                servicio_id: servidorInicial.servicio?.id || "",
+                capa_id: servidorInicial.capa?.id || "",
+                ambiente_id: servidorInicial.ambiente?.id || "",
+                dominio_id: servidorInicial.dominio?.id || "",
+                sistema_operativo_id: servidorInicial.sistema_operativo?.id || "",
+                estatus_id: servidorInicial.estatus?.id || ""
+            });
+        }
+    }, [servidorInicial, esEdicion]);
+
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
+    };
     const handleFormSubmit = async (e) => {
         e.preventDefault();
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
 
         try {
-            const response = await fetch("http://localhost:3001/api/servidores", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-            });
+            const response = await fetch(
+                esEdicion
+                    ? `http://localhost:3001/api/servidores/${servidorInicial.id}`
+                    : "http://localhost:3001/api/servidores",
+                {
+                    method: esEdicion ? "PUT" : "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(formData)
+                }
+            );
 
             if (!response.ok) {
                 throw new Error(`Error en el servidor: ${response.status} ${response.statusText}`);
             }
 
-            const nuevoServidor = await response.json();
-            // Recargar la lista de servidores manualmente
+            const servidorActualizado = await response.json();
             const responseServidores = await fetch("http://localhost:3001/api/servidores");
             const servidoresActualizados = await responseServidores.json();
             setServidores(servidoresActualizados);
 
-            setMensajeExito("✅ Servidor guardado exitosamente!");
+            setMensajeExito(esEdicion ? "✅ Servidor editado correctamente!" : "✅ Servidor guardado exitosamente!");
             setModalVisible(false);
 
             if (onSuccess) {
-                setTimeout(() => onSuccess("✅ Servidor guardado exitosamente!"), 100);
+                setTimeout(() => onSuccess(esEdicion ? "✅ Servidor editado correctamente!" : "✅ Servidor guardado exitosamente!"), 100);
             }
         } catch (error) {
             setError(error.message);
@@ -94,26 +129,26 @@ const FormularioServidor = ({ setServidores, setModalVisible, onSuccess }) => {
             <div className="grid-form-row">
                 <div className="form-field">
                     <label>Nombre</label>
-                    <input type="text" name="nombre" required />
+                    <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} required />
                 </div>
                 <div className="form-field">
                     <label>Tipo</label>
-                    <select name="tipo" required>
+                    <select name="tipo" value={formData.tipo} onChange={handleChange} required>
                         <option value="FÍSICO">FÍSICO</option>
                         <option value="VIRTUAL">VIRTUAL</option>
                     </select>
                 </div>
                 <div className="form-field">
                     <label>IP</label>
-                    <input type="text" name="ip" required />
+                    <input type="text" name="ip" value={formData.ip} onChange={handleChange} required />
                 </div>
                 <div className="form-field">
                     <label>Balanceador</label>
-                    <input type="text" name="balanceador" />
+                    <input type="text" name="balanceador" value={formData.balanceador} onChange={handleChange} />
                 </div>
                 <div className="form-field">
                     <label>VLAN</label>
-                    <input type="text" name="vlan" />
+                    <input type="text" name="vlan" value={formData.vlan} onChange={handleChange} />
                 </div>
             </div>
 
@@ -121,15 +156,15 @@ const FormularioServidor = ({ setServidores, setModalVisible, onSuccess }) => {
             <div className="grid-form-row">
                 <div className="form-field">
                     <label>Descripción</label>
-                    <textarea name="descripcion"></textarea>
+                    <textarea name="descripcion" value={formData.descripcion} onChange={handleChange}></textarea>
                 </div>
                 <div className="form-field">
                     <label>Link</label>
-                    <input type="text" name="link" />
+                    <input type="text" name="link" value={formData.link} onChange={handleChange} />
                 </div>
                 <div className="form-field">
                     <label>Servicio</label>
-                    <select name="servicio_id">
+                    <select name="servicio_id" value={formData.servicio_id} onChange={handleChange}>
                         <option value="">Seleccione un Servicio</option>
                         {servicios.map(servicio => (
                             <option key={servicio.id} value={servicio.id}>{servicio.nombre}</option>
@@ -138,7 +173,7 @@ const FormularioServidor = ({ setServidores, setModalVisible, onSuccess }) => {
                 </div>
                 <div className="form-field">
                     <label>Capa</label>
-                    <select name="capa_id">
+                    <select name="capa_id" value={formData.capa_id} onChange={handleChange}>
                         <option value="">Seleccione una Capa</option>
                         {capas.map(capa => (
                             <option key={capa.id} value={capa.id}>{capa.nombre}</option>
@@ -147,7 +182,7 @@ const FormularioServidor = ({ setServidores, setModalVisible, onSuccess }) => {
                 </div>
                 <div className="form-field">
                     <label>Ambiente</label>
-                    <select name="ambiente_id">
+                    <select name="ambiente_id" value={formData.ambiente_id} onChange={handleChange}>
                         <option value="">Seleccione un Ambiente</option>
                         {ambientes.map(ambiente => (
                             <option key={ambiente.id} value={ambiente.id}>{ambiente.nombre}</option>
@@ -160,7 +195,7 @@ const FormularioServidor = ({ setServidores, setModalVisible, onSuccess }) => {
             <div className="grid-form-row">
                 <div className="form-field">
                     <label>Dominio</label>
-                    <select name="dominio_id">
+                    <select name="dominio_id" value={formData.dominio_id} onChange={handleChange}>
                         <option value="">Seleccione un Dominio</option>
                         {dominios.map(dominio => (
                             <option key={dominio.id} value={dominio.id}>{dominio.nombre}</option>
@@ -169,7 +204,7 @@ const FormularioServidor = ({ setServidores, setModalVisible, onSuccess }) => {
                 </div>
                 <div className="form-field">
                     <label>Sistema Operativo</label>
-                    <select name="sistema_operativo_id">
+                    <select name="sistema_operativo_id" value={formData.sistema_operativo_id} onChange={handleChange}>
                         <option value="">Seleccione un S.O.</option>
                         {sistemasOperativos.map(so => (
                             <option key={so.id} value={so.id}>{so.nombre}</option>
@@ -178,7 +213,7 @@ const FormularioServidor = ({ setServidores, setModalVisible, onSuccess }) => {
                 </div>
                 <div className="form-field">
                     <label>Estatus</label>
-                    <select name="estatus_id">
+                    <select name="estatus_id" value={formData.estatus_id} onChange={handleChange}>
                         <option value="">Seleccione un Estatus</option>
                         {estatus.map(est => (
                             <option key={est.id} value={est.id}>{est.nombre}</option>

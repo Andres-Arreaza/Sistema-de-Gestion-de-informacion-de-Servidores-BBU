@@ -97,6 +97,7 @@ def create_servidor():
         return jsonify(nuevo_servidor.serialize()), 201
     except Exception as e:
         return jsonify({"error": f"Error al guardar servidor: {str(e)}"}), 500
+        
 
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3001))
