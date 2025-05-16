@@ -6,16 +6,24 @@ const Servidores = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [modalEditarVisible, setModalEditarVisible] = useState(false);
     const [servidorActual, setServidorActual] = useState(null);
-    const [servidores, setServidores] = useState([]); // 🔹 Estado global de servidores
+    const [servidores, setServidores] = useState([]);
+    const [mensajeExito, setMensajeExito] = useState(""); // Estado para el mensaje de éxito
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setModalVisible(false);
+    // Callback para mostrar mensaje de éxito en la interfaz
+    const handleSuccess = (msg) => {
+        setMensajeExito(msg);
+        setTimeout(() => setMensajeExito(""), 3000); // Oculta el mensaje después de 3 segundos
     };
 
     return (
         <div className="servidores-container">
-            {/* 🔹 Sección con encabezado */}
+            {mensajeExito && (
+                <div className="toast-success">
+                    {mensajeExito}
+                </div>
+            )}
+
+            {/* Sección con encabezado */}
             <div className="servidores-header">
                 <div className="linea-blanca"></div>
                 <h2 className="servidores-title">Gestión de Servidores</h2>
@@ -23,15 +31,24 @@ const Servidores = () => {
                 <div className="linea-blanca-2"></div>
             </div>
 
-            {/* 🔹 Tabla de servidores con actualización automática */}
-            <TablaServidores servidores={servidores} setServidores={setServidores} setServidorActual={setServidorActual} setModalVisible={setModalEditarVisible} />
+            {/* Tabla de servidores con actualización automática */}
+            <TablaServidores
+                servidores={servidores}
+                setServidores={setServidores}
+                setServidorActual={setServidorActual}
+                setModalVisible={setModalEditarVisible}
+            />
 
-            {/* 🔹 Modal de creación/edición */}
+            {/* Modal de creación/edición */}
             {(modalVisible || modalEditarVisible) && (
                 <div className="modal-overlay" onClick={() => setModalVisible(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <h2>{modalEditarVisible ? "Editar Servidor" : "Crear Nuevo Servidor"}</h2>
-                        <FormularioServidor setServidores={setServidores} setModalVisible={setModalVisible} />
+                        <FormularioServidor
+                            setServidores={setServidores}
+                            setModalVisible={setModalVisible}
+                            onSuccess={handleSuccess}
+                        />
                     </div>
                 </div>
             )}

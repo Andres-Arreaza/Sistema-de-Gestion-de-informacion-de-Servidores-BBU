@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const FormularioServidor = ({ setServidores, setModalVisible }) => {
-    // 🔹 Estados para almacenar datos específicos
+const FormularioServidor = ({ setServidores, setModalVisible, onSuccess }) => {
     const [servicios, setServicios] = useState([]);
     const [capas, setCapas] = useState([]);
     const [ambientes, setAmbientes] = useState([]);
@@ -9,12 +8,11 @@ const FormularioServidor = ({ setServidores, setModalVisible }) => {
     const [sistemasOperativos, setSistemasOperativos] = useState([]);
     const [estatus, setEstatus] = useState([]);
     const [error, setError] = useState(null);
+    const [mensajeExito, setMensajeExito] = useState("");
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                console.log("Intentando obtener datos desde la API...");
-
                 const urls = [
                     { name: "servicios", url: "http://localhost:3001/api/servicios" },
                     { name: "capas", url: "http://localhost:3001/api/capas" },
@@ -46,10 +44,7 @@ const FormularioServidor = ({ setServidores, setModalVisible }) => {
                 setEstatus(responses[5]);
 
                 setError(null);
-                console.log("Datos cargados correctamente.");
-
             } catch (error) {
-                console.error("Error al cargar opciones:", error);
                 setError(error.message);
             }
         };
@@ -74,23 +69,28 @@ const FormularioServidor = ({ setServidores, setModalVisible }) => {
             }
 
             const nuevoServidor = await response.json();
-            console.log("Servidor guardado:", nuevoServidor);
+            // Recargar la lista de servidores manualmente
+            const responseServidores = await fetch("http://localhost:3001/api/servidores");
+            const servidoresActualizados = await responseServidores.json();
+            setServidores(servidoresActualizados);
 
-            // 🔹 Actualizar la tabla agregando el nuevo servidor
-            setServidores(prev => [...prev, nuevoServidor]);
-
+            setMensajeExito("✅ Servidor guardado exitosamente!");
             setModalVisible(false);
+
+            if (onSuccess) {
+                setTimeout(() => onSuccess("✅ Servidor guardado exitosamente!"), 100);
+            }
         } catch (error) {
-            console.error("Error al guardar el servidor:", error);
             setError(error.message);
         }
     };
 
     return (
         <form onSubmit={handleFormSubmit} className="grid-form">
+            {mensajeExito && <div className="success-message">{mensajeExito}</div>}
             {error && <div className="error-message">{error}</div>}
 
-            {/* 🔹 Fila 1 */}
+            {/* Fila 1 */}
             <div className="grid-form-row">
                 <div className="form-field">
                     <label>Nombre</label>
@@ -117,7 +117,7 @@ const FormularioServidor = ({ setServidores, setModalVisible }) => {
                 </div>
             </div>
 
-            {/* 🔹 Fila 2 */}
+            {/* Fila 2 */}
             <div className="grid-form-row">
                 <div className="form-field">
                     <label>Descripción</label>
@@ -156,7 +156,7 @@ const FormularioServidor = ({ setServidores, setModalVisible }) => {
                 </div>
             </div>
 
-            {/* 🔹 Fila 3 */}
+            {/* Fila 3 */}
             <div className="grid-form-row">
                 <div className="form-field">
                     <label>Dominio</label>
@@ -187,7 +187,7 @@ const FormularioServidor = ({ setServidores, setModalVisible }) => {
                 </div>
             </div>
 
-            {/* 🔹 Acciones */}
+            {/* Acciones */}
             <div className="modal-buttons">
                 <button type="submit" className="guardar-servidores-btn">Guardar</button>
                 <button type="button" className="cerrar-servidores-btn" onClick={() => setModalVisible(false)}>Cerrar</button>

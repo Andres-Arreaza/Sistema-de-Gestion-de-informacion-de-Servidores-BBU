@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 
 const TablaServidores = ({ servidores, setServidores, setServidorActual, setModalVisible }) => {
-    // 🔹 Obtener servidores desde la API al montar el componente y cuando `servidores` cambie
+    // 🔹 Obtener servidores desde la API solo al montar el componente
     useEffect(() => {
         const fetchServidores = async () => {
             try {
@@ -21,7 +21,7 @@ const TablaServidores = ({ servidores, setServidores, setServidorActual, setModa
         };
 
         fetchServidores();
-    }, [servidores]); // 🔹 Se ejecuta cuando `servidores` cambia
+    }, []); // 🔹 Se ejecuta SOLO al montar el componente
 
     return (
         <div>
