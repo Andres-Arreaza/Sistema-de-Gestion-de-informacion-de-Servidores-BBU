@@ -6,12 +6,13 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db, SistemaOperativo, Servidor  # 🔹 Importar modelos
+from api.models import db, SistemaOperativo, Servidor
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from flask_jwt_extended import JWTManager
-from flask_cors import CORS  # 🔹 Importar CORS
+from flask_cors import CORS
+from datetime import datetime
 
 # Configuración de entorno
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
@@ -34,7 +35,7 @@ db.init_app(app)
 app.config["JWT_SECRET_KEY"] = "super-secret"  # Cambia esto!
 jwt = JWTManager(app)
 
-# 🔹 Habilitar CORS para todas las rutas
+# Habilitar CORS para todas las rutas
 CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
 
 # Inicialización de componentes
@@ -60,7 +61,7 @@ def serve_any_other_file(path):
     response.cache_control.max_age = 0  # Evita la caché en memoria
     return response
 
-# 🔹 Ruta para obtener sistemas operativos
+# Ruta para obtener sistemas operativos
 @app.route('/api/sistemas_operativos', methods=['GET'])
 def get_sistemas_operativos():
     try:
@@ -72,7 +73,7 @@ def get_sistemas_operativos():
     except Exception as e:
         return jsonify({"error": f"Error obteniendo sistemas operativos: {str(e)}"}), 500
 
-# 🔹 Ruta para obtener todos los servidores
+# Ruta para obtener todos los servidores
 @app.route('/api/servidores', methods=['GET'])
 def get_servidores():
     try:
@@ -84,53 +85,64 @@ def get_servidores():
     except Exception as e:
         return jsonify({"error": f"Error obteniendo servidores: {str(e)}"}), 500
 
-# 🔹 Ruta para crear un nuevo servidor
+# Ruta para crear un nuevo servidor
 @app.route('/api/servidores', methods=['POST'])
 def create_servidor():
     try:
         data = request.get_json()
-        
-        # 🔹 Validar que los datos necesarios están presentes
+        # Validar que los datos necesarios están presentes
         if "nombre" not in data or "tipo" not in data or "ip" not in data:
             return jsonify({"error": "Faltan datos obligatorios"}), 400
-        
+
         nuevo_servidor = Servidor(**data)
         db.session.add(nuevo_servidor)
         db.session.commit()
-        
+
         response = jsonify(nuevo_servidor.serialize())
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response, 201
     except Exception as e:
         return jsonify({"error": f"Error al guardar servidor: {str(e)}"}), 500
 
-# 🔹 Ruta para actualizar un servidor
+# Ruta para actualizar un servidor
 @app.route("/api/servidores/<int:servidor_id>", methods=["PUT"])
 def update_servidor(servidor_id):
     servidor = Servidor.query.get(servidor_id)
     if not servidor:
-        return jsonify({"error": "Servidor no encontrado"}), 404
+        response = jsonify({"error": "Servidor no encontrado"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response, 404
 
     data = request.get_json()
-    for key, value in data.items():
-        setattr(servidor, key, value)
 
+    # Solo actualizar los campos esperados (evita enviar objetos completos)
+    campos_actualizables = [
+        "nombre", "tipo", "ip", "balanceador", "vlan", "descripcion", "link",
+        "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id"
+    ]
+    for key in campos_actualizables:
+        if key in data:
+            setattr(servidor, key, data[key])
+
+    servidor.fecha_modificacion = datetime.utcnow()
     db.session.commit()
-    
+
     response = jsonify({"mensaje": "Servidor actualizado correctamente", "servidor": servidor.serialize()})
     response.headers.add("Access-Control-Allow-Origin", "*")
     return response, 200
 
-# 🔹 Ruta para eliminar un servidor
+# Ruta para eliminar un servidor
 @app.route("/api/servidores/<int:servidor_id>", methods=["DELETE"])
 def delete_servidor(servidor_id):
     servidor = Servidor.query.get(servidor_id)
     if not servidor:
-        return jsonify({"error": "Servidor no encontrado"}), 404
+        response = jsonify({"error": "Servidor no encontrado"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response, 404
 
     db.session.delete(servidor)
     db.session.commit()
-    
+
     response = jsonify({"mensaje": "Servidor eliminado correctamente"})
     response.headers.add("Access-Control-Allow-Origin", "*")
     return response, 200

@@ -11,7 +11,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
     const [mensajeExito, setMensajeExito] = useState("");
     const [formData, setFormData] = useState({
         nombre: "",
-        tipo: "FÍSICO",
+        tipo: "",
         ip: "",
         balanceador: "",
         vlan: "",
@@ -68,7 +68,13 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
 
         if (esEdicion && servidorInicial) {
             setFormData({
-                ...servidorInicial,
+                nombre: servidorInicial.nombre || "",
+                tipo: servidorInicial.tipo || "",
+                ip: servidorInicial.ip || "",
+                balanceador: servidorInicial.balanceador || "",
+                vlan: servidorInicial.vlan || "",
+                descripcion: servidorInicial.descripcion || "",
+                link: servidorInicial.link || "",
                 servicio_id: servidorInicial.servicio?.id || "",
                 capa_id: servidorInicial.capa?.id || "",
                 ambiente_id: servidorInicial.ambiente?.id || "",
@@ -89,13 +95,24 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
     const handleFormSubmit = async (e) => {
         e.preventDefault();
 
-        // 🔹 Generamos la fecha de modificación automáticamente sin mostrarla
-        const updatedFormData = {
-            ...formData,
-            fecha_modificacion: new Date().toISOString()
+        // Solo enviar los campos simples, no objetos completos
+        const payload = {
+            nombre: formData.nombre,
+            tipo: formData.tipo,
+            ip: formData.ip,
+            balanceador: formData.balanceador,
+            vlan: formData.vlan,
+            descripcion: formData.descripcion,
+            link: formData.link,
+            servicio_id: formData.servicio_id,
+            capa_id: formData.capa_id,
+            ambiente_id: formData.ambiente_id,
+            dominio_id: formData.dominio_id,
+            sistema_operativo_id: formData.sistema_operativo_id,
+            estatus_id: formData.estatus_id
         };
 
-        // 🔹 Logs para depuración
+        // Logs para depuración
         if (esEdicion) {
             console.log("Editando servidor con ID:", servidorInicial?.id);
             console.log("URL:", `http://localhost:3001/api/servidores/${servidorInicial?.id}`);
@@ -103,7 +120,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
             console.log("Creando nuevo servidor");
             console.log("URL:", "http://localhost:3001/api/servidores");
         }
-        console.log("Datos enviados al servidor:", updatedFormData);
+        console.log("Datos enviados al servidor:", payload);
 
         try {
             const response = await fetch(
@@ -113,7 +130,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 {
                     method: esEdicion ? "PUT" : "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(updatedFormData)
+                    body: JSON.stringify(payload)
                 }
             );
 
@@ -151,6 +168,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 <div className="form-field">
                     <label>Tipo</label>
                     <select name="tipo" value={formData.tipo} onChange={handleChange} required>
+                        <option value="">Seleccione el Tipo</option>
                         <option value="FÍSICO">FÍSICO</option>
                         <option value="VIRTUAL">VIRTUAL</option>
                     </select>

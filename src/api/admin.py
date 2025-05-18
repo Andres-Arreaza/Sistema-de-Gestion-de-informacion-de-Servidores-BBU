@@ -56,10 +56,9 @@ class DominioView(BaseView):
 
 class SistemaOperativoView(BaseView):
     """ Vista personalizada para gestionar sistemas operativos en Flask-Admin """
-    column_list = ["id", "nombre", "año", "version", "descripcion", "activo", "fecha_creacion", "fecha_modificacion"]
+    column_list = ["id", "nombre", "version", "descripcion", "activo", "fecha_creacion", "fecha_modificacion"]
     form_args = {
         "nombre": {"validators": [lambda form, field: field.data or field.errors.append("El nombre es obligatorio")]},
-        "año": {"validators": [lambda form, field: field.data or field.errors.append("El año es obligatorio")]},
         "version": {"validators": [lambda form, field: field.data or field.errors.append("La versión es obligatoria")]}
     }
 
@@ -67,18 +66,16 @@ class EstatusView(BaseView):
     """ Vista personalizada para gestionar estatus en Flask-Admin """
     pass
 
-class ServidorView(BaseView):  # 🔹 Se cambió a `BaseView` para incluir "activo"
+class ServidorView(BaseView):
     """ Vista personalizada para gestionar servidores en Flask-Admin """
-    
     column_list = [
         "id", "nombre", "tipo", "ip", "balanceador", "vlan", "descripcion", "link",
         "servicio", "capa", "ambiente", "dominio", "sistema_operativo", "estatus", "activo", "fecha_creacion", "fecha_modificacion"
-    ]  # 🔹 Se agregó "id", "fecha_creacion" y "fecha_modificacion" para mejor gestión
-
+    ]
     column_filters = ["activo", "tipo", "servicio", "capa", "ambiente", "dominio", "sistema_operativo", "estatus"]
-    column_editable_list = ["activo"]  # 🔹 Permitir edición rápida del estado activo
+    column_editable_list = ["activo"]
 
-    # 🔹 Mostrar los nombres en lugar de los IDs en la vista de administración
+    # Mostrar los nombres en lugar de los IDs en la vista de administración
     column_formatters = {
         "servicio": lambda v, c, m, p: m.servicio.nombre if m.servicio else "",
         "capa": lambda v, c, m, p: m.capa.nombre if m.capa else "",
@@ -88,7 +85,7 @@ class ServidorView(BaseView):  # 🔹 Se cambió a `BaseView` para incluir "acti
         "estatus": lambda v, c, m, p: m.estatus.nombre if m.estatus else ""
     }
 
-    # 🔹 Hacer que los campos sean seleccionables por nombre al agregar registros
+    # Hacer que los campos sean seleccionables por nombre al agregar registros
     form_overrides = {
         "servicio": QuerySelectField,
         "capa": QuerySelectField,
@@ -113,11 +110,11 @@ def setup_admin(app):
     app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
     admin = Admin(app, name='Gestión de Recursos', template_mode='bootstrap3')
 
-    # 🔹 Agregar modelos al panel de administración
+    # Agregar modelos al panel de administración
     admin.add_view(ServicioView(Servicio, db.session))
     admin.add_view(CapaView(Capa, db.session))
     admin.add_view(AmbienteView(Ambiente, db.session))
     admin.add_view(DominioView(Dominio, db.session))
     admin.add_view(SistemaOperativoView(SistemaOperativo, db.session))
     admin.add_view(EstatusView(Estatus, db.session))
-    admin.add_view(ServidorView(Servidor, db.session))  # 🔹 Se usa `ServidorView` para incluir "activo"
+    admin.add_view(ServidorView(Servidor, db.session))

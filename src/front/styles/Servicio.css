@@ -1,252 +1,182 @@
-.servicio-container {
-    padding: 20px;
-    text-align: center;
-    position: relative;
+/* 🔹 Variables globales */
+:root {
+  --gradient: linear-gradient(135deg, #004477 0%, #007953 100%);
+  --text-color: white;
 }
 
+/* 🔹 Encabezado con gradiente */
+.servicio-header {
+  padding: 40px 0;
+  background: var(--gradient);
+  text-align: center;
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 🔹 Título con animación */
 .servicio-title {
-    font-size: 24px;
-    margin-bottom: 20px;
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--text-color);
+  margin-bottom: 15px;
+  animation: fadeUpSlow 0.8s ease-out;
 }
 
-/* 🔹 Mensaje de alerta sobre el modal */
-.alerta {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 12px 20px;
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    opacity: 0;
-    animation: fadeIn 0.5s ease-in-out forwards;
-}
-
-/* 🔹 Alertas positivas (verde) */
-.alerta.success {
-    background-color: #28a745;
-    color: white;
-}
-
-/* 🔹 Alertas negativas (rojo) */
-.alerta.error {
-    background-color: #dc3545;
-    color: white;
-}
-
-/* 🔹 Estilo para el icono de error */
-.alerta .icono {
-    color: white;
-    font-size: 18px;
-    margin-right: 8px;
-}
-
-/* 🔹 Animación de aparición */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* 🔹 Botón para abrir el modal */
+/* 🔹 Botón de creación con mejor contraste */
 .crear-servicio-btn {
-    background-color: #007953; /* 🔹 Verde oscuro */
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-bottom: 20px;
-    transition: background-color 0.3s ease;
+  background-color: #ffffff;
+  color: #007953;
+  padding: 12px 25px;
+  font-size: 16px;
+  font-weight: bold;
+  border: 2px solid #007953;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+  animation: fadeUpSlow 1s ease-out;
 }
 
 .crear-servicio-btn:hover {
-    background-color: #006445; /* 🔹 Verde más fuerte */
+  background-color: #007953;
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.25);
 }
 
-/* 🔹 Modal */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    animation: fadeIn 0.3s ease-in-out;
-    z-index: 1000;
+/* 🔹 Líneas blancas más sutiles */
+.linea-blanca,
+.linea-blanca-2 {
+  margin: 10px auto;
+  height: 3px;
+  background-color: rgba(255, 255, 255, 0.6);
+  width: 25%;
+  animation: expandLine 1s ease-out;
 }
 
-.modal-content {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-    text-align: center;
-    width: 350px;
-    animation: scaleUp 0.3s ease-in-out;
+.linea-blanca-2 {
+  height: 2px;
+  width: 15%;
 }
 
-@keyframes scaleUp {
-    from { transform: scale(0.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+/* 🔹 Animaciones */
+@keyframes fadeUpSlow {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.modal-content input {
-    display: block;
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+@keyframes expandLine {
+  from {
+    width: 0%;
+    opacity: 0;
+  }
+  to {
+    width: 25%;
+    opacity: 1;
+  }
 }
 
-/* 🔹 Contenedor de botones en el modal */
-.modal-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
+/* 🔹 Mensajes de alerta con íconos */
+.alerta {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 5px;
+  width: fit-content;
+  margin: 10px auto;
+  font-weight: bold;
 }
 
-/* 🔹 Botón de guardar */
-.guardar-btn {
-    background-color: #007953; /* 🔹 Verde oscuro */
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+.alerta.success {
+  background-color: #007953;
+  color: white;
 }
 
-.guardar-btn:hover {
-    background-color: #006445; /* 🔹 Verde más fuerte */
+.alerta.success .material-symbols-outlined {
+  font-size: 22px;
+  margin-right: 8px;
+  color: white;
 }
 
-/* 🔹 Botón de cerrar */
-.cerrar-btn {
-    background-color: #dc3545; /* 🔹 Rojo */
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+.alerta.error {
+  background-color: #dc3545;
+  color: white;
 }
 
-.cerrar-btn:hover {
-    background-color: #b52b3a; /* 🔹 Rojo más fuerte */
+.alerta.error .material-symbols-outlined {
+  font-size: 22px;
+  margin-right: 8px;
+  color: white;
 }
 
-/* 🔹 Contenedor de botones en el modal de eliminación */
-.modal-delete-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
-}
-
-/* 🔹 Botón de eliminar */
-.eliminar-confirm-btn {
-    background-color: #dc3545; /* 🔹 Rojo */
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.eliminar-confirm-btn:hover {
-    background-color: #b52b3a; /* 🔹 Rojo más fuerte */
-}
-
-/* 🔹 Botón de cancelar */
-.cerrar-modal-btn {
-    background-color: #007953; /* 🔹 Verde oscuro */
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.cerrar-modal-btn:hover {
-    background-color: #006445; /* 🔹 Verde más fuerte */
-}
-
-/* 🔹 Diseño en 4 columnas con ancho limitado */
+/* 🔹 Cards de los servicios */
 .servicio-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    justify-content: center;
-    max-width: 80%;
-    margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  justify-content: center;
+  max-width: 90%;
+  margin: 40px auto;
 }
 
-/* 🔹 Estilo de cada servicio */
 .servicio-item {
-    background-color: #f4f4f4;
-    padding: 15px;
-    margin: 15px;
-    border-radius: 8px;
-    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  transition: 0.3s ease-in-out;
 }
 
-/* 🔹 Efecto hover */
 .servicio-item:hover {
-    background-color: #d6d6d6; /* 🔹 Color más fuerte */
+  transform: translateY(-5px);
+  box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2);
 }
 
-/* 🔹 Estilos para el nombre y descripción */
-/* 🔹 Estilos para el nombre y descripción */
+/* 🔹 Nombre y descripción */
 .name {
-    color: #004477;
-    font-weight: bold;
-    text-align: left; /* 🔹 Alinea el nombre a la izquierda */
+  color: #004477;
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 8px;
 }
 
 .descripcion {
-    margin-top: 10px;
-    font-size: 14px;
-    color: #555;
-    text-align: left; /* 🔹 Alinea la descripción a la izquierda */
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-/* 🔹 Contenedor del nombre y botones */
-.servicio-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* 🔹 Botones de editar y eliminar */
+/* 🔹 Botones de acción */
 .servicio-actions {
-    display: flex;
-    gap: 10px;
+  display: flex;
+  gap: 10px;
 }
 
-.editar-btn, .eliminar-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 18px;
-    padding: 5px;
-    transition: background-color 0.3s ease;
+/* 🔹 Estilo de los iconos */
+.material-icons {
+  font-size: 20px;
+  color: #333;
+  transition: 0.3s ease-in-out;
 }
 
-.editar-btn:hover {
-    color: #007bff;
-    background-color: #d6d6d6; /* 🔹 Color más fuerte */
+.editar-btn:hover .material-icons {
+  color: #007bff;
 }
 
-.eliminar-btn:hover {
-    color: #dc3545;
-    background-color: #d6d6d6; /* 🔹 Color más fuerte */
+.eliminar-btn:hover .material-icons {
+  color: #dc3545;
+}
+
+.editar-btn,
+.eliminar-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  transition: 0.3s ease-in-out;
 }

@@ -5,10 +5,10 @@ const SistemaOperativo = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [confirmModalVisible, setConfirmModalVisible] = useState(false);
     const [alerta, setAlerta] = useState({ mensaje: "", tipo: "" });
-    const [sistemaActual, setSistemaActual] = useState({ id: null, nombre: "", año: "", version: "", descripcion: "" });
+    const [sistemaActual, setSistemaActual] = useState({ id: null, nombre: "", version: "", descripcion: "" });
     const [sistemaAEliminar, setSistemaAEliminar] = useState(null);
 
-    // 🔹 Obtener sistemas operativos desde la API
+    // Obtener sistemas operativos desde la API
     const fetchSistemas = () => {
         fetch(process.env.BACKEND_URL + "/api/sistemas-operativos")
             .then((response) => {
@@ -16,7 +16,6 @@ const SistemaOperativo = () => {
                 return response.json();
             })
             .then((data) => {
-                console.log("Sistemas operativos recibidos:", data);
                 setSistemas(data);
             })
             .catch((error) => console.error("Error al obtener sistemas operativos:", error));
@@ -26,12 +25,12 @@ const SistemaOperativo = () => {
         fetchSistemas();
     }, []);
 
-    // 🔹 Manejar cambios en el formulario
+    // Manejar cambios en el formulario
     const handleChange = (e) => {
         setSistemaActual({ ...sistemaActual, [e.target.name]: e.target.value });
     };
 
-    // 🔹 Crear o actualizar sistema operativo
+    // Crear o actualizar sistema operativo
     const handleSubmit = (e) => {
         e.preventDefault();
         const metodo = sistemaActual.id ? "PUT" : "POST";
@@ -39,10 +38,12 @@ const SistemaOperativo = () => {
             ? `${process.env.BACKEND_URL}/api/sistemas-operativos/${sistemaActual.id}`
             : `${process.env.BACKEND_URL}/api/sistemas-operativos`;
 
+        const payload = { ...sistemaActual };
+
         fetch(url, {
             method: metodo,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(sistemaActual),
+            body: JSON.stringify(payload),
         })
             .then((response) => response.json())
             .then((data) => {
@@ -62,13 +63,13 @@ const SistemaOperativo = () => {
             });
     };
 
-    // 🔹 Mostrar modal de confirmación antes de eliminar
+    // Mostrar modal de confirmación antes de eliminar
     const handleDeleteConfirm = (sistema) => {
         setSistemaAEliminar(sistema);
         setConfirmModalVisible(true);
     };
 
-    // 🔹 Eliminar sistema operativo (borrado lógico)
+    // Eliminar sistema operativo (borrado lógico)
     const handleDelete = () => {
         if (!sistemaAEliminar) return;
 
@@ -91,29 +92,28 @@ const SistemaOperativo = () => {
         <div className="sistema-container">
             <h2 className="sistema-title">Sistemas Operativos</h2>
 
-            {/* 🔹 Mensaje de alerta */}
+            {/* Mensaje de alerta */}
             {alerta.mensaje && (
                 <div className={`alerta ${alerta.tipo}`}>
-                    <span className="icono">❌</span> {alerta.mensaje}
+                    <span className="icono">{alerta.tipo === "error" ? "❌" : "✅"}</span> {alerta.mensaje}
                 </div>
             )}
 
-            {/* 🔹 Botón para abrir el modal de creación */}
+            {/* Botón para abrir el modal de creación */}
             <button className="crear-sistema-btn" onClick={() => {
-                setSistemaActual({ id: null, nombre: "", año: "", version: "", descripcion: "" });
+                setSistemaActual({ id: null, nombre: "", version: "", descripcion: "" });
                 setModalVisible(true);
             }}>
                 Crear Sistema Operativo
             </button>
 
-            {/* 🔹 Modal de creación/edición */}
+            {/* Modal de creación/edición */}
             {modalVisible && (
                 <div className="modal-overlay" onClick={() => setModalVisible(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <h2>{sistemaActual.id ? "Editar Sistema Operativo" : "Crear Nuevo Sistema Operativo"}</h2>
                         <form onSubmit={handleSubmit}>
                             <input type="text" name="nombre" placeholder="Nombre del sistema operativo" value={sistemaActual.nombre} onChange={handleChange} required />
-                            <input type="number" name="año" placeholder="Año de lanzamiento" value={sistemaActual.año} onChange={handleChange} required />
                             <input type="text" name="version" placeholder="Versión" value={sistemaActual.version} onChange={handleChange} required />
                             <input type="text" name="descripcion" placeholder="Descripción" value={sistemaActual.descripcion} onChange={handleChange} required />
                             <div className="modal-buttons">
@@ -125,7 +125,20 @@ const SistemaOperativo = () => {
                 </div>
             )}
 
-            {/* 🔹 Lista de sistemas operativos con formato personalizado */}
+            {/* Modal de confirmación para eliminar */}
+            {confirmModalVisible && (
+                <div className="modal-overlay" onClick={() => setConfirmModalVisible(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3>¿Seguro que deseas eliminar este sistema operativo?</h3>
+                        <div className="modal-buttons">
+                            <button className="guardar-btn" onClick={handleDelete}>Sí, eliminar</button>
+                            <button className="cerrar-btn" onClick={() => setConfirmModalVisible(false)}>Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Lista de sistemas operativos */}
             <div className="sistema-grid">
                 {sistemas.length > 0 ? (
                     sistemas.map((sistema) => (
@@ -141,7 +154,6 @@ const SistemaOperativo = () => {
                                         <button className="eliminar-btn" onClick={() => handleDeleteConfirm(sistema)}>🗑️</button>
                                     </div>
                                 </div>
-                                <p className="sistema-label"><strong>Año:</strong> {sistema.año}</p>
                                 <p className="sistema-label"><strong>Versión:</strong> {sistema.version}</p>
                                 <p className="sistema-descripcion">{sistema.descripcion}</p>
                             </div>

@@ -21,13 +21,13 @@
   animation-delay: 0.2s;
   top: 10px;
   left: 20px;
-} /* 🔹 Superior izquierda */
+}
 .blue {
   background-color: #004477;
   animation-delay: 0.4s;
   top: 23px;
   left: 32px;
-} /* 🔹 Inferior derecha */
+}
 .white {
   background-color: #ffff;
   animation-delay: 0.6s;
@@ -37,15 +37,14 @@
   bottom: 10px;
   height: 20px;
   z-index: 4;
-} /* 🔹 Esfera blanca detrás */
+}
 .red {
   background-color: #dd0a0a;
   animation-delay: 0.8s;
   top: 33px;
   left: 25px;
   z-index: 4;
-} /* 🔹 Sobrepuesta en blanca */
-
+}
 .white-2 {
   background-color: #ffff;
   animation-delay: 0.7s;
@@ -55,7 +54,7 @@
   bottom: 10px;
   height: 13px;
   z-index: 3;
-} /* 🔹 Esfera blanca detrás */
+}
 .red-2 {
   background-color: #dd0a0a;
   animation-delay: 0.9s;
@@ -76,4 +75,33 @@
     opacity: 1;
     transform: scale(1);
   }
+}
+
+/* 🔹 Contenedor del logo y texto */
+.search-container {
+  display: flex;
+  align-items: center;
+}
+
+/* 🔹 Posicionamiento del texto */
+.text-container {
+  margin-left: 10px; /* Mueve el texto 10px a la derecha */
+  display: flex;
+  flex-direction: column; /* Coloca "Contigo" debajo de "BANESCO" */
+  align-items: flex-start;
+}
+
+/* 🔹 Estilo del título */
+.title-b {
+  color: #004477;
+  font-weight: 900; /* Hace que el texto sea más grueso */
+  font-size: 50px; /* Aumenta el tamaño */
+}
+
+/* 🔹 Estilo del subtítulo */
+.subTitle {
+  font-family: "Caveat", cursive;
+  color: #007953;
+  font-weight: bold;
+  font-size: 25px; /* Aumenta el tamaño para mejor visibilidad */
 }

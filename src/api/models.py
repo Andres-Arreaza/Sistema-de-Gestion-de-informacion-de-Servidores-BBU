@@ -8,14 +8,26 @@ class TipoServidorEnum(Enum):
     FISICO = "FÍSICO"
     VIRTUAL = "VIRTUAL"
 
+    @classmethod
+    def from_str(cls, value):
+        # Permite aceptar tanto "FISICO" como "FÍSICO" (con o sin tilde)
+        if isinstance(value, cls):
+            return value
+        if isinstance(value, str):
+            if value.upper() in ["FISICO", "FÍSICO"]:
+                return cls.FISICO
+            elif value.upper() == "VIRTUAL":
+                return cls.VIRTUAL
+        raise ValueError(f"TipoServidorEnum inválido: {value}")
+
 class BaseModel(db.Model):
     """ Modelo base con fecha de creación, modificación y borrado lógico """
     __abstract__ = True
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)  # 🔹 Se asegura que el ID sea válido
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    fecha_modificacion = db.Column(db.DateTime, nullable=True)  # 🔹 Solo se actualiza cuando hay modificaciones
-    activo = db.Column(db.Boolean, default=True, nullable=False)  # 🔹 Borrado lógico
+    fecha_modificacion = db.Column(db.DateTime, nullable=True)
+    activo = db.Column(db.Boolean, default=True, nullable=False)
 
     def serialize(self):
         return {
@@ -28,7 +40,7 @@ class BaseModel(db.Model):
 class Servicio(BaseModel):
     __tablename__ = 'servicios'
     
-    nombre = db.Column(db.String(120), nullable=False)  # 🔹 Campo obligatorio
+    nombre = db.Column(db.String(120), nullable=False)
     descripcion = db.Column(db.String(250), nullable=True)
 
     def serialize(self):
@@ -39,7 +51,7 @@ class Servicio(BaseModel):
 class Capa(BaseModel):
     __tablename__ = 'capas'
 
-    nombre = db.Column(db.String(120), nullable=False)  # 🔹 Campo obligatorio
+    nombre = db.Column(db.String(120), nullable=False)
     descripcion = db.Column(db.String(250), nullable=True)
 
     def serialize(self):
@@ -50,7 +62,7 @@ class Capa(BaseModel):
 class Ambiente(BaseModel):
     __tablename__ = 'ambientes'
 
-    nombre = db.Column(db.String(120), nullable=False)  # 🔹 Campo obligatorio
+    nombre = db.Column(db.String(120), nullable=False)
     descripcion = db.Column(db.String(250), nullable=True)
 
     def serialize(self):
@@ -61,7 +73,7 @@ class Ambiente(BaseModel):
 class Dominio(BaseModel):
     __tablename__ = 'dominios'
 
-    nombre = db.Column(db.String(120), nullable=False)  # 🔹 Campo obligatorio
+    nombre = db.Column(db.String(120), nullable=False)
     descripcion = db.Column(db.String(250), nullable=True)
 
     def serialize(self):
@@ -72,20 +84,23 @@ class Dominio(BaseModel):
 class SistemaOperativo(BaseModel):
     __tablename__ = 'sistemas_operativos'
 
-    nombre = db.Column(db.String(120), nullable=False)  # 🔹 Campo obligatorio
-    año = db.Column(db.Integer, nullable=False)  # 🔹 Año de lanzamiento
-    version = db.Column(db.String(50), nullable=False)  # 🔹 Campo obligatorio
+    nombre = db.Column(db.String(120), nullable=False)
+    version = db.Column(db.String(50), nullable=False)
     descripcion = db.Column(db.String(250), nullable=True)
 
     def serialize(self):
         data = super().serialize()
-        data.update({"nombre": self.nombre, "año": self.año, "version": self.version, "descripcion": self.descripcion})
+        data.update({
+            "nombre": self.nombre,
+            "version": self.version,
+            "descripcion": self.descripcion
+        })
         return data
 
 class Estatus(BaseModel):
     __tablename__ = 'estatus'
 
-    nombre = db.Column(db.String(120), nullable=False)  # 🔹 Campo obligatorio
+    nombre = db.Column(db.String(120), nullable=False)
     descripcion = db.Column(db.String(250), nullable=True)
 
     def serialize(self):
@@ -96,7 +111,7 @@ class Estatus(BaseModel):
 class Servidor(BaseModel): 
     __tablename__ = 'servidores'
 
-    nombre = db.Column(db.String(120), nullable=False) 
+    nombre = db.Column(db.String(120), nullable=False)
     tipo = db.Column(db.Enum(TipoServidorEnum), nullable=False)
     ip = db.Column(db.String(50), nullable=True)
     balanceador = db.Column(db.String(120), nullable=True)
@@ -117,6 +132,18 @@ class Servidor(BaseModel):
     dominio = db.relationship(Dominio)
     sistema_operativo = db.relationship(SistemaOperativo)
     estatus = db.relationship(Estatus)
+
+    def __init__(self, *args, **kwargs):
+        # Permite aceptar "FISICO", "FÍSICO", Enum o ya el valor correcto
+        if "tipo" in kwargs:
+            tipo_val = kwargs["tipo"]
+            if isinstance(tipo_val, TipoServidorEnum):
+                kwargs["tipo"] = tipo_val
+            elif isinstance(tipo_val, str):
+                kwargs["tipo"] = TipoServidorEnum.from_str(tipo_val)
+            else:
+                raise ValueError("Tipo de servidor inválido")
+        super().__init__(*args, **kwargs)
 
     def serialize(self):
         data = super().serialize()

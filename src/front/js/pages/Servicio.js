@@ -47,21 +47,20 @@ const Servicio = () => {
             .then((response) => response.json())
             .then((data) => {
                 if (data.error) {
-                    setAlerta({ mensaje: `${data.error}`, tipo: "error" });
+                    setAlerta({ mensaje: data.error, tipo: "error" });
                 } else {
                     fetchServicios();
                     setModalVisible(false);
-                    setAlerta({ mensaje: servicioActual.id ? "✅ Servicio actualizado" : "✅ Servicio creado", tipo: "success" });
+                    setAlerta({ mensaje: servicioActual.id ? "Servicio actualizado" : "Servicio creado", tipo: "success" });
                 }
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
             .catch((error) => {
                 console.error("Error al guardar servicio:", error);
-                setAlerta({ mensaje: "❌ Error al guardar el servicio", tipo: "error" });
+                setAlerta({ mensaje: "Error al guardar el servicio", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             });
     };
-
     // 🔹 Mostrar modal de confirmación antes de eliminar
     const handleDeleteConfirm = (servicio) => {
         setServicioAEliminar(servicio);
@@ -77,34 +76,40 @@ const Servicio = () => {
             .then(() => {
                 fetchServicios();
                 setConfirmModalVisible(false);
-                setAlerta({ mensaje: "✅ Servicio eliminado", tipo: "success" });
+                setAlerta({ mensaje: "Servidor eliminado", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
             .catch((error) => {
                 console.error("Error al eliminar servicio:", error);
-                setAlerta({ mensaje: "❌ Error al eliminar el servicio", tipo: "error" });
+                setAlerta({ mensaje: "Error al eliminar el servicio", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             });
     };
 
     return (
         <div className="servicio-container">
-            <h1 className="servicio-title">SERVICIOS</h1>
+            {/* 🔹 Encabezado con gradiente, líneas blancas y botón */}
+            <div className="servicio-header">
+                <div className="linea-blanca"></div>
+                <h2 className="servicio-title">Gestión de Servicios</h2>
+                <button className="crear-servicio-btn" onClick={() => {
+                    setServicioActual({ id: null, nombre: "", descripcion: "" });
+                    setModalVisible(true);
+                }}>Crear Servicio</button>
+                <div className="linea-blanca-2"></div>
+            </div>
 
             {/* 🔹 Mensaje de alerta */}
             {alerta.mensaje && (
                 <div className={`alerta ${alerta.tipo}`}>
-                    <span className="icono">❌</span> {alerta.mensaje}
+                    {alerta.mensaje === "Servidor eliminado" ? (
+                        <span class="material-symbols-outlined">cancel</span>
+                    ) : (
+                        <span class="material-symbols-outlined">check_circle</span>
+                    )}
+                    {alerta.mensaje}
                 </div>
             )}
-
-            {/* 🔹 Botón para abrir el modal de creación */}
-            <button className="crear-servicio-btn" onClick={() => {
-                setServicioActual({ id: null, nombre: "", descripcion: "" });
-                setModalVisible(true);
-            }}>
-                Crear Servicio
-            </button>
 
             {/* 🔹 Modal de creación/edición */}
             {modalVisible && (
@@ -137,7 +142,7 @@ const Servicio = () => {
                 </div>
             )}
 
-            {/* 🔹 Lista de servicios con botones de editar y eliminar al lado del nombre */}
+            {/* 🔹 Lista de servicios con botones de editar y eliminar */}
             <div className="servicio-grid">
                 {servicios.length > 0 ? (
                     servicios.map((servicio) => (
@@ -148,8 +153,12 @@ const Servicio = () => {
                                     <button className="editar-btn" onClick={() => {
                                         setServicioActual(servicio);
                                         setModalVisible(true);
-                                    }}>✏️</button>
-                                    <button className="eliminar-btn" onClick={() => handleDeleteConfirm(servicio)}>🗑️</button>
+                                    }}>
+                                        <span className="material-icons"><i className="fas fa-edit"></i></span>
+                                    </button>
+                                    <button className="eliminar-btn" onClick={() => handleDeleteConfirm(servicio)}>
+                                        <span className="material-icons"><i className="fas fa-trash"></i></span>
+                                    </button>
                                 </div>
                             </div>
                             <p className="descripcion">{servicio.descripcion}</p>
