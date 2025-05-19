@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Search from "../pages/Loading"; // Asegúrate de que la ruta sea correcta
+import Loading from "../pages/Loading"; // Asegúrate de que la ruta sea correcta
 
 export const Home = () => {
     // Estados para los filtros tipo checkbox
@@ -65,7 +65,7 @@ export const Home = () => {
                     if (key === "estatus") setEstatus(data);
                 } catch (e) { }
             }
-            setTimeout(() => setLoadingFiltros(false), {/* 650 */ });
+            setTimeout(() => setLoadingFiltros(false), 650, {/*  */ });
         };
         fetchData();
     }, []);
@@ -110,7 +110,7 @@ export const Home = () => {
 
             {/* Mostrar loader o filtros */}
             {loadingFiltros ? (
-                <Search />
+                <Loading />
             ) : (
                 <form className="filtros-servidores" onSubmit={e => { e.preventDefault(); buscarServidores(e); }}>
                     <div className="filtros-servidores-campos">

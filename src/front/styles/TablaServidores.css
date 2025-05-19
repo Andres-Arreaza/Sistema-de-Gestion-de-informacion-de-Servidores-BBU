@@ -109,7 +109,7 @@
 }
 
 .editar-btn:hover i {
-  color: #2876c9;
+  color: #007953;
   transform: scale(1.3);
 }
 
@@ -120,7 +120,7 @@
 }
 
 .eliminar-btn:hover i {
-  color: #2876c9;
+  color: #007953;
   transform: scale(1.3);
 }
 

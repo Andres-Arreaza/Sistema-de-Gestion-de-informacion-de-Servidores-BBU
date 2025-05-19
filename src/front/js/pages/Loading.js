@@ -1,8 +1,8 @@
 import React from "react";
 
-const Search = () => {
+const Loading = () => {
     return (
-        <div className="search-container">
+        <div className="loading-container">
             <div className="logo-container">
                 <div className="circle green"></div>
                 <div className="circle blue"></div>
@@ -11,9 +11,9 @@ const Search = () => {
                 <div className="circle white-2"></div>
                 <div className="circle red-2"></div>
             </div>
-            <h2 className="title-b loading-text">Cargando Datos ...</h2>
+            <h2 className="loading-text">Cargando Datos ...</h2>
         </div>
     );
 };
 
-export default Search;
+export default Loading;
