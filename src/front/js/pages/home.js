@@ -32,6 +32,16 @@ export const Home = () => {
     // Estado para saber si los filtros están cargando
     const [loadingFiltros, setLoadingFiltros] = useState(true);
 
+    // Estados para desplegables
+    const [openDropdown, setOpenDropdown] = useState({
+        servicios: false,
+        capas: false,
+        ambientes: false,
+        dominios: false,
+        sistemasOperativos: false,
+        estatus: false,
+    });
+
     // Cargar opciones de filtros al montar
     useEffect(() => {
         const fetchData = async () => {
@@ -55,7 +65,6 @@ export const Home = () => {
                     if (key === "estatus") setEstatus(data);
                 } catch (e) { }
             }
-            // Espera 1 segundo extra antes de ocultar el loader
             setTimeout(() => setLoadingFiltros(false), 650);
         };
         fetchData();
@@ -79,33 +88,14 @@ export const Home = () => {
         setFiltro({ ...filtro, [e.target.name]: e.target.value });
     };
 
-    // Buscar servidores
-    const buscarServidores = async (e) => {
-        e.preventDefault();
-        // Construir query params
-        const params = new URLSearchParams();
-
-        if (filtro.nombre) params.append("nombre", filtro.nombre);
-        if (filtro.tipo) params.append("tipo", filtro.tipo);
-        if (filtro.ip) params.append("ip", filtro.ip);
-        if (filtro.balanceador) params.append("balanceador", filtro.balanceador);
-        if (filtro.vlan) params.append("vlan", filtro.vlan);
-        if (filtro.link) params.append("link", filtro.link);
-
-        if (filtro.servicios.length > 0) filtro.servicios.forEach(id => params.append("servicios", id));
-        if (filtro.capas.length > 0) filtro.capas.forEach(id => params.append("capas", id));
-        if (filtro.ambientes.length > 0) filtro.ambientes.forEach(id => params.append("ambientes", id));
-        if (filtro.dominios.length > 0) filtro.dominios.forEach(id => params.append("dominios", id));
-        if (filtro.sistemasOperativos.length > 0) filtro.sistemasOperativos.forEach(id => params.append("sistemas_operativos", id));
-        if (filtro.estatus.length > 0) filtro.estatus.forEach(id => params.append("estatus", id));
-
-        // Realizar la búsqueda
-        const res = await fetch(`http://localhost:3001/api/servidores/busqueda?${params.toString()}`);
-        const data = await res.json();
-        setServidores(data);
+    // Manejar abrir/cerrar desplegables
+    const toggleDropdown = (key) => {
+        setOpenDropdown((prev) => ({
+            ...prev,
+            [key]: !prev[key]
+        }));
     };
 
-    // ...parte 1...
     return (
         <div>
             {/* Gradiente y título */}
@@ -122,93 +112,178 @@ export const Home = () => {
             {loadingFiltros ? (
                 <Search />
             ) : (
-                <form className="filtros-servidores" onSubmit={buscarServidores}>
+                <form className="filtros-servidores" onSubmit={e => { e.preventDefault(); buscarServidores(e); }}>
                     <div className="filtros-servidores-campos">
+                        {/* Servicios */}
                         <div className="filtros-columna">
-                            <span className="filtros-label">Servicios</span>
-                            {servicios.map(s => (
-                                <label key={s.id}>
-                                    <input
-                                        type="checkbox"
-                                        value={s.id}
-                                        checked={filtro.servicios.includes(String(s.id))}
-                                        onChange={e => handleCheckboxChange(e, "servicios")}
-                                    />
-                                    {s.nombre}
-                                </label>
-                            ))}
+                            <span
+                                className="filtros-label"
+                                onClick={() => toggleDropdown("servicios")}
+                                style={{ cursor: "pointer", userSelect: "none", display: "flex", alignItems: "center", gap: "4px" }}
+                            >
+                                Servicios
+                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+                                    {openDropdown.servicios ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+                                </span>
+                            </span>
+                            <div className={`filtro-dropdown-content${openDropdown.servicios ? " open" : ""}`}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                    {servicios.map(s => (
+                                        <label key={s.id} style={{ display: "flex", alignItems: "center", marginBottom: "2px" }}>
+                                            <input
+                                                type="checkbox"
+                                                value={s.id}
+                                                checked={filtro.servicios.includes(String(s.id))}
+                                                onChange={e => handleCheckboxChange(e, "servicios")}
+                                            />
+                                            {s.nombre}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
+                        {/* Capas */}
                         <div className="filtros-columna">
-                            <span className="filtros-label">Capas</span>
-                            {capas.map(c => (
-                                <label key={c.id}>
-                                    <input
-                                        type="checkbox"
-                                        value={c.id}
-                                        checked={filtro.capas.includes(String(c.id))}
-                                        onChange={e => handleCheckboxChange(e, "capas")}
-                                    />
-                                    {c.nombre}
-                                </label>
-                            ))}
+                            <span
+                                className="filtros-label"
+                                onClick={() => toggleDropdown("capas")}
+                                style={{ cursor: "pointer", userSelect: "none", display: "flex", alignItems: "center", gap: "4px" }}
+                            >
+                                Capas
+                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+                                    {openDropdown.capas ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+                                </span>
+                            </span>
+                            <div className={`filtro-dropdown-content${openDropdown.capas ? " open" : ""}`}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                    {capas.map(c => (
+                                        <label key={c.id} style={{ display: "flex", alignItems: "center", marginBottom: "2px" }}>
+                                            <input
+                                                type="checkbox"
+                                                value={c.id}
+                                                checked={filtro.capas.includes(String(c.id))}
+                                                onChange={e => handleCheckboxChange(e, "capas")}
+                                            />
+                                            {c.nombre}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
+                        {/* Ambientes */}
                         <div className="filtros-columna">
-                            <span className="filtros-label">Ambientes</span>
-                            {ambientes.map(a => (
-                                <label key={a.id}>
-                                    <input
-                                        type="checkbox"
-                                        value={a.id}
-                                        checked={filtro.ambientes.includes(String(a.id))}
-                                        onChange={e => handleCheckboxChange(e, "ambientes")}
-                                    />
-                                    {a.nombre}
-                                </label>
-                            ))}
+                            <span
+                                className="filtros-label"
+                                onClick={() => toggleDropdown("ambientes")}
+                                style={{ cursor: "pointer", userSelect: "none", display: "flex", alignItems: "center", gap: "4px" }}
+                            >
+                                Ambientes
+                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+                                    {openDropdown.ambientes ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+                                </span>
+                            </span>
+                            <div className={`filtro-dropdown-content${openDropdown.ambientes ? " open" : ""}`}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                    {ambientes.map(a => (
+                                        <label key={a.id} style={{ display: "flex", alignItems: "center", marginBottom: "2px" }}>
+                                            <input
+                                                type="checkbox"
+                                                value={a.id}
+                                                checked={filtro.ambientes.includes(String(a.id))}
+                                                onChange={e => handleCheckboxChange(e, "ambientes")}
+                                            />
+                                            {a.nombre}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
+                        {/* Dominios */}
                         <div className="filtros-columna">
-                            <span className="filtros-label">Dominios</span>
-                            {dominios.map(d => (
-                                <label key={d.id}>
-                                    <input
-                                        type="checkbox"
-                                        value={d.id}
-                                        checked={filtro.dominios.includes(String(d.id))}
-                                        onChange={e => handleCheckboxChange(e, "dominios")}
-                                    />
-                                    {d.nombre}
-                                </label>
-                            ))}
+                            <span
+                                className="filtros-label"
+                                onClick={() => toggleDropdown("dominios")}
+                                style={{ cursor: "pointer", userSelect: "none", display: "flex", alignItems: "center", gap: "4px" }}
+                            >
+                                Dominios
+                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+                                    {openDropdown.dominios ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+                                </span>
+                            </span>
+                            <div className={`filtro-dropdown-content${openDropdown.dominios ? " open" : ""}`}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                    {dominios.map(d => (
+                                        <label key={d.id} style={{ display: "flex", alignItems: "center", marginBottom: "2px" }}>
+                                            <input
+                                                type="checkbox"
+                                                value={d.id}
+                                                checked={filtro.dominios.includes(String(d.id))}
+                                                onChange={e => handleCheckboxChange(e, "dominios")}
+                                            />
+                                            {d.nombre}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
+                        {/* Sistemas Operativos */}
                         <div className="filtros-columna">
-                            <span className="filtros-label">Sistemas Operativos</span>
-                            {sistemasOperativos.map(so => (
-                                <label key={so.id}>
-                                    <input
-                                        type="checkbox"
-                                        value={so.id}
-                                        checked={filtro.sistemasOperativos.includes(String(so.id))}
-                                        onChange={e => handleCheckboxChange(e, "sistemasOperativos")}
-                                    />
-                                    {so.nombre}
-                                </label>
-                            ))}
+                            <span
+                                className="filtros-label"
+                                onClick={() => toggleDropdown("sistemasOperativos")}
+                                style={{ cursor: "pointer", userSelect: "none", display: "flex", alignItems: "center", gap: "4px" }}
+                            >
+                                Sistemas Operativos
+                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+                                    {openDropdown.sistemasOperativos ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+                                </span>
+                            </span>
+                            <div className={`filtro-dropdown-content${openDropdown.sistemasOperativos ? " open" : ""}`}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                    {sistemasOperativos.map(so => (
+                                        <label key={so.id} style={{ display: "flex", alignItems: "center", marginBottom: "2px" }}>
+                                            <input
+                                                type="checkbox"
+                                                value={so.id}
+                                                checked={filtro.sistemasOperativos.includes(String(so.id))}
+                                                onChange={e => handleCheckboxChange(e, "sistemasOperativos")}
+                                            />
+                                            {so.nombre}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
+                        {/* Estatus */}
                         <div className="filtros-columna">
-                            <span className="filtros-label">Estatus</span>
-                            {estatus.map(es => (
-                                <label key={es.id}>
-                                    <input
-                                        type="checkbox"
-                                        value={es.id}
-                                        checked={filtro.estatus.includes(String(es.id))}
-                                        onChange={e => handleCheckboxChange(e, "estatus")}
-                                    />
-                                    {es.nombre}
-                                </label>
-                            ))}
+                            <span
+                                className="filtros-label"
+                                onClick={() => toggleDropdown("estatus")}
+                                style={{ cursor: "pointer", userSelect: "none", display: "flex", alignItems: "center", gap: "4px" }}
+                            >
+                                Estatus
+                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+                                    {openDropdown.estatus ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+                                </span>
+                            </span>
+                            <div className={`filtro-dropdown-content${openDropdown.estatus ? " open" : ""}`}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                    {estatus.map(es => (
+                                        <label key={es.id} style={{ display: "flex", alignItems: "center", marginBottom: "2px" }}>
+                                            <input
+                                                type="checkbox"
+                                                value={es.id}
+                                                checked={filtro.estatus.includes(String(es.id))}
+                                                onChange={e => handleCheckboxChange(e, "estatus")}
+                                            />
+                                            {es.nombre}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
+                    {/* ...resto del formulario igual... */}
                     <div className="filtros-servidores-campos-segundo">
                         <div className="filtros-columna">
                             <label className="filtros-label-texto" htmlFor="nombre">Nombre</label>
