@@ -3,6 +3,7 @@
   position: relative;
   width: 150px;
   height: 150px;
+  left: 40px;
 }
 
 /* 🔹 Estilo base para los círculos */
@@ -80,7 +81,17 @@
 /* 🔹 Contenedor del logo y texto */
 .search-container {
   display: flex;
+  flex-direction: column;
   align-items: center;
+}
+.loading-text {
+  margin-top: -90px; /* Lo sube justo debajo del logo */
+  color: #004477;
+  font-weight: 900;
+  font-size: 22px;
+  text-align: center;
+  letter-spacing: 1px;
+  animation: fadeIn 2s;
 }
 
 /* 🔹 Posicionamiento del texto */
@@ -89,19 +100,4 @@
   display: flex;
   flex-direction: column; /* Coloca "Contigo" debajo de "BANESCO" */
   align-items: flex-start;
-}
-
-/* 🔹 Estilo del título */
-.title-b {
-  color: #004477;
-  font-weight: 900; /* Hace que el texto sea más grueso */
-  font-size: 50px; /* Aumenta el tamaño */
-}
-
-/* 🔹 Estilo del subtítulo */
-.subTitle {
-  font-family: "Caveat", cursive;
-  color: #007953;
-  font-weight: bold;
-  font-size: 25px; /* Aumenta el tamaño para mejor visibilidad */
 }

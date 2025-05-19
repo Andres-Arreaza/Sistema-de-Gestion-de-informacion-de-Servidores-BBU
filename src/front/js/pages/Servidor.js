@@ -15,6 +15,19 @@ const Servidores = () => {
         setTimeout(() => setMensajeExito(""), 3000); // Oculta el mensaje después de 3 segundos
     };
 
+    // Abrir modal de edición y setear el servidor actual
+    const abrirModalEditar = (servidor) => {
+        setServidorActual(servidor);
+        setModalEditarVisible(true);
+    };
+
+    // Cerrar ambos modales y limpiar servidor actual
+    const cerrarModal = () => {
+        setModalVisible(false);
+        setModalEditarVisible(false);
+        setServidorActual(null);
+    };
+
     return (
         <div className="servidores-container">
             {mensajeExito && (
@@ -36,18 +49,35 @@ const Servidores = () => {
                 servidores={servidores}
                 setServidores={setServidores}
                 setServidorActual={setServidorActual}
-                setModalVisible={setModalEditarVisible}
+                abrirModalEditar={abrirModalEditar} // Usar la función correcta para abrir edición
             />
 
-            {/* Modal de creación/edición */}
-            {(modalVisible || modalEditarVisible) && (
-                <div className="modal-overlay" onClick={() => setModalVisible(false)}>
+            {/* Modal de creación */}
+            {modalVisible && (
+                <div className="modal-overlay" onClick={cerrarModal}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h2>{modalEditarVisible ? "Editar Servidor" : "Crear Nuevo Servidor"}</h2>
+                        <h2>Crear Nuevo Servidor</h2>
                         <FormularioServidor
                             setServidores={setServidores}
-                            setModalVisible={setModalVisible}
+                            setModalVisible={cerrarModal}
                             onSuccess={handleSuccess}
+                            esEdicion={false}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de edición */}
+            {modalEditarVisible && (
+                <div className="modal-overlay" onClick={cerrarModal}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h2>Editar Servidor</h2>
+                        <FormularioServidor
+                            servidorInicial={servidorActual}
+                            setServidores={setServidores}
+                            setModalVisible={cerrarModal}
+                            onSuccess={handleSuccess}
+                            esEdicion={true}
                         />
                     </div>
                 </div>

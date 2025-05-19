@@ -30,7 +30,6 @@
   }
 }
 
-/* 🔹 Animación de expansión para líneas */
 @keyframes expandLine3 {
   from {
     width: 0%;
@@ -42,7 +41,6 @@
   }
 }
 
-/* 🔹 Animación de expansión para segunda línea */
 @keyframes expandLine4 {
   from {
     width: 0%;
@@ -99,7 +97,7 @@
   font-style: normal;
   font-size: 40px;
   color: #ffffff;
-  animation: fadeUpSlow 1s ease-out; /* 🔹 Aparece con elevación más lenta */
+  animation: fadeUpSlow 1s ease-out;
 }
 
 /* 🔹 Contenedor de servicios (Sin animación) */
@@ -115,7 +113,14 @@
   color: #333;
   margin-bottom: 20px;
 }
-
+.busqueda-title {
+  font-size: 30px;
+  color: #333;
+  margin-top: 25px;
+  padding: 10px;
+  text-align: center;
+  width: 100%;
+}
 /* 🔹 Lista de servicios (Sin animación) */
 .servicios-list {
   list-style: none;
@@ -155,10 +160,180 @@
   cursor: pointer;
   font-size: 16px;
   border-radius: 5px;
-  animation: zoomFadeInSlow 1s ease-out; /* 🔹 Aparece con zoom más lento */
+  animation: zoomFadeInSlow 1s ease-out;
 }
 
 /* 🔹 Hover en el botón */
 .home-btn:hover {
   background-color: #0056b3;
+}
+
+/* Filtros de servidores */
+.filtros-servidores {
+  margin: 30px auto;
+  max-width: 90%;
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  /* Efecto de sombra y animación */
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15),
+    0 1.5px 6px 0 rgba(0, 0, 0, 0.08);
+  animation: fadeUpSlow 1.1s;
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+.filtros-servidores:hover {
+  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.22),
+    0 3px 12px 0 rgba(0, 0, 0, 0.13);
+}
+
+/* Efecto de animación para los títulos de cada columna de filtro */
+.filtros-label,
+.filtros-label-texto {
+  animation: fadeUpSlow 1.2s;
+  display: block;
+}
+
+/* Encabezados de filtros en horizontal */
+.filtros-servidores-header {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.filtros-servidores-header span {
+  min-width: 100px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.filtros-servidores-header span:last-child {
+  min-width: 120px;
+}
+
+/* Contenedor de filtros en columnas */
+.filtros-servidores-campos {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+.filtros-servidores-campos-segundo {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  justify-content: center;
+  margin-bottom: 0px;
+}
+
+/* Cada columna de checkboxes */
+.filtros-columna {
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  flex: 1 1 0;
+  position: relative;
+}
+
+/* Contenedor para alinear el input de texto */
+.filtros-input-wrapper {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Ajusta el input de texto */
+.filtros-columna input[type="text"] {
+  width: 100%;
+  min-width: 100px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  border: 1.5px solid #cfd8dc;
+  border-radius: 4px;
+  padding: 6px 8px;
+  background: #f7fafc;
+}
+.filtros-columna input[type="text"]:focus {
+  outline: none;
+  border-color: #007953;
+  box-shadow: 0 0 0 2px #00795333;
+  background: #fff;
+}
+
+/* Efecto para los checkboxes */
+.filtros-columna input[type="checkbox"] {
+  accent-color: #007953;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  transition: accent-color 0.2s;
+}
+.filtros-columna label {
+  cursor: pointer;
+  font-size: 15px;
+  margin-bottom: 2px;
+  transition: color 0.2s;
+}
+.filtros-columna input[type="checkbox"]:focus + span,
+.filtros-columna input[type="checkbox"]:hover + span {
+  color: #007953;
+}
+
+/* Columna de campos de texto */
+.filtros-campos-texto {
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Botón buscar */
+.buscar-servidores-btn {
+  margin-top: 24px;
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 5px;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+}
+.buscar-servidores-btn:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.13);
+}
+
+/* Tabla de resultados */
+.tabla-servidores {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla-servidores th,
+.tabla-servidores td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.tabla-servidores th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.filtros-loading {
+  text-align: center;
+  font-size: 18px;
+  color: #007953;
+  padding: 40px 0 30px 0;
+  animation: fadeUpSlow 1s;
 }

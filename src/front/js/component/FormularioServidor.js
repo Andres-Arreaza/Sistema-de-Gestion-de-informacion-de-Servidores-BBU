@@ -8,7 +8,6 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
     const [sistemasOperativos, setSistemasOperativos] = useState([]);
     const [estatus, setEstatus] = useState([]);
     const [error, setError] = useState(null);
-    const [mensajeExito, setMensajeExito] = useState("");
     const [formData, setFormData] = useState({
         nombre: "",
         tipo: "",
@@ -95,7 +94,6 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
     const handleFormSubmit = async (e) => {
         e.preventDefault();
 
-        // Solo enviar los campos simples, no objetos completos
         const payload = {
             nombre: formData.nombre,
             tipo: formData.tipo,
@@ -111,16 +109,6 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
             sistema_operativo_id: formData.sistema_operativo_id,
             estatus_id: formData.estatus_id
         };
-
-        // Logs para depuración
-        if (esEdicion) {
-            console.log("Editando servidor con ID:", servidorInicial?.id);
-            console.log("URL:", `http://localhost:3001/api/servidores/${servidorInicial?.id}`);
-        } else {
-            console.log("Creando nuevo servidor");
-            console.log("URL:", "http://localhost:3001/api/servidores");
-        }
-        console.log("Datos enviados al servidor:", payload);
 
         try {
             const response = await fetch(
@@ -143,11 +131,12 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
             const servidoresActualizados = await responseServidores.json();
             setServidores(servidoresActualizados);
 
-            setMensajeExito(esEdicion ? "✅ Servidor editado correctamente!" : "✅ Servidor guardado exitosamente!");
             setModalVisible(false);
-
+            // Usar un pequeño delay para asegurar que el modal se cierre antes de mostrar la alerta
             if (onSuccess) {
-                setTimeout(() => onSuccess(esEdicion ? "✅ Servidor editado correctamente!" : "✅ Servidor guardado exitosamente!"), 100);
+                setTimeout(() => {
+                    onSuccess(esEdicion ? "✅ Servidor editado correctamente!" : "✅ Servidor guardado exitosamente!");
+                }, 100);
             }
         } catch (error) {
             setError(error.message);
@@ -156,7 +145,6 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
 
     return (
         <form onSubmit={handleFormSubmit} className="grid-form">
-            {mensajeExito && <div className="success-message">{mensajeExito}</div>}
             {error && <div className="error-message">{error}</div>}
 
             {/* Fila 1 */}
