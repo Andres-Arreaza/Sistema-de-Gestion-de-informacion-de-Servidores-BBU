@@ -5,7 +5,7 @@ from enum import Enum
 db = SQLAlchemy()
 
 class TipoServidorEnum(Enum):
-    FISICO = "FÍSICO"
+    FISICO = "FISICO"
     VIRTUAL = "VIRTUAL"
 
     @classmethod

@@ -169,7 +169,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                     <label>Tipo</label>
                     <select name="tipo" value={formData.tipo} onChange={handleChange} required>
                         <option value="">Seleccione el Tipo</option>
-                        <option value="FÍSICO">FÍSICO</option>
+                        <option value="FISICO">FISICO</option>
                         <option value="VIRTUAL">VIRTUAL</option>
                     </select>
                 </div>
