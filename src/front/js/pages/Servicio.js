@@ -147,7 +147,7 @@ const Servicio = () => {
                 {servicios.length > 0 ? (
                     servicios.map((servicio) => (
                         <div key={servicio.id} className="servicio-item">
-                            <div className="servicio-header">
+                            <div className="servicio-header-item">
                                 <strong className="name">{servicio.nombre}</strong>
                                 <div className="servicio-actions">
                                     <button className="editar-btn" onClick={() => {

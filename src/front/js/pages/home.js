@@ -65,7 +65,7 @@ export const Home = () => {
                     if (key === "estatus") setEstatus(data);
                 } catch (e) { }
             }
-            setTimeout(() => setLoadingFiltros(false), 650);
+            setTimeout(() => setLoadingFiltros(false), {/* 650 */ });
         };
         fetchData();
     }, []);
@@ -102,7 +102,7 @@ export const Home = () => {
             <div className="home-container">
                 <div className="linea-blanca-3"></div>
                 <h1 className="title">Gerencia de Operaciones de Canales Virtuales y Medios de Pagos</h1>
-                <p className="subtitle">"Gestiona y visualiza los servidores"</p>
+                <p className="subtitle">"Gestiona y visualiza servidores"</p>
                 <div className="linea-blanca-4"></div>
             </div>
 
