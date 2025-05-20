@@ -133,7 +133,7 @@ const Servicio = () => {
                 <div className="modal-overlay" onClick={() => setConfirmModalVisible(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <h2>¿Seguro que deseas eliminar este servicio?</h2>
-                        <p>{servicioAEliminar?.nombre}</p>
+                        <p>{`El Servicio "` + servicioAEliminar?.nombre + `" sera eliminado.`}</p>
                         <div className="modal-delete-buttons">
                             <button className="eliminar-confirm-btn" onClick={handleDelete}>Eliminar</button>
                             <button className="cerrar-modal-btn" onClick={() => setConfirmModalVisible(false)}>Cancelar</button>
@@ -148,8 +148,9 @@ const Servicio = () => {
                     servicios.map((servicio) => (
                         <div key={servicio.id} className="servicio-item">
                             <div className="servicio-header-item">
-                                <strong className="name">{servicio.nombre}</strong>
+
                                 <div className="servicio-actions">
+                                    <strong className="name">{servicio.nombre}</strong>
                                     <button className="editar-btn" onClick={() => {
                                         setServicioActual(servicio);
                                         setModalVisible(true);

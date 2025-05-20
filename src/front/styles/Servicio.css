@@ -9,12 +9,11 @@
   padding: 40px 0;
   background: var(--gradient);
   text-align: center;
-  border-radius: 10px 10px 0 0;
+}
+
+/* .servicio-header-item {
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-}
-.servicio-header-item {
-  border-radius: 10px 10px 0 0;
-}
+} */
 
 /* 🔹 Título con animación */
 .servicio-title {
