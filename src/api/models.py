@@ -155,11 +155,11 @@ class Servidor(BaseModel):
             "vlan": self.vlan,
             "descripcion": self.descripcion,
             "link": self.link,
-            "servicio": self.servicio.serialize() if self.servicio else None,
-            "capa": self.capa.serialize() if self.capa else None,
-            "ambiente": self.ambiente.serialize() if self.ambiente else None,
-            "dominio": self.dominio.serialize() if self.dominio else None,
-            "sistema_operativo": self.sistema_operativo.serialize() if self.sistema_operativo else None,
-            "estatus": self.estatus.serialize() if self.estatus else None
+            "servicios": [self.servicio.serialize()] if self.servicio else [],
+            "capas": [self.capa.serialize()] if self.capa else [],
+            "ambientes": [self.ambiente.serialize()] if self.ambiente else [],
+            "dominios": [self.dominio.serialize()] if self.dominio else [],
+            "sistemasOperativos": [self.sistema_operativo.serialize()] if self.sistema_operativo else [],
+            "estatus": [self.estatus.serialize()] if self.estatus else [],
         })
         return data
