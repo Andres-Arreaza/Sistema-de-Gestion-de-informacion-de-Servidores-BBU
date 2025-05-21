@@ -378,7 +378,8 @@ export const Home = () => {
                         Buscar servidores
                     </button>
                 </form>
-            )}
+            )
+            }
             {/* Resultados */}
             <div className="servicios-container">
                 <h2 className="services-title">Resultados de la búsqueda</h2>
@@ -447,6 +448,6 @@ export const Home = () => {
                     </table>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
