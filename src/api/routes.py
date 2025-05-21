@@ -75,359 +75,198 @@ def delete_generic(model, record_id):
     """ Borrado lógico de un registro """
     record = model.query.get(record_id)
     return delete_record(record)
-
-### **Rutas para Servicio**
-@api.route('/servicios', methods=['GET'])
+# --- Rutas CRUD genéricas para cada modelo ---
+@api.route("/servicios", methods=["GET"])
 def get_servicios():
-    servicios = Servicio.query.filter_by(activo=True).all()
-    return jsonify([{
-        "id": servicio.id,
-        "nombre": servicio.nombre,
-        "descripcion": servicio.descripcion
-    } for servicio in servicios]), 200
+    return get_generic(Servicio)
 
-@api.route('/servicios/<int:servicio_id>', methods=['GET'])
-def get_servicio(servicio_id):
-    return get_generic_by_id(Servicio, servicio_id)
+@api.route("/servicios/<int:record_id>", methods=["GET"])
+def get_servicio_by_id(record_id):
+    return get_generic_by_id(Servicio, record_id)
 
-@api.route('/servicios', methods=['POST'])
+@api.route("/servicios", methods=["POST"])
 def create_servicio():
-    data = request.get_json()
-    nombre_servicio = data.get("nombre")
-    servicio_existente = Servicio.query.filter_by(nombre=nombre_servicio).first()
-    if servicio_existente and servicio_existente.activo:
-        return jsonify({"error": "El nombre del servicio ya está registrado"}), 400
-    if servicio_existente and not servicio_existente.activo:
-        servicio_existente.activo = True
-        servicio_existente.descripcion = data.get("descripcion", servicio_existente.descripcion)
-        db.session.commit()
-        return jsonify({"mensaje": "Servicio reactivado exitosamente", "servicio": servicio_existente.serialize()}), 200
-    nuevo_servicio = Servicio(nombre=nombre_servicio, descripcion=data.get("descripcion"), activo=True)
-    db.session.add(nuevo_servicio)
-    db.session.commit()
-    return jsonify({"mensaje": "Servicio creado exitosamente", "servicio": nuevo_servicio.serialize()}), 201
+    return create_generic(Servicio)
 
-@api.route('/servicios/<int:servicio_id>', methods=['PUT'])
-def update_servicio(servicio_id):
-    return update_generic(Servicio, servicio_id)
+@api.route("/servicios/<int:record_id>", methods=["PUT"])
+def update_servicio(record_id):
+    return update_generic(Servicio, record_id)
 
-@api.route('/servicios/<int:servicio_id>', methods=['DELETE'])
-def delete_servicio(servicio_id):
-    return delete_generic(Servicio, servicio_id)
+@api.route("/servicios/<int:record_id>", methods=["DELETE"])
+def delete_servicio(record_id):
+    return delete_generic(Servicio, record_id)
 
-### **Rutas para Capa**
-@api.route('/capas', methods=['GET'])
+# Repite lo mismo para Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor...
+# Ejemplo para Capa:
+@api.route("/capas", methods=["GET"])
 def get_capas():
-    capas = Capa.query.filter_by(activo=True).all()
-    return jsonify([{ 
-        "id": capa.id, 
-        "nombre": capa.nombre, 
-        "descripcion": capa.descripcion 
-    } for capa in capas]), 200
+    return get_generic(Capa)
 
-@api.route('/capas/<int:capa_id>', methods=['GET'])
-def get_capa(capa_id):
-    return get_generic_by_id(Capa, capa_id)
+@api.route("/capas/<int:record_id>", methods=["GET"])
+def get_capa_by_id(record_id):
+    return get_generic_by_id(Capa, record_id)
 
-@api.route('/capas', methods=['POST'])
+@api.route("/capas", methods=["POST"])
 def create_capa():
-    data = request.get_json()
-    nombre_capa = data.get("nombre")
-    capa_existente = Capa.query.filter_by(nombre=nombre_capa).first()
-    if capa_existente and capa_existente.activo:
-        return jsonify({"error": "El nombre de la capa ya está registrado"}), 400
-    if capa_existente and not capa_existente.activo:
-        capa_existente.activo = True
-        capa_existente.descripcion = data.get("descripcion", capa_existente.descripcion)
-        db.session.commit()
-        return jsonify({"mensaje": "Capa reactivada exitosamente", "capa": capa_existente.serialize()}), 200
-    nueva_capa = Capa(nombre=nombre_capa, descripcion=data.get("descripcion"), activo=True)
-    db.session.add(nueva_capa)
-    db.session.commit()
-    return jsonify({"mensaje": "Capa creada exitosamente", "capa": nueva_capa.serialize()}), 201
+    return create_generic(Capa)
 
-@api.route('/capas/<int:capa_id>', methods=['PUT'])
-def update_capa(capa_id):
-    return update_generic(Capa, capa_id)
+@api.route("/capas/<int:record_id>", methods=["PUT"])
+def update_capa(record_id):
+    return update_generic(Capa, record_id)
 
-@api.route('/capas/<int:capa_id>', methods=['DELETE'])
-def delete_capa(capa_id):
-    return delete_generic(Capa, capa_id)
+@api.route("/capas/<int:record_id>", methods=["DELETE"])
+def delete_capa(record_id):
+    return delete_generic(Capa, record_id)
 
-### **Rutas para Ambiente**
-@api.route('/ambientes', methods=['GET'])
+# ...continúa igual para Ambiente, Dominio, SistemaOperativo, Estatus, Servidor
+
+# Ejemplo para Ambiente:
+@api.route("/ambientes", methods=["GET"])
 def get_ambientes():
-    ambientes = Ambiente.query.filter_by(activo=True).all()
-    return jsonify([{ 
-        "id": ambiente.id, 
-        "nombre": ambiente.nombre, 
-        "descripcion": ambiente.descripcion 
-    } for ambiente in ambientes]), 200
+    return get_generic(Ambiente)
 
-@api.route('/ambientes/<int:ambiente_id>', methods=['GET'])
-def get_ambiente(ambiente_id):
-    return get_generic_by_id(Ambiente, ambiente_id)
+@api.route("/ambientes/<int:record_id>", methods=["GET"])
+def get_ambiente_by_id(record_id):
+    return get_generic_by_id(Ambiente, record_id)
 
-@api.route('/ambientes', methods=['POST'])
+@api.route("/ambientes", methods=["POST"])
 def create_ambiente():
-    data = request.get_json()
-    nombre_ambiente = data.get("nombre")
-    ambiente_existente = Ambiente.query.filter_by(nombre=nombre_ambiente).first()
-    if ambiente_existente and ambiente_existente.activo:
-        return jsonify({"error": "El nombre del ambiente ya está registrado"}), 400
-    if ambiente_existente and not ambiente_existente.activo:
-        ambiente_existente.activo = True
-        ambiente_existente.descripcion = data.get("descripcion", ambiente_existente.descripcion)
-        db.session.commit()
-        return jsonify({"mensaje": "Ambiente reactivado exitosamente", "ambiente": ambiente_existente.serialize()}), 200
-    nuevo_ambiente = Ambiente(nombre=nombre_ambiente, descripcion=data.get("descripcion"), activo=True)
-    db.session.add(nuevo_ambiente)
-    db.session.commit()
-    return jsonify({"mensaje": "Ambiente creado exitosamente", "ambiente": nuevo_ambiente.serialize()}), 201
+    return create_generic(Ambiente)
 
-@api.route('/ambientes/<int:ambiente_id>', methods=['PUT'])
-def update_ambiente(ambiente_id):
-    return update_generic(Ambiente, ambiente_id)
+@api.route("/ambientes/<int:record_id>", methods=["PUT"])
+def update_ambiente(record_id):
+    return update_generic(Ambiente, record_id)
 
-@api.route('/ambientes/<int:ambiente_id>', methods=['DELETE'])
-def delete_ambiente(ambiente_id):
-    return delete_generic(Ambiente, ambiente_id)
+@api.route("/ambientes/<int:record_id>", methods=["DELETE"])
+def delete_ambiente(record_id):
+    return delete_generic(Ambiente, record_id)
 
-### **Rutas para Dominio**
-@api.route('/dominios', methods=['GET'])
+# Ejemplo para Dominio:
+@api.route("/dominios", methods=["GET"])
 def get_dominios():
-    dominios = Dominio.query.filter_by(activo=True).all()
-    return jsonify([{ 
-        "id": dominio.id, 
-        "nombre": dominio.nombre, 
-        "descripcion": dominio.descripcion 
-    } for dominio in dominios]), 200
+    return get_generic(Dominio)
 
-@api.route('/dominios/<int:dominio_id>', methods=['GET'])
-def get_dominio(dominio_id):
-    return get_generic_by_id(Dominio, dominio_id)
+@api.route("/dominios/<int:record_id>", methods=["GET"])
+def get_dominio_by_id(record_id):
+    return get_generic_by_id(Dominio, record_id)
 
-@api.route('/dominios', methods=['POST'])
+@api.route("/dominios", methods=["POST"])
 def create_dominio():
-    data = request.get_json()
-    nombre_dominio = data.get("nombre")
-    dominio_existente = Dominio.query.filter_by(nombre=nombre_dominio).first()
-    if dominio_existente and dominio_existente.activo:
-        return jsonify({"error": "El nombre del dominio ya está registrado"}), 400
-    if dominio_existente and not dominio_existente.activo:
-        dominio_existente.activo = True
-        dominio_existente.descripcion = data.get("descripcion", dominio_existente.descripcion)
-        db.session.commit()
-        return jsonify({"mensaje": "Dominio reactivado exitosamente", "dominio": dominio_existente.serialize()}), 200
-    nuevo_dominio = Dominio(nombre=nombre_dominio, descripcion=data.get("descripcion"), activo=True)
-    db.session.add(nuevo_dominio)
-    db.session.commit()
-    return jsonify({"mensaje": "Dominio creado exitosamente", "dominio": nuevo_dominio.serialize()}), 201
+    return create_generic(Dominio)
 
-@api.route('/dominios/<int:dominio_id>', methods=['PUT'])
-def update_dominio(dominio_id):
-    return update_generic(Dominio, dominio_id)
+@api.route("/dominios/<int:record_id>", methods=["PUT"])
+def update_dominio(record_id):
+    return update_generic(Dominio, record_id)
 
-@api.route('/dominios/<int:dominio_id>', methods=['DELETE'])
-def delete_dominio(dominio_id):
-    return delete_generic(Dominio, dominio_id)
+@api.route("/dominios/<int:record_id>", methods=["DELETE"])
+def delete_dominio(record_id):
+    return delete_generic(Dominio, record_id)
 
-### **Rutas para Sistemas Operativos**
-@api.route('/sistemas-operativos', methods=['GET'])
+# Ejemplo para SistemaOperativo:
+@api.route("/sistemas_operativos", methods=["GET"])
 def get_sistemas_operativos():
-    sistemas = SistemaOperativo.query.filter_by(activo=True).all()
-    return jsonify([{ 
-        "id": sistema.id, 
-        "nombre": sistema.nombre, 
-        "version": sistema.version,
-        "descripcion": sistema.descripcion 
-    } for sistema in sistemas]), 200
+    return get_generic(SistemaOperativo)
 
-@api.route('/sistemas-operativos/<int:sistema_id>', methods=['GET'])
-def get_sistema_operativo(sistema_id):
-    return get_generic_by_id(SistemaOperativo, sistema_id)
+@api.route("/sistemas_operativos/<int:record_id>", methods=["GET"])
+def get_sistema_operativo_by_id(record_id):
+    return get_generic_by_id(SistemaOperativo, record_id)
 
-@api.route('/sistemas-operativos', methods=['POST'])
+@api.route("/sistemas_operativos", methods=["POST"])
 def create_sistema_operativo():
-    data = request.get_json()
-    nombre_sistema = data.get("nombre")
-    version_sistema = data.get("version")
-    sistema_existente = SistemaOperativo.query.filter_by(nombre=nombre_sistema, version=version_sistema).first()
-    if sistema_existente and sistema_existente.activo:
-        return jsonify({"error": "El sistema operativo ya está registrado"}), 400
-    if sistema_existente and not sistema_existente.activo:
-        sistema_existente.activo = True
-        sistema_existente.descripcion = data.get("descripcion", sistema_existente.descripcion)
-        db.session.commit()
-        return jsonify({"mensaje": "Sistema operativo reactivado exitosamente", "sistema_operativo": sistema_existente.serialize()}), 200
-    nuevo_sistema = SistemaOperativo(
-        nombre=nombre_sistema,
-        version=version_sistema,
-        descripcion=data.get("descripcion"),
-        activo=True
-    )
-    db.session.add(nuevo_sistema)
-    db.session.commit()
-    return jsonify({"mensaje": "Sistema operativo creado exitosamente", "sistema_operativo": nuevo_sistema.serialize()}), 201
+    return create_generic(SistemaOperativo)
 
-@api.route('/sistemas-operativos/<int:sistema_id>', methods=['PUT'])
-def update_sistema_operativo(sistema_id):
-    return update_generic(SistemaOperativo, sistema_id)
+@api.route("/sistemas_operativos/<int:record_id>", methods=["PUT"])
+def update_sistema_operativo(record_id):
+    return update_generic(SistemaOperativo, record_id)
 
-@api.route('/sistemas-operativos/<int:sistema_id>', methods=['DELETE'])
-def delete_sistema_operativo(sistema_id):
-    return delete_generic(SistemaOperativo, sistema_id)
+@api.route("/sistemas_operativos/<int:record_id>", methods=["DELETE"])
+def delete_sistema_operativo(record_id):
+    return delete_generic(SistemaOperativo, record_id)
 
-### **Rutas para Estatus**
-@api.route('/estatus', methods=['GET'])
+# Ejemplo para Estatus:
+@api.route("/estatus", methods=["GET"])
 def get_estatus():
-    estatus_list = Estatus.query.filter_by(activo=True).all()
-    return jsonify([{ 
-        "id": estatus.id, 
-        "nombre": estatus.nombre, 
-        "descripcion": estatus.descripcion 
-    } for estatus in estatus_list]), 200
+    return get_generic(Estatus)
 
-@api.route('/estatus/<int:estatus_id>', methods=['GET'])
-def get_estatus_by_id(estatus_id):
-    return get_generic_by_id(Estatus, estatus_id)
+@api.route("/estatus/<int:record_id>", methods=["GET"])
+def get_estatus_by_id(record_id):
+    return get_generic_by_id(Estatus, record_id)
 
-@api.route('/estatus', methods=['POST'])
+@api.route("/estatus", methods=["POST"])
 def create_estatus():
-    data = request.get_json()
-    nombre_estatus = data.get("nombre")
-    estatus_existente = Estatus.query.filter_by(nombre=nombre_estatus).first()
-    if estatus_existente and estatus_existente.activo:
-        return jsonify({"error": "El estatus ya está registrado"}), 400
-    if estatus_existente and not estatus_existente.activo:
-        estatus_existente.activo = True
-        estatus_existente.descripcion = data.get("descripcion", estatus_existente.descripcion)
-        db.session.commit()
-        return jsonify({"mensaje": "Estatus reactivado exitosamente", "estatus": estatus_existente.serialize()}), 200
-    nuevo_estatus = Estatus(nombre=nombre_estatus, descripcion=data.get("descripcion"), activo=True)
-    db.session.add(nuevo_estatus)
-    db.session.commit()
-    return jsonify({"mensaje": "Estatus creado exitosamente", "estatus": nuevo_estatus.serialize()}), 201
+    return create_generic(Estatus)
 
-@api.route('/estatus/<int:estatus_id>', methods=['PUT'])
-def update_estatus(estatus_id):
-    return update_generic(Estatus, estatus_id)
+@api.route("/estatus/<int:record_id>", methods=["PUT"])
+def update_estatus(record_id):
+    return update_generic(Estatus, record_id)
 
-@api.route('/estatus/<int:estatus_id>', methods=['DELETE'])
-def delete_estatus(estatus_id):
-    return delete_generic(Estatus, estatus_id)
+@api.route("/estatus/<int:record_id>", methods=["DELETE"])
+def delete_estatus(record_id):
+    return delete_generic(Estatus, record_id)
 
-### **Rutas para Servidor**
+# Ejemplo para Servidor:
 @api.route("/servidores", methods=["GET"])
 def get_servidores():
-    servidores = Servidor.query.filter_by(activo=True).all()
-    response = jsonify([servidor.serialize() for servidor in servidores])
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response, 200
+    return get_generic(Servidor)
 
-@api.route("/servidores/<int:servidor_id>", methods=["GET"])
-def get_servidor(servidor_id):
-    servidor = Servidor.query.get(servidor_id)
-    if not servidor:
-        response = jsonify({"error": "Servidor no encontrado"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response, 404
-    response = jsonify(servidor.serialize())
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response, 200
+@api.route("/servidores/<int:record_id>", methods=["GET"])
+def get_servidor_by_id(record_id):
+    return get_generic_by_id(Servidor, record_id)
 
 @api.route("/servidores", methods=["POST"])
 def create_servidor():
+    return create_generic(Servidor)
+
+@api.route("/servidores/<int:record_id>", methods=["PUT"])
+def update_servidor(record_id):
+    return update_generic(Servidor, record_id)
+
+@api.route("/servidores/<int:record_id>", methods=["DELETE"])
+def delete_servidor(record_id):
+    return delete_generic(Servidor, record_id)
+
+# Ruta de búsqueda filtrada para servidores
+from api.models import TipoServidorEnum
+
+@api.route("/servidores/busqueda", methods=["GET"])
+def buscar_servidores():
     try:
-        data = request.get_json()
-        payload = {
-            "nombre": data.get("nombre"),
-            "tipo": data.get("tipo"),
-            "ip": data.get("ip"),
-            "balanceador": data.get("balanceador"),
-            "vlan": data.get("vlan"),
-            "descripcion": data.get("descripcion"),
-            "link": data.get("link"),
-            "servicio_id": data.get("servicio_id"),
-            "capa_id": data.get("capa_id"),
-            "ambiente_id": data.get("ambiente_id"),
-            "dominio_id": data.get("dominio_id"),
-            "sistema_operativo_id": data.get("sistema_operativo_id"),
-            "estatus_id": data.get("estatus_id"),
-        }
-        required_fields = ["nombre", "tipo", "ip", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id"]
-        for field in required_fields:
-            if not payload.get(field):
-                response = jsonify({"error": f"Falta el campo {field}"})
-                response.headers.add("Access-Control-Allow-Origin", "*")
-                return response, 400
-        nuevo_servidor = Servidor(**payload)
-        db.session.add(nuevo_servidor)
-        db.session.commit()
-        response = jsonify({"mensaje": "Servidor creado exitosamente", "servidor": nuevo_servidor.serialize()})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response, 201
+        query = Servidor.query.filter_by(activo=True)
+
+        # Filtros simples
+        if request.args.get("nombre"):
+            query = query.filter(Servidor.nombre.ilike(f"%{request.args['nombre']}%"))
+        if request.args.get("tipo"):
+            try:
+                tipo_val = TipoServidorEnum[request.args["tipo"]]
+                query = query.filter(Servidor.tipo == tipo_val)
+            except KeyError:
+                pass
+        if request.args.get("ip"):
+            query = query.filter(Servidor.ip.ilike(f"%{request.args['ip']}%"))
+        if request.args.get("balanceador"):
+            query = query.filter(Servidor.balanceador.ilike(f"%{request.args['balanceador']}%"))
+        if request.args.get("vlan"):
+            query = query.filter(Servidor.vlan.ilike(f"%{request.args['vlan']}%"))
+        if request.args.get("link"):
+            query = query.filter(Servidor.link.ilike(f"%{request.args['link']}%"))
+
+        # Filtros por relación (pueden venir varios valores)
+        if request.args.getlist("servicios"):
+            query = query.filter(Servidor.servicio_id.in_(request.args.getlist("servicios")))
+        if request.args.getlist("capas"):
+            query = query.filter(Servidor.capa_id.in_(request.args.getlist("capas")))
+        if request.args.getlist("ambientes"):
+            query = query.filter(Servidor.ambiente_id.in_(request.args.getlist("ambientes")))
+        if request.args.getlist("dominios"):
+            query = query.filter(Servidor.dominio_id.in_(request.args.getlist("dominios")))
+        if request.args.getlist("sistemas_operativos"):
+            query = query.filter(Servidor.sistema_operativo_id.in_(request.args.getlist("sistemas_operativos")))
+        if request.args.getlist("estatus"):
+            query = query.filter(Servidor.estatus_id.in_(request.args.getlist("estatus")))
+
+        servidores = query.all()
+        return jsonify([servidor.serialize() for servidor in servidores]), 200
     except Exception as e:
-        print(f"Error en create_servidor: {str(e)}")
-        response = jsonify({"error": "Error interno en el servidor"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response, 500
-
-@api.route("/servidores/<int:servidor_id>", methods=["PUT"])
-def update_servidor(servidor_id):
-    servidor = Servidor.query.get(servidor_id)
-    if not servidor:
-        response = jsonify({"error": "Servidor no encontrado"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response, 404
-    data = request.get_json()
-    campos_actualizables = [
-        "nombre", "tipo", "ip", "balanceador", "vlan", "descripcion", "link",
-        "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id"
-    ]
-    for key in campos_actualizables:
-        if key in data:
-            setattr(servidor, key, data[key])
-    servidor.fecha_modificacion = datetime.utcnow()
-    db.session.commit()
-    response = jsonify({"mensaje": "Servidor actualizado correctamente", "servidor": servidor.serialize()})
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response, 200
-
-@api.route("/servidores/<int:servidor_id>", methods=["DELETE"])
-def delete_servidor(servidor_id):
-    servidor = Servidor.query.get(servidor_id)
-    if not servidor:
-        response = jsonify({"error": "Servidor no encontrado"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response, 404
-    servidor.activo = False
-    db.session.commit()
-    response = jsonify({"mensaje": "Servidor eliminado correctamente"})
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response, 200
-
-@api.route("/servidores/<int:servidor_id>/campos-relacionados", methods=["PUT"])
-def update_servidor_campos_relacionados(servidor_id):
-    servidor = Servidor.query.get(servidor_id)
-    if not servidor:
-        response = jsonify({"error": "Servidor no encontrado"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response, 404
-    data = request.get_json()
-    campos = [
-        "servicio_id",
-        "capa_id",
-        "ambiente_id",
-        "dominio_id",
-        "sistema_operativo_id",
-        "estatus_id"
-    ]
-    for campo in campos:
-        if campo in data:
-            setattr(servidor, campo, data[campo])
-    servidor.fecha_modificacion = datetime.utcnow()
-    db.session.commit()
-    response = jsonify({"mensaje": "Campos relacionados actualizados correctamente", "servidor": servidor.serialize()})
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response, 200
+        print("ERROR EN BUSQUEDA:", e)
+        return jsonify({"error": str(e)}), 500

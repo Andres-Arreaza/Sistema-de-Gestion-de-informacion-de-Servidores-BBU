@@ -71,7 +71,7 @@ export const Home = () => {
     }, []);
     // Manejar cambios en los filtros tipo checkbox
     const handleCheckboxChange = (e, key) => {
-        const { value, checked } = e.target; // Extrae antes de actualizar el estado
+        const { value, checked } = e.target;
         setFiltro((prev) => {
             const arr = prev[key];
             if (checked) {
@@ -95,7 +95,7 @@ export const Home = () => {
         }));
     };
 
-    // Buscar servidores
+    // Buscar servidores según los filtros seleccionados
     const buscarServidores = async (e) => {
         e.preventDefault();
         const params = new URLSearchParams();
@@ -305,7 +305,7 @@ export const Home = () => {
                             </div>
                         </div>
                     </div>
-                    {/* ...resto del formulario igual... */}
+                    {/* Filtros de texto */}
                     <div className="filtros-servidores-campos-segundo">
                         <div className="filtros-columna">
                             <label className="filtros-label-texto" htmlFor="nombre">Nombre</label>
@@ -414,32 +414,32 @@ export const Home = () => {
                                     <td>
                                         {Array.isArray(srv.servicios)
                                             ? srv.servicios.map(s => s.nombre).join(", ")
-                                            : srv.servicios}
+                                            : (srv.servicios && srv.servicios.nombre ? srv.servicios.nombre : "")}
                                     </td>
                                     <td>
                                         {Array.isArray(srv.capas)
                                             ? srv.capas.map(c => c.nombre).join(", ")
-                                            : srv.capas}
+                                            : (srv.capas && srv.capas.nombre ? srv.capas.nombre : "")}
                                     </td>
                                     <td>
                                         {Array.isArray(srv.ambientes)
                                             ? srv.ambientes.map(a => a.nombre).join(", ")
-                                            : srv.ambientes}
+                                            : (srv.ambientes && srv.ambientes.nombre ? srv.ambientes.nombre : "")}
                                     </td>
                                     <td>
                                         {Array.isArray(srv.dominios)
                                             ? srv.dominios.map(d => d.nombre).join(", ")
-                                            : srv.dominios}
+                                            : (srv.dominios && srv.dominios.nombre ? srv.dominios.nombre : "")}
                                     </td>
                                     <td>
                                         {Array.isArray(srv.sistemasOperativos)
                                             ? srv.sistemasOperativos.map(so => so.nombre).join(", ")
-                                            : srv.sistemasOperativos}
+                                            : (srv.sistemasOperativos && srv.sistemasOperativos.nombre ? srv.sistemasOperativos.nombre : "")}
                                     </td>
                                     <td>
                                         {Array.isArray(srv.estatus)
                                             ? srv.estatus.map(es => es.nombre).join(", ")
-                                            : srv.estatus}
+                                            : (srv.estatus && srv.estatus.nombre ? srv.estatus.nombre : "")}
                                     </td>
                                 </tr>
                             ))}
