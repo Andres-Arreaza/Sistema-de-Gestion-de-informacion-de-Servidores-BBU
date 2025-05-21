@@ -220,14 +220,14 @@
   flex-direction: row;
   gap: 24px;
   justify-content: center;
-  margin-bottom: 30px;
+  margin-bottom: 0px;
 }
 .filtros-servidores-campos-segundo {
   display: flex;
   flex-direction: row;
   gap: 24px;
   justify-content: center;
-  margin-bottom: 0px;
+  margin-bottom: 15px;
 }
 
 /* Cada columna de checkboxes */
@@ -322,7 +322,7 @@
 .tabla-servidores th,
 .tabla-servidores td {
   border: 1px solid #ddd;
-  padding: 8px;
+  padding: 7px;
   text-align: center;
 }
 

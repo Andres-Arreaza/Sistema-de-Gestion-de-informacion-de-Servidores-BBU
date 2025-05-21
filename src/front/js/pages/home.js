@@ -23,6 +23,7 @@ export const Home = () => {
         ip: "",
         balanceador: "",
         vlan: "",
+        descripcion: "",
         link: ""
     });
 
@@ -105,6 +106,7 @@ export const Home = () => {
         if (filtro.ip) params.append("ip", filtro.ip);
         if (filtro.balanceador) params.append("balanceador", filtro.balanceador);
         if (filtro.vlan) params.append("vlan", filtro.vlan);
+        if (filtro.descripcion) params.append("descripcion", filtro.descripcion);
         if (filtro.link) params.append("link", filtro.link);
 
         if (filtro.servicios.length > 0) filtro.servicios.forEach(id => params.append("servicios", id));
@@ -135,6 +137,86 @@ export const Home = () => {
                 <Loading />
             ) : (
                 <form className="filtros-servidores" onSubmit={buscarServidores}>
+                    {/* Filtros de texto */}
+                    <div className="filtros-servidores-campos-segundo">
+                        <div className="filtros-columna">
+                            <label className="filtros-label-texto" htmlFor="nombre">Nombre</label>
+                            <input
+                                type="text"
+                                id="nombre"
+                                name="nombre"
+                                placeholder="Nombre"
+                                value={filtro.nombre}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="filtros-columna">
+                            <label className="filtros-label-texto" htmlFor="tipo">Tipo</label>
+                            <input
+                                type="text"
+                                id="tipo"
+                                name="tipo"
+                                placeholder="Tipo"
+                                value={filtro.tipo}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="filtros-columna">
+                            <label className="filtros-label-texto" htmlFor="ip">IP</label>
+                            <input
+                                type="text"
+                                id="ip"
+                                name="ip"
+                                placeholder="IP"
+                                value={filtro.ip}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="filtros-columna">
+                            <label className="filtros-label-texto" htmlFor="balanceador">Balanceador</label>
+                            <input
+                                type="text"
+                                id="balanceador"
+                                name="balanceador"
+                                placeholder="Balanceador"
+                                value={filtro.balanceador}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="filtros-columna">
+                            <label className="filtros-label-texto" htmlFor="vlan">VLAN</label>
+                            <input
+                                type="text"
+                                id="vlan"
+                                name="vlan"
+                                placeholder="VLAN"
+                                value={filtro.vlan}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="filtros-columna">
+                            <label className="filtros-label-texto" htmlFor="descripcion">Descripción</label>
+                            <input
+                                type="text"
+                                id="descripcion"
+                                name="descripcion"
+                                placeholder="descripcion"
+                                value={filtro.descripcion}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="filtros-columna">
+                            <label className="filtros-label-texto" htmlFor="link">Link</label>
+                            <input
+                                type="text"
+                                id="link"
+                                name="link"
+                                placeholder="Link"
+                                value={filtro.link}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                    </div>
                     <div className="filtros-servidores-campos">
                         {/* Servicios */}
                         <div className="filtros-columna">
@@ -305,75 +387,7 @@ export const Home = () => {
                             </div>
                         </div>
                     </div>
-                    {/* Filtros de texto */}
-                    <div className="filtros-servidores-campos-segundo">
-                        <div className="filtros-columna">
-                            <label className="filtros-label-texto" htmlFor="nombre">Nombre</label>
-                            <input
-                                type="text"
-                                id="nombre"
-                                name="nombre"
-                                placeholder="Nombre"
-                                value={filtro.nombre}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="filtros-columna">
-                            <label className="filtros-label-texto" htmlFor="tipo">Tipo</label>
-                            <input
-                                type="text"
-                                id="tipo"
-                                name="tipo"
-                                placeholder="Tipo"
-                                value={filtro.tipo}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="filtros-columna">
-                            <label className="filtros-label-texto" htmlFor="ip">IP</label>
-                            <input
-                                type="text"
-                                id="ip"
-                                name="ip"
-                                placeholder="IP"
-                                value={filtro.ip}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="filtros-columna">
-                            <label className="filtros-label-texto" htmlFor="balanceador">Balanceador</label>
-                            <input
-                                type="text"
-                                id="balanceador"
-                                name="balanceador"
-                                placeholder="Balanceador"
-                                value={filtro.balanceador}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="filtros-columna">
-                            <label className="filtros-label-texto" htmlFor="vlan">VLAN</label>
-                            <input
-                                type="text"
-                                id="vlan"
-                                name="vlan"
-                                placeholder="VLAN"
-                                value={filtro.vlan}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="filtros-columna">
-                            <label className="filtros-label-texto" htmlFor="link">Link</label>
-                            <input
-                                type="text"
-                                id="link"
-                                name="link"
-                                placeholder="Link"
-                                value={filtro.link}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    </div>
+
                     <button className="buscar-servidores-btn" type="submit">
                         Buscar servidores
                     </button>
@@ -392,15 +406,17 @@ export const Home = () => {
                                 <th>Nombre</th>
                                 <th>Tipo</th>
                                 <th>IP</th>
+                                <th>Servicio</th>
+                                <th>Capa</th>
+                                <th>Ambiente</th>
                                 <th>Balanceador</th>
                                 <th>VLAN</th>
-                                <th>Link</th>
-                                <th>Servicios</th>
-                                <th>Capas</th>
-                                <th>Ambientes</th>
-                                <th>Dominios</th>
+                                <th>Dominio</th>
                                 <th>S.O.</th>
                                 <th>Estatus</th>
+                                <th>Descripción</th>
+                                <th>Link</th>
+
                             </tr>
                         </thead>
                         <tbody>
@@ -409,9 +425,6 @@ export const Home = () => {
                                     <td>{srv.nombre}</td>
                                     <td>{srv.tipo}</td>
                                     <td>{srv.ip}</td>
-                                    <td>{srv.balanceador}</td>
-                                    <td>{srv.vlan}</td>
-                                    <td>{srv.link}</td>
                                     <td>
                                         {Array.isArray(srv.servicios)
                                             ? srv.servicios.map(s => s.nombre).join(", ")
@@ -427,6 +440,10 @@ export const Home = () => {
                                             ? srv.ambientes.map(a => a.nombre).join(", ")
                                             : (srv.ambientes && srv.ambientes.nombre ? srv.ambientes.nombre : "")}
                                     </td>
+                                    <td>{srv.balanceador}</td>
+                                    <td>{srv.vlan}</td>
+
+
                                     <td>
                                         {Array.isArray(srv.dominios)
                                             ? srv.dominios.map(d => d.nombre).join(", ")
@@ -442,6 +459,9 @@ export const Home = () => {
                                             ? srv.estatus.map(es => es.nombre).join(", ")
                                             : (srv.estatus && srv.estatus.nombre ? srv.estatus.nombre : "")}
                                     </td>
+                                    <td>{srv.descripcion}</td>
+                                    <td>{srv.link}</td>
+
                                 </tr>
                             ))}
                         </tbody>

@@ -250,6 +250,8 @@ def buscar_servidores():
             query = query.filter(Servidor.vlan.ilike(f"%{request.args['vlan']}%"))
         if request.args.get("link"):
             query = query.filter(Servidor.link.ilike(f"%{request.args['link']}%"))
+        if request.args.get("descripcion"):
+            query = query.filter(Servidor.descripcion.ilike(f"%{request.args['descripcion']}%"))
 
         # Filtros por relación (pueden venir varios valores)
         if request.args.getlist("servicios"):

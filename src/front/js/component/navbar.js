@@ -32,7 +32,7 @@ export const Navbar = () => {
                     <ul className="navbar-nav ms-auto">
                         {/* Búsqueda */}
                         <li className={`nav-item ${location.pathname === "/loading" ? "active" : ""}`}>
-                            <Link className="nav-link" to="/loading">Búsqueda</Link>
+                            <Link className="nav-link" to="/loading">Búsqueda Específica</Link>
                         </li>
 
                         {/* Administrar con menú desplegable */}
