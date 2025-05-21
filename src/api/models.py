@@ -162,5 +162,4 @@ class Servidor(BaseModel):
             "sistemasOperativos": [self.sistema_operativo.serialize()] if self.sistema_operativo else [],
             "estatus": [self.estatus.serialize()] if self.estatus else [],
         })
-        return data 
-    #borrar
+        return data
