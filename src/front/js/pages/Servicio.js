@@ -76,7 +76,7 @@ const Servicio = () => {
             .then(() => {
                 fetchServicios();
                 setConfirmModalVisible(false);
-                setAlerta({ mensaje: "Servidor eliminado", tipo: "error" });
+                setAlerta({ mensaje: "Servicio eliminado", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
             .catch((error) => {

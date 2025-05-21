@@ -65,7 +65,7 @@ export const Home = () => {
                     if (key === "estatus") setEstatus(data);
                 } catch (e) { }
             }
-            setTimeout(() => setLoadingFiltros(false), 650);
+            setTimeout(() => setLoadingFiltros(false), {/* 650 */ });
         };
         fetchData();
     }, []);

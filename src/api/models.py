@@ -145,6 +145,26 @@ class Servidor(BaseModel):
                 raise ValueError("Tipo de servidor inválido")
         super().__init__(*args, **kwargs)
 
+    # def serialize(self):
+    #     data = super().serialize()
+    #     data.update({
+    #         "nombre": self.nombre,
+    #         "tipo": self.tipo.value,
+    #         "ip": self.ip,
+    #         "balanceador": self.balanceador,
+    #         "vlan": self.vlan,
+    #         "descripcion": self.descripcion,
+    #         "link": self.link,
+    #         "servicios": [self.servicio.serialize()] if self.servicio else [],
+    #         "capas": [self.capa.serialize()] if self.capa else [],
+    #         "ambientes": [self.ambiente.serialize()] if self.ambiente else [],
+    #         "dominios": [self.dominio.serialize()] if self.dominio else [],
+    #         "sistemasOperativos": [self.sistema_operativo.serialize()] if self.sistema_operativo else [],
+    #         "estatus": [self.estatus.serialize()] if self.estatus else [],
+    #     })
+    #     return data
+    
+    
     def serialize(self):
         data = super().serialize()
         data.update({
@@ -155,11 +175,11 @@ class Servidor(BaseModel):
             "vlan": self.vlan,
             "descripcion": self.descripcion,
             "link": self.link,
-            "servicios": [self.servicio.serialize()] if self.servicio else [],
-            "capas": [self.capa.serialize()] if self.capa else [],
-            "ambientes": [self.ambiente.serialize()] if self.ambiente else [],
-            "dominios": [self.dominio.serialize()] if self.dominio else [],
-            "sistemasOperativos": [self.sistema_operativo.serialize()] if self.sistema_operativo else [],
-            "estatus": [self.estatus.serialize()] if self.estatus else [],
+            "servicios": [self.servicio.serialize()] if self.servicio else None,
+            "capas": [self.capa.serialize()] if self.capa else None,
+            "ambientes": [self.ambiente.serialize()] if self.ambiente else None,
+            "dominios": [self.dominio.serialize()] if self.dominio else None,
+            "sistemasOperativos": [self.sistema_operativo.serialize()] if self.sistema_operativo else None,
+            "estatus": [self.estatus.serialize()] if self.estatus else None,
         })
         return data
