@@ -65,17 +65,16 @@ export const Home = () => {
                     if (key === "estatus") setEstatus(data);
                 } catch (e) { }
             }
-            setTimeout(() => setLoadingFiltros(false), 650, {/*  */ });
+            setTimeout(() => setLoadingFiltros(false), 650);
         };
         fetchData();
     }, []);
-
     // Manejar cambios en los filtros tipo checkbox
     const handleCheckboxChange = (e, key) => {
-        const value = e.target.value;
+        const { value, checked } = e.target; // Extrae antes de actualizar el estado
         setFiltro((prev) => {
             const arr = prev[key];
-            if (e.target.checked) {
+            if (checked) {
                 return { ...prev, [key]: [...arr, value] };
             } else {
                 return { ...prev, [key]: arr.filter((v) => v !== value) };
@@ -96,13 +95,36 @@ export const Home = () => {
         }));
     };
 
+    // Buscar servidores
+    const buscarServidores = async (e) => {
+        e.preventDefault();
+        const params = new URLSearchParams();
+
+        if (filtro.nombre) params.append("nombre", filtro.nombre);
+        if (filtro.tipo) params.append("tipo", filtro.tipo);
+        if (filtro.ip) params.append("ip", filtro.ip);
+        if (filtro.balanceador) params.append("balanceador", filtro.balanceador);
+        if (filtro.vlan) params.append("vlan", filtro.vlan);
+        if (filtro.link) params.append("link", filtro.link);
+
+        if (filtro.servicios.length > 0) filtro.servicios.forEach(id => params.append("servicios", id));
+        if (filtro.capas.length > 0) filtro.capas.forEach(id => params.append("capas", id));
+        if (filtro.ambientes.length > 0) filtro.ambientes.forEach(id => params.append("ambientes", id));
+        if (filtro.dominios.length > 0) filtro.dominios.forEach(id => params.append("dominios", id));
+        if (filtro.sistemasOperativos.length > 0) filtro.sistemasOperativos.forEach(id => params.append("sistemas_operativos", id));
+        if (filtro.estatus.length > 0) filtro.estatus.forEach(id => params.append("estatus", id));
+
+        const res = await fetch(`http://localhost:3001/api/servidores/busqueda?${params.toString()}`);
+        const data = await res.json();
+        setServidores(data);
+    };
     return (
         <div>
             {/* Gradiente y título */}
             <div className="home-container">
                 <div className="linea-blanca-3"></div>
                 <h1 className="title">Gerencia de Operaciones de Canales Virtuales y Medios de Pagos</h1>
-                <p className="subtitle">"Gestiona y visualiza servidores"</p>
+                <p className="subtitle">"Gestiona y visualiza los servidores"</p>
                 <div className="linea-blanca-4"></div>
             </div>
 
@@ -112,7 +134,7 @@ export const Home = () => {
             {loadingFiltros ? (
                 <Loading />
             ) : (
-                <form className="filtros-servidores" onSubmit={e => { e.preventDefault(); buscarServidores(e); }}>
+                <form className="filtros-servidores" onSubmit={buscarServidores}>
                     <div className="filtros-servidores-campos">
                         {/* Servicios */}
                         <div className="filtros-columna">
