@@ -230,3 +230,16 @@
   background-color: #b52b3a;
   color: #d6d6d6;
 }
+
+.ver-link-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  transition: transform 0.2s ease;
+  color: #1a61ab;
+}
+
+.ver-link-btn:hover {
+  transform: scale(1.1);
+}

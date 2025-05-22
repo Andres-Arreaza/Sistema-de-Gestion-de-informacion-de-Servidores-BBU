@@ -222,22 +222,105 @@ def delete_estatus(record_id):
 # Ejemplo para Servidor:
 @api.route("/servidores", methods=["GET"])
 def get_servidores():
-    return get_generic(Servidor)
+    """Obtiene todos los servidores con nombres correctos de sus relaciones."""
+    servidores = Servidor.query.all()
+
+    return jsonify([
+        {
+            "id": servidor.id,
+            "nombre": servidor.nombre,
+            "tipo": servidor.tipo.name if servidor.tipo else None,
+            "ip": servidor.ip,
+            "balanceador": servidor.balanceador,
+            "vlan": servidor.vlan,
+            "link": servidor.link,
+            "descripcion": servidor.descripcion,
+            "servicio": servidor.servicio.nombre if servidor.servicio else "N/A",
+            "capa": servidor.capa.nombre if servidor.capa else "N/A",
+            "ambiente": servidor.ambiente.nombre if servidor.ambiente else "N/A",
+            "dominio": servidor.dominio.nombre if servidor.dominio else "N/A",
+            "sistema_operativo": servidor.sistema_operativo.nombre if servidor.sistema_operativo else "N/A",
+            "estatus": servidor.estatus.nombre if servidor.estatus else "N/A"
+        }
+        for servidor in servidores
+    ])
 
 @api.route("/servidores/<int:record_id>", methods=["GET"])
 def get_servidor_by_id(record_id):
+    """Obtiene un servidor por ID con datos completos."""
     return get_generic_by_id(Servidor, record_id)
 
 @api.route("/servidores", methods=["POST"])
 def create_servidor():
-    return create_generic(Servidor)
+    """Crea un nuevo servidor con validación de datos."""
+    data = request.get_json()
+
+    required_fields = ["nombre", "tipo", "ip", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id"]
+    missing_fields = [field for field in required_fields if field not in data or data[field] in [None, ""]]
+
+    if missing_fields:
+        return jsonify({"error": f"Faltan datos obligatorios: {', '.join(missing_fields)}"}), 400
+
+    nuevo_servidor = Servidor(
+        nombre=data["nombre"],
+        tipo=data["tipo"],
+        ip=data["ip"],
+        balanceador=data.get("balanceador", ""),
+        vlan=data.get("vlan", ""),
+        link=data.get("link", ""),
+        descripcion=data.get("descripcion", ""),
+        servicio_id=data["servicio_id"],
+        capa_id=data["capa_id"],
+        ambiente_id=data["ambiente_id"],
+        dominio_id=data["dominio_id"],
+        sistema_operativo_id=data["sistema_operativo_id"],
+        estatus_id=data["estatus_id"],
+        fecha_creacion=datetime.utcnow(),
+        fecha_modificacion=datetime.utcnow()
+    )
+
+    db.session.add(nuevo_servidor)
+    db.session.commit()
+
+    return jsonify(nuevo_servidor.serialize()), 201
 
 @api.route("/servidores/<int:record_id>", methods=["PUT"])
 def update_servidor(record_id):
-    return update_generic(Servidor, record_id)
+    """Actualiza un servidor por ID con validación de datos."""
+    servidor = Servidor.query.get(record_id)
+
+    if not servidor:
+        return jsonify({"error": "Servidor no encontrado"}), 404
+
+    data = request.get_json()
+
+    # Convertir valores vacíos en `None`
+    def sanitize(value):
+        return None if value in ["", None] else value
+
+    servidor.nombre = sanitize(data.get("nombre"))
+    servidor.tipo = sanitize(data.get("tipo"))
+    servidor.ip = sanitize(data.get("ip"))
+    servidor.balanceador = sanitize(data.get("balanceador"))
+    servidor.vlan = sanitize(data.get("vlan"))
+    servidor.link = sanitize(data.get("link"))
+    servidor.descripcion = sanitize(data.get("descripcion"))
+    servidor.servicio_id = sanitize(data.get("servicio_id"))
+    servidor.capa_id = sanitize(data.get("capa_id"))
+    servidor.ambiente_id = sanitize(data.get("ambiente_id"))
+    servidor.dominio_id = sanitize(data.get("dominio_id"))
+    servidor.sistema_operativo_id = sanitize(data.get("sistema_operativo_id"))
+    servidor.estatus_id = sanitize(data.get("estatus_id"))
+
+    servidor.fecha_modificacion = datetime.utcnow()
+
+    db.session.commit()
+
+    return jsonify(servidor.serialize()), 200
 
 @api.route("/servidores/<int:record_id>", methods=["DELETE"])
 def delete_servidor(record_id):
+    """Elimina un servidor por ID."""
     return delete_generic(Servidor, record_id)
 
 # Ruta de búsqueda filtrada para servidores
