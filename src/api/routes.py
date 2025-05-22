@@ -173,7 +173,22 @@ def get_sistema_operativo_by_id(record_id):
 
 @api.route("/sistemas_operativos", methods=["POST"])
 def create_sistema_operativo():
-    return create_generic(SistemaOperativo)
+    data = request.get_json()
+
+    # Validar que los datos no sean `None`
+    if not data or "nombre" not in data or "version" not in data:
+        return jsonify({"error": "Faltan datos obligatorios"}), 400
+
+    nuevo_sistema = SistemaOperativo(
+        nombre=data["nombre"],
+        version=data["version"].strip(),  # 🔹 Asegura que no sea None
+        descripcion=data.get("descripcion", "")
+    )
+
+    db.session.add(nuevo_sistema)
+    db.session.commit()
+
+    return jsonify(nuevo_sistema.serialize()), 201
 
 @api.route("/sistemas_operativos/<int:record_id>", methods=["PUT"])
 def update_sistema_operativo(record_id):
