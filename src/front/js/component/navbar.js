@@ -31,9 +31,11 @@ export const Navbar = () => {
                 <div className="collapse navbar-collapse" id="navbarNav">
                     <ul className="navbar-nav ms-auto">
                         {/* Búsqueda */}
+                        {/*
                         <li className={`nav-item ${location.pathname === "/loading" ? "active" : ""}`}>
                             <Link className="nav-link" to="/loading">Búsqueda Específica</Link>
                         </li>
+                        */}
 
                         {/* Administrar con menú desplegable */}
                         <li
