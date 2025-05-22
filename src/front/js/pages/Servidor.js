@@ -40,6 +40,7 @@ const Servidores = () => {
     useEffect(() => {
         fetchServidores();
     }, []);
+
     // 🔹 Eliminar un servidor
     const eliminarServidor = (servidor) => {
         fetch(`${process.env.BACKEND_URL}/api/servidores/${servidor.id}`, {
@@ -160,7 +161,6 @@ const Servidores = () => {
                     )}
                 </tbody>
             </table>
-
             {/* Modal de creación */}
             {modalVisible && (
                 <div className="modal-overlay" onClick={() => setModalVisible(false)}>

@@ -142,7 +142,6 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
             setError(error.message);
         }
     };
-
     return (
         <form onSubmit={handleFormSubmit} className="grid-form">
             {error && <div className="error-message">{error}</div>}
@@ -213,6 +212,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                     </select>
                 </div>
             </div>
+
             {/* Fila 3 */}
             <div className="grid-form-row">
                 <div className="form-field">
