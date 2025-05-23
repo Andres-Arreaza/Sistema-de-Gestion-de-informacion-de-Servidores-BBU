@@ -47,17 +47,17 @@ const Capa = () => {
             .then((response) => response.json())
             .then((data) => {
                 if (data.error) {
-                    setAlerta({ mensaje: `${data.error}`, tipo: "error" });
+                    setAlerta({ mensaje: data.error, tipo: "error" });
                 } else {
                     fetchCapas();
                     setModalVisible(false);
-                    setAlerta({ mensaje: capaActual.id ? "✅ Capa actualizada" : "✅ Capa creada", tipo: "success" });
+                    setAlerta({ mensaje: capaActual.id ? "Capa actualizada" : "Capa creada", tipo: "success" });
                 }
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
             .catch((error) => {
                 console.error("Error al guardar capa:", error);
-                setAlerta({ mensaje: "❌ Error al guardar la capa", tipo: "error" });
+                setAlerta({ mensaje: "Error al guardar la capa", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             });
     };
@@ -77,34 +77,40 @@ const Capa = () => {
             .then(() => {
                 fetchCapas();
                 setConfirmModalVisible(false);
-                setAlerta({ mensaje: "✅ Capa eliminada", tipo: "success" });
+                setAlerta({ mensaje: "Capa eliminada", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
             .catch((error) => {
                 console.error("Error al eliminar capa:", error);
-                setAlerta({ mensaje: "❌ Error al eliminar la capa", tipo: "error" });
+                setAlerta({ mensaje: "Error al eliminar la capa", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             });
     };
 
     return (
         <div className="capa-container">
-            <h1 className="capa-title">CAPAS</h1>
+            {/* 🔹 Encabezado con gradiente, líneas blancas y botón */}
+            <div className="capa-header">
+                <div className="linea-blanca"></div>
+                <h2 className="capa-title">Gestión de Capas</h2>
+                <button className="crear-capa-btn" onClick={() => {
+                    setCapaActual({ id: null, nombre: "", descripcion: "" });
+                    setModalVisible(true);
+                }}>Crear Capa</button>
+                <div className="linea-blanca-2"></div>
+            </div>
 
             {/* 🔹 Mensaje de alerta */}
             {alerta.mensaje && (
                 <div className={`alerta ${alerta.tipo}`}>
-                    <span className="icono">❌</span> {alerta.mensaje}
+                    {alerta.mensaje === "Capa eliminada" ? (
+                        <span className="material-symbols-outlined">cancel</span>
+                    ) : (
+                        <span className="material-symbols-outlined">check_circle</span>
+                    )}
+                    {alerta.mensaje}
                 </div>
             )}
-
-            {/* 🔹 Botón para abrir el modal de creación */}
-            <button className="crear-capa-btn" onClick={() => {
-                setCapaActual({ id: null, nombre: "", descripcion: "" });
-                setModalVisible(true);
-            }}>
-                Crear Capa
-            </button>
 
             {/* 🔹 Modal de creación/edición */}
             {modalVisible && (
@@ -128,7 +134,7 @@ const Capa = () => {
                 <div className="modal-overlay" onClick={() => setConfirmModalVisible(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <h2>¿Seguro que deseas eliminar esta capa?</h2>
-                        <p>{capaAEliminar?.nombre}</p>
+                        <p>{`La capa "` + capaAEliminar?.nombre + `" será eliminada.`}</p>
                         <div className="modal-delete-buttons">
                             <button className="eliminar-confirm-btn" onClick={handleDelete}>Eliminar</button>
                             <button className="cerrar-modal-btn" onClick={() => setConfirmModalVisible(false)}>Cancelar</button>
@@ -137,19 +143,23 @@ const Capa = () => {
                 </div>
             )}
 
-            {/* 🔹 Lista de capas con botones de editar y eliminar al lado del nombre */}
+            {/* 🔹 Lista de capas con botones de editar y eliminar */}
             <div className="capa-grid">
                 {capas.length > 0 ? (
                     capas.map((capa) => (
                         <div key={capa.id} className="capa-item">
-                            <div className="capa-header">
-                                <strong className="name">{capa.nombre}</strong>
+                            <div className="capa-header-item">
                                 <div className="capa-actions">
+                                    <strong className="name">{capa.nombre}</strong>
                                     <button className="editar-btn" onClick={() => {
                                         setCapaActual(capa);
                                         setModalVisible(true);
-                                    }}>✏️</button>
-                                    <button className="eliminar-btn" onClick={() => handleDeleteConfirm(capa)}>🗑️</button>
+                                    }}>
+                                        <span className="material-icons"><i className="fas fa-edit"></i></span>
+                                    </button>
+                                    <button className="eliminar-btn" onClick={() => handleDeleteConfirm(capa)}>
+                                        <span className="material-icons"><i className="fas fa-trash"></i></span>
+                                    </button>
                                 </div>
                             </div>
                             <p className="descripcion">{capa.descripcion}</p>

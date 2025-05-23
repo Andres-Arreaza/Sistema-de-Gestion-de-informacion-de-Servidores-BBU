@@ -5,7 +5,7 @@ import "../styles/index.css";
 import "../styles/navbar.css";
 import "../styles/home.css";
 import "../styles/Servicio.css";
-import "../styles/capa.css";
+import "../styles/Capa.css";
 import "../styles/Ambiente.css";
 import "../styles/Dominio.css";
 import "../styles/SistemaOperativo.css";
