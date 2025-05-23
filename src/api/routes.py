@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, Blueprint
 from api.models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor
 from flask_cors import CORS
+from flask_cors import cross_origin
 from datetime import datetime
 
 api = Blueprint('api', __name__)
@@ -222,28 +223,14 @@ def delete_estatus(record_id):
 # Ejemplo para Servidor:
 @api.route("/servidores", methods=["GET"])
 def get_servidores():
-    """Obtiene todos los servidores con nombres correctos de sus relaciones."""
-    servidores = Servidor.query.all()
-
-    return jsonify([
-        {
-            "id": servidor.id,
-            "nombre": servidor.nombre,
-            "tipo": servidor.tipo.name if servidor.tipo else None,
-            "ip": servidor.ip,
-            "balanceador": servidor.balanceador,
-            "vlan": servidor.vlan,
-            "link": servidor.link,
-            "descripcion": servidor.descripcion,
-            "servicio": servidor.servicio.nombre if servidor.servicio else "N/A",
-            "capa": servidor.capa.nombre if servidor.capa else "N/A",
-            "ambiente": servidor.ambiente.nombre if servidor.ambiente else "N/A",
-            "dominio": servidor.dominio.nombre if servidor.dominio else "N/A",
-            "sistema_operativo": servidor.sistema_operativo.nombre if servidor.sistema_operativo else "N/A",
-            "estatus": servidor.estatus.nombre if servidor.estatus else "N/A"
-        }
-        for servidor in servidores
-    ])
+    """Obtiene solo los servidores activos."""
+    try:
+        query = Servidor.query.filter_by(activo=True)  # 🔹 Solo servidores activos (`True`)
+        servidores = query.all()
+        return jsonify([servidor.serialize() for servidor in servidores]), 200
+    except Exception as e:
+        print("ERROR EN GET SERVIDORES:", e)
+        return jsonify({"error": str(e)}), 500
 
 @api.route("/servidores/<int:record_id>", methods=["GET"])
 def get_servidor_by_id(record_id):
@@ -253,75 +240,89 @@ def get_servidor_by_id(record_id):
 @api.route("/servidores", methods=["POST"])
 def create_servidor():
     """Crea un nuevo servidor con validación de datos."""
-    data = request.get_json()
+    try:
+        data = request.get_json()
+        required_fields = ["nombre", "tipo", "ip", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id"]
+        missing_fields = [field for field in required_fields if field not in data or data[field] in [None, ""]]
 
-    required_fields = ["nombre", "tipo", "ip", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id"]
-    missing_fields = [field for field in required_fields if field not in data or data[field] in [None, ""]]
+        if missing_fields:
+            return jsonify({"error": f"Faltan datos obligatorios: {', '.join(missing_fields)}"}), 400
 
-    if missing_fields:
-        return jsonify({"error": f"Faltan datos obligatorios: {', '.join(missing_fields)}"}), 400
+        nuevo_servidor = Servidor(
+            nombre=data["nombre"],
+            tipo=data["tipo"],
+            ip=data["ip"],
+            balanceador=data.get("balanceador", ""),
+            vlan=data.get("vlan", ""),
+            link=data.get("link"),
+            descripcion=data.get("descripcion"),
+            servicio_id=data["servicio_id"],
+            capa_id=data["capa_id"],
+            ambiente_id=data["ambiente_id"],
+            dominio_id=data["dominio_id"],
+            sistema_operativo_id=data["sistema_operativo_id"],
+            activo=True,  # 🔹 Se crea como activo (`True`)
+            fecha_creacion=datetime.utcnow(),
+            fecha_modificacion=datetime.utcnow()
+        )
 
-    nuevo_servidor = Servidor(
-        nombre=data["nombre"],
-        tipo=data["tipo"],
-        ip=data["ip"],
-        balanceador=data.get("balanceador", ""),
-        vlan=data.get("vlan", ""),
-        link=data.get("link", ""),
-        descripcion=data.get("descripcion", ""),
-        servicio_id=data["servicio_id"],
-        capa_id=data["capa_id"],
-        ambiente_id=data["ambiente_id"],
-        dominio_id=data["dominio_id"],
-        sistema_operativo_id=data["sistema_operativo_id"],
-        estatus_id=data["estatus_id"],
-        fecha_creacion=datetime.utcnow(),
-        fecha_modificacion=datetime.utcnow()
-    )
+        db.session.add(nuevo_servidor)
+        db.session.commit()
 
-    db.session.add(nuevo_servidor)
-    db.session.commit()
-
-    return jsonify(nuevo_servidor.serialize()), 201
+        return jsonify(nuevo_servidor.serialize()), 201
+    except Exception as e:
+        print("ERROR EN CREACIÓN:", e)
+        return jsonify({"error": str(e)}), 500
 
 @api.route("/servidores/<int:record_id>", methods=["PUT"])
 def update_servidor(record_id):
     """Actualiza un servidor por ID con validación de datos."""
-    servidor = Servidor.query.get(record_id)
+    try:
+        servidor = Servidor.query.get(record_id)
+        if not servidor:
+            return jsonify({"error": "Servidor no encontrado"}), 404
 
-    if not servidor:
-        return jsonify({"error": "Servidor no encontrado"}), 404
+        data = request.get_json()
+        def sanitize(value):
+            return None if value in ["", None] else value
 
-    data = request.get_json()
+        servidor.nombre = sanitize(data.get("nombre"))
+        servidor.tipo = sanitize(data.get("tipo"))
+        servidor.ip = sanitize(data.get("ip"))
+        servidor.balanceador = sanitize(data.get("balanceador"))
+        servidor.vlan = sanitize(data.get("vlan"))
+        servidor.link = sanitize(data.get("link"))
+        servidor.descripcion = sanitize(data.get("descripcion"))
+        servidor.servicio_id = sanitize(data.get("servicio_id"))
+        servidor.capa_id = sanitize(data.get("capa_id"))
+        servidor.ambiente_id = sanitize(data.get("ambiente_id"))
+        servidor.dominio_id = sanitize(data.get("dominio_id"))
+        servidor.sistema_operativo_id = sanitize(data.get("sistema_operativo_id"))
+        servidor.activo = sanitize(data.get("activo"))  # 🔹 Se puede actualizar el estado activo/inactivo
 
-    # Convertir valores vacíos en `None`
-    def sanitize(value):
-        return None if value in ["", None] else value
+        servidor.fecha_modificacion = datetime.utcnow()
+        db.session.commit()
 
-    servidor.nombre = sanitize(data.get("nombre"))
-    servidor.tipo = sanitize(data.get("tipo"))
-    servidor.ip = sanitize(data.get("ip"))
-    servidor.balanceador = sanitize(data.get("balanceador"))
-    servidor.vlan = sanitize(data.get("vlan"))
-    servidor.link = sanitize(data.get("link"))
-    servidor.descripcion = sanitize(data.get("descripcion"))
-    servidor.servicio_id = sanitize(data.get("servicio_id"))
-    servidor.capa_id = sanitize(data.get("capa_id"))
-    servidor.ambiente_id = sanitize(data.get("ambiente_id"))
-    servidor.dominio_id = sanitize(data.get("dominio_id"))
-    servidor.sistema_operativo_id = sanitize(data.get("sistema_operativo_id"))
-    servidor.estatus_id = sanitize(data.get("estatus_id"))
-
-    servidor.fecha_modificacion = datetime.utcnow()
-
-    db.session.commit()
-
-    return jsonify(servidor.serialize()), 200
+        return jsonify(servidor.serialize()), 200
+    except Exception as e:
+        print("ERROR EN ACTUALIZACIÓN:", e)
+        return jsonify({"error": str(e)}), 500
 
 @api.route("/servidores/<int:record_id>", methods=["DELETE"])
 def delete_servidor(record_id):
-    """Elimina un servidor por ID."""
-    return delete_generic(Servidor, record_id)
+    """Marca un servidor como eliminado en lugar de borrarlo físicamente."""
+    try:
+        servidor = Servidor.query.get(record_id)
+        if not servidor:
+            return jsonify({"error": "Servidor no encontrado"}), 404
+
+        servidor.activo = False  # 🔹 Marca el servidor como eliminado (`False`)
+        db.session.commit()
+
+        return jsonify({"message": "Servidor marcado como eliminado"}), 200
+    except Exception as e:
+        print("ERROR EN ELIMINACIÓN:", e)
+        return jsonify({"error": str(e)}), 500
 
 # Ruta de búsqueda filtrada para servidores
 from api.models import TipoServidorEnum

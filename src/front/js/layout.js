@@ -6,8 +6,10 @@ import injectContext from "./store/appContext";
 
 import { Navbar } from "./component/navbar";
 import { Footer } from "./component/footer";
-import TablaServidores from "./component/TablaServidores";
+import ServidorTabla from "./component/ServidorTabla";
 import FormularioServidor from "./component/FormularioServidor";
+import Loading from "./component/Loading";
+
 
 
 import { Home } from "./pages/home";
@@ -18,7 +20,6 @@ import Dominio from "./pages/Dominio";
 import SistemaOperativo from "./pages/SistemaOperativo";
 import Estatus from "./pages/Estatus";
 import Servidor from "./pages/Servidor";
-import Loading from "./pages/Loading";
 
 const Layout = () => {
     const basename = process.env.BASENAME || "";
@@ -39,7 +40,7 @@ const Layout = () => {
                         <Route element={<SistemaOperativo />} path="/sistemaOperativo" />
                         <Route element={<Estatus />} path="/estatus" />
                         <Route element={<Servidor />} path="/servidor" />
-                        <Route element={<TablaServidores />} path="/tablaServidores" />
+                        <Route element={<ServidorTabla />} path="/servidorTabla" />
                         <Route element={<FormularioServidor />} path="/formularioServidor" />
                         <Route element={<Loading />} path="/loading" />
                         <Route element={<h1>Not found!</h1>} path="*" />

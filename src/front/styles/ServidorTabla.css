@@ -1,0 +1,90 @@
+/* 🔹 Estilos base para la tabla */
+.tabla-servidores {
+  width: 90%;
+  border-collapse: collapse;
+  margin: auto;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  animation: fadeInTable 1s ease-in-out;
+}
+
+/* 🔹 Animación de aparición de la tabla */
+@keyframes fadeInTable {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 🔹 Encabezados de la tabla */
+.tabla-servidores thead tr {
+  background: linear-gradient(135deg, #007953 0%, #004477 100%);
+  color: #007953;
+  font-size: 16px;
+}
+
+.tabla-servidores th {
+  padding: 12px;
+  text-align: center;
+}
+
+/* 🔹 Filas con efecto alterno */
+.tabla-servidores tbody tr {
+  transition: background-color 0.3s ease-in-out;
+}
+
+.tabla-servidores tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.tabla-servidores tbody tr:hover {
+  background-color: #014b341e; /*#007bff1a;*/
+}
+
+/* 🔹 Animación de entrada de filas */
+.tabla-servidores tbody tr {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInRow 0.6s ease forwards;
+}
+
+@keyframes fadeInRow {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 🔹 Animación de eliminación */
+tr.eliminado {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+}
+
+/* 🔹 Botones con efecto fluido */
+.icon-btn {
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.icon-btn:hover {
+  transform: scale(1.1);
+  filter: brightness(1.2);
+}
+
+.eliminar-btn {
+  margin-left: 8px;
+}

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import FormularioServidor from "../component/FormularioServidor";
+import ServidorTabla from "../component/ServidorTabla";
+import Loading from "../component/Loading";
 
 const Servidores = () => {
     const [modalVisible, setModalVisible] = useState(false);
@@ -9,39 +11,36 @@ const Servidores = () => {
     const [servidorLink, setServidorLink] = useState(null);
     const [servidores, setServidores] = useState([]);
     const [mensajeExito, setMensajeExito] = useState("");
+    const [cargando, setCargando] = useState(true);
+    const [desvanecerLoading, setDesvanecerLoading] = useState(false);
 
-    // 🔹 Obtener servidores asegurando que los nombres sean correctos
+    // 🔹 Obtener servidores asegurando que solo se muestren los activos
     const fetchServidores = () => {
+        setCargando(true);
         fetch(`${process.env.BACKEND_URL}/api/servidores`)
             .then((response) => response.json())
             .then((data) => {
                 console.log("Datos obtenidos de la API:", data);
 
-                const servidoresTransformados = data.map((servidor) => ({
-                    ...servidor,
-                    servicio: servidor.servicio ?? "",
-                    capa: servidor.capa ?? "",
-                    ambiente: servidor.ambiente ?? "",
-                    balanceador: servidor.balanceador ?? "",
-                    vlan: servidor.vlan ?? "",
-                    dominio: servidor.dominio ?? "",
-                    sistema_operativo: servidor.sistema_operativo ?? "",
-                    estatus: servidor.estatus ?? "",
-                    descripcion: servidor.descripcion ?? "",
-                    link: servidor.link ?? ""
-                }));
+                // 🔹 Filtrar para excluir los servidores eliminados (`activo = false`)
+                const servidoresFiltrados = data.filter((servidor) => servidor.activo === true);
 
-                console.log("Servidores transformados:", servidoresTransformados);
-                setServidores(servidoresTransformados);
+                setServidores(servidoresFiltrados);
+
+                setTimeout(() => setDesvanecerLoading(true), 500);
+                setTimeout(() => setCargando(false), 1000);
             })
-            .catch((error) => console.error("Error al obtener servidores:", error));
+            .catch((error) => {
+                console.error("Error al obtener servidores:", error);
+                setCargando(false);
+            });
     };
 
     useEffect(() => {
         fetchServidores();
     }, []);
 
-    // 🔹 Eliminar un servidor
+    // 🔹 Eliminar un servidor con animación orgánica sin recargar la tabla
     const eliminarServidor = (servidor) => {
         fetch(`${process.env.BACKEND_URL}/api/servidores/${servidor.id}`, {
             method: "DELETE",
@@ -54,34 +53,29 @@ const Servidores = () => {
                 return response.json();
             })
             .then(() => {
-                fetchServidores(); // 🔹 Recargar la tabla después de eliminar
+                setServidores((prevServidores) =>
+                    prevServidores.map((s) =>
+                        s.id === servidor.id ? { ...s, activo: false } : s
+                    )
+                );
+
+                setTimeout(() => {
+                    setServidores((prevServidores) =>
+                        prevServidores.filter((s) => s.activo !== false)
+                    );
+                }, 500);
             })
             .catch((error) => console.error("Error al eliminar el servidor:", error));
     };
 
-    // 🔹 Obtener datos completos de un servidor para edición y mostrar el formulario con datos precargados
+    // 🔹 Obtener datos completos de un servidor para edición
     const obtenerServidorPorId = (id) => {
         fetch(`${process.env.BACKEND_URL}/api/servidores/${id}`)
             .then((response) => response.json())
             .then((data) => {
                 console.log("Servidor cargado para edición:", data);
-
-                const servidorTransformado = {
-                    ...data,
-                    servicio: data.servicio ?? "",
-                    capa: data.capa ?? "",
-                    ambiente: data.ambiente ?? "",
-                    balanceador: data.balanceador ?? "",
-                    vlan: data.vlan ?? "",
-                    dominio: data.dominio ?? "",
-                    sistema_operativo: data.sistema_operativo ?? "",
-                    estatus: data.estatus ?? "",
-                    descripcion: data.descripcion ?? "",
-                    link: data.link ?? ""
-                };
-
-                setServidorActual(servidorTransformado);
-                setModalEditarVisible(true); // 🔹 Abre el formulario con los datos precargados
+                setServidorActual(data);
+                setModalEditarVisible(true);
             })
             .catch((error) => console.error("Error al obtener servidor:", error));
     };
@@ -91,11 +85,11 @@ const Servidores = () => {
         setServidorLink(servidor);
         setModalLinkVisible(true);
     };
+
     return (
         <div className="servidores-container">
             {mensajeExito && <div className="toast-success">{mensajeExito}</div>}
 
-            {/* Sección con encabezado */}
             <div className="servidores-header">
                 <div className="linea-blanca"></div>
                 <h2 className="servidores-title">Gestión de Servidores</h2>
@@ -103,65 +97,17 @@ const Servidores = () => {
                 <div className="linea-blanca-2"></div>
             </div>
 
-            {/* Tabla de servidores */}
-            <table className="tabla-servidores">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Tipo</th>
-                        <th>IP</th>
-                        <th>Servicio</th>
-                        <th>Capa</th>
-                        <th>Ambiente</th>
-                        <th>Balanceador</th>
-                        <th>VLAN</th>
-                        <th>Dominio</th>
-                        <th>S.O.</th>
-                        <th>Estatus</th>
-                        <th>Descripción</th>
-                        <th>Link</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {servidores.length > 0 ? (
-                        servidores.map((servidor) => (
-                            <tr key={servidor.id}>
-                                <td>{servidor.nombre}</td>
-                                <td>{servidor.tipo}</td>
-                                <td>{servidor.ip}</td>
-                                <td>{servidor.servicio}</td>
-                                <td>{servidor.capa}</td>
-                                <td>{servidor.ambiente}</td>
-                                <td>{servidor.balanceador}</td>
-                                <td>{servidor.vlan}</td>
-                                <td>{servidor.dominio}</td>
-                                <td>{servidor.sistema_operativo}</td>
-                                <td>{servidor.estatus}</td>
-                                <td>{servidor.descripcion}</td>
-                                <td>
-                                    <button className="ver-link-btn icon-btn" onClick={() => abrirModalLink(servidor)}>
-                                        <span className="material-symbols-outlined">visibility</span>
-                                    </button>
-                                </td>
-                                <td>
-                                    <button className="editar-btn icon-btn" onClick={() => obtenerServidorPorId(servidor.id)}>
-                                        <span className="material-icons"><i className="fas fa-edit"></i></span>
-                                    </button>
-                                    <button className="eliminar-btn icon-btn" onClick={() => eliminarServidor(servidor)}>
-                                        <span className="material-icons"><i className="fas fa-trash"></i></span>
-                                    </button>
-                                </td>
-                            </tr>
-                        ))
-                    ) : (
-                        <tr>
-                            <td colSpan="14">No hay servidores disponibles.</td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
-            {/* Modal de creación */}
+            {cargando ? (
+                <Loading desvanecerLoading={desvanecerLoading} />
+            ) : (
+                <ServidorTabla
+                    servidores={servidores}
+                    obtenerServidorPorId={obtenerServidorPorId}
+                    eliminarServidor={eliminarServidor}
+                    abrirModalLink={abrirModalLink}
+                />
+            )}
+
             {modalVisible && (
                 <div className="modal-overlay" onClick={() => setModalVisible(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -176,13 +122,12 @@ const Servidores = () => {
                 </div>
             )}
 
-            {/* Modal de edición con datos precargados */}
             {modalEditarVisible && servidorActual && (
                 <div className="modal-overlay" onClick={() => setModalEditarVisible(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <h2>Editar Servidor</h2>
                         <FormularioServidor
-                            servidorInicial={servidorActual} // 🔹 Se cargan los datos del servidor seleccionado
+                            servidorInicial={servidorActual}
                             setServidores={setServidores}
                             setModalVisible={setModalEditarVisible}
                             onSuccess={setMensajeExito}
@@ -192,7 +137,6 @@ const Servidores = () => {
                 </div>
             )}
 
-            {/* Modal de enlace con información detallada */}
             {modalLinkVisible && servidorLink && (
                 <div className="modal-overlay" onClick={() => setModalLinkVisible(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>

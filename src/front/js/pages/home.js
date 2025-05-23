@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Loading from "../pages/Loading"; // Asegúrate de que la ruta sea correcta
+import Loading from "../component/Loading"; // Asegúrate de que la ruta sea correcta
 
 export const Home = () => {
     // Estados para los filtros tipo checkbox

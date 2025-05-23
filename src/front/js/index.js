@@ -11,7 +11,7 @@ import "../styles/Dominio.css";
 import "../styles/SistemaOperativo.css";
 import "../styles/Estatus.css";
 import "../styles/Servidor.css";
-import "../styles/TablaServidores.css";
+import "../styles/ServidorTabla.css";
 import "../styles/Loading.css";
 import "../styles/FormularioServidor.css";
 import "../styles/footer.css";
