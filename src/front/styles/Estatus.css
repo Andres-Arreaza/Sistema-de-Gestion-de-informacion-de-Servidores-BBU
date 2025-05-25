@@ -1,14 +1,62 @@
-/* 🔹 Contenedor principal */
-.estatus-container {
-  padding: 20px;
-  text-align: center;
-  position: relative;
+:root {
+  --gradient: linear-gradient(135deg, #004477 0%, #007953 100%);
+  --text-color: white;
 }
 
-/* 🔹 Título */
+/* 🔹 Encabezado con gradiente */
+.estatus-header {
+  padding: 40px 0;
+  background: var(--gradient);
+  text-align: center;
+}
+
+/* .servicio-header-item {
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+} */
+
+/* 🔹 Título con animación */
 .estatus-title {
-  font-size: 24px;
-  margin-bottom: 20px;
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--text-color);
+  margin-bottom: 15px;
+  animation: fadeUpSlow 0.8s ease-out;
+}
+
+/* 🔹 Botón de creación con mejor contraste */
+.crear-estatus-btn {
+  background-color: #ffffff;
+  color: #007953;
+  padding: 12px 25px;
+  font-size: 16px;
+  font-weight: bold;
+  border: 2px solid #007953;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+  animation: fadeUpSlow 1s ease-out;
+}
+
+.crear-estatus-btn:hover {
+  background-color: #007953;
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* 🔹 Líneas blancas más sutiles */
+.linea-blanca,
+.linea-blanca-2 {
+  margin: 10px auto;
+  height: 3px;
+  background-color: rgba(255, 255, 255, 0.6);
+  width: 25%;
+  animation: expandLine 1s ease-out;
+}
+
+.linea-blanca-2 {
+  height: 2px;
+  width: 15%;
 }
 
 /* 🔹 Mensaje de alerta */
