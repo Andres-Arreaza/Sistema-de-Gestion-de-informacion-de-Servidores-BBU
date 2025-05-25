@@ -47,17 +47,17 @@ const Dominio = () => {
             .then((response) => response.json())
             .then((data) => {
                 if (data.error) {
-                    setAlerta({ mensaje: `❌ ${data.error}`, tipo: "error" });
+                    setAlerta({ mensaje: data.error, tipo: "error" });
                 } else {
                     fetchDominios();
                     setModalVisible(false);
-                    setAlerta({ mensaje: dominioActual.id ? "✅ Dominio actualizado" : "✅ Dominio creado", tipo: "success" });
+                    setAlerta({ mensaje: dominioActual.id ? "Dominio actualizado" : "Dominio creado", tipo: "success" });
                 }
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
             .catch((error) => {
                 console.error("Error al guardar dominio:", error);
-                setAlerta({ mensaje: "❌ Error al guardar el dominio", tipo: "error" });
+                setAlerta({ mensaje: "Error al guardar el dominio", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             });
     };
@@ -77,34 +77,40 @@ const Dominio = () => {
             .then(() => {
                 fetchDominios();
                 setConfirmModalVisible(false);
-                setAlerta({ mensaje: "✅ Dominio eliminado", tipo: "success" });
+                setAlerta({ mensaje: "Dominio eliminado", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
             .catch((error) => {
                 console.error("Error al eliminar dominio:", error);
-                setAlerta({ mensaje: "❌ Error al eliminar el dominio", tipo: "error" });
+                setAlerta({ mensaje: "Error al eliminar el dominio", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             });
     };
 
     return (
         <div className="dominio-container">
-            <h1 className="dominio-title">DOMINIOS</h1>
+            {/* 🔹 Encabezado con gradiente, líneas blancas y botón */}
+            <div className="dominio-header">
+                <div className="linea-blanca"></div>
+                <h2 className="dominio-title">Gestión de Dominios</h2>
+                <button className="crear-dominio-btn" onClick={() => {
+                    setDominioActual({ id: null, nombre: "", descripcion: "" });
+                    setModalVisible(true);
+                }}>Crear Dominio</button>
+                <div className="linea-blanca-2"></div>
+            </div>
 
             {/* 🔹 Mensaje de alerta */}
             {alerta.mensaje && (
                 <div className={`alerta ${alerta.tipo}`}>
-                    <span className="icono">❌</span> {alerta.mensaje}
+                    {alerta.mensaje === "Dominio eliminado" ? (
+                        <span className="material-symbols-outlined">cancel</span>
+                    ) : (
+                        <span className="material-symbols-outlined">check_circle</span>
+                    )}
+                    {alerta.mensaje}
                 </div>
             )}
-
-            {/* 🔹 Botón para abrir el modal de creación */}
-            <button className="crear-dominio-btn" onClick={() => {
-                setDominioActual({ id: null, nombre: "", descripcion: "" });
-                setModalVisible(true);
-            }}>
-                Crear Dominio
-            </button>
 
             {/* 🔹 Modal de creación/edición */}
             {modalVisible && (
@@ -128,7 +134,7 @@ const Dominio = () => {
                 <div className="modal-overlay" onClick={() => setConfirmModalVisible(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <h2>¿Seguro que deseas eliminar este dominio?</h2>
-                        <p>{dominioAEliminar?.nombre}</p>
+                        <p>{`El dominio "` + dominioAEliminar?.nombre + `" será eliminado.`}</p>
                         <div className="modal-delete-buttons">
                             <button className="eliminar-confirm-btn" onClick={handleDelete}>Eliminar</button>
                             <button className="cerrar-modal-btn" onClick={() => setConfirmModalVisible(false)}>Cancelar</button>
@@ -137,19 +143,23 @@ const Dominio = () => {
                 </div>
             )}
 
-            {/* 🔹 Lista de dominios con botones de editar y eliminar al lado del nombre */}
+            {/* 🔹 Lista de dominios con botones de editar y eliminar */}
             <div className="dominio-grid">
                 {dominios.length > 0 ? (
                     dominios.map((dominio) => (
                         <div key={dominio.id} className="dominio-item">
-                            <div className="dominio-header">
-                                <strong className="name">{dominio.nombre}</strong>
+                            <div className="dominio-header-item">
                                 <div className="dominio-actions">
+                                    <strong className="name">{dominio.nombre}</strong>
                                     <button className="editar-btn" onClick={() => {
                                         setDominioActual(dominio);
                                         setModalVisible(true);
-                                    }}>✏️</button>
-                                    <button className="eliminar-btn" onClick={() => handleDeleteConfirm(dominio)}>🗑️</button>
+                                    }}>
+                                        <span className="material-icons"><i className="fas fa-edit"></i></span>
+                                    </button>
+                                    <button className="eliminar-btn" onClick={() => handleDeleteConfirm(dominio)}>
+                                        <span className="material-icons"><i className="fas fa-trash"></i></span>
+                                    </button>
                                 </div>
                             </div>
                             <p className="descripcion">{dominio.descripcion}</p>
