@@ -47,17 +47,17 @@ const Ambiente = () => {
             .then((response) => response.json())
             .then((data) => {
                 if (data.error) {
-                    setAlerta({ mensaje: `${data.error}`, tipo: "error" });
+                    setAlerta({ mensaje: data.error, tipo: "error" });
                 } else {
                     fetchAmbientes();
                     setModalVisible(false);
-                    setAlerta({ mensaje: ambienteActual.id ? "✅ Ambiente actualizado" : "✅ Ambiente creado", tipo: "success" });
+                    setAlerta({ mensaje: ambienteActual.id ? "Ambiente actualizado" : "Ambiente creado", tipo: "success" });
                 }
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
             .catch((error) => {
                 console.error("Error al guardar ambiente:", error);
-                setAlerta({ mensaje: "❌ Error al guardar el ambiente", tipo: "error" });
+                setAlerta({ mensaje: "Error al guardar el ambiente", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             });
     };
@@ -77,34 +77,40 @@ const Ambiente = () => {
             .then(() => {
                 fetchAmbientes();
                 setConfirmModalVisible(false);
-                setAlerta({ mensaje: "✅ Ambiente eliminado", tipo: "success" });
+                setAlerta({ mensaje: "Ambiente eliminado", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
             .catch((error) => {
                 console.error("Error al eliminar ambiente:", error);
-                setAlerta({ mensaje: "❌ Error al eliminar el ambiente", tipo: "error" });
+                setAlerta({ mensaje: "Error al eliminar el ambiente", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             });
     };
 
     return (
         <div className="ambiente-container">
-            <h1 className="ambiente-title">AMBIENTES</h1>
+            {/* 🔹 Encabezado con gradiente, líneas blancas y botón */}
+            <div className="ambiente-header">
+                <div className="linea-blanca"></div>
+                <h2 className="ambiente-title">Gestión de Ambientes</h2>
+                <button className="crear-ambiente-btn" onClick={() => {
+                    setAmbienteActual({ id: null, nombre: "", descripcion: "" });
+                    setModalVisible(true);
+                }}>Crear Ambiente</button>
+                <div className="linea-blanca-2"></div>
+            </div>
 
             {/* 🔹 Mensaje de alerta */}
             {alerta.mensaje && (
                 <div className={`alerta ${alerta.tipo}`}>
-                    <span className="icono">❌</span> {alerta.mensaje}
+                    {alerta.mensaje === "Ambiente eliminado" ? (
+                        <span className="material-symbols-outlined">cancel</span>
+                    ) : (
+                        <span className="material-symbols-outlined">check_circle</span>
+                    )}
+                    {alerta.mensaje}
                 </div>
             )}
-
-            {/* 🔹 Botón para abrir el modal de creación */}
-            <button className="crear-ambiente-btn" onClick={() => {
-                setAmbienteActual({ id: null, nombre: "", descripcion: "" });
-                setModalVisible(true);
-            }}>
-                Crear Ambiente
-            </button>
 
             {/* 🔹 Modal de creación/edición */}
             {modalVisible && (
@@ -128,7 +134,7 @@ const Ambiente = () => {
                 <div className="modal-overlay" onClick={() => setConfirmModalVisible(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <h2>¿Seguro que deseas eliminar este ambiente?</h2>
-                        <p>{ambienteAEliminar?.nombre}</p>
+                        <p>{`El ambiente "` + ambienteAEliminar?.nombre + `" será eliminado.`}</p>
                         <div className="modal-delete-buttons">
                             <button className="eliminar-confirm-btn" onClick={handleDelete}>Eliminar</button>
                             <button className="cerrar-modal-btn" onClick={() => setConfirmModalVisible(false)}>Cancelar</button>
@@ -137,19 +143,23 @@ const Ambiente = () => {
                 </div>
             )}
 
-            {/* 🔹 Lista de ambientes con botones de editar y eliminar al lado del nombre */}
+            {/* 🔹 Lista de ambientes con botones de editar y eliminar */}
             <div className="ambiente-grid">
                 {ambientes.length > 0 ? (
                     ambientes.map((ambiente) => (
                         <div key={ambiente.id} className="ambiente-item">
-                            <div className="ambiente-header">
-                                <strong className="name">{ambiente.nombre}</strong>
+                            <div className="ambiente-header-item">
                                 <div className="ambiente-actions">
+                                    <strong className="name">{ambiente.nombre}</strong>
                                     <button className="editar-btn" onClick={() => {
                                         setAmbienteActual(ambiente);
                                         setModalVisible(true);
-                                    }}>✏️</button>
-                                    <button className="eliminar-btn" onClick={() => handleDeleteConfirm(ambiente)}>🗑️</button>
+                                    }}>
+                                        <span className="material-icons"><i className="fas fa-edit"></i></span>
+                                    </button>
+                                    <button className="eliminar-btn" onClick={() => handleDeleteConfirm(ambiente)}>
+                                        <span className="material-icons"><i className="fas fa-trash"></i></span>
+                                    </button>
                                 </div>
                             </div>
                             <p className="descripcion">{ambiente.descripcion}</p>
