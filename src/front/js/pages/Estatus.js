@@ -47,17 +47,17 @@ const Estatus = () => {
             .then((response) => response.json())
             .then((data) => {
                 if (data.error) {
-                    setAlerta({ mensaje: `❌ ${data.error}`, tipo: "error" });
+                    setAlerta({ mensaje: data.error, tipo: "error" });
                 } else {
                     fetchEstatus();
                     setModalVisible(false);
-                    setAlerta({ mensaje: estatusActual.id ? "✅ Estatus actualizado" : "✅ Estatus creado", tipo: "success" });
+                    setAlerta({ mensaje: estatusActual.id ? "Estatus actualizado" : "Estatus creado", tipo: "success" });
                 }
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
             .catch((error) => {
                 console.error("Error al guardar estatus:", error);
-                setAlerta({ mensaje: "❌ Error al guardar el estatus", tipo: "error" });
+                setAlerta({ mensaje: "Error al guardar el estatus", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             });
     };
@@ -68,7 +68,7 @@ const Estatus = () => {
         setConfirmModalVisible(true);
     };
 
-    // 🔹 Eliminar estatus (borrado lógico)
+    // 🔹 Eliminar estatus
     const handleDelete = () => {
         if (!estatusAEliminar) return;
 
@@ -77,34 +77,38 @@ const Estatus = () => {
             .then(() => {
                 fetchEstatus();
                 setConfirmModalVisible(false);
-                setAlerta({ mensaje: "✅ Estatus eliminado", tipo: "success" });
+                setAlerta({ mensaje: "Estatus eliminado", tipo: "success" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
             .catch((error) => {
                 console.error("Error al eliminar estatus:", error);
-                setAlerta({ mensaje: "❌ Error al eliminar el estatus", tipo: "error" });
+                setAlerta({ mensaje: "Error al eliminar el estatus", tipo: "error" });
                 setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             });
     };
 
     return (
         <div className="estatus-container">
-            <h1 className="estatus-title">ESTATUS</h1>
+            {/* 🔹 Encabezado con gradiente, líneas blancas y botón */}
+            <div className="estatus-header">
+                <div className="linea-blanca"></div>
+                <h2 className="estatus-title">Gestión de Estatus</h2>
+                <button className="crear-estatus-btn" onClick={() => {
+                    setEstatusActual({ id: null, nombre: "", descripcion: "" });
+                    setModalVisible(true);
+                }}>Crear Estatus</button>
+                <div className="linea-blanca-2"></div>
+            </div>
 
             {/* 🔹 Mensaje de alerta */}
             {alerta.mensaje && (
                 <div className={`alerta ${alerta.tipo}`}>
-                    <span className="icono">❌</span> {alerta.mensaje}
+                    <span className="material-symbols-outlined">
+                        {alerta.tipo === "success" ? "check_circle" : "error"}
+                    </span>
+                    {alerta.mensaje}
                 </div>
             )}
-
-            {/* 🔹 Botón para abrir el modal de creación */}
-            <button className="crear-estatus-btn" onClick={() => {
-                setEstatusActual({ id: null, nombre: "", descripcion: "" });
-                setModalVisible(true);
-            }}>
-                Crear Estatus
-            </button>
 
             {/* 🔹 Modal de creación/edición */}
             {modalVisible && (
@@ -128,7 +132,7 @@ const Estatus = () => {
                 <div className="modal-overlay" onClick={() => setConfirmModalVisible(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <h2>¿Seguro que deseas eliminar este estatus?</h2>
-                        <p>{estatusAEliminar?.nombre}</p>
+                        <p>{`El Estatus "` + estatusAEliminar?.nombre + `" será eliminado.`}</p>
                         <div className="modal-delete-buttons">
                             <button className="eliminar-confirm-btn" onClick={handleDelete}>Eliminar</button>
                             <button className="cerrar-modal-btn" onClick={() => setConfirmModalVisible(false)}>Cancelar</button>
@@ -137,19 +141,23 @@ const Estatus = () => {
                 </div>
             )}
 
-            {/* 🔹 Lista de estatus con botones de editar y eliminar al lado del nombre */}
+            {/* 🔹 Lista de estatus con botones de editar y eliminar */}
             <div className="estatus-grid">
                 {estatusList.length > 0 ? (
                     estatusList.map((estatus) => (
                         <div key={estatus.id} className="estatus-item">
-                            <div className="estatus-header">
-                                <strong className="name">{estatus.nombre}</strong>
+                            <div className="estatus-header-item">
                                 <div className="estatus-actions">
+                                    <strong className="name">{estatus.nombre}</strong>
                                     <button className="editar-btn" onClick={() => {
                                         setEstatusActual(estatus);
                                         setModalVisible(true);
-                                    }}>✏️</button>
-                                    <button className="eliminar-btn" onClick={() => handleDeleteConfirm(estatus)}>🗑️</button>
+                                    }}>
+                                        <span className="material-icons"><i className="fas fa-edit"></i></span>
+                                    </button>
+                                    <button className="eliminar-btn" onClick={() => handleDeleteConfirm(estatus)}>
+                                        <span className="material-icons"><i className="fas fa-trash"></i></span>
+                                    </button>
                                 </div>
                             </div>
                             <p className="descripcion">{estatus.descripcion}</p>
