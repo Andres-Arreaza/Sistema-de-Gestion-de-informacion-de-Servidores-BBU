@@ -24,6 +24,22 @@
   }
 }
 
+/* 🔹 Animación de reducción al cambiar cantidad de servidores */
+@keyframes shrinkTable {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.85);
+    opacity: 0.5;
+  }
+}
+
+.tabla-servidores.reduciendo {
+  animation: shrinkTable 0.4s ease-in-out;
+}
+
 /* 🔹 Encabezados de la tabla con color verde */
 .tabla-servidores thead tr {
   color: white;
@@ -64,28 +80,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* 🔹 Animación de eliminación */
-tr.eliminado {
-  opacity: 0;
-  transform: scale(0.95);
-  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
-}
-
-/* 🔹 Botones con efecto fluido */
-.icon-btn {
-  cursor: pointer;
-  transition: all 0.3s ease-in-out;
-}
-
-.icon-btn:hover {
-  transform: scale(1.1);
-  filter: brightness(1.2);
-}
-
-.eliminar-btn {
-  margin-left: 8px;
 }
 
 /* 🔹 Estilos de paginación */
@@ -137,4 +131,53 @@ tr.eliminado {
   font-weight: bold;
   color: #004477;
   padding: 0 12px;
+}
+
+/* 🔹 Selector de cantidad de servidores */
+.cantidad-servidores {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 20px auto;
+  text-align: center;
+  animation: fadeInSelect 1s ease-in-out;
+}
+
+/* 🔹 Animación de entrada */
+@keyframes fadeInSelect {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.cantidad-servidores label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+
+.cantidad-servidores select {
+  padding: 6px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.cantidad-servidores select:hover {
+  border-color: #0078d4;
+}
+
+.cantidad-servidores select:focus {
+  outline: none;
+  border-color: #005a9e;
+  box-shadow: 0 0 5px rgba(0, 90, 158, 0.5);
 }

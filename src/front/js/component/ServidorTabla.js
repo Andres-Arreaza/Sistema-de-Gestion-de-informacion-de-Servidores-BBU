@@ -3,7 +3,12 @@ import Swal from "sweetalert2";
 
 const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink, servidores, setServidores }) => {
     const [paginaActual, setPaginaActual] = useState(1);
-    const servidoresPorPagina = 10;
+    const [servidoresPorPagina, setServidoresPorPagina] = useState(10); // 🔹 Por defecto, 10 servidores
+
+    const handleCantidadCambio = (e) => {
+        setServidoresPorPagina(Number(e.target.value));
+        setPaginaActual(1); // 🔹 Reseteamos a la primera página
+    };
 
     // 🔹 Función para obtener servidores actualizados desde la API
     const actualizarServidores = async () => {
@@ -21,45 +26,6 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
         actualizarServidores();
     }, []);
 
-    // 🔹 Confirmación visual antes de eliminar un servidor
-    const handleEliminarConfirmacion = (servidor) => {
-        Swal.fire({
-            title: `¿Seguro que desea eliminar el servidor ${servidor.nombre}?`,
-            text: "Se eliminará el servidor.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Eliminar",
-            cancelButtonText: "Cancelar"
-        }).then((result) => {
-            if (result.isConfirmed) {
-                handleEliminarServidor(servidor);
-            }
-        });
-    };
-
-    // 🔹 Eliminar servidor con alerta visual
-    const handleEliminarServidor = async (servidor) => {
-        try {
-            await eliminarServidor(servidor);
-            actualizarServidores();  // 🔹 Recarga la tabla tras eliminar
-
-            Swal.fire({
-                icon: "success",
-                title: "Servidor eliminado exitosamente.",
-                showConfirmButton: false,
-                timer: 2500,
-            });
-        } catch (error) {
-            Swal.fire({
-                icon: "error",
-                title: "Error al eliminar",
-                text: `Hubo un problema: ${error.message}`,
-                showConfirmButton: false,
-                timer: 2500,
-            });
-        }
-    };
-
     // 🔹 Calcula el número total de páginas
     const totalPaginas = Math.ceil(servidores.length / servidoresPorPagina);
 
@@ -67,9 +33,19 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
     const indiceInicial = (paginaActual - 1) * servidoresPorPagina;
     const indiceFinal = indiceInicial + servidoresPorPagina;
     const servidoresPaginados = servidores.slice(indiceInicial, indiceFinal);
-
     return (
         <div>
+            {/* 🔹 Selector de cantidad de servidores por página */}
+            <div className="cantidad-servidores">
+                <label>Servidores por página:</label>
+                <select onChange={handleCantidadCambio} value={servidoresPorPagina}>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+
             <table className="tabla-servidores">
                 <thead>
                     <tr>
@@ -127,7 +103,6 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
                     )}
                 </tbody>
             </table>
-
             {totalPaginas > 1 && (
                 <div className="paginacion-servidores">
                     <button
@@ -137,7 +112,9 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
                     >
                         <span className="material-symbols-outlined">arrow_back_ios</span>
                     </button>
-                    <span className="pagina-numero">Página {paginaActual} de {totalPaginas}</span>
+                    <span className="pagina-numero">
+                        Página {paginaActual} de {totalPaginas}
+                    </span>
                     <button
                         onClick={() => setPaginaActual(paginaActual + 1)}
                         disabled={paginaActual === totalPaginas}
