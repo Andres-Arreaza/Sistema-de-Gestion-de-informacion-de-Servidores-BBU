@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Swal from "sweetalert2";
 
 const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, onSuccess, esEdicion }) => {
     const [servicios, setServicios] = useState([]);
@@ -93,7 +94,6 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
     const handleFormSubmit = async (e) => {
         e.preventDefault();
 
-        // 🔹 Validación de campos obligatorios antes de enviar la solicitud
         const requiredFields = [
             "nombre", "tipo", "ip", "balanceador", "vlan", "descripcion",
             "link", "servicio_id", "capa_id", "ambiente_id", "dominio_id",
@@ -103,13 +103,17 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
         const missingFields = requiredFields.filter(field => !formData[field] || formData[field] === "");
 
         if (missingFields.length > 0) {
-            setError(`Faltan datos obligatorios: ${missingFields.join(", ")}`);
+            Swal.fire({
+                icon: "warning",
+                title: "Campos faltantes",
+                text: `Debes completar: ${missingFields.join(", ")}`,
+                showConfirmButton: false,
+                timer: 3000,
+            });
             return;
         }
 
         const payload = { ...formData };
-
-        console.log("Datos enviados al backend:", payload);
 
         try {
             const response = await fetch(
@@ -129,20 +133,28 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
 
             const servidorNuevo = await response.json();
 
-            // 🔹 Actualiza la tabla inmediatamente agregando el nuevo servidor
             setServidores(prevServidores => [...prevServidores, servidorNuevo]);
 
             setModalVisible(false);
-            if (onSuccess) {
-                setTimeout(() => {
-                    onSuccess(esEdicion ? "✅ Servidor editado correctamente!" : "✅ Servidor guardado exitosamente!");
-                }, 100);
-            }
+
+            Swal.fire({
+                icon: "success",
+                title: esEdicion ? "Servidor actualizado" : "Servidor guardado",
+                showConfirmButton: false,
+                timer: 3000,
+            });
         } catch (error) {
             setError(error.message);
+
+            Swal.fire({
+                icon: "error",
+                title: "Error al guardar",
+                text: `Hubo un problema: ${error.message}`,
+                showConfirmButton: false,
+                timer: 3000,
+            });
         }
     };
-
     return (
         <form onSubmit={handleFormSubmit} className="grid-form">
             {error && <div className="error-message">{error}</div>}

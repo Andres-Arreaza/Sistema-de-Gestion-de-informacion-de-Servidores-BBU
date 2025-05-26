@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
+import Swal from "sweetalert2";
 
 const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink, servidores, setServidores }) => {
-    const [modalVisible, setModalVisible] = useState(false);
-    const [servidorAEliminar, setServidorAEliminar] = useState(null);
     const [paginaActual, setPaginaActual] = useState(1);
     const servidoresPorPagina = 10;
 
@@ -18,16 +17,47 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
         }
     };
 
-    // 🔹 Ejecutar `actualizarServidores()` cuando se monte el componente
     useEffect(() => {
         actualizarServidores();
     }, []);
 
-    // 🔹 Llamar `actualizarServidores()` después de eliminar un servidor
+    // 🔹 Confirmación visual antes de eliminar un servidor
+    const handleEliminarConfirmacion = (servidor) => {
+        Swal.fire({
+            title: `¿Seguro que desea eliminar el servidor ${servidor.nombre}?`,
+            text: "Se eliminara el servidor.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Eliminar",
+            cancelButtonText: "Cancelar"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                handleEliminarServidor(servidor);
+            }
+        });
+    };
+
+    // 🔹 Eliminar servidor con alerta visual
     const handleEliminarServidor = async (servidor) => {
-        await eliminarServidor(servidor);
-        actualizarServidores();  // 🔹 Recarga la tabla tras eliminar
-        setModalVisible(false);
+        try {
+            await eliminarServidor(servidor);
+            actualizarServidores();  // 🔹 Recarga la tabla tras eliminar
+
+            Swal.fire({
+                icon: "success",
+                title: "Servidor eliminado",
+                showConfirmButton: false,
+                timer: 3000,
+            });
+        } catch (error) {
+            Swal.fire({
+                icon: "error",
+                title: "Error al eliminar",
+                text: `Hubo un problema: ${error.message}`,
+                showConfirmButton: false,
+                timer: 3000,
+            });
+        }
     };
 
     // 🔹 Calcula el número total de páginas
@@ -84,10 +114,7 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
                                     <button className="editar-btn icon-btn" onClick={() => obtenerServidorPorId(servidor.id)}>
                                         <span className="material-icons"><i className="fas fa-edit"></i></span>
                                     </button>
-                                    <button className="eliminar-btn icon-btn" onClick={() => {
-                                        setServidorAEliminar(servidor);
-                                        setModalVisible(true);
-                                    }}>
+                                    <button className="eliminar-btn icon-btn" onClick={() => handleEliminarConfirmacion(servidor)}>
                                         <span className="material-icons"><i className="fas fa-trash"></i></span>
                                     </button>
                                 </td>
@@ -101,7 +128,6 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
                 </tbody>
             </table>
 
-            {/* 🔹 Paginación */}
             {totalPaginas > 1 && (
                 <div className="paginacion-servidores">
                     <button
@@ -119,20 +145,6 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
                     >
                         <span className="material-symbols-outlined">arrow_forward_ios</span>
                     </button>
-                </div>
-            )}
-
-            {/* 🔹 Modal de Confirmación para eliminar servidor */}
-            {modalVisible && (
-                <div className="modal-confirmacion">
-                    <div className="modal-content">
-                        <h3>¿Seguro que quieres eliminar {servidorAEliminar?.nombre}?</h3>
-                        <p>Esta acción no se puede deshacer.</p>
-                        <div className="modal-buttons">
-                            <button onClick={() => handleEliminarServidor(servidorAEliminar)} className="confirmar-btn">Sí, eliminar</button>
-                            <button onClick={() => setModalVisible(false)} className="cancelar-btn">Cancelar</button>
-                        </div>
-                    </div>
                 </div>
             )}
         </div>
