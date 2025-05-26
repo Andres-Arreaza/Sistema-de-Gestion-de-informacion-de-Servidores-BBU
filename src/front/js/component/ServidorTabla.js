@@ -25,7 +25,7 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
     const handleEliminarConfirmacion = (servidor) => {
         Swal.fire({
             title: `¿Seguro que desea eliminar el servidor ${servidor.nombre}?`,
-            text: "Se eliminara el servidor.",
+            text: "Se eliminará el servidor.",
             icon: "warning",
             showCancelButton: true,
             confirmButtonText: "Eliminar",
@@ -45,7 +45,7 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
 
             Swal.fire({
                 icon: "success",
-                title: "Servidor eliminado exisosamente.",
+                title: "Servidor eliminado exitosamente.",
                 showConfirmButton: false,
                 timer: 3000,
             });
@@ -93,18 +93,18 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
                     {servidoresPaginados.length > 0 ? (
                         servidoresPaginados.map((servidor) => (
                             <tr key={servidor.id}>
-                                <td>{servidor.nombre}</td>
-                                <td>{servidor.tipo || "N/A"}</td>
-                                <td>{servidor.ip}</td>
-                                <td>{servidor.servicio?.nombre || "N/A"}</td>
-                                <td>{servidor.capa?.nombre || "N/A"}</td>
-                                <td>{servidor.ambiente?.nombre || "N/A"}</td>
-                                <td>{servidor.balanceador}</td>
-                                <td>{servidor.vlan}</td>
-                                <td>{servidor.dominio?.nombre || "N/A"}</td>
-                                <td>{servidor.sistema_operativo?.nombre || "N/A"}</td>
-                                <td>{servidor.estatus?.nombre || "N/A"}</td>
-                                <td>{servidor.descripcion}</td>
+                                <td>{servidor.nombre || "Sin nombre"}</td>
+                                <td>{servidor.tipo || "Sin tipo"}</td>
+                                <td>{servidor.ip || "Sin IP"}</td>
+                                <td>{servidor.servicios?.[0]?.nombre || "Sin servicio"}</td>
+                                <td>{servidor.capas?.[0]?.nombre || "Sin capa"}</td>
+                                <td>{servidor.ambientes?.[0]?.nombre || "Sin ambiente"}</td>
+                                <td>{servidor.balanceador || "Sin balanceador"}</td>
+                                <td>{servidor.vlan || "Sin VLAN"}</td>
+                                <td>{servidor.dominios?.[0]?.nombre || "Sin dominio"}</td>
+                                <td>{servidor.sistemasOperativos?.[0]?.nombre || "Sin S.O."}</td>
+                                <td>{servidor.estatus?.[0]?.nombre || "Sin estatus"}</td>
+                                <td>{servidor.descripcion || "Sin descripción"}</td>
                                 <td>
                                     <button className="ver-link-btn icon-btn" onClick={() => abrirModalLink(servidor)}>
                                         <span className="material-symbols-outlined">visibility</span>
