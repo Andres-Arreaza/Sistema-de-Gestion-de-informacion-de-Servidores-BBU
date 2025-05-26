@@ -45,7 +45,7 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
 
             Swal.fire({
                 icon: "success",
-                title: "Servidor eliminado",
+                title: "Servidor eliminado exisosamente.",
                 showConfirmButton: false,
                 timer: 3000,
             });

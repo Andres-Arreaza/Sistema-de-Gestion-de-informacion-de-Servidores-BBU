@@ -95,7 +95,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
         e.preventDefault();
 
         const requiredFields = [
-            "nombre", "tipo", "ip", "balanceador", "vlan", "descripcion",
+            "nombre", "tipo", "ip", "balanceador", "vlan",
             "link", "servicio_id", "capa_id", "ambiente_id", "dominio_id",
             "sistema_operativo_id", "estatus_id"
         ];
@@ -108,7 +108,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 title: "Campos faltantes",
                 text: `Debes completar: ${missingFields.join(", ")}`,
                 showConfirmButton: false,
-                timer: 3000,
+                timer: 2500,
             });
             return;
         }
@@ -139,7 +139,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
 
             Swal.fire({
                 icon: "success",
-                title: esEdicion ? "Servidor actualizado" : "Servidor guardado",
+                title: esEdicion ? "Servidor actualizado" : "Servidor guardado exitosamente",
                 showConfirmButton: false,
                 timer: 3000,
             });
@@ -163,11 +163,11 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
             <div className="grid-form-row">
                 <div className="form-field">
                     <label>Nombre</label>
-                    <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} required />
+                    <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} />
                 </div>
                 <div className="form-field">
                     <label>Tipo</label>
-                    <select name="tipo" value={formData.tipo} onChange={handleChange} required>
+                    <select name="tipo" value={formData.tipo} onChange={handleChange} >
                         <option value="">Seleccione el Tipo</option>
                         <option value="FISICO">FISICO</option>
                         <option value="VIRTUAL">VIRTUAL</option>
@@ -175,15 +175,15 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 </div>
                 <div className="form-field">
                     <label>IP</label>
-                    <input type="text" name="ip" value={formData.ip} onChange={handleChange} required />
+                    <input type="text" name="ip" value={formData.ip} onChange={handleChange} />
                 </div>
                 <div className="form-field">
                     <label>Balanceador</label>
-                    <input type="text" name="balanceador" value={formData.balanceador} onChange={handleChange} required />
+                    <input type="text" name="balanceador" value={formData.balanceador} onChange={handleChange} />
                 </div>
                 <div className="form-field">
                     <label>VLAN</label>
-                    <input type="text" name="vlan" value={formData.vlan} onChange={handleChange} required />
+                    <input type="text" name="vlan" value={formData.vlan} onChange={handleChange} />
                 </div>
             </div>
 
@@ -191,15 +191,15 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
             <div className="grid-form-row">
                 <div className="form-field">
                     <label>Descripción</label>
-                    <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} required></textarea>
+                    <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} ></textarea>
                 </div>
                 <div className="form-field">
                     <label>Link</label>
-                    <input type="text" name="link" value={formData.link} onChange={handleChange} required />
+                    <input type="text" name="link" value={formData.link} onChange={handleChange} />
                 </div>
                 <div className="form-field">
                     <label>Servicio</label>
-                    <select name="servicio_id" value={formData.servicio_id} onChange={handleChange} required>
+                    <select name="servicio_id" value={formData.servicio_id} onChange={handleChange} >
                         <option value="">Seleccione un Servicio</option>
                         {servicios.map(servicio => (
                             <option key={servicio.id} value={servicio.id}>{servicio.nombre}</option>
@@ -208,7 +208,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 </div>
                 <div className="form-field">
                     <label>Capa</label>
-                    <select name="capa_id" value={formData.capa_id} onChange={handleChange} required>
+                    <select name="capa_id" value={formData.capa_id} onChange={handleChange} >
                         <option value="">Seleccione una Capa</option>
                         {capas.map(capa => (
                             <option key={capa.id} value={capa.id}>{capa.nombre}</option>
@@ -217,7 +217,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 </div>
                 <div className="form-field">
                     <label>Ambiente</label>
-                    <select name="ambiente_id" value={formData.ambiente_id} onChange={handleChange} required>
+                    <select name="ambiente_id" value={formData.ambiente_id} onChange={handleChange} >
                         <option value="">Seleccione un Ambiente</option>
                         {ambientes.map(ambiente => (
                             <option key={ambiente.id} value={ambiente.id}>{ambiente.nombre}</option>
@@ -230,7 +230,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
             <div className="grid-form-row">
                 <div className="form-field">
                     <label>Dominio</label>
-                    <select name="dominio_id" value={formData.dominio_id} onChange={handleChange} required>
+                    <select name="dominio_id" value={formData.dominio_id} onChange={handleChange} >
                         <option value="">Seleccione un Dominio</option>
                         {dominios.map(dominio => (
                             <option key={dominio.id} value={dominio.id}>{dominio.nombre}</option>
@@ -239,7 +239,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 </div>
                 <div className="form-field">
                     <label>Sistema Operativo</label>
-                    <select name="sistema_operativo_id" value={formData.sistema_operativo_id} onChange={handleChange} required>
+                    <select name="sistema_operativo_id" value={formData.sistema_operativo_id} onChange={handleChange} >
                         <option value="">Seleccione un S.O.</option>
                         {sistemasOperativos.map(so => (
                             <option key={so.id} value={so.id}>{so.nombre}</option>
@@ -248,7 +248,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 </div>
                 <div className="form-field">
                     <label>Estatus</label>
-                    <select name="estatus_id" value={formData.estatus_id} onChange={handleChange} required>
+                    <select name="estatus_id" value={formData.estatus_id} onChange={handleChange} >
                         <option value="">Seleccione un Estatus</option>
                         {estatus.map(est => (
                             <option key={est.id} value={est.id}>{est.nombre}</option>
