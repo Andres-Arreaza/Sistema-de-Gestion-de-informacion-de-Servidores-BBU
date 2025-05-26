@@ -14,6 +14,10 @@ const Servidores = () => {
     const [cargando, setCargando] = useState(true);
     const [desvanecerLoading, setDesvanecerLoading] = useState(false);
 
+    // 🔹 Variables para la paginación
+    const [paginaActual, setPaginaActual] = useState(1);
+    const servidoresPorPagina = 10;
+
     // 🔹 Obtener servidores asegurando que solo se muestren los activos
     const fetchServidores = () => {
         setCargando(true);
@@ -86,6 +90,9 @@ const Servidores = () => {
         setModalLinkVisible(true);
     };
 
+    // 🔹 Calcular número de páginas
+    const totalPaginas = Math.ceil(servidores.length / servidoresPorPagina);
+
     return (
         <div className="servidores-container">
             {mensajeExito && <div className="toast-success">{mensajeExito}</div>}
@@ -100,12 +107,15 @@ const Servidores = () => {
             {cargando ? (
                 <Loading desvanecerLoading={desvanecerLoading} />
             ) : (
-                <ServidorTabla
-                    servidores={servidores}
-                    obtenerServidorPorId={obtenerServidorPorId}
-                    eliminarServidor={eliminarServidor}
-                    abrirModalLink={abrirModalLink}
-                />
+                <>
+                    <ServidorTabla
+                        servidores={servidores}
+                        obtenerServidorPorId={obtenerServidorPorId}
+                        eliminarServidor={eliminarServidor}
+                        abrirModalLink={abrirModalLink}
+                    />
+
+                </>
             )}
 
             {modalVisible && (

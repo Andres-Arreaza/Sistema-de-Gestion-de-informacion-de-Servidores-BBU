@@ -257,6 +257,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                     </select>
                 </div>
             </div>
+
             {/* Acciones */}
             <div className="modal-buttons">
                 <button type="submit" className="guardar-servidores-btn">Guardar</button>

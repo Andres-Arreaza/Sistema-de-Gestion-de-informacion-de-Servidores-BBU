@@ -1,11 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-const ServidorTabla = ({ servidores, obtenerServidorPorId, eliminarServidor, abrirModalLink }) => {
+const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink }) => {
+    const [servidores, setServidores] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
     const [servidorAEliminar, setServidorAEliminar] = useState(null);
+    const [paginaActual, setPaginaActual] = useState(1);
+    const servidoresPorPagina = 10;
 
-    // 🔹 Filtra servidores activos antes de renderizar la tabla
-    const servidoresFiltrados = servidores.filter((servidor) => servidor.activo === true);
+    // 🔹 Obtener servidores de la API
+    useEffect(() => {
+        fetch(`${process.env.BACKEND_URL}/api/servidores`)
+            .then((response) => response.json())
+            .then((data) => {
+                const servidoresFiltrados = data.filter((servidor) => servidor.activo === true);
+                setServidores(servidoresFiltrados);
+            })
+            .catch((error) => console.error("Error al obtener servidores:", error));
+    }, []);
+
+    // 🔹 Calcula el número total de páginas
+    const totalPaginas = Math.ceil(servidores.length / servidoresPorPagina);
+
+    // 🔹 Determina los servidores que se mostrarán en la página actual
+    const indiceInicial = (paginaActual - 1) * servidoresPorPagina;
+    const indiceFinal = indiceInicial + servidoresPorPagina;
+    const servidoresPaginados = servidores.slice(indiceInicial, indiceFinal);
 
     return (
         <div>
@@ -29,8 +48,8 @@ const ServidorTabla = ({ servidores, obtenerServidorPorId, eliminarServidor, abr
                     </tr>
                 </thead>
                 <tbody>
-                    {servidoresFiltrados.length > 0 ? (
-                        servidoresFiltrados.map((servidor) => (
+                    {servidoresPaginados.length > 0 ? (
+                        servidoresPaginados.map((servidor) => (
                             <tr key={servidor.id}>
                                 <td>{servidor.nombre}</td>
                                 <td>{servidor.tipo?.name || "N/A"}</td>
@@ -69,6 +88,29 @@ const ServidorTabla = ({ servidores, obtenerServidorPorId, eliminarServidor, abr
                     )}
                 </tbody>
             </table>
+
+            {/* 🔹 Paginación */}
+            {totalPaginas > 1 && (
+                <div className="paginacion-servidores">
+                    <button
+                        onClick={() => setPaginaActual(paginaActual - 1)}
+                        disabled={paginaActual === 1}
+                        className="paginacion-btn"
+                    >
+                        <span className="material-symbols-outlined">arrow_back_ios</span>
+                    </button>
+
+                    <span className="pagina-numero">Página {paginaActual} de {totalPaginas}</span>
+
+                    <button
+                        onClick={() => setPaginaActual(paginaActual + 1)}
+                        disabled={paginaActual === totalPaginas}
+                        className="paginacion-btn"
+                    >
+                        <span className="material-symbols-outlined">arrow_forward_ios</span>
+                    </button>
+                </div>
+            )}
 
             {/* 🔹 Modal de Confirmación para eliminar servidor */}
             {modalVisible && (
