@@ -1,22 +1,34 @@
 import React, { useState, useEffect } from "react";
 
-const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink }) => {
-    const [servidores, setServidores] = useState([]);
+const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink, servidores, setServidores }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [servidorAEliminar, setServidorAEliminar] = useState(null);
     const [paginaActual, setPaginaActual] = useState(1);
     const servidoresPorPagina = 10;
 
-    // 🔹 Obtener servidores desde la API
+    // 🔹 Función para obtener servidores actualizados desde la API
+    const actualizarServidores = async () => {
+        try {
+            const response = await fetch(`${process.env.BACKEND_URL}/api/servidores`);
+            const data = await response.json();
+            const servidoresFiltrados = data.filter((servidor) => servidor.activo === true);
+            setServidores(servidoresFiltrados);  // 🔹 Actualiza la lista de servidores
+        } catch (error) {
+            console.error("Error al obtener servidores:", error);
+        }
+    };
+
+    // 🔹 Ejecutar `actualizarServidores()` cuando se monte el componente
     useEffect(() => {
-        fetch(`${process.env.BACKEND_URL}/api/servidores`)
-            .then((response) => response.json())
-            .then((data) => {
-                const servidoresFiltrados = data.filter((servidor) => servidor.activo === true);
-                setServidores(servidoresFiltrados);
-            })
-            .catch((error) => console.error("Error al obtener servidores:", error));
+        actualizarServidores();
     }, []);
+
+    // 🔹 Llamar `actualizarServidores()` después de eliminar un servidor
+    const handleEliminarServidor = async (servidor) => {
+        await eliminarServidor(servidor);
+        actualizarServidores();  // 🔹 Recarga la tabla tras eliminar
+        setModalVisible(false);
+    };
 
     // 🔹 Calcula el número total de páginas
     const totalPaginas = Math.ceil(servidores.length / servidoresPorPagina);
@@ -54,14 +66,14 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink 
                                 <td>{servidor.nombre}</td>
                                 <td>{servidor.tipo || "N/A"}</td>
                                 <td>{servidor.ip}</td>
-                                <td>{servidor.servicios?.[0]?.nombre || "N/A"}</td>
-                                <td>{servidor.capas?.[0]?.nombre || "N/A"}</td>
-                                <td>{servidor.ambientes?.[0]?.nombre || "N/A"}</td>
+                                <td>{servidor.servicio?.nombre || "N/A"}</td>
+                                <td>{servidor.capa?.nombre || "N/A"}</td>
+                                <td>{servidor.ambiente?.nombre || "N/A"}</td>
                                 <td>{servidor.balanceador}</td>
                                 <td>{servidor.vlan}</td>
-                                <td>{servidor.dominios?.[0]?.nombre || "N/A"}</td>
-                                <td>{servidor.sistemasOperativos?.[0]?.nombre || "N/A"}</td>
-                                <td>{servidor.estatus?.[0]?.nombre || "N/A"}</td>
+                                <td>{servidor.dominio?.nombre || "N/A"}</td>
+                                <td>{servidor.sistema_operativo?.nombre || "N/A"}</td>
+                                <td>{servidor.estatus?.nombre || "N/A"}</td>
                                 <td>{servidor.descripcion}</td>
                                 <td>
                                     <button className="ver-link-btn icon-btn" onClick={() => abrirModalLink(servidor)}>
@@ -99,9 +111,7 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink 
                     >
                         <span className="material-symbols-outlined">arrow_back_ios</span>
                     </button>
-
                     <span className="pagina-numero">Página {paginaActual} de {totalPaginas}</span>
-
                     <button
                         onClick={() => setPaginaActual(paginaActual + 1)}
                         disabled={paginaActual === totalPaginas}
@@ -119,10 +129,7 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink 
                         <h3>¿Seguro que quieres eliminar {servidorAEliminar?.nombre}?</h3>
                         <p>Esta acción no se puede deshacer.</p>
                         <div className="modal-buttons">
-                            <button onClick={() => {
-                                eliminarServidor(servidorAEliminar);
-                                setModalVisible(false);
-                            }} className="confirmar-btn">Sí, eliminar</button>
+                            <button onClick={() => handleEliminarServidor(servidorAEliminar)} className="confirmar-btn">Sí, eliminar</button>
                             <button onClick={() => setModalVisible(false)} className="cancelar-btn">Cancelar</button>
                         </div>
                     </div>

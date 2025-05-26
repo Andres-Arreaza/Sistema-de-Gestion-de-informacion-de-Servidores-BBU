@@ -127,10 +127,10 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 throw new Error(`Error en el servidor: ${response.status} ${response.statusText}`);
             }
 
-            const servidorActualizado = await response.json();
-            const responseServidores = await fetch("http://localhost:3001/api/servidores");
-            const servidoresActualizados = await responseServidores.json();
-            setServidores(servidoresActualizados);
+            const servidorNuevo = await response.json();
+
+            // 🔹 Actualiza la tabla inmediatamente agregando el nuevo servidor
+            setServidores(prevServidores => [...prevServidores, servidorNuevo]);
 
             setModalVisible(false);
             if (onSuccess) {
