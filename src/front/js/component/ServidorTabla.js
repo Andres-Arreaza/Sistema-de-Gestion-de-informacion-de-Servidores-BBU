@@ -7,7 +7,7 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink 
     const [paginaActual, setPaginaActual] = useState(1);
     const servidoresPorPagina = 10;
 
-    // 🔹 Obtener servidores de la API
+    // 🔹 Obtener servidores desde la API
     useEffect(() => {
         fetch(`${process.env.BACKEND_URL}/api/servidores`)
             .then((response) => response.json())
@@ -52,16 +52,16 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink 
                         servidoresPaginados.map((servidor) => (
                             <tr key={servidor.id}>
                                 <td>{servidor.nombre}</td>
-                                <td>{servidor.tipo?.name || "N/A"}</td>
+                                <td>{servidor.tipo || "N/A"}</td>
                                 <td>{servidor.ip}</td>
-                                <td>{servidor.servicio?.nombre || "N/A"}</td>
-                                <td>{servidor.capa?.nombre || "N/A"}</td>
-                                <td>{servidor.ambiente?.nombre || "N/A"}</td>
+                                <td>{servidor.servicios?.[0]?.nombre || "N/A"}</td>
+                                <td>{servidor.capas?.[0]?.nombre || "N/A"}</td>
+                                <td>{servidor.ambientes?.[0]?.nombre || "N/A"}</td>
                                 <td>{servidor.balanceador}</td>
                                 <td>{servidor.vlan}</td>
-                                <td>{servidor.dominio?.nombre || "N/A"}</td>
-                                <td>{servidor.sistema_operativo?.nombre || "N/A"}</td>
-                                <td>{servidor.estatus?.nombre || "N/A"}</td>
+                                <td>{servidor.dominios?.[0]?.nombre || "N/A"}</td>
+                                <td>{servidor.sistemasOperativos?.[0]?.nombre || "N/A"}</td>
+                                <td>{servidor.estatus?.[0]?.nombre || "N/A"}</td>
                                 <td>{servidor.descripcion}</td>
                                 <td>
                                     <button className="ver-link-btn icon-btn" onClick={() => abrirModalLink(servidor)}>
