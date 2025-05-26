@@ -22,7 +22,8 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
         ambiente_id: "",
         dominio_id: "",
         sistema_operativo_id: "",
-        estatus_id: "1" // 🔹 Valor por defecto para evitar errores
+        estatus_id: "1", // 🔹 Valor por defecto
+        activo: true // 🔹 Valor por defecto asegurando que nunca sea nulo
     });
 
     useEffect(() => {
@@ -75,12 +76,13 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 vlan: servidorInicial.vlan || "",
                 descripcion: servidorInicial.descripcion || "",
                 link: servidorInicial.link || "",
-                servicio_id: servidorInicial.servicio?.id || "",
-                capa_id: servidorInicial.capa?.id || "",
-                ambiente_id: servidorInicial.ambiente?.id || "",
-                dominio_id: servidorInicial.dominio?.id || "",
-                sistema_operativo_id: servidorInicial.sistema_operativo?.id || "",
-                estatus_id: servidorInicial.estatus?.id || "1" // 🔹 Valor por defecto si falta
+                servicio_id: servidorInicial.servicios?.[0]?.id || "",
+                capa_id: servidorInicial.capas?.[0]?.id || "",
+                ambiente_id: servidorInicial.ambientes?.[0]?.id || "",
+                dominio_id: servidorInicial.dominios?.[0]?.id || "",
+                sistema_operativo_id: servidorInicial.sistemasOperativos?.[0]?.id || "",
+                estatus_id: servidorInicial.estatus?.[0]?.id || "1",
+                activo: servidorInicial.activo !== undefined ? servidorInicial.activo : true // 🔹 Asegura un valor válido
             });
         }
     }, [servidorInicial, esEdicion]);
@@ -108,12 +110,15 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 title: "Campos faltantes",
                 text: `Debes completar: ${missingFields.join(", ")}`,
                 showConfirmButton: false,
-                timer: 2500,
+                timer: 3000,
             });
             return;
         }
 
-        const payload = { ...formData };
+        const payload = {
+            ...formData,
+            activo: formData.activo !== undefined ? formData.activo : true  // 🔹 Asegura que `activo` tenga un valor válido
+        };
 
         try {
             const response = await fetch(
@@ -131,18 +136,28 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 throw new Error(`Error en el servidor: ${response.status} ${response.statusText}`);
             }
 
-            const servidorNuevo = await response.json();
+            const servidorActualizado = await response.json();
 
-            setServidores(prevServidores => [...prevServidores, servidorNuevo]);
+            // 🔹 Refresca la lista después de editar
+            setServidores(prevServidores => {
+                if (esEdicion) {
+                    return prevServidores.map(s =>
+                        s.id === servidorActualizado.id ? servidorActualizado : s
+                    );
+                } else {
+                    return [...prevServidores, servidorActualizado];
+                }
+            });
 
             setModalVisible(false);
 
             Swal.fire({
                 icon: "success",
-                title: esEdicion ? "Servidor actualizado" : "Servidor guardado exitosamente",
+                title: esEdicion ? "Servidor actualizado" : "Servidor guardado",
                 showConfirmButton: false,
                 timer: 3000,
             });
+
         } catch (error) {
             setError(error.message);
 
@@ -253,6 +268,13 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                         {estatus.map(est => (
                             <option key={est.id} value={est.id}>{est.nombre}</option>
                         ))}
+                    </select>
+                </div>
+                <div className="form-field">
+                    <label>Activo</label>
+                    <select name="activo" value={formData.activo} onChange={handleChange} >
+                        <option value={true}>Activo</option>
+                        <option value={false}>Inactivo</option>
                     </select>
                 </div>
             </div>
