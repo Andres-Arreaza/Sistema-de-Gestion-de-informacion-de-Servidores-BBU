@@ -47,7 +47,7 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
                 icon: "success",
                 title: "Servidor eliminado exitosamente.",
                 showConfirmButton: false,
-                timer: 3000,
+                timer: 2500,
             });
         } catch (error) {
             Swal.fire({
@@ -55,7 +55,7 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
                 title: "Error al eliminar",
                 text: `Hubo un problema: ${error.message}`,
                 showConfirmButton: false,
-                timer: 3000,
+                timer: 2500,
             });
         }
     };
