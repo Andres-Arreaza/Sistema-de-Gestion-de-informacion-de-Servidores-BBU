@@ -1,20 +1,26 @@
-/* Reseteo básico */
-body, html {
-    margin: 0;
-    padding: 0;
-    font-family: "Lato", sans-serif;
-    background-color: #f8f9fa;
+html,
+body {
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Para dispositivos móviles */
-@media (max-width: 768px) {
-    .home-container {
-        padding-top: var(--paddings-top-mobile);
-        padding-bottom: var(--paddings-bottom-mobile);
-        margin-top: var(--margins-top-mobile);
-        margin-bottom: var(--margins-bottom-mobile);
-    }
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* 🔹 La página siempre tendrá la altura completa */
 }
 
+.main-content {
+  flex: 1; /* 🔹 Empuja el footer hacia abajo */
+}
 
-
+.footer {
+  background-color: #ffffff;
+  border-top: 2px solid #007953;
+  padding: 20px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+}

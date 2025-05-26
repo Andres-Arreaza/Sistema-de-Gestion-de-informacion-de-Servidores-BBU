@@ -10,8 +10,6 @@ import ServidorTabla from "./component/ServidorTabla";
 import FormularioServidor from "./component/FormularioServidor";
 import Loading from "./component/Loading";
 
-
-
 import { Home } from "./pages/home";
 import Servicio from "./pages/Servicio";
 import Capa from "./pages/Capa";
@@ -27,25 +25,27 @@ const Layout = () => {
     if (!process.env.BACKEND_URL || process.env.BACKEND_URL === "") return <BackendURL />;
 
     return (
-        <div>
+        <div className="layout-container"> {/* 🔹 Contenedor principal */}
             <BrowserRouter basename={basename}>
                 <ScrollToTop>
                     <Navbar />
-                    <Routes>
-                        <Route element={<Home />} path="/" />
-                        <Route element={<Servicio />} path="/servicio" />
-                        <Route element={<Capa />} path="/capa" />
-                        <Route element={<Ambiente />} path="/ambiente" />
-                        <Route element={<Dominio />} path="/dominio" />
-                        <Route element={<SistemaOperativo />} path="/sistemaOperativo" />
-                        <Route element={<Estatus />} path="/estatus" />
-                        <Route element={<Servidor />} path="/servidor" />
-                        <Route element={<ServidorTabla />} path="/servidorTabla" />
-                        <Route element={<FormularioServidor />} path="/formularioServidor" />
-                        <Route element={<Loading />} path="/loading" />
-                        <Route element={<h1>Not found!</h1>} path="*" />
-                    </Routes>
-                    <Footer />
+                    <div className="main-content"> {/* 🔹 Contenedor que ocupa el espacio disponible */}
+                        <Routes>
+                            <Route element={<Home />} path="/" />
+                            <Route element={<Servicio />} path="/servicio" />
+                            <Route element={<Capa />} path="/capa" />
+                            <Route element={<Ambiente />} path="/ambiente" />
+                            <Route element={<Dominio />} path="/dominio" />
+                            <Route element={<SistemaOperativo />} path="/sistemaOperativo" />
+                            <Route element={<Estatus />} path="/estatus" />
+                            <Route element={<Servidor />} path="/servidor" />
+                            <Route element={<ServidorTabla />} path="/servidorTabla" />
+                            <Route element={<FormularioServidor />} path="/formularioServidor" />
+                            <Route element={<Loading />} path="/loading" />
+                            <Route element={<h1>Not found!</h1>} path="*" />
+                        </Routes>
+                    </div>
+                    <Footer /> {/* 🔹 Siempre estará abajo */}
                 </ScrollToTop>
             </BrowserRouter>
         </div>
