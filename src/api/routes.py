@@ -242,37 +242,53 @@ def create_servidor():
     """Crea un nuevo servidor con validación de datos."""
     try:
         data = request.get_json()
-        required_fields = ["nombre", "tipo", "ip", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id"]
-        missing_fields = [field for field in required_fields if field not in data or data[field] in [None, ""]]
+        print("DATOS RECIBIDOS:", data)  # 🔹 Verifica qué datos recibe el backend
+
+        # 🔹 Validación de datos obligatorios
+        required_fields = [
+            "nombre", "tipo", "ip", "servicio_id", "capa_id", "ambiente_id", 
+            "dominio_id", "sistema_operativo_id", "estatus_id"
+        ]
+        missing_fields = [field for field in required_fields if field not in data or not data[field]]
 
         if missing_fields:
             return jsonify({"error": f"Faltan datos obligatorios: {', '.join(missing_fields)}"}), 400
 
+        # 🔹 Asegura que `estatus_id` nunca sea `None`
+        data["estatus_id"] = data.get("estatus_id", 1)  # 🔹 Valor por defecto si falta
+
+        # 🔹 Crear nuevo servidor
         nuevo_servidor = Servidor(
             nombre=data["nombre"],
             tipo=data["tipo"],
             ip=data["ip"],
             balanceador=data.get("balanceador", ""),
             vlan=data.get("vlan", ""),
-            link=data.get("link"),
-            descripcion=data.get("descripcion"),
+            link=data.get("link", ""),
+            descripcion=data.get("descripcion", ""),
             servicio_id=data["servicio_id"],
             capa_id=data["capa_id"],
             ambiente_id=data["ambiente_id"],
             dominio_id=data["dominio_id"],
             sistema_operativo_id=data["sistema_operativo_id"],
+            estatus_id=data["estatus_id"],
             activo=True,  # 🔹 Se crea como activo (`True`)
             fecha_creacion=datetime.utcnow(),
             fecha_modificacion=datetime.utcnow()
         )
 
+        # 🔹 Guardar en la base de datos
         db.session.add(nuevo_servidor)
         db.session.commit()
 
-        return jsonify(nuevo_servidor.serialize()), 201
+        response = jsonify(nuevo_servidor.serialize())
+        response.headers.add("Access-Control-Allow-Origin", "*")  # 🔹 Evita bloqueo por CORS
+        return response, 201
+
     except Exception as e:
-        print("ERROR EN CREACIÓN:", e)
-        return jsonify({"error": str(e)}), 500
+        db.session.rollback()  # 🔹 Evita datos corruptos si ocurre un error
+        print("ERROR AL GUARDAR SERVIDOR:", e)  # 🔹 Mensaje detallado en consola
+        return jsonify({"error": f"Error interno: {str(e)}"}), 500
 
 @api.route("/servidores/<int:record_id>", methods=["PUT"])
 def update_servidor(record_id):

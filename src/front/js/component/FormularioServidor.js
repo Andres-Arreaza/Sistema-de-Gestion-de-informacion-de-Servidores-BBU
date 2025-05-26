@@ -21,7 +21,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
         ambiente_id: "",
         dominio_id: "",
         sistema_operativo_id: "",
-        estatus_id: ""
+        estatus_id: "1" // 🔹 Valor por defecto para evitar errores
     });
 
     useEffect(() => {
@@ -79,7 +79,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 ambiente_id: servidorInicial.ambiente?.id || "",
                 dominio_id: servidorInicial.dominio?.id || "",
                 sistema_operativo_id: servidorInicial.sistema_operativo?.id || "",
-                estatus_id: servidorInicial.estatus?.id || ""
+                estatus_id: servidorInicial.estatus?.id || "1" // 🔹 Valor por defecto si falta
             });
         }
     }, [servidorInicial, esEdicion]);
@@ -107,21 +107,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
             return;
         }
 
-        const payload = {
-            nombre: formData.nombre,
-            tipo: formData.tipo,
-            ip: formData.ip,
-            balanceador: formData.balanceador,
-            vlan: formData.vlan,
-            descripcion: formData.descripcion,
-            link: formData.link,
-            servicio_id: formData.servicio_id,
-            capa_id: formData.capa_id,
-            ambiente_id: formData.ambiente_id,
-            dominio_id: formData.dominio_id,
-            sistema_operativo_id: formData.sistema_operativo_id,
-            estatus_id: formData.estatus_id
-        };
+        const payload = { ...formData };
 
         console.log("Datos enviados al backend:", payload);
 
@@ -156,6 +142,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
             setError(error.message);
         }
     };
+
     return (
         <form onSubmit={handleFormSubmit} className="grid-form">
             {error && <div className="error-message">{error}</div>}
