@@ -4,6 +4,8 @@ import ReactDOM from "react-dom";
 import "../styles/index.css";
 import "../styles/navbar.css";
 import "../styles/home.css";
+import "../styles/HomeFiltro.css";
+import "../styles/HomeTabla.css";
 import "../styles/Servicio.css";
 import "../styles/Capa.css";
 import "../styles/Ambiente.css";
