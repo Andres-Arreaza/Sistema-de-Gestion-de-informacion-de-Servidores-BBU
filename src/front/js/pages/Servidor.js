@@ -120,8 +120,8 @@ const Servidores = () => {
 
             {modalVisible && (
                 <div className="modal-overlay" onClick={() => setModalVisible(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h2>Crear Nuevo Servidor</h2>
+                    <div className="modal-content-servidor" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="modal-title">Crear Nuevo Servidor</h2>
                         <FormularioServidor
                             setServidores={setServidores}
                             setModalVisible={setModalVisible}
@@ -134,8 +134,8 @@ const Servidores = () => {
 
             {modalEditarVisible && servidorActual && (
                 <div className="modal-overlay" onClick={() => setModalEditarVisible(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h2>Editar Servidor</h2>
+                    <div className="modal-content-servidor" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="modal-title">Editar Servidor</h2>
                         <FormularioServidor
                             servidorInicial={servidorActual}
                             setServidores={setServidores}
@@ -149,8 +149,8 @@ const Servidores = () => {
 
             {modalLinkVisible && servidorLink && (
                 <div className="modal-overlay" onClick={() => setModalLinkVisible(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h2>Información del Enlace</h2>
+                    <div className="modal-content-link" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="modal-title">Información del Enlace</h2>
                         <p><strong>Servidor:</strong> {servidorLink.nombre}</p>
                         <p><strong>Descripción:</strong> {servidorLink.descripcion}</p>
                         <p><strong>Enlace:</strong> <a href={servidorLink.link} target="_blank" rel="noopener noreferrer">{servidorLink.link}</a></p>

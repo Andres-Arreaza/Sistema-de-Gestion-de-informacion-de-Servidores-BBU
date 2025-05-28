@@ -167,11 +167,12 @@ body {
 
 /* Estilos del icono Home */
 .home-icon {
-  font-size: 24px;
   display: flex;
   align-items: center;
+  font-size: 50px;
 }
 
 .material-symbols-outlined {
   font-variation-settings: "FILL" 0, "WGT" 400, "GRAD" 0, "OPSZ" 24;
+  font-size: 30px;
 }

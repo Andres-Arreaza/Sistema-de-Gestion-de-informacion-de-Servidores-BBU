@@ -1,4 +1,102 @@
-/* Puedes ajustar los estilos a tu gusto */
+/* 🔹 Botón "Guardar" */
+.guardar-servidores-btn {
+  background-color: #007953;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.guardar-servidores-btn:hover {
+  background-color: #00563b;
+}
+
+/* 🔹 Botón "Cerrar" */
+.cerrar-servidores-btn {
+  background-color: #dc3545;
+  color: #ffff;
+  padding: 10px 20px;
+  margin-left: 30px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.cerrar-servidores-btn:hover {
+  background-color: #b52b3a;
+}
+
+/* 🔹 Formulario organizado en filas */
+.grid-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 🔹 Filas alineadas horizontalmente */
+.grid-form-row {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  gap: 20px;
+}
+
+/* 🔹 Campos del formulario */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  width: 18%;
+}
+
+/* 🔹 Estilo para los labels */
+.form-field label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  text-align: left;
+}
+
+/* 🔹 Estilo para los inputs, select y textarea */
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  padding: 15px; /* 🔹 Ajuste en el padding */
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  transition: all 0.3s ease-in-out;
+}
+
+/* 🔹 Asegurar que el campo Descripción tenga el mismo padding */
+.form-field textarea {
+  height: 40px;
+  resize: none;
+  padding: 25px; /* 🔹 Ahora igualado con los demás */
+}
+
+/* 🔹 Efecto al hacer foco en inputs */
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: #007953 !important;
+  box-shadow: 0 0 5px rgba(0, 121, 83, 0.5);
+}
+
+/* 🔹 Botones del formulario */
+.modal-buttons {
+  display: flex;
+  justify-content: center; /* 🔹 Centra los botones */
+  gap: 10px; /* 🔹 Reduce la separación entre ellos */
+  width: 100%;
+  margin-top: 20px; /* 🔹 Ajuste en la separación superior */
+  margin-left: 20px; /* 🔹 Ajuste en la separación superior */
+}
+
 .toast-success {
   position: fixed;
   top: 30px;

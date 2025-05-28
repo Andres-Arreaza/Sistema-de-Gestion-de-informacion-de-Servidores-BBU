@@ -71,6 +71,10 @@
   animation: fadeInRow 0.6s ease forwards;
 }
 
+.eliminar-btn {
+  margin-left: 8px;
+}
+
 @keyframes fadeInRow {
   from {
     opacity: 0;
