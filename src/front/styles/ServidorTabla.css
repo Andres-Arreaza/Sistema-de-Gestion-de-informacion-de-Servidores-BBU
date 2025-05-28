@@ -185,3 +185,7 @@
   border-color: #005a9e;
   box-shadow: 0 0 5px rgba(0, 90, 158, 0.5);
 }
+
+.swal-title-green {
+  color: #007953 !important; /* 🔹 Solo el título será verde */
+}

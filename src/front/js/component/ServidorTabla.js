@@ -10,7 +10,6 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
         setPaginaActual(1);
     };
 
-    // 🔹 Función para obtener servidores activos desde la API
     const actualizarServidores = async () => {
         try {
             const response = await fetch(`${process.env.BACKEND_URL}/api/servidores`);
@@ -26,21 +25,24 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
         actualizarServidores();
     }, []);
 
-    // 🔹 Eliminación con confirmación antes del borrado lógico
     const handleEliminarConfirmacion = (servidor) => {
         Swal.fire({
-            title: `¿Seguro que desea desactivar servidor ${servidor.nombre}?`,
+            title: `¿Seguro que desea desactivar el servidor ${servidor.nombre}?`,
             text: "El servidor será marcado como inactivo, pero no eliminado definitivamente.",
             icon: "warning",
             showCancelButton: true,
             confirmButtonColor: "#d33",
-            cancelButtonColor: "#333",
-            confirmButtonText: "Sí, desactivar",
-            cancelButtonText: "Cancelar"
+            cancelButtonColor: "#3349",
+            confirmButtonText: "Desactivar",
+            cancelButtonText: "Cancelar",
+            width: "50%",
+            customClass: {
+                title: "swal-title-green" // 🔹 Solo afecta el título
+            }
         }).then(async (result) => {
             if (result.isConfirmed) {
                 await handleBorradoLogico(servidor.id);
-                actualizarServidores(); // 🔹 Refresca la tabla después de desactivar el servidor
+                actualizarServidores();
             }
         });
     };
@@ -57,11 +59,14 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
                     text: "El servidor ha sido marcado como inactivo.",
                     icon: "success",
                     timer: 2000,
-                    showConfirmButton: false
+                    showConfirmButton: false,
+                    width: "50%",
+                    customClass: {
+                        title: "swal-title-green"
+                    }
                 });
 
                 actualizarServidores();
-
             } else {
                 Swal.fire("Error", "No se pudo desactivar el servidor.", "error");
             }
@@ -83,7 +88,7 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
                 <select onChange={handleCantidadCambio} value={servidoresPorPagina}>
                     <option value="20">20</option>
                     <option value="30">30</option>
-                    <option value="100">50</option>
+                    <option value="50">50</option>
                     <option value="100">100</option>
                     <option value="150">150</option>
                 </select>

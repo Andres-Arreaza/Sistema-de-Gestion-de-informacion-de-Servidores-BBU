@@ -153,7 +153,11 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 icon: "success",
                 title: esEdicion ? "Servidor actualizado exitosamente" : "Servidor guardado exitosamente",
                 showConfirmButton: false,
-                timer: 2500,
+                width: "50%",
+                timer: 2000,
+                padding: "50px",
+                background: "#fffffg",
+                color: "#009868"
             });
 
         } catch (error) {

@@ -113,13 +113,13 @@
   margin: auto;
   width: 20%;
   height: 2.5px;
-  background-color: #ffffff89;
+  background-color: #ffffff;
   margin-top: 20px;
   animation: expandLine2 1s ease-out;
 }
 
 .modal-title {
-  color: #006243 !important;
+  color: #00794b !important;
 }
 
 /* 🔹 Modal ampliado */
