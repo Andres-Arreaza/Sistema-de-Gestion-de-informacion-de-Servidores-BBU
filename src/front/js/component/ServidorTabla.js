@@ -84,6 +84,8 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
     return (
         <div>
             <div className="cantidad-servidores">
+                {/* 🔹 Nuevo contador de servidores creados */}
+                <span className="servidores-contador">Servidores creados: {servidores.length}</span>
                 <label>Servidores por página:</label>
                 <select onChange={handleCantidadCambio} value={servidoresPorPagina}>
                     <option value="20">20</option>
@@ -92,6 +94,7 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
                     <option value="100">100</option>
                     <option value="150">150</option>
                 </select>
+
             </div>
 
             <table className="tabla-servidores">

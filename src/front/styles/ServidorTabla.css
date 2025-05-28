@@ -142,48 +142,62 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  flex-wrap: wrap; /* 📌 Evita desbordamientos en pantallas pequeñas */
+  gap: 15px;
   margin: 20px auto;
   text-align: center;
-  animation: fadeInSelect 1s ease-in-out;
+  animation: fadeInSelect 0.8s ease-in-out;
+}
+
+/* 🔹 Contador de servidores */
+.servidores-contador {
+  font-size: 16px;
+  font-weight: bold;
+  margin-left: 15px;
+  display: inline-block;
+  margin-right: 100px;
+  color: #474747 !important;
 }
 
 /* 🔹 Animación de entrada */
 @keyframes fadeInSelect {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: translateY(-5px);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0);
   }
 }
 
+/* 🔹 Estilizar el label */
 .cantidad-servidores label {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: bold;
   color: #333;
 }
 
+/* 🔹 Estilizar el selector */
 .cantidad-servidores select {
-  padding: 6px 12px;
+  padding: 7px 14px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid #bbb;
+  border-radius: 5px;
   background-color: #fff;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
 }
 
+/* 🔹 Efectos hover y focus */
 .cantidad-servidores select:hover {
-  border-color: #0078d4;
+  border-color: #00897b;
 }
 
 .cantidad-servidores select:focus {
   outline: none;
-  border-color: #005a9e;
-  box-shadow: 0 0 5px rgba(0, 90, 158, 0.5);
+  border-color: #00695c;
+  box-shadow: 0 0 5px rgba(0, 105, 92, 0.4);
 }
 
 .swal-title-green {
