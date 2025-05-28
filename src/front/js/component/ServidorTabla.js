@@ -3,7 +3,7 @@ import Swal from "sweetalert2";
 
 const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setServidores }) => {
     const [paginaActual, setPaginaActual] = useState(1);
-    const [servidoresPorPagina, setServidoresPorPagina] = useState(10);
+    const [servidoresPorPagina, setServidoresPorPagina] = useState(20);
 
     const handleCantidadCambio = (e) => {
         setServidoresPorPagina(Number(e.target.value));
