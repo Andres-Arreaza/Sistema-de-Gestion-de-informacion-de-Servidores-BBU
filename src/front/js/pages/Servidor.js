@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import FormularioServidor from "../component/FormularioServidor";
+import ServidorFormulario from "../component/ServidorFormulario";
 import ServidorTabla from "../component/ServidorTabla";
 import Loading from "../component/Loading";
 
@@ -122,7 +122,7 @@ const Servidores = () => {
                 <div className="modal-overlay" onClick={() => setModalVisible(false)}>
                     <div className="modal-content-servidor" onClick={(e) => e.stopPropagation()}>
                         <h2 className="modal-title">Crear Nuevo Servidor</h2>
-                        <FormularioServidor
+                        <ServidorFormulario
                             setServidores={setServidores}
                             setModalVisible={setModalVisible}
                             onSuccess={setMensajeExito}
@@ -136,7 +136,7 @@ const Servidores = () => {
                 <div className="modal-overlay" onClick={() => setModalEditarVisible(false)}>
                     <div className="modal-content-servidor" onClick={(e) => e.stopPropagation()}>
                         <h2 className="modal-title">Editar Servidor</h2>
-                        <FormularioServidor
+                        <ServidorFormulario
                             servidorInicial={servidorActual}
                             setServidores={setServidores}
                             setModalVisible={setModalEditarVisible}

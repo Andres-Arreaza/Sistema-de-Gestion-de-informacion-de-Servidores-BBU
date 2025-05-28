@@ -7,7 +7,7 @@ import injectContext from "./store/appContext";
 import { Navbar } from "./component/navbar";
 import { Footer } from "./component/footer";
 import ServidorTabla from "./component/ServidorTabla";
-import FormularioServidor from "./component/FormularioServidor";
+import ServidorFormulario from "./component/ServidorFormulario";
 import Loading from "./component/Loading";
 
 import { Home } from "./pages/home";
@@ -40,7 +40,7 @@ const Layout = () => {
                             <Route element={<Estatus />} path="/estatus" />
                             <Route element={<Servidor />} path="/servidor" />
                             <Route element={<ServidorTabla />} path="/servidorTabla" />
-                            <Route element={<FormularioServidor />} path="/formularioServidor" />
+                            <Route element={<ServidorFormulario />} path="/servidorFormulario" />
                             <Route element={<Loading />} path="/loading" />
                             <Route element={<h1>Not found!</h1>} path="*" />
                         </Routes>
