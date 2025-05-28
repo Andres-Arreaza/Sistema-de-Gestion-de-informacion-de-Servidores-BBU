@@ -44,7 +44,6 @@ const Servidores = () => {
         fetchServidores();
     }, []);
 
-    // 🔹 Eliminar un servidor con animación orgánica sin recargar la tabla
     const eliminarServidor = (servidor) => {
         fetch(`${process.env.BACKEND_URL}/api/servidores/${servidor.id}`, {
             method: "DELETE",
@@ -57,19 +56,19 @@ const Servidores = () => {
                 return response.json();
             })
             .then(() => {
-                setServidores((prevServidores) =>
-                    prevServidores.map((s) =>
-                        s.id === servidor.id ? { ...s, activo: false } : s
-                    )
-                );
-
-                setTimeout(() => {
-                    setServidores((prevServidores) =>
-                        prevServidores.filter((s) => s.activo !== false)
-                    );
-                }, 500);
+                Swal.fire({
+                    title: "Desactivado",
+                    text: "El servidor ha sido marcado como inactivo.",
+                    icon: "success",
+                    timer: 2000,
+                    showConfirmButton: false,
+                    width: "50%",
+                    customClass: { title: "swal-title-green" }
+                }).then(() => {
+                    fetchServidores(); // 🔹 Ahora recarga la tabla después de la alerta
+                });
             })
-            .catch((error) => console.error("Error al eliminar el servidor:", error));
+            .catch((error) => console.error("❌ Error al eliminar el servidor:", error));
     };
 
     // 🔹 Obtener datos completos de un servidor para edición
@@ -110,6 +109,7 @@ const Servidores = () => {
                 <>
                     <ServidorTabla
                         servidores={servidores}
+                        setServidores={setServidores} // 🔹 Se pasa correctamente para ser usado en ServidorTabla.js
                         obtenerServidorPorId={obtenerServidorPorId}
                         eliminarServidor={eliminarServidor}
                         abrirModalLink={abrirModalLink}
