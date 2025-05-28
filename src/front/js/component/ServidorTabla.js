@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 
-const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink, servidores, setServidores }) => {
+const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setServidores }) => {
     const [paginaActual, setPaginaActual] = useState(1);
-    const [servidoresPorPagina, setServidoresPorPagina] = useState(10); // 🔹 Por defecto, 10 servidores
+    const [servidoresPorPagina, setServidoresPorPagina] = useState(10);
 
     const handleCantidadCambio = (e) => {
         setServidoresPorPagina(Number(e.target.value));
-        setPaginaActual(1); // 🔹 Reseteamos a la primera página
+        setPaginaActual(1);
     };
 
-    // 🔹 Función para obtener servidores actualizados desde la API
+    // 🔹 Función para obtener servidores activos desde la API
     const actualizarServidores = async () => {
         try {
             const response = await fetch(`${process.env.BACKEND_URL}/api/servidores`);
             const data = await response.json();
             const servidoresFiltrados = data.filter((servidor) => servidor.activo === true);
-            setServidores(servidoresFiltrados);  // 🔹 Actualiza la lista de servidores
+            setServidores(servidoresFiltrados);
         } catch (error) {
             console.error("Error al obtener servidores:", error);
         }
@@ -26,23 +26,66 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
         actualizarServidores();
     }, []);
 
-    // 🔹 Calcula el número total de páginas
-    const totalPaginas = Math.ceil(servidores.length / servidoresPorPagina);
+    // 🔹 Eliminación con confirmación antes del borrado lógico
+    const handleEliminarConfirmacion = (servidor) => {
+        Swal.fire({
+            title: `¿Seguro que desea desactivar servidor ${servidor.nombre}?`,
+            text: "El servidor será marcado como inactivo, pero no eliminado definitivamente.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#333",
+            confirmButtonText: "Sí, desactivar",
+            cancelButtonText: "Cancelar"
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                await handleBorradoLogico(servidor.id);
+                actualizarServidores(); // 🔹 Refresca la tabla después de desactivar el servidor
+            }
+        });
+    };
 
-    // 🔹 Determina los servidores que se mostrarán en la página actual
+    const handleBorradoLogico = async (id) => {
+        try {
+            const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/${id}`, {
+                method: "DELETE"
+            });
+
+            if (response.ok) {
+                Swal.fire({
+                    title: "Desactivado",
+                    text: "El servidor ha sido marcado como inactivo.",
+                    icon: "success",
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                actualizarServidores();
+
+            } else {
+                Swal.fire("Error", "No se pudo desactivar el servidor.", "error");
+            }
+        } catch (error) {
+            console.error("Error al actualizar el servidor:", error);
+            Swal.fire("Error", "No se pudo conectar con el servidor.", "error");
+        }
+    };
+
+    const totalPaginas = Math.ceil(servidores.length / servidoresPorPagina);
     const indiceInicial = (paginaActual - 1) * servidoresPorPagina;
     const indiceFinal = indiceInicial + servidoresPorPagina;
     const servidoresPaginados = servidores.slice(indiceInicial, indiceFinal);
+
     return (
         <div>
-            {/* 🔹 Selector de cantidad de servidores por página */}
             <div className="cantidad-servidores">
                 <label>Servidores por página:</label>
                 <select onChange={handleCantidadCambio} value={servidoresPorPagina}>
-                    <option value="5">5</option>
-                    <option value="10">10</option>
                     <option value="20">20</option>
-                    <option value="50">50</option>
+                    <option value="30">30</option>
+                    <option value="100">50</option>
+                    <option value="100">100</option>
+                    <option value="150">150</option>
                 </select>
             </div>
 
@@ -103,23 +146,14 @@ const ServidorTabla = ({ obtenerServidorPorId, eliminarServidor, abrirModalLink,
                     )}
                 </tbody>
             </table>
+
             {totalPaginas > 1 && (
                 <div className="paginacion-servidores">
-                    <button
-                        onClick={() => setPaginaActual(paginaActual - 1)}
-                        disabled={paginaActual === 1}
-                        className="paginacion-btn"
-                    >
+                    <button onClick={() => setPaginaActual(paginaActual - 1)} disabled={paginaActual === 1} className="paginacion-btn">
                         <span className="material-symbols-outlined">arrow_back_ios</span>
                     </button>
-                    <span className="pagina-numero">
-                        Página {paginaActual} de {totalPaginas}
-                    </span>
-                    <button
-                        onClick={() => setPaginaActual(paginaActual + 1)}
-                        disabled={paginaActual === totalPaginas}
-                        className="paginacion-btn"
-                    >
+                    <span className="pagina-numero">Página {paginaActual} de {totalPaginas}</span>
+                    <button onClick={() => setPaginaActual(paginaActual + 1)} disabled={paginaActual === totalPaginas} className="paginacion-btn">
                         <span className="material-symbols-outlined">arrow_forward_ios</span>
                     </button>
                 </div>

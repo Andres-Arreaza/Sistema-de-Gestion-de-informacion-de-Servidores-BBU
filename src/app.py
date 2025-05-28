@@ -64,91 +64,91 @@ def serve_any_other_file(path):
     response.cache_control.max_age = 0  # Evita la caché en memoria
     return response
 
-# 🔹 Ruta para obtener sistemas operativos
-@app.route('/api/sistemas_operativos', methods=['GET'])
-def get_sistemas_operativos():
-    try:
-        sistemas = SistemaOperativo.query.all()
-        response = jsonify([sistema.serialize() for sistema in sistemas])
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response, 200
-    except Exception as e:
-        return jsonify({"error": f"Error obteniendo sistemas operativos: {str(e)}"}), 500
+# # 🔹 Ruta para obtener sistemas operativos
+# @app.route('/api/sistemas_operativos', methods=['GET'])
+# def get_sistemas_operativos():
+#     try:
+#         sistemas = SistemaOperativo.query.all()
+#         response = jsonify([sistema.serialize() for sistema in sistemas])
+#         response.headers.add("Access-Control-Allow-Origin", "*")
+#         return response, 200
+#     except Exception as e:
+#         return jsonify({"error": f"Error obteniendo sistemas operativos: {str(e)}"}), 500
 
-# 🔹 Ruta para obtener todos los servidores
-@app.route('/api/servidores', methods=['GET'])
-def get_servidores():
-    try:
-        servidores = Servidor.query.all()
-        response = jsonify([servidor.serialize() for servidor in servidores])
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response, 200
-    except Exception as e:
-        return jsonify({"error": f"Error obteniendo servidores: {str(e)}"}), 500
+# # 🔹 Ruta para obtener todos los servidores
+# @app.route('/api/servidores', methods=['GET'])
+# def get_servidores():
+#     try:
+#         servidores = Servidor.query.all()
+#         response = jsonify([servidor.serialize() for servidor in servidores])
+#         response.headers.add("Access-Control-Allow-Origin", "*")
+#         return response, 200
+#     except Exception as e:
+#         return jsonify({"error": f"Error obteniendo servidores: {str(e)}"}), 500
 
-# 🔹 Ruta para crear un nuevo servidor
-@app.route('/api/servidores', methods=['POST'])
-def create_servidor():
-    try:
-        data = request.get_json()
+# # 🔹 Ruta para crear un nuevo servidor
+# @app.route('/api/servidores', methods=['POST'])
+# def create_servidor():
+#     try:
+#         data = request.get_json()
 
-        # 🔹 Validar que los datos necesarios están presentes
-        required_fields = [
-            "nombre", "tipo", "ip", "balanceador", "vlan", "descripcion",
-            "link", "servicio_id", "capa_id", "ambiente_id", "dominio_id",
-            "sistema_operativo_id", "estatus_id"
-        ]
-        for field in required_fields:
-            if field not in data or data[field] == "":
-                return jsonify({"error": f"Campo '{field}' faltante o vacío"}), 400
+#         # 🔹 Validar que los datos necesarios están presentes
+#         required_fields = [
+#             "nombre", "tipo", "ip", "balanceador", "vlan", "descripcion",
+#             "link", "servicio_id", "capa_id", "ambiente_id", "dominio_id",
+#             "sistema_operativo_id", "estatus_id"
+#         ]
+#         for field in required_fields:
+#             if field not in data or data[field] == "":
+#                 return jsonify({"error": f"Campo '{field}' faltante o vacío"}), 400
 
-        nuevo_servidor = Servidor(**data)
-        db.session.add(nuevo_servidor)
-        db.session.commit()
+#         nuevo_servidor = Servidor(**data)
+#         db.session.add(nuevo_servidor)
+#         db.session.commit()
 
-        response = jsonify(nuevo_servidor.serialize())
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response, 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": f"Error al guardar servidor: {str(e)}"}), 500
+#         response = jsonify(nuevo_servidor.serialize())
+#         response.headers.add("Access-Control-Allow-Origin", "*")
+#         return response, 201
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({"error": f"Error al guardar servidor: {str(e)}"}), 500
 
-# 🔹 Ruta para actualizar un servidor
-@app.route("/api/servidores/<int:servidor_id>", methods=["PUT"])
-def update_servidor(servidor_id):
-    servidor = Servidor.query.get(servidor_id)
-    if not servidor:
-        return jsonify({"error": "Servidor no encontrado"}), 404
+# # 🔹 Ruta para actualizar un servidor
+# @app.route("/api/servidores/<int:servidor_id>", methods=["PUT"])
+# def update_servidor(servidor_id):
+#     servidor = Servidor.query.get(servidor_id)
+#     if not servidor:
+#         return jsonify({"error": "Servidor no encontrado"}), 404
 
-    data = request.get_json()
-    campos_actualizables = [
-        "nombre", "tipo", "ip", "balanceador", "vlan", "descripcion", "link",
-        "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id"
-    ]
-    for key in campos_actualizables:
-        if key in data:
-            setattr(servidor, key, data[key])
+#     data = request.get_json()
+#     campos_actualizables = [
+#         "nombre", "tipo", "ip", "balanceador", "vlan", "descripcion", "link",
+#         "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id"
+#     ]
+#     for key in campos_actualizables:
+#         if key in data:
+#             setattr(servidor, key, data[key])
 
-    servidor.fecha_modificacion = datetime.utcnow()
-    db.session.commit()
+#     servidor.fecha_modificacion = datetime.utcnow()
+#     db.session.commit()
 
-    response = jsonify({"mensaje": "Servidor actualizado correctamente", "servidor": servidor.serialize()})
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response, 200
+#     response = jsonify({"mensaje": "Servidor actualizado correctamente", "servidor": servidor.serialize()})
+#     response.headers.add("Access-Control-Allow-Origin", "*")
+#     return response, 200
 
-# 🔹 Ruta para eliminar un servidor
-@app.route("/api/servidores/<int:servidor_id>", methods=["DELETE"])
-def delete_servidor(servidor_id):
-    servidor = Servidor.query.get(servidor_id)
-    if not servidor:
-        return jsonify({"error": "Servidor no encontrado"}), 404
+# # 🔹 Ruta para eliminar un servidor
+# @app.route("/api/servidores/<int:servidor_id>", methods=["DELETE"])
+# def delete_servidor(servidor_id):
+#     servidor = Servidor.query.get(servidor_id)
+#     if not servidor:
+#         return jsonify({"error": "Servidor no encontrado"}), 404
 
-    db.session.delete(servidor)
-    db.session.commit()
+#     db.session.delete(servidor)
+#     db.session.commit()
 
-    response = jsonify({"mensaje": "Servidor eliminado correctamente"})
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response, 200
+#     response = jsonify({"mensaje": "Servidor eliminado correctamente"})
+#     response.headers.add("Access-Control-Allow-Origin", "*")
+#     return response, 200
 
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3001))

@@ -91,13 +91,20 @@ const Estatus = () => {
         <div className="estatus-container">
             {/* 🔹 Encabezado con gradiente, líneas blancas y botón */}
             <div className="estatus-header">
-                <div className="linea-blanca"></div>
-                <h2 className="estatus-title">Gestión de Estatus</h2>
-                <button className="crear-estatus-btn" onClick={() => {
-                    setEstatusActual({ id: null, nombre: "", descripcion: "" });
-                    setModalVisible(true);
-                }}>Crear Estatus</button>
-                <div className="linea-blanca-2"></div>
+                <div>
+                    <div className="linea-blanca"></div>
+                </div>
+                <div>
+                    <h2 className="estatus-title">Gestión de Estatus</h2>
+                    <button className="crear-estatus-btn" onClick={() => {
+                        setEstatusActual({ id: null, nombre: "", descripcion: "" });
+                        setModalVisible(true);
+                    }}>Crear Estatus</button>
+                </div>
+                <div>
+                    <div className="linea-blanca-2"></div>
+                </div>
+
             </div>
 
             {/* 🔹 Mensaje de alerta */}
