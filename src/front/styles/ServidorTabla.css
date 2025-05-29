@@ -203,3 +203,29 @@
 .swal-title-green {
   color: #007953 !important; /* 🔹 Solo el título será verde */
 }
+
+.view {
+  font-size: 25px;
+}
+.modal-content-link {
+  width: 40%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: white;
+  padding: 40px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.ver-link-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  transition: transform 0.2s ease;
+  color: #1a61ab;
+}
+
+.ver-link-btn:hover {
+  transform: scale(1.1);
+}

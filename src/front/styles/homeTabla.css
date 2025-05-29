@@ -101,3 +101,26 @@
   color: #004477;
   padding: 0 12px;
 } */
+
+/* 🔹 Contenedor con scroll horizontal si es necesario */
+.tabla-servidores-container {
+  width: 100%;
+  overflow-x: auto;
+  padding: 10px;
+}
+
+/* 🔹 Ajuste responsivo en pantallas pequeñas */
+@media screen and (max-width: 768px) {
+  .tabla-servidores {
+    font-size: 14px;
+    min-width: 700px; /* 📌 Evita desbordes */
+  }
+}
+
+/* 🔹 Adaptación en móviles */
+@media screen and (max-width: 480px) {
+  .tabla-servidores {
+    font-size: 12px;
+    min-width: 600px;
+  }
+}

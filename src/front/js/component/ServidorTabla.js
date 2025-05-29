@@ -18,7 +18,7 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
             const servidoresFiltrados = data.filter((servidor) => servidor.activo === true);
             setServidores(servidoresFiltrados);
         } catch (error) {
-            console.error("❌ Error al obtener servidores:", error);
+            console.error(" Error al obtener servidores:", error);
         }
     };
 
@@ -89,6 +89,7 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
                     <option value="50">50</option>
                     <option value="100">100</option>
                     <option value="150">150</option>
+                    <option value="200">200</option>
                 </select>
             </div>
 
@@ -129,7 +130,7 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
                                 <td>{servidor.descripcion || "Sin descripción"}</td>
                                 <td>
                                     <button className="ver-link-btn icon-btn" onClick={() => abrirModalLink(servidor)}>
-                                        <span className="material-symbols-outlined">visibility</span>
+                                        <span className="material-symbols-outlined view">visibility</span>
                                     </button>
                                 </td>
                                 <td>

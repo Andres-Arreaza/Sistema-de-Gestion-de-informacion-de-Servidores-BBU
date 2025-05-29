@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 
-const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, onSuccess, esEdicion }) => {
+const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, esEdicion }) => {
     const [servicios, setServicios] = useState([]);
     const [capas, setCapas] = useState([]);
     const [ambientes, setAmbientes] = useState([]);
     const [dominios, setDominios] = useState([]);
     const [sistemasOperativos, setSistemasOperativos] = useState([]);
     const [estatus, setEstatus] = useState([]);
-    const [error, setError] = useState(null);
     const [formData, setFormData] = useState({
         nombre: "",
         tipo: "",
@@ -22,23 +21,8 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
         ambiente_id: "",
         dominio_id: "",
         sistema_operativo_id: "",
-        estatus_id: "1" // 🔹 Valor por defecto
+        estatus_id: "1"
     });
-
-    const fieldLabels = {
-        nombre: "Nombre del Servidor",
-        tipo: "Tipo de Servidor",
-        ip: "Dirección IP",
-        balanceador: "Balanceador",
-        vlan: "VLAN",
-        link: "Enlace",
-        servicio_id: "Servicio",
-        capa_id: "Capa",
-        ambiente_id: "Ambiente",
-        dominio_id: "Dominio",
-        sistema_operativo_id: "Sistema Operativo",
-        estatus_id: "Estatus"
-    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -67,10 +51,15 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 setDominios(responses[3]);
                 setSistemasOperativos(responses[4]);
                 setEstatus(responses[5]);
-
-                setError(null);
             } catch (error) {
-                setError(error.message);
+                Swal.fire({
+                    icon: "error",
+                    title: "Error en la carga de datos",
+                    text: error.message,
+                    showConfirmButton: true,
+                    confirmButtonText: "Cerrar",
+                    width: "50%"
+                });
             }
         };
 
@@ -94,6 +83,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
             });
         }
     }, [servidorInicial, esEdicion]);
+
     const handleChange = (e) => {
         setFormData({
             ...formData,
@@ -102,86 +92,78 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
     };
 
     const handleFormSubmit = async (e) => {
-        e.preventDefault();
+        e.preventDefault(); /* 🔹 Evita que el formulario recargue la página */
 
-        const requiredFields = Object.keys(fieldLabels);
-        const missingFields = requiredFields.filter(field => !formData[field] || formData[field] === "");
+        const requiredFields = Object.keys(formData).filter(field => !formData[field] || formData[field] === "");
 
-        if (missingFields.length > 0) {
+        if (requiredFields.length > 0) {
             Swal.fire({
                 icon: "warning",
                 title: "Campos obligatorios",
-                html: missingFields.map(field => `${fieldLabels[field]}`).join("<br>"),
-                timer: 3000,
-                padding: "20px 0px",
-                showConfirmButton: false
+                html: requiredFields.map(field => `<p>${field.replace("_id", "").toUpperCase()}</p>`).join(""),
+                timer: 3000, /* 🔹 Se cerrará automáticamente */
+                showConfirmButton: false,
+                width: "50%"
             });
             return;
         }
 
-        const payload = {
-            ...formData,
-            activo: servidorInicial?.activo !== undefined ? servidorInicial.activo : true // 🔹 Asegura que `activo` tenga un valor válido
-        };
+        Swal.fire({
+            title: esEdicion ? "Confirmar actualización" : "Confirmar creación",
+            text: esEdicion ? "¿Seguro que deseas actualizar este servidor?" : "¿Seguro que deseas guardar este servidor?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#007953",
+            cancelButtonColor: "#dc3545",
+            confirmButtonText: "Sí, guardar"
+        }).then(async (result) => {
+            if (!result.isConfirmed) return;
 
-        try {
-            const response = await fetch(
-                esEdicion
-                    ? `http://localhost:3001/api/servidores/${servidorInicial?.id}`
-                    : "http://localhost:3001/api/servidores",
-                {
-                    method: esEdicion ? "PUT" : "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                }
-            );
+            try {
+                const response = await fetch(
+                    esEdicion
+                        ? `http://localhost:3001/api/servidores/${servidorInicial?.id}`
+                        : "http://localhost:3001/api/servidores",
+                    {
+                        method: esEdicion ? "PUT" : "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ ...formData, activo: servidorInicial?.activo ?? true })
+                    }
+                );
 
-            if (!response.ok) {
-                throw new Error(`Error en el servidor: ${response.status} ${response.statusText}`);
+                if (!response.ok) throw new Error(`Error en el servidor: ${response.status} ${response.statusText}`);
+
+                const servidorActualizado = await response.json();
+
+                setServidores(prevServidores =>
+                    esEdicion ? prevServidores.map(s => s.id === servidorActualizado.id ? servidorActualizado : s) : [...prevServidores, servidorActualizado]
+                );
+
+                setModalVisible(false);
+
+                Swal.fire({
+                    icon: "success",
+                    title: esEdicion ? "Servidor actualizado" : "Servidor guardado",
+                    showConfirmButton: false,
+                    width: "50%",
+                    timer: 2000
+                });
+
+            } catch (error) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error al guardar el servidor",
+                    text: error.message,
+                    showConfirmButton: true,
+                    confirmButtonText: "Cerrar"
+                });
             }
-
-            const servidorActualizado = await response.json();
-
-            setServidores(prevServidores => {
-                if (esEdicion) {
-                    return prevServidores.map(s =>
-                        s.id === servidorActualizado.id ? servidorActualizado : s
-                    );
-                } else {
-                    return [...prevServidores, servidorActualizado];
-                }
-            });
-
-            setModalVisible(false);
-
-            Swal.fire({
-                icon: "success",
-                title: esEdicion ? "Servidor actualizado exitosamente" : "Servidor guardado exitosamente",
-                showConfirmButton: false,
-                width: "50%",
-                timer: 2000,
-                padding: "50px",
-                background: "#ffffff",
-                color: "#009868"
-            });
-
-        } catch (error) {
-            setError(error.message);
-
-            Swal.fire({
-                icon: "error",
-                title: "Error al guardar el servidor",
-                text: `Hubo un problema: ${error.message}`,
-                showConfirmButton: false,
-                timer: 2500
-            });
-        }
+        });
     };
+
     return (
         <form onSubmit={handleFormSubmit} className="grid-form">
-            {error && <div className="error-message">{error}</div>}
-
-            {/* Fila 1 */}
+            {/* 🔹 Fila 1 */}
             <div className="grid-form-row">
                 <div className="form-field">
                     <label>Nombre</label>
@@ -189,7 +171,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 </div>
                 <div className="form-field">
                     <label>Tipo</label>
-                    <select name="tipo" value={formData.tipo} onChange={handleChange}>
+                    <select name="tipo" value={formData.tipo} onChange={handleChange} >
                         <option value="">Seleccione el Tipo</option>
                         <option value="FISICO">FISICO</option>
                         <option value="VIRTUAL">VIRTUAL</option>
@@ -209,37 +191,37 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 </div>
             </div>
 
-            {/* Fila 2 */}
+            {/* 🔹 Fila 2 con campos más pequeños */}
             <div className="grid-form-row">
-                <div className="form-field">
+                <div className="form-field field-small">
                     <label>Descripción</label>
                     <textarea name="descripcion" value={formData.descripcion} onChange={handleChange}></textarea>
                 </div>
-                <div className="form-field">
+                <div className="form-field field-small">
                     <label>Link</label>
                     <input type="text" name="link" value={formData.link} onChange={handleChange} />
                 </div>
-                <div className="form-field">
+                <div className="form-field field-small">
                     <label>Servicio</label>
-                    <select name="servicio_id" value={formData.servicio_id} onChange={handleChange}>
+                    <select name="servicio_id" value={formData.servicio_id} onChange={handleChange} >
                         <option value="">Seleccione un Servicio</option>
                         {servicios.map(servicio => (
                             <option key={servicio.id} value={servicio.id}>{servicio.nombre}</option>
                         ))}
                     </select>
                 </div>
-                <div className="form-field">
+                <div className="form-field field-small">
                     <label>Capa</label>
-                    <select name="capa_id" value={formData.capa_id} onChange={handleChange}>
+                    <select name="capa_id" value={formData.capa_id} onChange={handleChange} >
                         <option value="">Seleccione una Capa</option>
                         {capas.map(capa => (
                             <option key={capa.id} value={capa.id}>{capa.nombre}</option>
                         ))}
                     </select>
                 </div>
-                <div className="form-field">
+                <div className="form-field field-small">
                     <label>Ambiente</label>
-                    <select name="ambiente_id" value={formData.ambiente_id} onChange={handleChange}>
+                    <select name="ambiente_id" value={formData.ambiente_id} onChange={handleChange} >
                         <option value="">Seleccione un Ambiente</option>
                         {ambientes.map(ambiente => (
                             <option key={ambiente.id} value={ambiente.id}>{ambiente.nombre}</option>
@@ -248,11 +230,11 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 </div>
             </div>
 
-            {/* Fila 3 */}
+            {/* 🔹 Fila 3 */}
             <div className="grid-form-row">
                 <div className="form-field">
                     <label>Dominio</label>
-                    <select name="dominio_id" value={formData.dominio_id} onChange={handleChange}>
+                    <select name="dominio_id" value={formData.dominio_id} onChange={handleChange} >
                         <option value="">Seleccione un Dominio</option>
                         {dominios.map(dominio => (
                             <option key={dominio.id} value={dominio.id}>{dominio.nombre}</option>
@@ -261,7 +243,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 </div>
                 <div className="form-field">
                     <label>Sistema Operativo</label>
-                    <select name="sistema_operativo_id" value={formData.sistema_operativo_id} onChange={handleChange}>
+                    <select name="sistema_operativo_id" value={formData.sistema_operativo_id} onChange={handleChange} >
                         <option value="">Seleccione un S.O.</option>
                         {sistemasOperativos.map(so => (
                             <option key={so.id} value={so.id}>{so.nombre}</option>
@@ -270,7 +252,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 </div>
                 <div className="form-field">
                     <label>Estatus</label>
-                    <select name="estatus_id" value={formData.estatus_id} onChange={handleChange}>
+                    <select name="estatus_id" value={formData.estatus_id} onChange={handleChange} >
                         <option value="">Seleccione un Estatus</option>
                         {estatus.map(est => (
                             <option key={est.id} value={est.id}>{est.nombre}</option>
@@ -279,14 +261,35 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, o
                 </div>
             </div>
 
-            {/* Acciones */}
+            {/* 🔹 Botones con SweetAlert2 */}
             <div className="modal-buttons">
-                <button type="submit" className="guardar-servidores-btn">Guardar</button>
-                <button type="button" className="cerrar-servidores-btn" onClick={() => setModalVisible(false)}>Cerrar</button>
+                <button type="submit" className="guardar-servidores-btn">
+                    Guardar
+                </button>
+
+                {/* 🔹 Botón de cierre con estilo rojo */}
+                <button
+                    type="button"
+                    className="cerrar-servidores-btn btn-red"
+                    onClick={() => Swal.fire({
+                        title: "Cerrar formulario",
+                        text: "¿Seguro que deseas cerrar sin guardar?",
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#dc3545",
+                        cancelButtonColor: "#007953",
+                        confirmButtonText: "Sí, cerrar"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            setModalVisible(false);
+                        }
+                    })}
+                >
+                    Cerrar
+                </button>
             </div>
         </form>
     );
 };
 
-// 🔹 Exportar correctamente
 export default FormularioServidor;
