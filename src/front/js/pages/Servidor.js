@@ -68,7 +68,7 @@ const Servidores = () => {
                     fetchServidores(); // 🔹 Ahora recarga la tabla después de la alerta
                 });
             })
-            .catch((error) => console.error("❌ Error al eliminar el servidor:", error));
+            .catch((error) => console.error("Error al eliminar el servidor:", error));
     };
 
     // 🔹 Obtener datos completos de un servidor para edición

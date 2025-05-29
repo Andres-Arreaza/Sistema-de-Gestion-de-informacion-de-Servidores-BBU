@@ -10,6 +10,7 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
         setPaginaActual(1);
     };
 
+    // 🔹 Obtener servidores activos desde la API
     const actualizarServidores = async () => {
         try {
             const response = await fetch(`${process.env.BACKEND_URL}/api/servidores`);
@@ -17,7 +18,7 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
             const servidoresFiltrados = data.filter((servidor) => servidor.activo === true);
             setServidores(servidoresFiltrados);
         } catch (error) {
-            console.error("Error al obtener servidores:", error);
+            console.error("❌ Error al obtener servidores:", error);
         }
     };
 
@@ -27,18 +28,16 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
 
     const handleEliminarConfirmacion = (servidor) => {
         Swal.fire({
-            title: `¿Seguro que desea desactivar el servidor ${servidor.nombre}?`,
-            text: "El servidor será marcado como inactivo, pero no eliminado definitivamente.",
+            title: `¿Seguro que desea eliminar el servidor ${servidor.nombre}?`,
+            text: "El servidor será eliminado de forma permanente.",
             icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: "#d33",
+            confirmButtonColor: "#dc3545",
             cancelButtonColor: "#3349",
-            confirmButtonText: "Desactivar",
+            confirmButtonText: "Eliminar",
             cancelButtonText: "Cancelar",
             width: "50%",
-            customClass: {
-                title: "swal-title-green" // 🔹 Solo afecta el título
-            }
+            customClass: { title: "swal-title-green" }
         }).then(async (result) => {
             if (result.isConfirmed) {
                 await handleBorradoLogico(servidor.id);
@@ -55,20 +54,18 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
 
             if (response.ok) {
                 Swal.fire({
-                    title: "Desactivado",
-                    text: "El servidor ha sido marcado como inactivo.",
+                    title: "Eliminado",
+                    text: "El servidor se ha eliminado exitosamente.",
                     icon: "success",
                     timer: 2000,
                     showConfirmButton: false,
                     width: "50%",
-                    customClass: {
-                        title: "swal-title-green"
-                    }
+                    customClass: { title: "swal-title-green" }
+                }).then(() => {
+                    actualizarServidores(); // 🔹 Recarga la tabla después de la eliminación
                 });
-
-                actualizarServidores();
             } else {
-                Swal.fire("Error", "No se pudo desactivar el servidor.", "error");
+                Swal.fire("Error", "No se pudo eliminar el servidor.", "error");
             }
         } catch (error) {
             console.error("Error al actualizar el servidor:", error);
@@ -76,7 +73,7 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
         }
     };
 
-    const totalPaginas = Math.ceil(servidores.length / servidoresPorPagina);
+    const totalPaginas = Math.max(1, Math.ceil(servidores.length / servidoresPorPagina)); // 🔹 Siempre mínimo 1
     const indiceInicial = (paginaActual - 1) * servidoresPorPagina;
     const indiceFinal = indiceInicial + servidoresPorPagina;
     const servidoresPaginados = servidores.slice(indiceInicial, indiceFinal);
@@ -84,7 +81,6 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
     return (
         <div>
             <div className="cantidad-servidores">
-                {/* 🔹 Nuevo contador de servidores creados */}
                 <span className="servidores-contador">Servidores creados: {servidores.length}</span>
                 <label>Servidores por página:</label>
                 <select onChange={handleCantidadCambio} value={servidoresPorPagina}>
@@ -94,7 +90,6 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
                     <option value="100">100</option>
                     <option value="150">150</option>
                 </select>
-
             </div>
 
             <table className="tabla-servidores">
@@ -155,17 +150,24 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
                 </tbody>
             </table>
 
-            {totalPaginas > 1 && (
-                <div className="paginacion-servidores">
-                    <button onClick={() => setPaginaActual(paginaActual - 1)} disabled={paginaActual === 1} className="paginacion-btn">
-                        <span className="material-symbols-outlined">arrow_back_ios</span>
-                    </button>
-                    <span className="pagina-numero">Página {paginaActual} de {totalPaginas}</span>
-                    <button onClick={() => setPaginaActual(paginaActual + 1)} disabled={paginaActual === totalPaginas} className="paginacion-btn">
-                        <span className="material-symbols-outlined">arrow_forward_ios</span>
-                    </button>
-                </div>
-            )}
+            {/* 🔹 Siempre mostrar paginado, incluso si hay pocos servidores */}
+            <div className="paginacion-servidores">
+                <button
+                    onClick={() => setPaginaActual(Math.max(1, paginaActual - 1))}
+                    className={`paginacion-btn ${paginaActual === 1 ? "btn-disabled" : ""}`}
+                    disabled={paginaActual === 1}
+                >
+                    <span className="material-symbols-outlined">arrow_back_ios</span>
+                </button>
+                <span className="pagina-numero">Página {paginaActual} de {totalPaginas}</span>
+                <button
+                    onClick={() => setPaginaActual(Math.min(totalPaginas, paginaActual + 1))}
+                    className={`paginacion-btn ${paginaActual === totalPaginas ? "btn-disabled" : ""}`}
+                    disabled={paginaActual === totalPaginas}
+                >
+                    <span className="material-symbols-outlined">arrow_forward_ios</span>
+                </button>
+            </div>
         </div>
     );
 };
