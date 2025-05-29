@@ -40,27 +40,46 @@
   text-align: center;
 }
 
-/* 🔹 Línea blanca de separación */
-.linea-blanca-3,
-.linea-blanca-4 {
-  margin: auto;
+.linea-blanca-1 {
+  margin: 10px auto;
+  height: 3px; /* 📌 Más gruesa */
   background-color: rgba(255, 255, 255, 0.6);
-}
-
-.linea-blanca-3 {
-  width: 50%;
-  height: 3px;
-  margin-bottom: 20px;
-  animation: fadeUpSlow 1s ease-out;
+  width: 50%; /* 📌 Mucho más ancha */
+  opacity: 0;
+  animation: expandLine1 1s ease-out forwards;
 }
 
 .linea-blanca-4 {
-  width: 25%;
-  height: 2.5px;
-  margin-top: 20px;
-  animation: fadeUpSlow 1s ease-out;
+  margin: 10px auto;
+  height: 3px; /* 📌 Más delgada */
+  background-color: rgba(255, 255, 255, 0.6);
+  width: 30%; /* 📌 Más estrecha */
+  opacity: 0;
+  animation: expandLine4 1s ease-out forwards;
 }
 
+/* 📌 Animaciones separadas para cada línea */
+@keyframes expandLine1 {
+  from {
+    width: 0%;
+    opacity: 0;
+  }
+  to {
+    width: 50%; /* 📌 Se expande más */
+    opacity: 1;
+  }
+}
+
+@keyframes expandLine4 {
+  from {
+    width: 0%;
+    opacity: 0;
+  }
+  to {
+    width: 30%; /* 📌 Se expande menos */
+    opacity: 1;
+  }
+}
 /* 🔹 Títulos principales */
 .title,
 .subtitle {
@@ -132,7 +151,6 @@
 
 /* 🔹 Tabla de resultados */
 .tabla-servidores {
-  width: 100%;
   border-collapse: collapse;
 }
 

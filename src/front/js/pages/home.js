@@ -79,7 +79,7 @@ export const Home = () => {
     return (
         <div>
             <div className="home-container">
-                <div className="linea-blanca-3"></div>
+                <div className="linea-blanca-1"></div>
                 <h1 className="title">Gerencia de Operaciones de Canales Virtuales y Medios de Pagos</h1>
                 <p className="subtitle">"Gestiona y visualiza los servidores"</p>
                 <div className="linea-blanca-4"></div>
