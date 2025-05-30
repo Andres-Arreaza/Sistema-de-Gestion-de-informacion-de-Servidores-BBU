@@ -32,7 +32,7 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
         Swal.fire({
             title: "Información del Enlace",
             html: `
-                <div style="text-align: left;">
+                <div class="modal-link-container">
                     <p><strong>Servidor:</strong> ${servidor.nombre || "No disponible"}</p>
                     <p><strong>Descripción:</strong> ${servidor.descripcion || "No disponible"}</p>
                     <p><strong>Enlace:</strong> <a href="${servidor.link}" target="_blank" rel="noopener noreferrer">${servidor.link}</a></p>
@@ -45,7 +45,6 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
             customClass: { title: "swal-title-green" }
         });
     };
-
     const handleEliminarConfirmacion = (servidor) => {
         Swal.fire({
             title: `¿Seguro que desea eliminar el servidor ${servidor.nombre}?`,
@@ -82,7 +81,7 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
                     width: "50%",
                     customClass: { title: "swal-title-green" }
                 }).then(() => {
-                    actualizarServidores(); // 🔹 Recarga la tabla después de la eliminación
+                    actualizarServidores();
                 });
             } else {
                 Swal.fire("Error", "No se pudo eliminar el servidor.", "error");
@@ -100,6 +99,7 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
 
     return (
         <div>
+            {/* 🔹 Paginación */}
             <div className="cantidad-servidores">
                 <span className="servidores-contador">Servidores creados: {servidores.length}</span>
                 <label>Servidores por página:</label>
@@ -170,6 +170,25 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
                     )}
                 </tbody>
             </table>
+
+            {/* 🔹 Paginación */}
+            <div className="paginacion-servidores">
+                <button
+                    onClick={() => setPaginaActual(Math.max(1, paginaActual - 1))}
+                    className={`paginacion-btn ${paginaActual === 1 ? "btn-disabled" : ""}`}
+                    disabled={paginaActual === 1}
+                >
+                    <span className="material-symbols-outlined">arrow_back_ios</span>
+                </button>
+                <span className="pagina-numero">Página {paginaActual} de {totalPaginas}</span>
+                <button
+                    onClick={() => setPaginaActual(Math.min(totalPaginas, paginaActual + 1))}
+                    className={`paginacion-btn ${paginaActual === totalPaginas ? "btn-disabled" : ""}`}
+                    disabled={paginaActual === totalPaginas}
+                >
+                    <span className="material-symbols-outlined">arrow_forward_ios</span>
+                </button>
+            </div>
         </div>
     );
 };
