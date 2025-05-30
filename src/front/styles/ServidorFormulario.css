@@ -126,3 +126,9 @@
     opacity: 0;
   }
 }
+
+.alerta-campos-faltantes {
+  font-size: 12px;
+  margin: 2px 0;
+  color: #d9534f;
+}

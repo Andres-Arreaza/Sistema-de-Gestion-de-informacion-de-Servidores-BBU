@@ -100,7 +100,9 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, e
             Swal.fire({
                 icon: "warning",
                 title: "Campos obligatorios",
-                html: requiredFields.map(field => `<p>${field.replace("_id", "").toUpperCase()}</p>`).join(""),
+                html: requiredFields.map(field =>
+                    `<p class="alerta-campos-faltantes">${field.replace("_id", "").toUpperCase()}</p>`
+                ).join(""),
                 timer: 3000, /* 🔹 Se cerrará automáticamente */
                 showConfirmButton: false,
                 width: "50%"
