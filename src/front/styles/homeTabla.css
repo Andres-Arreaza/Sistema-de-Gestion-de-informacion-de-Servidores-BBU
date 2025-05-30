@@ -175,3 +175,21 @@
     min-width: 600px;
   }
 }
+
+.export-csv-btn {
+  height: 40px;
+  width: 160px;
+  cursor: pointer;
+  background: #004477;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  font-size: 14px;
+  color: #fff;
+  transition: background 200ms ease-in-out;
+  margin-left: 100px;
+}
+
+.export-csv-btn:hover {
+  background: #003366;
+}

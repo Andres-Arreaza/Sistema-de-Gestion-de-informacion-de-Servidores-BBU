@@ -21,6 +21,31 @@ const abrirModalLink = (servidor) => {
     });
 };
 
+const exportarCSV = (servidores) => {
+    if (!servidores.length) return;
+
+    // 🔹 Encabezados bien alineados en la primera fila
+    const encabezados = `"Nombre";"Tipo";"IP";"Servicio";"Capa";"Ambiente";"Balanceador";"VLAN";"Dominio";"S.O.";"Estatus";"Descripción";"Link"\n`;
+
+    // 🔹 Cada servidor ocupa su propia fila, con separación por punto y coma
+    const filas = servidores.map(srv =>
+        `"${srv.nombre || 'N/A'}";"${srv.tipo || 'N/A'}";"${srv.ip || 'N/A'}";"${srv.servicios?.[0]?.nombre || 'N/A'}";` +
+        `"${srv.capas?.[0]?.nombre || 'N/A'}";"${srv.ambientes?.[0]?.nombre || 'N/A'}";"${srv.balanceador || 'N/A'}";"${srv.vlan || 'N/A'}";` +
+        `"${srv.dominios?.[0]?.nombre || 'N/A'}";"${srv.sistemasOperativos?.[0]?.nombre || 'N/A'}";"${srv.estatus?.[0]?.nombre || 'N/A'}";"${srv.descripcion || 'N/A'}";` +
+        `"${srv.link || 'N/A'}"`
+    ).join("\n");
+
+    // 🔹 Codificación en UTF-8 con estructura bien formateada
+    const csvContent = `data:text/csv;charset=utf-8,\uFEFF${encabezados}${filas}`;
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "servidores.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
 const HomeTabla = ({ servidores }) => {
     const [paginaActual, setPaginaActual] = useState(1);
     const [servidoresPorPagina, setServidoresPorPagina] = useState(20);
@@ -30,19 +55,14 @@ const HomeTabla = ({ servidores }) => {
     const indiceFinal = indiceInicial + servidoresPorPagina;
     const servidoresPaginados = servidores.slice(indiceInicial, indiceFinal);
 
-    const handleCambioCantidad = (e) => {
-        setServidoresPorPagina(Number(e.target.value));
-        setPaginaActual(1);
-    };
-
     return (
         <div className="servicios-container">
             <h2 className="services-title">Resultados de la búsqueda</h2>
 
             <div className="cantidad-servidores">
-                <span className="servidores-contador">Servidores cargados: {servidores.length}</span>
-                <label>Servidores por página:</label>
-                <select onChange={handleCambioCantidad} value={servidoresPorPagina}>
+                <span className="servidores-contador">Servidores Cargados: {servidores.length}</span>
+                <label>Servidores por Página:</label>
+                <select onChange={(e) => setServidoresPorPagina(Number(e.target.value))} value={servidoresPorPagina}>
                     <option value="20">20</option>
                     <option value="30">30</option>
                     <option value="50">50</option>
@@ -50,6 +70,7 @@ const HomeTabla = ({ servidores }) => {
                     <option value="150">150</option>
                     <option value="200">200</option>
                 </select>
+                <button className="export-csv-btn" onClick={() => exportarCSV(servidores)}>Descargar Servidores</button>
             </div>
 
             {servidores.length === 0 ? (
