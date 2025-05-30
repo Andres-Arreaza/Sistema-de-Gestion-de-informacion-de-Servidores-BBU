@@ -39,7 +39,6 @@ const HomeTabla = ({ servidores }) => {
         <div className="servicios-container">
             <h2 className="services-title">Resultados de la búsqueda</h2>
 
-            {/* 🔹 Información de la cantidad de servidores */}
             <div className="cantidad-servidores">
                 <span className="servidores-contador">Servidores cargados: {servidores.length}</span>
                 <label>Servidores por página:</label>
