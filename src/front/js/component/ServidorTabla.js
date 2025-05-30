@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 
-const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setServidores }) => {
+const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
     const [paginaActual, setPaginaActual] = useState(1);
     const [servidoresPorPagina, setServidoresPorPagina] = useState(20);
 
@@ -18,13 +18,33 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
             const servidoresFiltrados = data.filter((servidor) => servidor.activo === true);
             setServidores(servidoresFiltrados);
         } catch (error) {
-            console.error(" Error al obtener servidores:", error);
+            console.error("Error al obtener servidores:", error);
         }
     };
 
     useEffect(() => {
         actualizarServidores();
     }, []);
+
+    const abrirModalLink = (servidor) => {
+        if (!servidor || !servidor.link) return;
+
+        Swal.fire({
+            title: "Información del Enlace",
+            html: `
+                <div style="text-align: left;">
+                    <p><strong>Servidor:</strong> ${servidor.nombre || "No disponible"}</p>
+                    <p><strong>Descripción:</strong> ${servidor.descripcion || "No disponible"}</p>
+                    <p><strong>Enlace:</strong> <a href="${servidor.link}" target="_blank" rel="noopener noreferrer">${servidor.link}</a></p>
+                </div>
+            `,
+            showConfirmButton: true,
+            confirmButtonText: "Cerrar",
+            confirmButtonColor: "#dc3545",
+            width: "50%",
+            customClass: { title: "swal-title-green" }
+        });
+    };
 
     const handleEliminarConfirmacion = (servidor) => {
         Swal.fire({
@@ -73,7 +93,7 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
         }
     };
 
-    const totalPaginas = Math.max(1, Math.ceil(servidores.length / servidoresPorPagina)); // 🔹 Siempre mínimo 1
+    const totalPaginas = Math.max(1, Math.ceil(servidores.length / servidoresPorPagina));
     const indiceInicial = (paginaActual - 1) * servidoresPorPagina;
     const indiceFinal = indiceInicial + servidoresPorPagina;
     const servidoresPaginados = servidores.slice(indiceInicial, indiceFinal);
@@ -130,7 +150,7 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
                                 <td>{servidor.descripcion || "Sin descripción"}</td>
                                 <td>
                                     <button className="ver-link-btn icon-btn" onClick={() => abrirModalLink(servidor)}>
-                                        <span className="material-symbols-outlined view">visibility</span>
+                                        <span className="material-symbols-outlined">visibility</span>
                                     </button>
                                 </td>
                                 <td>
@@ -150,25 +170,6 @@ const ServidorTabla = ({ obtenerServidorPorId, abrirModalLink, servidores, setSe
                     )}
                 </tbody>
             </table>
-
-            {/* 🔹 Siempre mostrar paginado, incluso si hay pocos servidores */}
-            <div className="paginacion-servidores">
-                <button
-                    onClick={() => setPaginaActual(Math.max(1, paginaActual - 1))}
-                    className={`paginacion-btn ${paginaActual === 1 ? "btn-disabled" : ""}`}
-                    disabled={paginaActual === 1}
-                >
-                    <span className="material-symbols-outlined">arrow_back_ios</span>
-                </button>
-                <span className="pagina-numero">Página {paginaActual} de {totalPaginas}</span>
-                <button
-                    onClick={() => setPaginaActual(Math.min(totalPaginas, paginaActual + 1))}
-                    className={`paginacion-btn ${paginaActual === totalPaginas ? "btn-disabled" : ""}`}
-                    disabled={paginaActual === totalPaginas}
-                >
-                    <span className="material-symbols-outlined">arrow_forward_ios</span>
-                </button>
-            </div>
         </div>
     );
 };
