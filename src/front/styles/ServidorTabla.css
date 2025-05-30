@@ -229,3 +229,71 @@
 .ver-link-btn:hover {
   transform: scale(1.1);
 }
+/* 🔹 Animación de entrada para el título */
+@keyframes fadeInEffect {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.services-title {
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  animation: fadeInEffect 1s ease-in-out forwards;
+}
+
+/* 🔹 Animación de escala para los contadores */
+@keyframes scaleInEffect {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.cantidad-servidores {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #004477;
+  animation: scaleInEffect 0.8s ease-in-out forwards;
+}
+
+.cantidad-servidores select {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  animation: scaleInEffect 0.8s ease-in-out forwards;
+}
+
+/* 🔹 Ajuste responsivo en pantallas pequeñas */
+@media screen and (max-width: 768px) {
+  .services-title {
+    font-size: 22px;
+  }
+  .cantidad-servidores {
+    font-size: 16px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .services-title {
+    font-size: 20px;
+  }
+  .cantidad-servidores {
+    font-size: 14px;
+  }
+}
