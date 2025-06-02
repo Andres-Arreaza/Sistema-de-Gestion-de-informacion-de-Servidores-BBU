@@ -14,11 +14,11 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, e
         ip: "",
         balanceador: "",
         vlan: "",
-        descripcion: "",
-        link: "",
         servicio_id: "",
         capa_id: "",
         ambiente_id: "",
+        link: "",
+        descripcion: "",
         dominio_id: "",
         sistema_operativo_id: "",
         estatus_id: "1"
@@ -72,11 +72,10 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, e
                 ip: servidorInicial.ip || "",
                 balanceador: servidorInicial.balanceador || "",
                 vlan: servidorInicial.vlan || "",
-                descripcion: servidorInicial.descripcion || "",
-                link: servidorInicial.link || "",
                 servicio_id: servidorInicial.servicios?.[0]?.id || "",
                 capa_id: servidorInicial.capas?.[0]?.id || "",
                 ambiente_id: servidorInicial.ambientes?.[0]?.id || "",
+                descripcion: servidorInicial.descripcion || "",
                 dominio_id: servidorInicial.dominios?.[0]?.id || "",
                 sistema_operativo_id: servidorInicial.sistemasOperativos?.[0]?.id || "",
                 estatus_id: servidorInicial.estatus?.[0]?.id || "1"
@@ -196,14 +195,6 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, e
             {/* 🔹 Fila 2 con campos más pequeños */}
             <div className="grid-form-row">
                 <div className="form-field field-small">
-                    <label>Descripción</label>
-                    <textarea name="descripcion" value={formData.descripcion} onChange={handleChange}></textarea>
-                </div>
-                <div className="form-field field-small">
-                    <label>Link</label>
-                    <input type="text" name="link" value={formData.link} onChange={handleChange} />
-                </div>
-                <div className="form-field field-small">
                     <label>Servicio</label>
                     <select name="servicio_id" value={formData.servicio_id} onChange={handleChange} >
                         <option value="">Seleccione un Servicio</option>
@@ -229,6 +220,14 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, e
                             <option key={ambiente.id} value={ambiente.id}>{ambiente.nombre}</option>
                         ))}
                     </select>
+                </div>
+                <div className="form-field field-small">
+                    <label>Link</label>
+                    <input type="text" name="link" value={formData.link} onChange={handleChange} />
+                </div>
+                <div className="form-field field-small">
+                    <label>Descripción</label>
+                    <textarea name="descripcion" value={formData.descripcion} onChange={handleChange}></textarea>
                 </div>
             </div>
 

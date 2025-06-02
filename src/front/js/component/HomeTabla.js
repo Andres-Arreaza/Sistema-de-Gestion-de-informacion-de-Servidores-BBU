@@ -35,7 +35,6 @@ const exportarCSV = (servidores) => {
         `"${srv.link || 'N/A'}"`
     ).join("\n");
 
-    // 🔹 Codificación en UTF-8 con estructura bien formateada
     const csvContent = `data:text/csv;charset=utf-8,\uFEFF${encabezados}${filas}`;
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -45,7 +44,6 @@ const exportarCSV = (servidores) => {
     link.click();
     document.body.removeChild(link);
 };
-
 const HomeTabla = ({ servidores }) => {
     const [paginaActual, setPaginaActual] = useState(1);
     const [servidoresPorPagina, setServidoresPorPagina] = useState(20);
