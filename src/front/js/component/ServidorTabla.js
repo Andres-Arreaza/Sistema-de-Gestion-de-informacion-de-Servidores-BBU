@@ -154,7 +154,8 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
                                 <td>{servidor.vlan || "Sin VLAN"}</td>
                                 <td>{servidor.dominios?.[0]?.nombre || "Sin dominio"}</td>
                                 <td>{servidor.sistemasOperativos?.[0]?.nombre || "Sin S.O."}</td>
-                                <td>{servidor.estatus?.[0]?.nombre || "Sin estatus"}</td>
+                                {/* 🔹 Mostrar correctamente el estatus actualizado */}
+                                <td>{servidor.estatus?.[0]?.nombre || servidor.estatus?.nombre || "Sin estatus"}</td>
                                 <td>{servidor.descripcion || "Sin descripción"}</td>
                                 <td>
                                     <button className="ver-link-btn icon-btn" onClick={() => abrirModalLink(servidor)}>

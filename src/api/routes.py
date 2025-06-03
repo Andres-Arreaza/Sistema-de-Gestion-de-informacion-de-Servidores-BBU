@@ -314,7 +314,8 @@ def update_servidor(record_id):
         servidor.ambiente_id = sanitize(data.get("ambiente_id"))
         servidor.dominio_id = sanitize(data.get("dominio_id"))
         servidor.sistema_operativo_id = sanitize(data.get("sistema_operativo_id"))
-        servidor.activo = sanitize(data.get("activo"))  # 🔹 Se puede actualizar el estado activo/inactivo
+        servidor.estatus_id = sanitize(data.get("estatus_id"))  # <-- AGREGA ESTA LÍNEA
+        servidor.activo = sanitize(data.get("activo"))
 
         servidor.fecha_modificacion = datetime.utcnow()
         db.session.commit()

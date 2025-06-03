@@ -75,10 +75,11 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, e
                 servicio_id: servidorInicial.servicios?.[0]?.id || "",
                 capa_id: servidorInicial.capas?.[0]?.id || "",
                 ambiente_id: servidorInicial.ambientes?.[0]?.id || "",
-                descripcion: servidorInicial.descripcion || "",
+                link: servidorInicial.link || "",
+                descripcion: servidorInicial.descripcion || "", // 🔹 Asegura que se cargue la descripción
                 dominio_id: servidorInicial.dominios?.[0]?.id || "",
                 sistema_operativo_id: servidorInicial.sistemasOperativos?.[0]?.id || "",
-                estatus_id: servidorInicial.estatus?.[0]?.id || "1"
+                estatus_id: servidorInicial.estatus?.[0]?.id?.toString() || "1" // 🔹 Permite editar el estatus
             });
         }
     }, [servidorInicial, esEdicion]);
@@ -91,7 +92,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, e
     };
 
     const handleFormSubmit = async (e) => {
-        e.preventDefault(); /* 🔹 Evita que el formulario recargue la página */
+        e.preventDefault();
 
         const requiredFields = Object.keys(formData).filter(field => !formData[field] || formData[field] === "");
 
@@ -102,7 +103,7 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, e
                 html: requiredFields.map(field =>
                     `<p class="alerta-campos-faltantes">${field.replace("_id", "").toUpperCase()}</p>`
                 ).join(""),
-                timer: 3000, /* 🔹 Se cerrará automáticamente */
+                timer: 3000,
                 showConfirmButton: false,
                 width: "50%"
             });
@@ -267,8 +268,6 @@ const FormularioServidor = ({ servidorInicial, setServidores, setModalVisible, e
                 <button type="submit" className="guardar-servidores-btn">
                     Guardar
                 </button>
-
-                {/* 🔹 Botón de cierre con estilo rojo */}
                 <button
                     type="button"
                     className="cerrar-servidores-btn btn-red"
