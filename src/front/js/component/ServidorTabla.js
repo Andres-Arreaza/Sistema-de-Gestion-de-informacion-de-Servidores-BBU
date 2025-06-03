@@ -15,6 +15,7 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
         try {
             const response = await fetch(`${process.env.BACKEND_URL}/api/servidores`);
             const data = await response.json();
+            console.log("Datos recibidos del backend:", data); // 🔹 Debugging
             const servidoresFiltrados = data.filter((servidor) => servidor.activo === true);
             setServidores(servidoresFiltrados);
         } catch (error) {
@@ -25,6 +26,72 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
     useEffect(() => {
         actualizarServidores();
     }, []);
+
+    // 🔹 Calcular total de páginas con validación segura
+    const totalPaginas = servidores.length ? Math.max(1, Math.ceil(servidores.length / servidoresPorPagina)) : 1;
+
+    // 🔹 Obtener los servidores de la página actual
+    const inicioIndex = (paginaActual - 1) * servidoresPorPagina;
+    const finIndex = inicioIndex + servidoresPorPagina;
+    const servidoresVisibles = servidores.slice(inicioIndex, finIndex);
+
+    const importarCSV = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const contenido = e.target.result;
+            const filas = contenido.split("\n").slice(1);
+
+            for (const fila of filas) {
+                const columnas = fila.split(";").map(col => col.replace(/"/g, ""));
+                const servidor = {
+                    nombre: columnas[0],
+                    tipo: columnas[1],
+                    ip: parseInt(columnas[2], 10),
+                    balanceador: columnas[6] || "",
+                    vlan: columnas[7] || "",
+                    link: columnas[12] || "",
+                    descripcion: columnas[11] || "",
+                    servicio_id: parseInt(columnas[3], 10),
+                    capa_id: parseInt(columnas[4], 10),
+                    ambiente_id: parseInt(columnas[5], 10),
+                    dominio_id: parseInt(columnas[8], 10),
+                    sistema_operativo_id: parseInt(columnas[9], 10),
+                    estatus_id: parseInt(columnas[10], 10),
+                    activo: true
+                };
+
+                try {
+                    const response = await fetch(`${process.env.BACKEND_URL}/api/servidores`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(servidor),
+                    });
+
+                    if (!response.ok) {
+                        console.error(`Error al subir servidor: ${servidor.nombre}`);
+                        continue;
+                    }
+                } catch (error) {
+                    console.error("Error al enviar el servidor:", error);
+                }
+            }
+
+            Swal.fire({
+                title: "Carga exitosa",
+                text: "Los servidores fueron guardados correctamente.",
+                icon: "success",
+                timer: 2000,
+                showConfirmButton: false,
+            });
+
+            actualizarServidores();
+        };
+
+        reader.readAsText(file);
+    };
 
     const abrirModalLink = (servidor) => {
         if (!servidor || !servidor.link) return;
@@ -45,6 +112,7 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
             customClass: { title: "swal-title-green" }
         });
     };
+
     const handleEliminarConfirmacion = (servidor) => {
         Swal.fire({
             title: `¿Seguro que desea eliminar el servidor ${servidor.nombre}?`,
@@ -91,15 +159,9 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
             Swal.fire("Error", "No se pudo conectar con el servidor.", "error");
         }
     };
-
-    const totalPaginas = Math.max(1, Math.ceil(servidores.length / servidoresPorPagina));
-    const indiceInicial = (paginaActual - 1) * servidoresPorPagina;
-    const indiceFinal = indiceInicial + servidoresPorPagina;
-    const servidoresPaginados = servidores.slice(indiceInicial, indiceFinal);
-
     return (
         <div>
-            {/* 🔹 Paginación */}
+            {/* 🔹 Paginación y opciones */}
             <div className="cantidad-servidores">
                 <span className="servidores-contador">Servidores creados: {servidores.length}</span>
                 <label>Servidores por página:</label>
@@ -111,8 +173,14 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
                     <option value="150">150</option>
                     <option value="200">200</option>
                 </select>
+                {/* 🔹 Botón de carga masiva */}
+                <label className="carga-masiva-btn">
+                    <span>Carga Masiva</span>
+                    <input type="file" accept=".csv" onChange={importarCSV} hidden />
+                </label>
             </div>
 
+            {/* 🔹 Tabla de servidores */}
             <table className="tabla-servidores">
                 <thead>
                     <tr>
@@ -133,8 +201,8 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
                     </tr>
                 </thead>
                 <tbody>
-                    {servidoresPaginados.length > 0 ? (
-                        servidoresPaginados.map((servidor) => (
+                    {servidoresVisibles.length > 0 ? (
+                        servidoresVisibles.map((servidor) => (
                             <tr key={servidor.id}>
                                 <td>{servidor.nombre || "Sin nombre"}</td>
                                 <td>{servidor.tipo || "Sin tipo"}</td>
@@ -165,12 +233,11 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
                         ))
                     ) : (
                         <tr>
-                            <td colSpan="14">No hay servidores disponibles.</td>
+                            <td colSpan="14">No hay servidores disponibles en esta página.</td>
                         </tr>
                     )}
                 </tbody>
             </table>
-
             {/* 🔹 Paginación */}
             <div className="paginacion-servidores">
                 <button
