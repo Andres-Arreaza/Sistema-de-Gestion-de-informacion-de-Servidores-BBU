@@ -239,7 +239,7 @@ def get_servidor_by_id(record_id):
 
 @api.route("/servidores", methods=["POST"])
 def create_servidor():
-    """Crea un nuevo servidor con validación de datos."""
+    """Crea un nuevo servidor con validación de datos y evita duplicados por nombre o IP."""
     try:
         data = request.get_json()
         print("DATOS RECIBIDOS:", data)  # 🔹 Verifica qué datos recibe el backend
@@ -253,6 +253,14 @@ def create_servidor():
 
         if missing_fields:
             return jsonify({"error": f"Faltan datos obligatorios: {', '.join(missing_fields)}"}), 400
+
+        # 🔹 Validación de duplicidad por nombre
+        if Servidor.query.filter_by(nombre=data["nombre"]).first():
+            return jsonify({"msg": "Ya existe un servidor con ese nombre"}), 400
+
+        # 🔹 Validación de duplicidad por IP
+        if Servidor.query.filter_by(ip=data["ip"]).first():
+            return jsonify({"msg": "Ya existe un servidor con esa IP"}), 400
 
         # 🔹 Asegura que `estatus_id` nunca sea `None`
         data["estatus_id"] = data.get("estatus_id", 1)  # 🔹 Valor por defecto si falta

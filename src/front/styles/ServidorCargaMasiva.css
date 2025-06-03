@@ -1,0 +1,28 @@
+.carga-masiva-modal {
+  text-align: left;
+}
+.carga-masiva-lista-exito {
+  color: green;
+  max-height: 100px;
+  overflow: auto;
+  margin-bottom: 10px;
+}
+.carga-masiva-lista-error {
+  color: red;
+  max-height: 100px;
+  overflow: auto;
+}
+.carga-masiva-btn {
+  display: inline-block;
+  cursor: pointer;
+  background: #004477;
+  color: #fff !important;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-weight: bold;
+  margin-left: 10px;
+  transition: background 0.2s;
+}
+.carga-masiva-btn:hover {
+  background: #013a67;
+}

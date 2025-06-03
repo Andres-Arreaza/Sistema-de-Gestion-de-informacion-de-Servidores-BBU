@@ -16,6 +16,7 @@ import "../styles/Servidor.css";
 import "../styles/ServidorTabla.css";
 import "../styles/Loading.css";
 import "../styles/ServidorFormulario.css";
+import "../styles/ServidorCargaMasiva.css";
 import "../styles/footer.css";
 
 import Layout from "./layout";

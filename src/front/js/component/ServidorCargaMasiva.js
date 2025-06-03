@@ -12,7 +12,6 @@ const ServidorCargaMasiva = ({ actualizarServidores }) => {
         estatus: [],
     });
 
-    // Cargar listas de referencia al montar
     useEffect(() => {
         const obtenerListasReferencia = async () => {
             try {
@@ -78,7 +77,11 @@ const ServidorCargaMasiva = ({ actualizarServidores }) => {
             const contenido = e.target.result;
             const filas = contenido.split("\n").slice(1);
 
+            let cargados = [];
+            let duplicados = [];
+
             for (const fila of filas) {
+                if (!fila.trim()) continue;
                 const columnas = fila.split(";").map(col => col.replace(/"/g, "").trim());
 
                 const servidor = {
@@ -99,7 +102,11 @@ const ServidorCargaMasiva = ({ actualizarServidores }) => {
                 };
 
                 if (!servidor.servicio_id || !servidor.capa_id || !servidor.ambiente_id || !servidor.dominio_id || !servidor.sistema_operativo_id || !servidor.estatus_id) {
-                    console.error(`Error al procesar servidor ${servidor.nombre}: algunos valores no fueron encontrados.`);
+                    duplicados.push({
+                        nombre: servidor.nombre,
+                        ip: servidor.ip,
+                        motivo: "Valores de referencia no encontrados"
+                    });
                     continue;
                 }
 
@@ -110,21 +117,48 @@ const ServidorCargaMasiva = ({ actualizarServidores }) => {
                         body: JSON.stringify(servidor),
                     });
 
-                    if (!response.ok) {
-                        console.error(`Error al subir servidor: ${servidor.nombre}`);
-                        continue;
+                    if (response.ok) {
+                        cargados.push({ nombre: servidor.nombre, ip: servidor.ip });
+                    } else {
+                        // Intentar obtener el mensaje de error del backend
+                        let motivo = "Duplicidad";
+                        try {
+                            const errorData = await response.json();
+                            motivo = errorData?.msg || errorData?.error || motivo;
+                        } catch { }
+                        duplicados.push({
+                            nombre: servidor.nombre,
+                            ip: servidor.ip,
+                            motivo
+                        });
                     }
                 } catch (error) {
-                    console.error("Error al enviar el servidor:", error);
+                    duplicados.push({
+                        nombre: servidor.nombre,
+                        ip: servidor.ip,
+                        motivo: "Error de red o servidor"
+                    });
                 }
             }
 
+            // Mostrar resumen en un modal
             Swal.fire({
-                title: "Carga exitosa",
-                text: "Los servidores fueron guardados correctamente.",
-                icon: "success",
-                timer: 2000,
-                showConfirmButton: false,
+                title: "Resultado de la carga masiva",
+                html: `
+                    <div class="carga-masiva-modal">
+                        <b>Servidores cargados correctamente (${cargados.length}):</b>
+                        <ul class="carga-masiva-lista-exito">
+                            ${cargados.map(s => `<li>${s.nombre} (${s.ip})</li>`).join("") || "<li>Ninguno</li>"}
+                        </ul>
+                        <b>Servidores NO cargados (${duplicados.length}):</b>
+                        <ul class="carga-masiva-lista-error">
+                            ${duplicados.map(s => `<li>${s.nombre} (${s.ip}) - ${s.motivo}</li>`).join("") || "<li>Ninguno</li>"}
+                        </ul>
+                    </div>
+                `,
+                icon: "info",
+                width: "50%",
+                confirmButtonText: "Aceptar"
             });
 
             if (actualizarServidores) actualizarServidores();
