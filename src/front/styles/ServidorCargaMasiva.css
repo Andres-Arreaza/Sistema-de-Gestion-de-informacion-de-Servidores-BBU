@@ -12,6 +12,19 @@
   max-height: 100px;
   overflow: auto;
 }
+.icon-success {
+  color: green;
+  vertical-align: middle;
+  font-size: 20px;
+  margin-right: 4px;
+}
+.icon-error {
+  color: red;
+  vertical-align: middle;
+  font-size: 20px;
+  margin-right: 4px;
+}
+
 .carga-masiva-btn {
   display: inline-block;
   cursor: pointer;
@@ -22,6 +35,7 @@
   font-weight: bold;
   margin-left: 10px;
   transition: background 0.2s;
+  margin-left: 100px;
 }
 .carga-masiva-btn:hover {
   background: #013a67;

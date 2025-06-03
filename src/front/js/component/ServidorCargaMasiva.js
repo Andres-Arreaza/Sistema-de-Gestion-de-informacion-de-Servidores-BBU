@@ -51,16 +51,6 @@ const ServidorCargaMasiva = ({ actualizarServidores }) => {
         obtenerListasReferencia();
     }, []);
 
-    // Buscar ID por nombre en una lista
-    const obtenerIdPorNombre = (lista, nombre) => {
-        if (!lista || lista.length === 0) {
-            console.error(`Lista vacía: No se pudo obtener ID para ${nombre}`);
-            return null;
-        }
-        const elemento = lista.find(item => item.nombre?.toLowerCase() === nombre?.toLowerCase());
-        return elemento ? elemento.id : null;
-    };
-
     // Importar CSV y crear servidores
     const importarCSV = async (event) => {
         event.persist();
@@ -70,6 +60,17 @@ const ServidorCargaMasiva = ({ actualizarServidores }) => {
             return;
         }
 
+        // Obtener todos los servidores existentes para validar duplicados localmente
+        let servidoresExistentes = [];
+        try {
+            const res = await fetch(`${process.env.BACKEND_URL}/api/servidores`);
+            if (res.ok) {
+                servidoresExistentes = await res.json();
+            }
+        } catch (e) {
+            // Si falla, igual seguimos, pero no podremos validar duplicados locales
+        }
+
         const file = event.target.files[0];
         const reader = new FileReader();
 
@@ -77,8 +78,7 @@ const ServidorCargaMasiva = ({ actualizarServidores }) => {
             const contenido = e.target.result;
             const filas = contenido.split("\n").slice(1);
 
-            let cargados = [];
-            let duplicados = [];
+            let resultados = [];
 
             for (const fila of filas) {
                 if (!fila.trim()) continue;
@@ -101,11 +101,33 @@ const ServidorCargaMasiva = ({ actualizarServidores }) => {
                     activo: true
                 };
 
+                // Validación local de duplicados por nombre y/o IP
+                let mensajesDuplicidad = [];
+                if (servidoresExistentes.find(s => s.nombre === servidor.nombre)) {
+                    mensajesDuplicidad.push("Ya existe un servidor con ese nombre");
+                }
+                if (servidoresExistentes.find(s => s.ip === servidor.ip)) {
+                    mensajesDuplicidad.push("Ya existe un servidor con esa IP");
+                }
+
                 if (!servidor.servicio_id || !servidor.capa_id || !servidor.ambiente_id || !servidor.dominio_id || !servidor.sistema_operativo_id || !servidor.estatus_id) {
-                    duplicados.push({
+                    resultados.push({
                         nombre: servidor.nombre,
                         ip: servidor.ip,
-                        motivo: "Valores de referencia no encontrados"
+                        exito: false,
+                        mensaje: "Valores de referencia no encontrados"
+                    });
+                    continue;
+                }
+
+                if (mensajesDuplicidad.length > 0) {
+                    resultados.push({
+                        nombre: servidor.nombre,
+                        ip: servidor.ip,
+                        exito: false,
+                        mensaje: mensajesDuplicidad.length === 2
+                            ? "Ya existe un servidor con ese nombre y con esa IP"
+                            : mensajesDuplicidad[0]
                     });
                     continue;
                 }
@@ -118,47 +140,60 @@ const ServidorCargaMasiva = ({ actualizarServidores }) => {
                     });
 
                     if (response.ok) {
-                        cargados.push({ nombre: servidor.nombre, ip: servidor.ip });
+                        resultados.push({
+                            nombre: servidor.nombre,
+                            ip: servidor.ip,
+                            exito: true,
+                            mensaje: "Servidor guardado correctamente"
+                        });
+                        // Añadir a la lista local para evitar duplicados en el mismo archivo
+                        servidoresExistentes.push({ nombre: servidor.nombre, ip: servidor.ip });
                     } else {
-                        // Intentar obtener el mensaje de error del backend
                         let motivo = "Duplicidad";
                         try {
                             const errorData = await response.json();
                             motivo = errorData?.msg || errorData?.error || motivo;
                         } catch { }
-                        duplicados.push({
+                        resultados.push({
                             nombre: servidor.nombre,
                             ip: servidor.ip,
-                            motivo
+                            exito: false,
+                            mensaje: motivo
                         });
                     }
                 } catch (error) {
-                    duplicados.push({
+                    resultados.push({
                         nombre: servidor.nombre,
                         ip: servidor.ip,
-                        motivo: "Error de red o servidor"
+                        exito: false,
+                        mensaje: "Error de red o servidor"
                     });
                 }
             }
 
-            // Mostrar resumen en un modal
+            // Mostrar resumen en un modal, cada registro con su icono y color de texto
             Swal.fire({
                 title: "Resultado de la carga masiva",
                 html: `
                     <div class="carga-masiva-modal">
-                        <b>Servidores cargados correctamente (${cargados.length}):</b>
-                        <ul class="carga-masiva-lista-exito">
-                            ${cargados.map(s => `<li>${s.nombre} (${s.ip})</li>`).join("") || "<li>Ninguno</li>"}
-                        </ul>
-                        <b>Servidores NO cargados (${duplicados.length}):</b>
-                        <ul class="carga-masiva-lista-error">
-                            ${duplicados.map(s => `<li>${s.nombre} (${s.ip}) - ${s.motivo}</li>`).join("") || "<li>Ninguno</li>"}
-                        </ul>
+                        ${resultados.length === 0 ? "<div>No se procesó ningún registro.</div>" : ""}
+                        ${resultados.map(s => `
+                            <div style="margin-bottom:6px;">
+                                <span class="material-symbols-outlined ${s.exito ? "icon-success" : "icon-error"}">
+                                    ${s.exito ? "check" : "close"}
+                                </span>
+                                <span style="color:${s.exito ? 'green' : 'red'}">
+                                    ${s.nombre} (${s.ip}) - ${s.mensaje}
+                                </span>
+                            </div>
+                        `).join("")}
                     </div>
                 `,
                 icon: "info",
                 width: "50%",
-                confirmButtonText: "Aceptar"
+                confirmButtonText: "Aceptar",
+                confirmButtonColor: "#007953",
+                background: "#fff"
             });
 
             if (actualizarServidores) actualizarServidores();
@@ -168,6 +203,16 @@ const ServidorCargaMasiva = ({ actualizarServidores }) => {
                 event.target.value = "";
             }
         };
+
+        // Buscar ID por nombre en una lista
+        function obtenerIdPorNombre(lista, nombre) {
+            if (!lista || lista.length === 0) {
+                console.error(`Lista vacía: No se pudo obtener ID para ${nombre}`);
+                return null;
+            }
+            const elemento = lista.find(item => item.nombre?.toLowerCase() === nombre?.toLowerCase());
+            return elemento ? elemento.id : null;
+        }
 
         reader.readAsText(file);
     };
