@@ -35,33 +35,102 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
     const finIndex = inicioIndex + servidoresPorPagina;
     const servidoresVisibles = servidores.slice(inicioIndex, finIndex);
 
-    const importarCSV = async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
+    // 🔹 Estado para almacenar listas de referencia
+    const [listasReferencia, setListasReferencia] = useState({
+        servicios: [],
+        capas: [],
+        ambientes: [],
+        dominios: [],
+        sistemasOperativos: [],
+        estatus: [],
+    });
 
+    useEffect(() => {
+        const obtenerListasReferencia = async () => {
+            try {
+                const urls = [
+                    `${process.env.BACKEND_URL}/api/servicios`,
+                    `${process.env.BACKEND_URL}/api/capas`,
+                    `${process.env.BACKEND_URL}/api/ambientes`,
+                    `${process.env.BACKEND_URL}/api/dominios`,
+                    `${process.env.BACKEND_URL}/api/sistemas_operativos`,
+                    `${process.env.BACKEND_URL}/api/estatus`
+                ];
+
+                const respuestas = await Promise.all(urls.map(url => fetch(url)));
+                const datos = await Promise.all(respuestas.map(async res => {
+                    const contentType = res.headers.get("content-type") || "";
+                    if (!res.ok || !contentType.includes("application/json")) {
+                        console.error(`Error en API (${res.url}): ${res.status}`);
+                        return [];
+                    }
+                    return res.json();
+                }));
+
+                setListasReferencia({
+                    servicios: datos[0] || [],
+                    capas: datos[1] || [],
+                    ambientes: datos[2] || [],
+                    dominios: datos[3] || [],
+                    sistemasOperativos: datos[4] || [],
+                    estatus: datos[5] || [],
+                });
+
+            } catch (error) {
+                console.error("Error al obtener listas de referencia:", error);
+            }
+        };
+
+        obtenerListasReferencia();
+    }, []);
+    const obtenerIdPorNombre = (lista, nombre) => {
+        if (!lista || lista.length === 0) {
+            console.error(`Lista vacía: No se pudo obtener ID para ${nombre}`);
+            return null;
+        }
+        const elemento = lista.find(item => item.nombre?.toLowerCase() === nombre?.toLowerCase());
+        return elemento ? elemento.id : null;
+    };
+
+    const importarCSV = async (event) => {
+        event.persist(); // 🔹 Evita el error de evento reciclado
+
+        if (!event.target || !event.target.files || event.target.files.length === 0) {
+            console.error("Error: No se seleccionó un archivo.");
+            return;
+        }
+
+        const file = event.target.files[0];
         const reader = new FileReader();
+
         reader.onload = async (e) => {
             const contenido = e.target.result;
             const filas = contenido.split("\n").slice(1);
 
             for (const fila of filas) {
-                const columnas = fila.split(";").map(col => col.replace(/"/g, ""));
+                const columnas = fila.split(";").map(col => col.replace(/"/g, "").trim());
+
                 const servidor = {
                     nombre: columnas[0],
                     tipo: columnas[1],
-                    ip: parseInt(columnas[2], 10),
+                    ip: columnas[2],
+                    servicio_id: obtenerIdPorNombre(listasReferencia.servicios, columnas[3]),
+                    capa_id: obtenerIdPorNombre(listasReferencia.capas, columnas[4]),
+                    ambiente_id: obtenerIdPorNombre(listasReferencia.ambientes, columnas[5]),
                     balanceador: columnas[6] || "",
                     vlan: columnas[7] || "",
-                    link: columnas[12] || "",
+                    dominio_id: obtenerIdPorNombre(listasReferencia.dominios, columnas[8]),
+                    sistema_operativo_id: obtenerIdPorNombre(listasReferencia.sistemasOperativos, columnas[9]),
+                    estatus_id: obtenerIdPorNombre(listasReferencia.estatus, columnas[10]),
                     descripcion: columnas[11] || "",
-                    servicio_id: parseInt(columnas[3], 10),
-                    capa_id: parseInt(columnas[4], 10),
-                    ambiente_id: parseInt(columnas[5], 10),
-                    dominio_id: parseInt(columnas[8], 10),
-                    sistema_operativo_id: parseInt(columnas[9], 10),
-                    estatus_id: parseInt(columnas[10], 10),
+                    link: columnas[12] || "",
                     activo: true
                 };
+
+                if (!servidor.servicio_id || !servidor.capa_id || !servidor.ambiente_id || !servidor.dominio_id || !servidor.sistema_operativo_id || !servidor.estatus_id) {
+                    console.error(`Error al procesar servidor ${servidor.nombre}: algunos valores no fueron encontrados.`);
+                    continue;
+                }
 
                 try {
                     const response = await fetch(`${process.env.BACKEND_URL}/api/servidores`, {
@@ -88,11 +157,15 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
             });
 
             actualizarServidores();
+
+            // 🔹 Resetear input de archivo de manera segura
+            if (event.target) {
+                event.target.value = "";
+            }
         };
 
         reader.readAsText(file);
     };
-
     const abrirModalLink = (servidor) => {
         if (!servidor || !servidor.link) return;
 
@@ -155,10 +228,11 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
                 Swal.fire("Error", "No se pudo eliminar el servidor.", "error");
             }
         } catch (error) {
-            console.error("Error al actualizar el servidor:", error);
+            console.error("Error al eliminar el servidor:", error);
             Swal.fire("Error", "No se pudo conectar con el servidor.", "error");
         }
     };
+
     return (
         <div>
             {/* 🔹 Paginación y opciones */}
@@ -238,6 +312,7 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
                     )}
                 </tbody>
             </table>
+
             {/* 🔹 Paginación */}
             <div className="paginacion-servidores">
                 <button
@@ -258,6 +333,7 @@ const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
             </div>
         </div>
     );
+
 };
 
 export default ServidorTabla;
