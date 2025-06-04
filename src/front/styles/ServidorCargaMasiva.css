@@ -111,7 +111,7 @@
   margin-right: 2px;
 }
 .icon-error {
-  color: #d9534f;
+  color: #dc3545;
   vertical-align: middle;
   font-size: 22px;
   margin-right: 2px;
@@ -125,6 +125,6 @@
   font-weight: 500;
 }
 .texto-error {
-  color: #d9534f;
+  color: #dc3545;
   font-weight: 500;
 }

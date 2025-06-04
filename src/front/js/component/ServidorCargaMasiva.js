@@ -73,7 +73,7 @@ const ServidorCargaMasiva = ({ actualizarServidores }) => {
             confirmButtonText: "Guardar",
             cancelButtonText: "Cancelar",
             confirmButtonColor: "#007953",
-            cancelButtonColor: "#d9534f",
+            cancelButtonColor: "#dc3545",
             background: "#fff",
             width: "40%",
             preConfirm: () => {
