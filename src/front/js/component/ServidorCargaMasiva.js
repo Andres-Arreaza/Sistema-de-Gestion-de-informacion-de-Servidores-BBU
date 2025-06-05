@@ -73,6 +73,7 @@ const ServidorCargaMasiva = () => {
     const actualizarTabla = (data) => {
         if (!data.length) return;
 
+        const encabezado = data[0]; // <-- Toma el encabezado dinámicamente
         const cantidadServidores = data.length - 1;
         const totalPaginas = Math.ceil(cantidadServidores / servidoresPorPagina);
         const inicio = (paginaActual - 1) * servidoresPorPagina;
@@ -92,25 +93,17 @@ const ServidorCargaMasiva = () => {
                 <table class="tabla-servidores">
                     <thead>
                         <tr>
-                            <th>Nombre</th>
-                            <th>Tipo</th>
-                            <th>IP</th>
-                            <th>Servicio</th>
-                            <th>Capa</th>
-                            <th>Ambiente</th>
-                            <th>Balanceador</th>
-                            <th>VLAN</th>
-                            <th>Dominio</th>
-                            <th>S.O.</th>
-                            <th>Estatus</th>
-                            <th>Descripción</th>
-                            <th>Link</th>
+                            ${encabezado.map(col => `<th>${col}</th>`).join("")}
                         </tr>
                     </thead>
                     <tbody>
                         ${nuevosDatos.map(row => `
                             <tr>
-                                ${row.map(col => `<td>${col}</td>`).join("")}
+                                ${row.map((col, idx) =>
+                idx === row.length - 1
+                    ? `<td style="font-weight:bold; color:${col.includes('listo') ? '#007953' : '#dc3545'}">${col}</td>`
+                    : `<td>${col}</td>`
+            ).join("")}
                             </tr>
                         `).join("")}
                     </tbody>
@@ -129,13 +122,75 @@ const ServidorCargaMasiva = () => {
         actualizarTabla(datosCSV);
     }, [paginaActual, servidoresPorPagina, datosCSV]);
 
-    const mostrarModalTabla = (data) => {
+    const validarFilas = async (filas) => {
+        try {
+            const response = await fetch("http://localhost:3001/api/servidores/validar_masivo", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ filas }),
+            });
+            if (!response.ok) {
+                throw new Error("Error en la validación masiva");
+            }
+            return await response.json();
+        } catch (error) {
+            Swal.fire("Error", "No se pudo validar el archivo. Verifica la conexión con el servidor.", "error");
+            return filas; // Devuelve las filas originales para evitar romper el flujo
+        }
+    };
+
+    const renderTablaModal = (filasValidadas, paginaActual, servidoresPorPagina) => {
+        const tablaContainer = document.getElementById("tabla-container");
+        if (!tablaContainer) return;
+        const encabezado = filasValidadas[0];
+        const filas = filasValidadas.slice(1);
+
+        // Paginación
+        const inicio = (paginaActual - 1) * servidoresPorPagina;
+        const fin = inicio + servidoresPorPagina;
+        const filasPagina = filas.slice(inicio, fin);
+
+        tablaContainer.innerHTML = `
+            <table class="tabla-servidores">
+                <thead>
+                    <tr>
+                        ${encabezado.map(col => `<th>${col}</th>`).join("")}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filasPagina.map(row => `
+                        <tr>
+                            ${row.map((col, idx) =>
+            idx === row.length - 1
+                ? `<td style="font-weight:bold; color:${col.includes('listo') ? '#007953' : '#dc3545'}">${col}</td>`
+                : `<td>${col}</td>`
+        ).join("")}
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        `;
+
+        // Actualiza los indicadores de paginación
+        const contadorServidores = document.getElementById("contador-servidores");
+        const paginaIndicador = document.getElementById("pagina-indicador");
+        if (contadorServidores) {
+            contadorServidores.innerHTML = `<b>Servidores a crear:</b> ${filas.length}`;
+        }
+        if (paginaIndicador) {
+            paginaIndicador.innerHTML = `Página ${paginaActual} de ${Math.ceil(filas.length / servidoresPorPagina)}`;
+        }
+    };
+
+    const mostrarModalTabla = async (data) => {
+        const filasValidadas = await validarFilas(data);
+
         Swal.fire({
             title: "Vista Previa de la Carga Masiva",
             html: `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                     <span id="contador-servidores" style="font-size: 14px; color: #333;">
-                        <b>Servidores a crear:</b> ${data.length - 1}
+                        <b>Servidores a crear:</b> ${filasValidadas.length - 1}
                     </span>
                     <div>
                         <label for="select-servidores" style="font-size: 14px;">Servidores por página:</label>
@@ -150,34 +205,45 @@ const ServidorCargaMasiva = () => {
                 <div id="tabla-container" class="tabla-modal"></div>
                 <div style="display: flex; justify-content: space-between; margin-top: 10px;">
                     <button id="btn-prev" class="paginacion-btn">Anterior</button>
-                    <span id="pagina-indicador" style="font-size: 14px;">Página ${paginaActual} de ${Math.ceil((data.length - 1) / servidoresPorPagina)}</span>
+                    <span id="pagina-indicador" style="font-size: 14px;">Página ${paginaActual} de ${Math.ceil((filasValidadas.length - 1) / servidoresPorPagina)}</span>
                     <button id="btn-next" class="paginacion-btn">Siguiente</button>
                 </div>
             `,
             confirmButtonText: "Cerrar",
             confirmButtonColor: "#dc3545",
-            width: "80%",
+            width: "100%",
             didClose: () => {
                 setPaginaActual(1);
             },
             didOpen: () => {
-                actualizarTabla(data);
+                // Renderiza la tabla inicial
+                renderTablaModal(filasValidadas, paginaActual, servidoresPorPagina);
 
                 document.getElementById("select-servidores").addEventListener("change", (e) => {
                     setServidoresPorPagina(Number(e.target.value));
                     setPaginaActual(1);
+                    // Vuelve a renderizar la tabla con la nueva cantidad
+                    renderTablaModal(filasValidadas, 1, Number(e.target.value));
                 });
 
                 document.getElementById("btn-prev").addEventListener("click", () => {
                     if (paginaActual >= 1) {
-                        setPaginaActual(prev => prev - 1);
+                        setPaginaActual(prev => {
+                            const nuevaPagina = prev - 1;
+                            renderTablaModal(filasValidadas, nuevaPagina, servidoresPorPagina);
+                            return nuevaPagina;
+                        });
                     }
                 });
 
                 document.getElementById("btn-next").addEventListener("click", () => {
-                    const totalPaginas = Math.ceil((data.length - 1) / servidoresPorPagina);
+                    const totalPaginas = Math.ceil((filasValidadas.length - 1) / servidoresPorPagina);
                     if (paginaActual < totalPaginas) {
-                        setPaginaActual(prev => prev + 1);
+                        setPaginaActual(prev => {
+                            const nuevaPagina = prev + 1;
+                            renderTablaModal(filasValidadas, nuevaPagina, servidoresPorPagina);
+                            return nuevaPagina;
+                        });
                     }
                 });
             }

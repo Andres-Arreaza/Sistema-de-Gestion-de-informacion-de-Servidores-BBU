@@ -68,7 +68,7 @@ const HomeTabla = ({ servidores }) => {
                     <option value="150">150</option>
                     <option value="200">200</option>
                 </select>
-                <button className="export-csv-btn" onClick={() => exportarCSV(servidores)}>Descargar Servidores</button>
+                <button className="export-csv-btn" onClick={() => exportarCSV(servidores)}>Descargar</button>
             </div>
 
             {servidores.length === 0 ? (

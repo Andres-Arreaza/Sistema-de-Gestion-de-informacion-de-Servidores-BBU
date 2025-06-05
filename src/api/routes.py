@@ -396,3 +396,59 @@ def buscar_servidores():
     except Exception as e:
         print("ERROR EN BUSQUEDA:", e)
         return jsonify({"error": str(e)}), 500
+
+@api.route("/servidores/validar_masivo", methods=["POST"])
+def validar_masivo():
+    """
+    Recibe filas del CSV y devuelve la observación para cada una.
+    """
+    from api.models import Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, TipoServidorEnum
+    data = request.get_json()
+    filas = data.get("filas", [])
+    if not filas or len(filas) < 2:
+        return jsonify([])
+
+    encabezado = filas[0]
+    resultado = [encabezado + ["Observación"]]
+
+    # Mapas para buscar por nombre
+    servicios = {s.nombre.upper(): s.id for s in Servicio.query.filter_by(activo=True).all()}
+    capas = {c.nombre.upper(): c.id for c in Capa.query.filter_by(activo=True).all()}
+    ambientes = {a.nombre.upper(): a.id for a in Ambiente.query.filter_by(activo=True).all()}
+    dominios = {d.nombre.upper(): d.id for d in Dominio.query.filter_by(activo=True).all()}
+    sistemas = {s.nombre.upper(): s.id for s in SistemaOperativo.query.filter_by(activo=True).all()}
+    estatuses = {e.nombre.upper(): e.id for e in Estatus.query.filter_by(activo=True).all()}
+
+    for fila in filas[1:]:
+        # Ajusta los índices según el orden de tu CSV
+        nombre, tipo, ip, servicio, capa, ambiente, balanceador, vlan, dominio, so, estatus, descripcion, link = fila[:13]
+        observacion = []
+
+        # Validar nombre e IP duplicados
+        if Servidor.query.filter_by(nombre=nombre).first():
+            observacion.append("Nombre ya existe")
+        if Servidor.query.filter_by(ip=ip).first():
+            observacion.append("IP ya existe")
+
+        # Validar existencia de campos relacionados
+        if tipo.upper() not in ["FISICO", "FÍSICO", "VIRTUAL"]:
+            observacion.append("Tipo no válido")
+        if servicio.upper() not in servicios:
+            observacion.append("Servicio no existe")
+        if capa.upper() not in capas:
+            observacion.append("Capa no existe")
+        if ambiente.upper() not in ambientes:
+            observacion.append("Ambiente no existe")
+        if dominio.upper() not in dominios:
+            observacion.append("Dominio no existe")
+        if so.upper() not in sistemas:
+            observacion.append("S.O. no existe")
+        if estatus.upper() not in estatuses:
+            observacion.append("Estatus no existe")
+
+        if not observacion:
+            observacion = ["Servidor listo para guardar"]
+
+        resultado.append(fila + ["; ".join(observacion)])
+
+    return jsonify(resultado)
