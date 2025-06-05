@@ -1,58 +1,18 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 
-const ServidorCargaMasiva = ({ actualizarServidores }) => {
-    const [listasReferencia, setListasReferencia] = useState({
-        servicios: [],
-        capas: [],
-        ambientes: [],
-        dominios: [],
-        sistemasOperativos: [],
-        estatus: [],
-    });
+const ServidorCargaMasiva = () => {
+    const [datosCSV, setDatosCSV] = useState([]);
+    const [paginaActual, setPaginaActual] = useState(1);
+    const [servidoresPorPagina, setServidoresPorPagina] = useState(10);
+    const [datosPaginados, setDatosPaginados] = useState([]);
 
     useEffect(() => {
-        const obtenerListasReferencia = async () => {
-            try {
-                const urls = [
-                    `${process.env.BACKEND_URL}/api/servicios`,
-                    `${process.env.BACKEND_URL}/api/capas`,
-                    `${process.env.BACKEND_URL}/api/ambientes`,
-                    `${process.env.BACKEND_URL}/api/dominios`,
-                    `${process.env.BACKEND_URL}/api/sistemas_operativos`,
-                    `${process.env.BACKEND_URL}/api/estatus`
-                ];
-                const respuestas = await Promise.all(urls.map(url => fetch(url)));
-                const datos = await Promise.all(respuestas.map(async res => {
-                    const contentType = res.headers.get("content-type") || "";
-                    if (!res.ok || !contentType.includes("application/json")) {
-                        console.error(`Error en API (${res.url}): ${res.status}`);
-                        return [];
-                    }
-                    return res.json();
-                }));
-                setListasReferencia({
-                    servicios: datos[0] || [],
-                    capas: datos[1] || [],
-                    ambientes: datos[2] || [],
-                    dominios: datos[3] || [],
-                    sistemasOperativos: datos[4] || [],
-                    estatus: datos[5] || [],
-                });
-            } catch (error) {
-                console.error("Error al obtener listas de referencia:", error);
-            }
-        };
-        obtenerListasReferencia();
-    }, []);
+        if (datosCSV.length > 0) {
+            actualizarTabla(datosCSV);
+        }
+    }, [paginaActual, servidoresPorPagina, datosCSV]);
 
-    const obtenerIdPorNombre = (lista, nombre) => {
-        if (!lista || lista.length === 0) return null;
-        const elemento = lista.find(item => item.nombre?.toLowerCase() === nombre?.toLowerCase());
-        return elemento ? elemento.id : null;
-    };
-
-    // Modal solo con input y nombre de archivo bonito y centrado
     const mostrarModalCarga = () => {
         let fileRows = [];
         let fileName = "";
@@ -60,21 +20,20 @@ const ServidorCargaMasiva = ({ actualizarServidores }) => {
         Swal.fire({
             title: "Carga Masiva de Servidores",
             html: `
-                <div class="carga-masiva-modal-simple" style="display:flex;flex-direction:column;align-items:center;gap:16px;">
-                    <label for="input-csv" class="custom-file-label" style="margin:auto;">
+                <div class="carga-masiva-modal-simple">
+                    <label for="input-csv" class="custom-file-label">
                         <span class="material-symbols-outlined">upload</span>
                         Seleccionar archivo CSV
                     </label>
-                    <input type="file" id="input-csv" accept=".csv" class="swal2-input custom-file-input"/>
-                    <div id="nombre-archivo-csv" class="nombre-archivo-csv" style="margin:auto;text-align:center;"></div>
+                    <input type="file" id="input-csv" accept=".csv" class="custom-file-input" style="display:none;"/>
+                    <div id="nombre-archivo-csv" class="nombre-archivo-csv">Ningún archivo seleccionado</div>
                 </div>
             `,
             showCancelButton: true,
-            confirmButtonText: "Guardar",
+            confirmButtonText: "Aceptar",
             cancelButtonText: "Cancelar",
             confirmButtonColor: "#007953",
             cancelButtonColor: "#dc3545",
-            background: "#fff",
             width: "40%",
             preConfirm: () => {
                 if (!fileRows.length) {
@@ -85,160 +44,144 @@ const ServidorCargaMasiva = ({ actualizarServidores }) => {
             },
             didOpen: () => {
                 const input = document.getElementById("input-csv");
-                input.style.display = "none"; // Oculta el input real
-                const label = document.querySelector(".custom-file-label");
-                label.onclick = () => input.click();
-
-                // Permitir seleccionar el mismo archivo dos veces seguidas
-                input.value = "";
+                const nombreArchivo = document.getElementById("nombre-archivo-csv");
 
                 input.addEventListener("change", (e) => {
                     const file = e.target.files[0];
                     if (!file) return;
+
                     fileName = file.name;
                     const reader = new FileReader();
+
                     reader.onload = (ev) => {
                         const filas = ev.target.result.split("\n").filter(f => f.trim());
                         fileRows = filas.map(fila => fila.split(";").map(col => col.replace(/"/g, "").trim()));
-                        document.getElementById("nombre-archivo-csv").innerHTML =
-                            `<span class="archivo-seleccionado"><b>Archivo seleccionado:</b> ${fileName}</span>`;
+                        nombreArchivo.innerHTML = `<b>Archivo seleccionado:</b> ${file.name}`;
                     };
+
                     reader.readAsText(file);
-                    // Permitir volver a seleccionar el mismo archivo si hay error
-                    input.value = "";
                 });
             }
-        }).then(async (result) => {
-            if (result.isConfirmed && result.value) {
-                await importarCSV(result.value);
+        }).then((result) => {
+            if (result.isConfirmed) {
+                setDatosCSV(fileRows);
+                setPaginaActual(1);
+                mostrarModalTabla(fileRows);
             }
         });
     };
+    const actualizarTabla = (data) => {
+        if (!data.length) return;
 
-    // Aquí va la función importarCSV (sin cambios en la lógica principal)
-    const importarCSV = async (filas) => {
-        if (!filas || filas.length < 2) return;
-        let servidoresExistentes = [];
-        try {
-            const res = await fetch(`${process.env.BACKEND_URL}/api/servidores`);
-            if (res.ok) servidoresExistentes = await res.json();
-        } catch (e) { }
+        const cantidadServidores = data.length - 1;
+        const totalPaginas = Math.ceil(cantidadServidores / servidoresPorPagina);
+        const inicio = (paginaActual - 1) * servidoresPorPagina;
+        const fin = inicio + servidoresPorPagina;
+        const nuevosDatos = data.slice(1).slice(inicio, fin);
 
-        let resultados = [];
-        for (let i = 1; i < filas.length; i++) {
-            const columnas = filas[i];
-            if (!columnas || columnas.length < 3) continue;
-            const servidor = {
-                nombre: columnas[0],
-                tipo: columnas[1],
-                ip: columnas[2],
-                servicio_id: obtenerIdPorNombre(listasReferencia.servicios, columnas[3]),
-                capa_id: obtenerIdPorNombre(listasReferencia.capas, columnas[4]),
-                ambiente_id: obtenerIdPorNombre(listasReferencia.ambientes, columnas[5]),
-                balanceador: columnas[6] || "",
-                vlan: columnas[7] || "",
-                dominio_id: obtenerIdPorNombre(listasReferencia.dominios, columnas[8]),
-                sistema_operativo_id: obtenerIdPorNombre(listasReferencia.sistemasOperativos, columnas[9]),
-                estatus_id: obtenerIdPorNombre(listasReferencia.estatus, columnas[10]),
-                descripcion: columnas[11] || "",
-                link: columnas[12] || "",
-                activo: true
-            };
+        setDatosPaginados(nuevosDatos);
 
-            let mensajesDuplicidad = [];
-            if (servidoresExistentes.find(s => s.nombre === servidor.nombre)) {
-                mensajesDuplicidad.push("Ya existe un servidor con ese nombre");
-            }
-            if (servidoresExistentes.find(s => s.ip === servidor.ip)) {
-                mensajesDuplicidad.push("Ya existe un servidor con esa IP");
-            }
+        const tablaContainer = document.getElementById("tabla-container");
+        const contadorServidores = document.getElementById("contador-servidores");
+        const paginaIndicador = document.getElementById("pagina-indicador");
+        const btnPrev = document.getElementById("btn-prev");
+        const btnNext = document.getElementById("btn-next");
 
-            if (!servidor.servicio_id || !servidor.capa_id || !servidor.ambiente_id || !servidor.dominio_id || !servidor.sistema_operativo_id || !servidor.estatus_id) {
-                resultados.push({
-                    nombre: servidor.nombre,
-                    ip: servidor.ip,
-                    exito: false,
-                    mensaje: "Valores de referencia no encontrados"
-                });
-                continue;
-            }
+        if (tablaContainer && contadorServidores && paginaIndicador && btnPrev && btnNext) {
+            tablaContainer.innerHTML = `
+                <table class="tabla-servidores">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>IP</th>
+                            <th>Servicio</th>
+                            <th>Capa</th>
+                            <th>Ambiente</th>
+                            <th>Balanceador</th>
+                            <th>VLAN</th>
+                            <th>Dominio</th>
+                            <th>S.O.</th>
+                            <th>Estatus</th>
+                            <th>Descripción</th>
+                            <th>Link</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${nuevosDatos.map(row => `
+                            <tr>
+                                ${row.map(col => `<td>${col}</td>`).join("")}
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+            `;
 
-            if (mensajesDuplicidad.length > 0) {
-                resultados.push({
-                    nombre: servidor.nombre,
-                    ip: servidor.ip,
-                    exito: false,
-                    mensaje: mensajesDuplicidad.length === 2
-                        ? "Ya existe un servidor con ese nombre y con esa IP"
-                        : mensajesDuplicidad[0]
-                });
-                continue;
-            }
+            contadorServidores.innerHTML = `<b>Servidores a crear:</b> ${cantidadServidores}`;
+            paginaIndicador.innerHTML = `Página ${paginaActual} de ${totalPaginas}`;
 
-            try {
-                const response = await fetch(`${process.env.BACKEND_URL}/api/servidores`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(servidor),
-                });
-
-                if (response.ok) {
-                    resultados.push({
-                        nombre: servidor.nombre,
-                        ip: servidor.ip,
-                        exito: true,
-                        mensaje: "Servidor guardado correctamente"
-                    });
-                    servidoresExistentes.push({ nombre: servidor.nombre, ip: servidor.ip });
-                } else {
-                    let motivo = "Duplicidad";
-                    try {
-                        const errorData = await response.json();
-                        motivo = errorData?.msg || errorData?.error || motivo;
-                    } catch { }
-                    resultados.push({
-                        nombre: servidor.nombre,
-                        ip: servidor.ip,
-                        exito: false,
-                        mensaje: motivo
-                    });
-                }
-            } catch (error) {
-                resultados.push({
-                    nombre: servidor.nombre,
-                    ip: servidor.ip,
-                    exito: false,
-                    mensaje: "Error de red o servidor"
-                });
-            }
+            btnPrev.disabled = paginaActual === 1;
+            btnNext.disabled = paginaActual >= totalPaginas;
         }
+    };
 
-        // Mostrar resultados finales
+    useEffect(() => {
+        actualizarTabla(datosCSV);
+    }, [paginaActual, servidoresPorPagina, datosCSV]);
+
+    const mostrarModalTabla = (data) => {
         Swal.fire({
-            title: "Resultado de la carga masiva",
+            title: "Vista Previa de la Carga Masiva",
             html: `
-                <div class="carga-masiva-modal">
-                    ${resultados.length === 0 ? "<div>No se procesó ningún registro.</div>" : ""}
-                    ${resultados.map(s => `
-                        <div class="carga-masiva-item">
-                            <span class="material-symbols-outlined ${s.exito ? "icon-success" : "icon-error"}">
-                                ${s.exito ? "check" : "close"}
-                            </span>
-                            <span class="carga-masiva-mensaje ${s.exito ? "texto-exito" : "texto-error"}">
-                                <b>${s.nombre}</b> (${s.ip}) - ${s.mensaje}
-                            </span>
-                        </div>
-                    `).join("")}
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span id="contador-servidores" style="font-size: 14px; color: #333;">
+                        <b>Servidores a crear:</b> ${data.length - 1}
+                    </span>
+                    <div>
+                        <label for="select-servidores" style="font-size: 14px;">Servidores por página:</label>
+                        <select id="select-servidores" style="font-size: 14px; padding: 4px; margin-left: 6px;">
+                            <option value="5">5</option>
+                            <option value="10" ${servidoresPorPagina === 10 ? "selected" : ""}>10</option>
+                            <option value="20" ${servidoresPorPagina === 20 ? "selected" : ""}>20</option>
+                            <option value="50" ${servidoresPorPagina === 50 ? "selected" : ""}>50</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="tabla-container" class="tabla-modal"></div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                    <button id="btn-prev" class="paginacion-btn">Anterior</button>
+                    <span id="pagina-indicador" style="font-size: 14px;">Página ${paginaActual} de ${Math.ceil((data.length - 1) / servidoresPorPagina)}</span>
+                    <button id="btn-next" class="paginacion-btn">Siguiente</button>
                 </div>
             `,
-            icon: "info",
-            width: "40%",
-            confirmButtonText: "Aceptar",
-            confirmButtonColor: "#007953",
-            background: "#fff"
-        });
+            confirmButtonText: "Cerrar",
+            confirmButtonColor: "#dc3545",
+            width: "80%",
+            didClose: () => {
+                setPaginaActual(1);
+            },
+            didOpen: () => {
+                actualizarTabla(data);
 
-        if (actualizarServidores) actualizarServidores();
+                document.getElementById("select-servidores").addEventListener("change", (e) => {
+                    setServidoresPorPagina(Number(e.target.value));
+                    setPaginaActual(1);
+                });
+
+                document.getElementById("btn-prev").addEventListener("click", () => {
+                    if (paginaActual >= 1) {
+                        setPaginaActual(prev => prev - 1);
+                    }
+                });
+
+                document.getElementById("btn-next").addEventListener("click", () => {
+                    const totalPaginas = Math.ceil((data.length - 1) / servidoresPorPagina);
+                    if (paginaActual < totalPaginas) {
+                        setPaginaActual(prev => prev + 1);
+                    }
+                });
+            }
+        });
     };
 
     return (
