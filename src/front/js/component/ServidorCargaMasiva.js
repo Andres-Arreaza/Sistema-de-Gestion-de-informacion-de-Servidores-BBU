@@ -139,51 +139,79 @@ const ServidorCargaMasiva = () => {
         }
     };
 
-    const renderTablaModal = (filasValidadas, paginaActual, servidoresPorPagina) => {
-        const tablaContainer = document.getElementById("tabla-container");
-        if (!tablaContainer) return;
-        const encabezado = filasValidadas[0];
-        const filas = filasValidadas.slice(1);
-
-        // Paginación
-        const inicio = (paginaActual - 1) * servidoresPorPagina;
-        const fin = inicio + servidoresPorPagina;
-        const filasPagina = filas.slice(inicio, fin);
-
-        tablaContainer.innerHTML = `
-            <table class="tabla-servidores">
-                <thead>
-                    <tr>
-                        ${encabezado.map(col => `<th>${col}</th>`).join("")}
-                    </tr>
-                </thead>
-                <tbody>
-                    ${filasPagina.map(row => `
-                        <tr>
-                            ${row.map((col, idx) =>
-            idx === row.length - 1
-                ? `<td style="font-weight:bold; color:${col.includes('listo') ? '#007953' : '#dc3545'}">${col}</td>`
-                : `<td>${col}</td>`
-        ).join("")}
-                        </tr>
-                    `).join("")}
-                </tbody>
-            </table>
-        `;
-
-        // Actualiza los indicadores de paginación
-        const contadorServidores = document.getElementById("contador-servidores");
-        const paginaIndicador = document.getElementById("pagina-indicador");
-        if (contadorServidores) {
-            contadorServidores.innerHTML = `<b>Servidores a crear:</b> ${filas.length}`;
-        }
-        if (paginaIndicador) {
-            paginaIndicador.innerHTML = `Página ${paginaActual} de ${Math.ceil(filas.length / servidoresPorPagina)}`;
-        }
-    };
-
     const mostrarModalTabla = async (data) => {
         const filasValidadas = await validarFilas(data);
+
+        // Estado local para paginación dentro del modal
+        let paginaActual = 1;
+        let servidoresPorPagina = 10;
+
+        // Renderiza la tabla y controles
+        const renderTablaModal = () => {
+            const tablaContainer = document.getElementById("tabla-container");
+            if (!tablaContainer) return;
+            const encabezado = filasValidadas[0];
+            const filas = filasValidadas.slice(1);
+
+            // Paginación
+            const totalPaginas = Math.ceil(filas.length / servidoresPorPagina);
+            const inicio = (paginaActual - 1) * servidoresPorPagina;
+            const fin = inicio + servidoresPorPagina;
+            const filasPagina = filas.slice(inicio, fin);
+
+            // Íconos de Google Fonts
+            const iconCheck = `<span class="material-symbols-outlined" style="color:#007953;">check_circle</span>`;
+            const iconCancel = `<span class="material-symbols-outlined" style="color:#dc3545;">cancel</span>`;
+
+            tablaContainer.innerHTML = `
+                <table class="tabla-servidores">
+                    <thead>
+                        <tr>
+                            ${encabezado.map(col => `<th>${col}</th>`).join("")}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filasPagina.map(row => {
+                const observacion = row[row.length - 1];
+                const tieneError = observacion !== "Servidor listo para guardar";
+                const errores = tieneError ? observacion.split(";").map(e => e.trim()) : [];
+                return `
+                            <tr>
+                                ${row.map((col, idx) => {
+                    // Columna Observación: solo icono
+                    if (idx === row.length - 1) {
+                        return `<td style="text-align:center;">${tieneError ? iconCancel : iconCheck}</td>`;
+                    }
+                    // Resalta en rojo si hay error en el campo
+                    let esError = false;
+                    if (tieneError) {
+                        const nombreCampo = encabezado[idx].toLowerCase();
+                        esError = errores.some(err => err.toLowerCase().includes(nombreCampo));
+                    }
+                    return `<td${esError ? ' style="color:#dc3545;font-weight:bold;"' : ''}>${col}</td>`;
+                }).join("")}
+                            </tr>
+                        `;
+            }).join("")}
+                    </tbody>
+                </table>
+            `;
+
+            // Actualiza los indicadores de paginación
+            const contadorServidores = document.getElementById("contador-servidores");
+            const paginaIndicador = document.getElementById("pagina-indicador");
+            const btnPrev = document.getElementById("btn-prev");
+            const btnNext = document.getElementById("btn-next");
+
+            if (contadorServidores) {
+                contadorServidores.innerHTML = `<b>Servidores a crear:</b> ${filas.length}`;
+            }
+            if (paginaIndicador) {
+                paginaIndicador.innerHTML = `Página ${paginaActual} de ${totalPaginas}`;
+            }
+            if (btnPrev) btnPrev.disabled = paginaActual === 1;
+            if (btnNext) btnNext.disabled = paginaActual === totalPaginas;
+        };
 
         Swal.fire({
             title: "Vista Previa de la Carga Masiva",
@@ -196,54 +224,43 @@ const ServidorCargaMasiva = () => {
                         <label for="select-servidores" style="font-size: 14px;">Servidores por página:</label>
                         <select id="select-servidores" style="font-size: 14px; padding: 4px; margin-left: 6px;">
                             <option value="5">5</option>
-                            <option value="10" ${servidoresPorPagina === 10 ? "selected" : ""}>10</option>
-                            <option value="20" ${servidoresPorPagina === 20 ? "selected" : ""}>20</option>
-                            <option value="50" ${servidoresPorPagina === 50 ? "selected" : ""}>50</option>
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
                         </select>
                     </div>
                 </div>
                 <div id="tabla-container" class="tabla-modal"></div>
                 <div style="display: flex; justify-content: space-between; margin-top: 10px;">
                     <button id="btn-prev" class="paginacion-btn">Anterior</button>
-                    <span id="pagina-indicador" style="font-size: 14px;">Página ${paginaActual} de ${Math.ceil((filasValidadas.length - 1) / servidoresPorPagina)}</span>
+                    <span id="pagina-indicador" style="font-size: 14px;"></span>
                     <button id="btn-next" class="paginacion-btn">Siguiente</button>
                 </div>
             `,
             confirmButtonText: "Cerrar",
             confirmButtonColor: "#dc3545",
             width: "100%",
-            didClose: () => {
-                setPaginaActual(1);
-            },
             didOpen: () => {
-                // Renderiza la tabla inicial
-                renderTablaModal(filasValidadas, paginaActual, servidoresPorPagina);
+                renderTablaModal();
 
                 document.getElementById("select-servidores").addEventListener("change", (e) => {
-                    setServidoresPorPagina(Number(e.target.value));
-                    setPaginaActual(1);
-                    // Vuelve a renderizar la tabla con la nueva cantidad
-                    renderTablaModal(filasValidadas, 1, Number(e.target.value));
+                    servidoresPorPagina = Number(e.target.value);
+                    paginaActual = 1;
+                    renderTablaModal();
                 });
 
                 document.getElementById("btn-prev").addEventListener("click", () => {
-                    if (paginaActual >= 1) {
-                        setPaginaActual(prev => {
-                            const nuevaPagina = prev - 1;
-                            renderTablaModal(filasValidadas, nuevaPagina, servidoresPorPagina);
-                            return nuevaPagina;
-                        });
+                    if (paginaActual > 1) {
+                        paginaActual--;
+                        renderTablaModal();
                     }
                 });
 
                 document.getElementById("btn-next").addEventListener("click", () => {
                     const totalPaginas = Math.ceil((filasValidadas.length - 1) / servidoresPorPagina);
                     if (paginaActual < totalPaginas) {
-                        setPaginaActual(prev => {
-                            const nuevaPagina = prev + 1;
-                            renderTablaModal(filasValidadas, nuevaPagina, servidoresPorPagina);
-                            return nuevaPagina;
-                        });
+                        paginaActual++;
+                        renderTablaModal();
                     }
                 });
             }
