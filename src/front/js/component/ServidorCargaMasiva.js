@@ -164,7 +164,7 @@ const ServidorCargaMasiva = () => {
             const iconCancel = `<span class="material-symbols-outlined" style="color:#dc3545;">cancel</span>`;
 
             tablaContainer.innerHTML = `
-                <table class="tabla-servidores">
+                <table class="tabla-servidores tabla-modal-carga" style="width: 1800px; font-size: 16px;">
                     <thead>
                         <tr>
                             ${encabezado.map(col => `<th>${col}</th>`).join("")}
@@ -176,13 +176,11 @@ const ServidorCargaMasiva = () => {
                 const tieneError = observacion !== "Servidor listo para guardar";
                 const errores = tieneError ? observacion.split(";").map(e => e.trim()) : [];
                 return `
-                            <tr>
-                                ${row.map((col, idx) => {
-                    // Columna Observación: solo icono
+                    <tr>
+                        ${row.map((col, idx) => {
                     if (idx === row.length - 1) {
                         return `<td style="text-align:center;">${tieneError ? iconCancel : iconCheck}</td>`;
                     }
-                    // Resalta en rojo si hay error en el campo
                     let esError = false;
                     if (tieneError) {
                         const nombreCampo = encabezado[idx].toLowerCase();
@@ -190,8 +188,8 @@ const ServidorCargaMasiva = () => {
                     }
                     return `<td${esError ? ' style="color:#dc3545;font-weight:bold;"' : ''}>${col}</td>`;
                 }).join("")}
-                            </tr>
-                        `;
+                    </tr>
+                `;
             }).join("")}
                     </tbody>
                 </table>
