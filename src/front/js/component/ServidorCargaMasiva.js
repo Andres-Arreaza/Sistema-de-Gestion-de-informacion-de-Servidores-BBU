@@ -1,19 +1,79 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
+import ReactDOM from "react-dom";
 import Swal from "sweetalert2";
+
+/**
+ * Modal flotante para mostrar el link, nombre e IP del servidor.
+ * Incluye fondo oscuro y cierra al hacer clic fuera o en el botón.
+ */
+const LinkFloatModal = ({ link, nombre, ip, onClose }) => {
+    if (!link) return null;
+    return ReactDOM.createPortal(
+        <div
+            style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100vw",
+                height: "100vh",
+                background: "rgba(0,0,0,0.45)",
+                zIndex: 2147483647,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+            }}
+            onClick={onClose}
+        >
+            <div
+                style={{
+                    background: "#fff",
+                    border: "2px solid #007953",
+                    borderRadius: "10px",
+                    padding: "24px 32px",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+                    minWidth: "320px",
+                    textAlign: "center",
+                    position: "relative"
+                }}
+                onClick={e => e.stopPropagation()}
+            >
+                <h3 style={{ marginBottom: 16 }}>Enlace del servidor</h3>
+                <div style={{ marginBottom: 8 }}>
+                    <b>Nombre:</b> {nombre || "-"}
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                    <b>IP:</b> {ip || "-"}
+                </div>
+                <div style={{ wordBreak: "break-all", marginBottom: 16 }}>
+                    <a href={link} target="_blank" rel="noopener noreferrer">{link}</a>
+                </div>
+                <button
+                    onClick={onClose}
+                    style={{
+                        background: "#007953",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "5px",
+                        padding: "8px 24px",
+                        cursor: "pointer"
+                    }}
+                >
+                    Cerrar
+                </button>
+            </div>
+        </div>,
+        document.body
+    );
+};
 
 const ServidorCargaMasiva = () => {
     const [datosCSV, setDatosCSV] = useState([]);
     const [paginaActual, setPaginaActual] = useState(1);
     const [servidoresPorPagina, setServidoresPorPagina] = useState(10);
-    const [datosPaginados, setDatosPaginados] = useState([]);
-    const fileInputRef = useRef(null);
+    const [showLink, setShowLink] = useState(null); // { link, nombre, ip }
+    const filasValidadasRef = useRef([]); // Para mantener los datos validados entre renders
 
-    useEffect(() => {
-        if (datosCSV.length > 0) {
-            actualizarTabla(datosCSV);
-        }
-    }, [paginaActual, servidoresPorPagina, datosCSV]);
-
+    // Función para validar las filas en el backend
     const validarFilas = async (filas) => {
         if (!filas || filas.length === 0) {
             console.error("Error: 'filas' no está definido o está vacío.");
@@ -38,6 +98,7 @@ const ServidorCargaMasiva = () => {
         }
     };
 
+    // Modal para cargar el archivo CSV
     const mostrarModalCarga = () => {
         let fileRows = [];
 
@@ -99,19 +160,7 @@ const ServidorCargaMasiva = () => {
         });
     };
 
-    const actualizarTabla = (data) => {
-        if (!data.length) return;
-
-        const encabezado = data[0];
-        const cantidadServidores = data.length - 1;
-        const totalPaginas = Math.ceil(cantidadServidores / servidoresPorPagina);
-        const inicio = (paginaActual - 1) * servidoresPorPagina;
-        const fin = Math.min(inicio + servidoresPorPagina, cantidadServidores);
-        const nuevosDatos = data.slice(1).slice(inicio, fin);
-
-        setDatosPaginados(nuevosDatos);
-    };
-
+    // Modal de vista previa de la tabla
     const mostrarModalTabla = async (data) => {
         if (!data || data.length === 0) {
             console.error("Error: 'data' no está definido o está vacío.");
@@ -124,28 +173,30 @@ const ServidorCargaMasiva = () => {
             return;
         }
 
-        let paginaActual = 1;
-        let servidoresPorPagina = 10;
+        filasValidadasRef.current = filasValidadas;
+
+        let pagina = 1;
+        let porPagina = 10;
 
         const renderTablaModal = () => {
             const tablaContainer = document.getElementById("tabla-container");
             if (!tablaContainer) return;
-            const encabezado = filasValidadas[0];
-            const filas = filasValidadas.slice(1);
+            const encabezado = filasValidadasRef.current[0];
+            const filas = filasValidadasRef.current.slice(1);
 
-            if (!encabezado || encabezado.length === 0 || !filas || filas.length === 0) {
-                console.error("Error: Datos insuficientes para renderizar la tabla.");
-                return;
-            }
+            const linkIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "link");
+            const nombreIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "nombre" || col.trim().toLowerCase() === "servidor" || col.trim().toLowerCase() === "nombre servidor");
+            const ipIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "ip" || col.trim().toLowerCase() === "ip servidor");
 
-            const totalPaginas = Math.max(1, Math.ceil(filas.length / servidoresPorPagina));
-            paginaActual = Math.min(paginaActual, totalPaginas);
-            const inicio = (paginaActual - 1) * servidoresPorPagina;
-            const fin = Math.min(inicio + servidoresPorPagina, filas.length);
+            const totalPaginas = Math.max(1, Math.ceil(filas.length / porPagina));
+            pagina = Math.min(pagina, totalPaginas);
+            const inicio = (pagina - 1) * porPagina;
+            const fin = Math.min(inicio + porPagina, filas.length);
             const filasPagina = filas.slice(inicio, fin);
 
             const iconCheck = `<span class="material-symbols-outlined" style="color:#007953;">check_circle</span>`;
             const iconCancel = `<span class="material-symbols-outlined" style="color:#dc3545;">cancel</span>`;
+            const iconEye = `<span class="material-symbols-outlined" style="vertical-align:middle;">visibility</span>`;
 
             tablaContainer.innerHTML = `
                 <table class="tabla-servidores tabla-modal-carga" style="width: 1800px; font-size: 16px;">
@@ -155,7 +206,7 @@ const ServidorCargaMasiva = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        ${filasPagina.map(row => {
+                        ${filasPagina.map((row, rowIdx) => {
                 const observacion = row[row.length - 1];
                 const tieneError = observacion !== "Servidor listo para guardar";
                 const errores = tieneError ? observacion.split(";").map(e => e.trim()) : [];
@@ -165,6 +216,17 @@ const ServidorCargaMasiva = () => {
                                     ${row.map((col, idx) => {
                     if (idx === row.length - 1) {
                         return `<td style="text-align:center;">${tieneError ? iconCancel : iconCheck}</td>`;
+                    }
+                    if (idx === linkIdx) {
+                        if (!col || col.trim() === "") {
+                            return `<td></td>`;
+                        }
+                        const btnId = `btn-link-${inicio + rowIdx}`;
+                        return `<td style="text-align:center;">
+                            <button id="${btnId}" class="btn-link-ojo" style="background:none;border:none;cursor:pointer;" title="Ver enlace">
+                                ${iconEye}
+                            </button>
+                        </td>`;
                     }
                     let esError = false;
                     if (tieneError) {
@@ -181,10 +243,34 @@ const ServidorCargaMasiva = () => {
             `;
 
             document.getElementById("contador-servidores").innerHTML = `<b>Servidores a crear:</b> ${filas.length}`;
-            document.getElementById("pagina-indicador").innerHTML = `Página ${paginaActual} de ${totalPaginas}`;
-            document.getElementById("btn-prev").disabled = paginaActual === 1;
-            document.getElementById("btn-next").disabled = paginaActual >= totalPaginas;
+            document.getElementById("pagina-indicador").innerHTML = `Página ${pagina} de ${totalPaginas}`;
+            document.getElementById("btn-prev").disabled = pagina === 1;
+            document.getElementById("btn-next").disabled = pagina >= totalPaginas;
+
+            // Agrega el event listener para el botón del ojo
+            if (linkIdx !== -1) {
+                filasPagina.forEach((row, rowIdx) => {
+                    const col = row[linkIdx];
+                    if (col && col.trim() !== "") {
+                        const btnId = `btn-link-${inicio + rowIdx}`;
+                        setTimeout(() => {
+                            const btn = document.getElementById(btnId);
+                            if (btn) {
+                                btn.onclick = (e) => {
+                                    e.preventDefault();
+                                    setShowLink({
+                                        link: col,
+                                        nombre: nombreIdx !== -1 ? row[nombreIdx] : "",
+                                        ip: ipIdx !== -1 ? row[ipIdx] : ""
+                                    });
+                                };
+                            }
+                        }, 0);
+                    }
+                });
+            }
         };
+
         Swal.fire({
             title: "Vista Previa de la Carga Masiva",
             html: `
@@ -216,22 +302,22 @@ const ServidorCargaMasiva = () => {
                 renderTablaModal();
 
                 document.getElementById("select-servidores").addEventListener("change", (e) => {
-                    servidoresPorPagina = Number(e.target.value);
-                    paginaActual = 1;
+                    porPagina = Number(e.target.value);
+                    pagina = 1;
                     renderTablaModal();
                 });
 
                 document.getElementById("btn-prev").addEventListener("click", () => {
-                    if (paginaActual > 1) {
-                        paginaActual--;
+                    if (pagina > 1) {
+                        pagina--;
                         renderTablaModal();
                     }
                 });
 
                 document.getElementById("btn-next").addEventListener("click", () => {
-                    const totalPaginas = Math.max(1, Math.ceil((filasValidadas.length - 1) / servidoresPorPagina));
-                    if (paginaActual < totalPaginas) {
-                        paginaActual++;
+                    const totalPaginas = Math.max(1, Math.ceil((filasValidadas.length - 1) / porPagina));
+                    if (pagina < totalPaginas) {
+                        pagina++;
                         renderTablaModal();
                     }
                 });
@@ -240,9 +326,17 @@ const ServidorCargaMasiva = () => {
     };
 
     return (
-        <button className="carga-masiva-btn" onClick={mostrarModalCarga}>
-            Carga Masiva
-        </button>
+        <>
+            <button className="carga-masiva-btn" onClick={mostrarModalCarga}>
+                Carga Masiva
+            </button>
+            <LinkFloatModal
+                link={showLink?.link}
+                nombre={showLink?.nombre}
+                ip={showLink?.ip}
+                onClose={() => setShowLink(null)}
+            />
+        </>
     );
 };
 
