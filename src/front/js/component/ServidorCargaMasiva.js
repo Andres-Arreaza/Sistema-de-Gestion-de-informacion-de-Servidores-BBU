@@ -377,25 +377,6 @@ const ServidorCargaMasiva = () => {
             const encabezado = filasValidadasRef.current[0];
             const filas = filasValidadasRef.current.slice(1);
 
-            const repetidosPorColumna = {};
-            encabezado.slice(0, -1).forEach((col, colIdx) => {
-                const valores = {};
-                filas.forEach((fila, filaIdx) => {
-                    if (filaIdx === 0) return;
-                    const valor = fila[colIdx];
-                    if (valor && valor !== "") {
-                        if (!valores[valor]) valores[valor] = [];
-                        valores[valor].push(filaIdx);
-                    }
-                });
-                repetidosPorColumna[colIdx] = new Set();
-                Object.values(valores).forEach(indices => {
-                    if (indices.length > 0) {
-                        indices.forEach(idx => repetidosPorColumna[colIdx].add(idx));
-                    }
-                });
-            });
-
             const linkIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "link");
             const nombreIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "nombre" || col.trim().toLowerCase() === "servidor" || col.trim().toLowerCase() === "nombre servidor");
             const ipIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "ip" || col.trim().toLowerCase() === "ip servidor");
@@ -423,9 +404,11 @@ const ServidorCargaMasiva = () => {
                     <tbody>
                         ${filasPagina.map((row, rowIdx) => {
                 const filaRealIdx = inicio + rowIdx;
+                const observacion = row[row.length - 1] || "";
                 return `
             <tr>
                 ${row.map((col, idx) => {
+                    // Observación (última columna)
                     if (idx === row.length - 1) {
                         const tieneError = col !== "Servidor listo para guardar";
                         return `<td style="text-align:center;">
@@ -434,6 +417,7 @@ const ServidorCargaMasiva = () => {
                             </span>
                         </td>`;
                     }
+                    // Link
                     if (idx === linkIdx) {
                         if (!col || col.trim() === "") {
                             return `<td></td>`;
@@ -445,20 +429,18 @@ const ServidorCargaMasiva = () => {
                             </button>
                         </td>`;
                     }
+                    // Solo marcar en rojo si el campo tiene error específico
                     let esError = false;
-                    const observacion = row[row.length - 1];
-                    if (observacion !== "Servidor listo para guardar") {
+                    if (observacion && observacion !== "Servidor listo para guardar") {
+                        // Solo marcar en rojo si la observación menciona este campo o repetido de este campo
                         const nombreCampo = encabezado[idx].toLowerCase();
-                        esError = observacion.split(";").some(err => err.toLowerCase().includes(nombreCampo) || err.toLowerCase().includes("repetido"));
+                        esError = observacion.split(";").some(err =>
+                            err.toLowerCase().includes(nombreCampo) ||
+                            (idx === nombreIdx && err.toLowerCase().includes("nombre repetido")) ||
+                            (idx === ipIdx && err.toLowerCase().includes("ip repetida"))
+                        );
                     }
-                    let esRepetido = false;
-                    if (filaRealIdx > 0 && repetidosPorColumna[idx] && repetidosPorColumna[idx].has(filaRealIdx - 1)) {
-                        esRepetido = true;
-                    }
-                    if (idx === nombreIdx && observacion.toLowerCase().includes("nombre repetido")) esRepetido = true;
-                    if (idx === ipIdx && observacion.toLowerCase().includes("ip repetida")) esRepetido = true;
-
-                    const style = (esError || esRepetido) ? ' style="color:#dc3545;font-weight:bold;"' : '';
+                    const style = esError ? ' style="color:#dc3545;font-weight:bold;"' : '';
                     return `<td${style}>${col}</td>`;
                 }).join("")}
                 <td style="text-align:center;">
@@ -590,23 +572,65 @@ const ServidorCargaMasiva = () => {
             }
         }).then(async (result) => {
             if (result.isConfirmed) {
-                // Solo envía filas válidas (sin encabezado)
-                const filasParaGuardar = filasValidadasRef.current.filter((fila, idx) => idx === 0 || (fila[fila.length - 1] === "Servidor listo para guardar"));
-                if (filasParaGuardar.length <= 1) {
-                    Swal.fire("Error", "No hay servidores válidos para guardar.", "error");
+                // Solo permite guardar si TODOS los servidores son válidos
+                const filas = filasValidadasRef.current;
+                const todasValidas = filas.slice(1).every(fila => fila[fila.length - 1] === "Servidor listo para guardar");
+                if (!todasValidas) {
+                    // Mostrar alerta sobrepuesta, NO cerrar el modal principal
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error en la carga masiva",
+                        text: "Se encontraron datos incorrectos en la vista previa. Verifica los registros antes de guardar.",
+                        confirmButtonText: "Aceptar",
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        backdrop: false,
+                        didClose: () => {
+                            mostrarModalTabla(filas);
+                        }
+                    });
                     return;
                 }
                 try {
                     const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/carga_masiva`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ filas: filasParaGuardar }),
+                        body: JSON.stringify({ filas }),
                     });
                     if (!response.ok) throw new Error();
-                    Swal.fire("Carga masiva exitosa", "Los servidores fueron guardados correctamente.", "success");
+                    Swal.fire({
+                        icon: "success",
+                        title: "Carga masiva exitosa",
+                        text: "Los servidores fueron guardados correctamente.",
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
                 } catch (e) {
                     Swal.fire("Error en la carga masiva", "Ocurrió un error al guardar los servidores.", "error");
                 }
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                // Mostrar modal de confirmación sobrepuesto
+                Swal.fire({
+                    icon: "warning",
+                    title: "¿Seguro que deseas cerrar la carga masiva?",
+                    text: "No se guardarán los datos cargados.",
+                    showCancelButton: true,
+                    confirmButtonText: "Sí, cerrar",
+                    cancelButtonText: "No, volver",
+                    confirmButtonColor: "#dc3545",
+                    cancelButtonColor: "#007953",
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    backdrop: false // Esto hace que se sobreponga sin cerrar el modal principal
+                }).then((confirmResult) => {
+                    if (confirmResult.isConfirmed) {
+                        // Cierra ambos modales (el usuario ya confirmó)
+                        // No es necesario hacer nada, simplemente no se vuelve a mostrar la vista previa
+                    } else {
+                        // Si el usuario cancela, vuelve a mostrar la vista previa
+                        mostrarModalTabla(filasValidadasRef.current);
+                    }
+                });
             }
         });
     };
@@ -623,17 +647,20 @@ const ServidorCargaMasiva = () => {
             }
         }
         const filas = filasValidadasRef.current;
-        filas[editModal.filaIdx] = [...filaAValidar, ""];
-        filasValidadasRef.current = limpiarObservacionDuplicada(filas);
+        // Validar la fila editada
         const filasValidas = await validarFilas([encabezado, filaAValidar]);
         const filaActualizada = filasValidas[1];
-        const filasActuales = filasValidadasRef.current;
-        filasActuales[editModal.filaIdx] = filaActualizada;
+
+        // Actualizar la fila editada en el arreglo principal
+        filas[editModal.filaIdx] = filaActualizada;
+
+        // Recalcular repetidos y limpiar observaciones para todas las filas
         const nombreIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "nombre" || col.trim().toLowerCase() === "servidor" || col.trim().toLowerCase() === "nombre servidor");
         const ipIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "ip" || col.trim().toLowerCase() === "ip servidor");
         const obsIdx = encabezado.length - 1;
-        marcarRepetidosEnFilas(filasActuales, nombreIdx, ipIdx, obsIdx);
-        filasValidadasRef.current = limpiarObservacionDuplicada(filasActuales);
+        marcarRepetidosEnFilas(filas, nombreIdx, ipIdx, obsIdx);
+        filasValidadasRef.current = limpiarObservacionDuplicada(filas);
+
         const obs = filasValidadasRef.current[editModal.filaIdx][obsIdx] || "";
         if (obs.toLowerCase().includes("repetido")) {
             Swal.fire({

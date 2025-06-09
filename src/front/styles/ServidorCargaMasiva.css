@@ -137,9 +137,11 @@
 /* Modal flotante de enlace */
 .link-float-modal-overlay {
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.45);
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.45);
   z-index: 2147483647;
   display: flex;
   align-items: center;
@@ -150,7 +152,7 @@
   border: 2px solid #007953;
   border-radius: 10px;
   padding: 24px 32px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   min-width: 320px;
   text-align: center;
   position: relative;
@@ -177,9 +179,11 @@
 /* Modal de edición de fila */
 .editar-fila-modal-overlay {
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.45);
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.45);
   z-index: 2147483647;
   display: flex;
   align-items: center;
@@ -190,7 +194,7 @@
   border: 2px solid #007953;
   border-radius: 10px;
   padding: 24px 32px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   min-width: 400px;
   text-align: center;
   position: relative;
