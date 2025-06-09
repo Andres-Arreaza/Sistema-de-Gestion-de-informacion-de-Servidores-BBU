@@ -279,6 +279,39 @@ const ServidorCargaMasiva = () => {
         });
     };
 
+    // Eliminar un servidor de la vista previa (sin cerrar el modal principal)
+    const eliminarServidor = (filaIdx, renderTablaModal) => {
+        Swal.fire({
+            title: "¿Eliminar servidor?",
+            text: "¿Estás seguro de eliminar este servidor de la carga masiva?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#dc3545",
+            cancelButtonColor: "#007953",
+            confirmButtonText: "Eliminar",
+            cancelButtonText: "Cancelar",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Elimina la fila (recuerda que fila 0 es encabezado)
+                const filas = filasValidadasRef.current;
+                filas.splice(filaIdx, 1);
+                filasValidadasRef.current = limpiarObservacionDuplicada(filas);
+
+                // Recalcula repetidos después de eliminar
+                const encabezado = filas[0];
+                const nombreIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "nombre" || col.trim().toLowerCase() === "servidor" || col.trim().toLowerCase() === "nombre servidor");
+                const ipIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "ip" || col.trim().toLowerCase() === "ip servidor");
+                const obsIdx = encabezado.length - 1;
+                marcarRepetidosEnFilas(filas, nombreIdx, ipIdx, obsIdx);
+
+                // Vuelve a renderizar la tabla
+                renderTablaModal();
+            }
+        });
+    };
+
     // Modal de vista previa de la tabla
     const mostrarModalTabla = async (data) => {
         // --- LIMPIA COLUMNAS EXTRAS DE OBSERVACIÓN ANTES DE VALIDAR ---
@@ -347,6 +380,7 @@ const ServidorCargaMasiva = () => {
             const iconCancel = `<span class="material-symbols-outlined" style="color:#dc3545;">cancel</span>`;
             const iconEye = `<span class="material-symbols-outlined" style="vertical-align:middle;">visibility</span>`;
             const iconEdit = `<span class="material-symbols-outlined" style="vertical-align:middle;">edit</span>`;
+            const iconDelete = `<span class="material-symbols-outlined" style="color:#dc3545;">delete</span>`;
 
             tablaContainer.innerHTML = `
                 <table class="tabla-servidores tabla-modal-carga" style="width: 1800px; font-size: 16px;">
@@ -406,6 +440,9 @@ const ServidorCargaMasiva = () => {
                     <button id="btn-edit-${filaRealIdx}" class="btn-edit-ojo" style="background:none;border:none;cursor:pointer;" title="Editar">
                         ${iconEdit}
                     </button>
+                    <button id="btn-delete-${filaRealIdx}" class="btn-delete-ojo" style="background:none;border:none;cursor:pointer;" title="Eliminar">
+                        ${iconDelete}
+                    </button>
                 </td>
             </tr>
         `;
@@ -457,6 +494,20 @@ const ServidorCargaMasiva = () => {
                                 fila: [...filas[filaRealIdx]].slice(0, -1), // sin observación
                                 encabezado
                             });
+                        };
+                    }
+                }, 0);
+            });
+            // Botón de eliminar
+            filasPagina.forEach((row, rowIdx) => {
+                const filaRealIdx = inicio + rowIdx;
+                const btnId = `btn-delete-${filaRealIdx}`;
+                setTimeout(() => {
+                    const btn = document.getElementById(btnId);
+                    if (btn) {
+                        btn.onclick = (e) => {
+                            e.preventDefault();
+                            eliminarServidor(filaRealIdx + 1, renderTablaModal); // +1 porque fila 0 es encabezado
                         };
                     }
                 }, 0);
