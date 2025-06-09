@@ -32,7 +32,7 @@ const LinkFloatModal = ({ link, nombre, ip, onClose }) => {
 /**
  * Modal para editar una fila de la tabla de carga masiva.
  */
-const EditarFilaModal = ({ open, encabezado, fila, onSave, onClose }) => {
+const EditarFilaModal = ({ open, encabezado, fila, onSave, onClose, catalogos }) => {
     const [form, setForm] = useState(fila.map(col => col ?? ""));
     const [errores, setErrores] = useState([]);
 
@@ -53,6 +53,89 @@ const EditarFilaModal = ({ open, encabezado, fila, onSave, onClose }) => {
 
     if (!open) return null;
 
+    // Mapeo de campos seleccionables
+    const camposSelect = {
+        "tipo": (
+            <select value={form[encabezado.findIndex(c => c.toLowerCase().includes("tipo"))] || ""} onChange={e => {
+                const idx = encabezado.findIndex(c => c.toLowerCase().includes("tipo"));
+                const newForm = [...form];
+                newForm[idx] = e.target.value;
+                setForm(newForm);
+            }}>
+                <option value="">Seleccione el Tipo</option>
+                <option value="FISICO">FISICO</option>
+                <option value="VIRTUAL">VIRTUAL</option>
+            </select>
+        ),
+        "servicio": (
+            <select value={form[encabezado.findIndex(c => c.toLowerCase().includes("servicio"))] || ""} onChange={e => {
+                const idx = encabezado.findIndex(c => c.toLowerCase().includes("servicio"));
+                const newForm = [...form];
+                newForm[idx] = e.target.value;
+                setForm(newForm);
+            }}>
+                <option value="">Seleccione un Servicio</option>
+                {catalogos.servicios.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+            </select>
+        ),
+        "capa": (
+            <select value={form[encabezado.findIndex(c => c.toLowerCase().includes("capa"))] || ""} onChange={e => {
+                const idx = encabezado.findIndex(c => c.toLowerCase().includes("capa"));
+                const newForm = [...form];
+                newForm[idx] = e.target.value;
+                setForm(newForm);
+            }}>
+                <option value="">Seleccione una Capa</option>
+                {catalogos.capas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            </select>
+        ),
+        "ambiente": (
+            <select value={form[encabezado.findIndex(c => c.toLowerCase().includes("ambiente"))] || ""} onChange={e => {
+                const idx = encabezado.findIndex(c => c.toLowerCase().includes("ambiente"));
+                const newForm = [...form];
+                newForm[idx] = e.target.value;
+                setForm(newForm);
+            }}>
+                <option value="">Seleccione un Ambiente</option>
+                {catalogos.ambientes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+            </select>
+        ),
+        "dominio": (
+            <select value={form[encabezado.findIndex(c => c.toLowerCase().includes("dominio"))] || ""} onChange={e => {
+                const idx = encabezado.findIndex(c => c.toLowerCase().includes("dominio"));
+                const newForm = [...form];
+                newForm[idx] = e.target.value;
+                setForm(newForm);
+            }}>
+                <option value="">Seleccione un Dominio</option>
+                {catalogos.dominios.map(d => <option key={d.id} value={d.id}>{d.nombre}</option>)}
+            </select>
+        ),
+        "s.o.": (
+            <select value={form[encabezado.findIndex(c => c.toLowerCase().includes("s.o."))] || ""} onChange={e => {
+                const idx = encabezado.findIndex(c => c.toLowerCase().includes("s.o."));
+                const newForm = [...form];
+                newForm[idx] = e.target.value;
+                setForm(newForm);
+            }}>
+                <option value="">Seleccione un S.O.</option>
+                {catalogos.sistemasOperativos.map(so => <option key={so.id} value={so.id}>{so.nombre}</option>)}
+            </select>
+        ),
+        "estatus": (
+            <select value={form[encabezado.findIndex(c => c.toLowerCase().includes("estatus"))] || ""} onChange={e => {
+                const idx = encabezado.findIndex(c => c.toLowerCase().includes("estatus"));
+                const newForm = [...form];
+                newForm[idx] = e.target.value;
+                setForm(newForm);
+            }}>
+                <option value="">Seleccione un Estatus</option>
+                {catalogos.estatus.map(est => <option key={est.id} value={est.id}>{est.nombre}</option>)}
+            </select>
+        ),
+    };
+
+    // Render dinámico de campos
     return ReactDOM.createPortal(
         <div className="editar-fila-modal-overlay" onClick={onClose}>
             <form
@@ -65,31 +148,45 @@ const EditarFilaModal = ({ open, encabezado, fila, onSave, onClose }) => {
             >
                 <h3>Editar servidor</h3>
                 <div className="grid-form-row">
-                    {encabezado.slice(0, -1).map((col, idx) => (
-                        <div className="form-field" key={col}>
-                            <label>{col}</label>
-                            <input
-                                type="text"
-                                value={form[idx] ?? ""}
-                                className={errores[idx] ? "input-error" : ""}
-                                onChange={e => {
-                                    const newForm = [...form];
-                                    newForm[idx] = e.target.value;
-                                    setForm(newForm);
-                                    if (errores[idx]) {
-                                        const nuevosErrores = [...errores];
-                                        nuevosErrores[idx] = false;
-                                        setErrores(nuevosErrores);
-                                    }
-                                }}
-                            />
-                            {errores[idx] && (
-                                <span style={{ color: "#dc3545", fontSize: "13px", marginTop: "2px" }}>
-                                    Corrige este campo
-                                </span>
-                            )}
-                        </div>
-                    ))}
+                    {encabezado.slice(0, -1).map((col, idx) => {
+                        const key = col.trim().toLowerCase();
+                        let campoSelect = null;
+                        if (key === "tipo") campoSelect = camposSelect["tipo"];
+                        else if (key.includes("servicio")) campoSelect = camposSelect["servicio"];
+                        else if (key.includes("capa")) campoSelect = camposSelect["capa"];
+                        else if (key.includes("ambiente")) campoSelect = camposSelect["ambiente"];
+                        else if (key.includes("dominio")) campoSelect = camposSelect["dominio"];
+                        else if (key.includes("s.o.")) campoSelect = camposSelect["s.o."];
+                        else if (key.includes("estatus")) campoSelect = camposSelect["estatus"];
+
+                        return (
+                            <div className="form-field" key={col}>
+                                <label>{col}</label>
+                                {campoSelect ? React.cloneElement(campoSelect, { key: col }) : (
+                                    <input
+                                        type="text"
+                                        value={form[idx] ?? ""}
+                                        className={errores[idx] ? "input-error" : ""}
+                                        onChange={e => {
+                                            const newForm = [...form];
+                                            newForm[idx] = e.target.value;
+                                            setForm(newForm);
+                                            if (errores[idx]) {
+                                                const nuevosErrores = [...errores];
+                                                nuevosErrores[idx] = false;
+                                                setErrores(nuevosErrores);
+                                            }
+                                        }}
+                                    />
+                                )}
+                                {errores[idx] && (
+                                    <span style={{ color: "#dc3545", fontSize: "13px", marginTop: "2px" }}>
+                                        Corrige este campo
+                                    </span>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
                 <div className="modal-buttons">
                     <button type="submit" className="guardar-servidores-btn">
@@ -226,6 +323,41 @@ function marcarRepetidosEnFilas(filas, nombreIdx, ipIdx, obsIdx) {
     return filas;
 }
 
+// Utilidad para mapear ids a nombres en la fila editada
+function mapearIdsANombresFila(fila, encabezado, catalogos) {
+    return fila.map((valor, idx) => {
+        const col = encabezado[idx].toLowerCase();
+        if (col === "tipo") {
+            if (valor === "FISICO" || valor === "VIRTUAL") return valor;
+        }
+        if (col.includes("servicio")) {
+            const obj = catalogos.servicios.find(s => String(s.id) === String(valor));
+            return obj ? obj.nombre : valor;
+        }
+        if (col.includes("capa")) {
+            const obj = catalogos.capas.find(c => String(c.id) === String(valor));
+            return obj ? obj.nombre : valor;
+        }
+        if (col.includes("ambiente")) {
+            const obj = catalogos.ambientes.find(a => String(a.id) === String(valor));
+            return obj ? obj.nombre : valor;
+        }
+        if (col.includes("dominio")) {
+            const obj = catalogos.dominios.find(d => String(d.id) === String(valor));
+            return obj ? obj.nombre : valor;
+        }
+        if (col.includes("s.o.")) {
+            const obj = catalogos.sistemasOperativos.find(so => String(so.id) === String(valor));
+            return obj ? obj.nombre : valor;
+        }
+        if (col.includes("estatus")) {
+            const obj = catalogos.estatus.find(e => String(e.id) === String(valor));
+            return obj ? obj.nombre : valor;
+        }
+        return valor;
+    });
+}
+
 const ServidorCargaMasiva = () => {
     const [datosCSV, setDatosCSV] = useState([]);
     const [paginaActual, setPaginaActual] = useState(1);
@@ -234,6 +366,40 @@ const ServidorCargaMasiva = () => {
     const [editModal, setEditModal] = useState({ open: false, filaIdx: null, fila: [], encabezado: [] });
     const [deleteModal, setDeleteModal] = useState({ open: false, filaIdx: null, renderTablaModal: null });
     const filasValidadasRef = useRef([]);
+
+    // --- Catálogos globales para edición y mapeo ---
+    const [servicios, setServicios] = useState([]);
+    const [capas, setCapas] = useState([]);
+    const [ambientes, setAmbientes] = useState([]);
+    const [dominios, setDominios] = useState([]);
+    const [sistemasOperativos, setSistemasOperativos] = useState([]);
+    const [estatus, setEstatus] = useState([]);
+
+    useEffect(() => {
+        // Cargar catálogos al montar el componente
+        const fetchCatalogos = async () => {
+            try {
+                const urls = [
+                    { name: "servicios", url: "http://localhost:3001/api/servicios" },
+                    { name: "capas", url: "http://localhost:3001/api/capas" },
+                    { name: "ambientes", url: "http://localhost:3001/api/ambientes" },
+                    { name: "dominios", url: "http://localhost:3001/api/dominios" },
+                    { name: "sistemasOperativos", url: "http://localhost:3001/api/sistemas_operativos" },
+                    { name: "estatus", url: "http://localhost:3001/api/estatus" }
+                ];
+                const responses = await Promise.all(urls.map(({ url }) =>
+                    fetch(url).then(res => res.ok ? res.json() : [])
+                ));
+                setServicios(responses[0]);
+                setCapas(responses[1]);
+                setAmbientes(responses[2]);
+                setDominios(responses[3]);
+                setSistemasOperativos(responses[4]);
+                setEstatus(responses[5]);
+            } catch (e) { }
+        };
+        fetchCatalogos();
+    }, []);
 
     const validarFilas = async (filas) => {
         if (!filas || filas.length === 0) {
@@ -341,7 +507,7 @@ const ServidorCargaMasiva = () => {
             backdrop: true,
             didClose: () => {
                 // Recargar la tabla con los datos actualizados
-                if (typeof renderTablaModal === "function") renderTablaModal();
+                mostrarModalTabla(filasValidadasRef.current);
             }
         });
     };
@@ -649,7 +815,11 @@ const ServidorCargaMasiva = () => {
         const filas = filasValidadasRef.current;
         // Validar la fila editada
         const filasValidas = await validarFilas([encabezado, filaAValidar]);
-        const filaActualizada = filasValidas[1];
+        let filaActualizada = filasValidas[1];
+
+        // Mapear ids a nombres para la vista previa
+        const catalogos = { servicios, capas, ambientes, dominios, sistemasOperativos, estatus };
+        filaActualizada = mapearIdsANombresFila(filaActualizada, encabezado, catalogos);
 
         // Actualizar la fila editada en el arreglo principal
         filas[editModal.filaIdx] = filaActualizada;
@@ -702,6 +872,7 @@ const ServidorCargaMasiva = () => {
                 fila={editModal.fila}
                 onSave={handleSaveEdit}
                 onClose={() => setEditModal({ open: false, filaIdx: null, fila: [], encabezado: [] })}
+                catalogos={{ servicios, capas, ambientes, dominios, sistemasOperativos, estatus }}
             />
             <DeleteModal
                 open={deleteModal.open}
