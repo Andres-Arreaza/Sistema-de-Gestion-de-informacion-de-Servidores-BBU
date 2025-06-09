@@ -452,3 +452,78 @@ def validar_masivo():
         resultado.append(fila + ["; ".join(observacion)])
 
     return jsonify(resultado)
+
+@api.route("/servidores/carga_masiva", methods=["POST"])
+def carga_masiva_servidores():
+    """
+    Recibe una lista de filas (incluyendo encabezado) y crea los servidores en la base de datos.
+    Devuelve éxito o error.
+    """
+    from api.models import Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor
+    data = request.get_json()
+    filas = data.get("filas", [])
+    if not filas or len(filas) < 2:
+        return jsonify({"error": "No hay datos para guardar"}), 400
+
+    encabezado = filas[0]
+    # Ajusta los índices según el orden de tu CSV
+    # nombre, tipo, ip, servicio, capa, ambiente, balanceador, vlan, dominio, so, estatus, descripcion, link
+    servidores_creados = []
+    errores = []
+
+    # Mapas para buscar por nombre
+    servicios = {s.nombre.upper(): s.id for s in Servicio.query.filter_by(activo=True).all()}
+    capas = {c.nombre.upper(): c.id for c in Capa.query.filter_by(activo=True).all()}
+    ambientes = {a.nombre.upper(): a.id for a in Ambiente.query.filter_by(activo=True).all()}
+    dominios = {d.nombre.upper(): d.id for d in Dominio.query.filter_by(activo=True).all()}
+    sistemas = {s.nombre.upper(): s.id for s in SistemaOperativo.query.filter_by(activo=True).all()}
+    estatuses = {e.nombre.upper(): e.id for e in Estatus.query.filter_by(activo=True).all()}
+
+    for fila in filas[1:]:
+        try:
+            nombre, tipo, ip, servicio, capa, ambiente, balanceador, vlan, dominio, so, estatus, descripcion, link = fila[:13]
+            # Validar duplicados en BD
+            if Servidor.query.filter_by(nombre=nombre).first() or Servidor.query.filter_by(ip=ip).first():
+                errores.append(f"Servidor duplicado: {nombre} / {ip}")
+                continue
+            # Validar relaciones
+            servicio_id = servicios.get(servicio.upper())
+            capa_id = capas.get(capa.upper())
+            ambiente_id = ambientes.get(ambiente.upper())
+            dominio_id = dominios.get(dominio.upper())
+            so_id = sistemas.get(so.upper())
+            estatus_id = estatuses.get(estatus.upper())
+            if not all([servicio_id, capa_id, ambiente_id, dominio_id, so_id, estatus_id]):
+                errores.append(f"Relaciones inválidas para: {nombre}")
+                continue
+            nuevo_servidor = Servidor(
+                nombre=nombre,
+                tipo=tipo,
+                ip=ip,
+                balanceador=balanceador,
+                vlan=vlan,
+                link=link,
+                descripcion=descripcion,
+                servicio_id=servicio_id,
+                capa_id=capa_id,
+                ambiente_id=ambiente_id,
+                dominio_id=dominio_id,
+                sistema_operativo_id=so_id,
+                estatus_id=estatus_id,
+                activo=True,
+                fecha_creacion=datetime.utcnow(),
+                fecha_modificacion=datetime.utcnow()
+            )
+            db.session.add(nuevo_servidor)
+            servidores_creados.append(nombre)
+        except Exception as e:
+            errores.append(f"Error en {fila}: {str(e)}")
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Error al guardar en base de datos: {str(e)}"}), 500
+
+    if errores:
+        return jsonify({"msg": "Carga masiva finalizada con errores", "errores": errores, "creados": servidores_creados}), 207
+    return jsonify({"msg": "Carga masiva exitosa", "creados": servidores_creados}), 201

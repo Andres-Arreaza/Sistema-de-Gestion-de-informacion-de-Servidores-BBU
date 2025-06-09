@@ -8,14 +8,8 @@ import Swal from "sweetalert2";
 const LinkFloatModal = ({ link, nombre, ip, onClose }) => {
     if (!link) return null;
     return ReactDOM.createPortal(
-        <div
-            className="link-float-modal-overlay"
-            onClick={onClose}
-        >
-            <div
-                className="link-float-modal-content"
-                onClick={e => e.stopPropagation()}
-            >
+        <div className="link-float-modal-overlay" onClick={onClose}>
+            <div className="link-float-modal-content" onClick={e => e.stopPropagation()}>
                 <h3>Enlace del servidor</h3>
                 <div className="modal-link-row">
                     <b>Nombre:</b> {nombre || "-"}
@@ -26,10 +20,7 @@ const LinkFloatModal = ({ link, nombre, ip, onClose }) => {
                 <div className="modal-link-url">
                     <a href={link} target="_blank" rel="noopener noreferrer">{link}</a>
                 </div>
-                <button
-                    onClick={onClose}
-                    className="cerrar-link-btn"
-                >
+                <button onClick={onClose} className="cerrar-link-btn">
                     Cerrar
                 </button>
             </div>
@@ -42,13 +33,11 @@ const LinkFloatModal = ({ link, nombre, ip, onClose }) => {
  * Modal para editar una fila de la tabla de carga masiva.
  */
 const EditarFilaModal = ({ open, encabezado, fila, onSave, onClose }) => {
-    const [form, setForm] = useState([...fila]);
+    const [form, setForm] = useState(fila.map(col => col ?? ""));
     const [errores, setErrores] = useState([]);
 
-    // Detecta errores en la observación
     useEffect(() => {
-        setForm([...fila]);
-        // Busca errores en la observación (última columna de la fila original)
+        setForm(fila.map(col => col ?? ""));
         let obs = fila[fila.length - 1] || "";
         let nuevosErrores = [];
         if (obs && obs !== "Servidor listo para guardar") {
@@ -65,10 +54,7 @@ const EditarFilaModal = ({ open, encabezado, fila, onSave, onClose }) => {
     if (!open) return null;
 
     return ReactDOM.createPortal(
-        <div
-            className="editar-fila-modal-overlay"
-            onClick={onClose}
-        >
+        <div className="editar-fila-modal-overlay" onClick={onClose}>
             <form
                 className="editar-fila-modal-content grid-form"
                 onClick={e => e.stopPropagation()}
@@ -84,13 +70,12 @@ const EditarFilaModal = ({ open, encabezado, fila, onSave, onClose }) => {
                             <label>{col}</label>
                             <input
                                 type="text"
-                                value={form[idx]}
+                                value={form[idx] ?? ""}
                                 className={errores[idx] ? "input-error" : ""}
                                 onChange={e => {
                                     const newForm = [...form];
                                     newForm[idx] = e.target.value;
                                     setForm(newForm);
-                                    // Quita el error visual al editar
                                     if (errores[idx]) {
                                         const nuevosErrores = [...errores];
                                         nuevosErrores[idx] = false;
@@ -120,6 +105,66 @@ const EditarFilaModal = ({ open, encabezado, fila, onSave, onClose }) => {
     );
 };
 
+// --- Modal personalizado para eliminar, sobrepone sin cerrar el modal principal ---
+const DeleteModal = ({ open, onConfirm, onCancel }) => {
+    if (!open) return null;
+    return ReactDOM.createPortal(
+        <div className="custom-delete-modal-overlay" style={{
+            position: "fixed",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0,0,0,0.4)",
+            zIndex: 20000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+        }}>
+            <div className="custom-delete-modal-content" style={{
+                background: "#fff",
+                borderRadius: "8px",
+                padding: "32px 24px",
+                minWidth: "340px",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
+                textAlign: "center"
+            }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 48, color: "#dc3545" }}>warning</span>
+                <h2 style={{ margin: "16px 0 8px 0" }}>¿Eliminar servidor?</h2>
+                <div style={{ marginBottom: 24 }}>¿Estás seguro de eliminar este servidor de la carga masiva?</div>
+                <div style={{ display: "flex", justifyContent: "center", gap: 16 }}>
+                    <button
+                        style={{
+                            background: "#dc3545",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: 4,
+                            padding: "8px 18px",
+                            fontWeight: "bold",
+                            cursor: "pointer"
+                        }}
+                        onClick={onConfirm}
+                    >
+                        Eliminar
+                    </button>
+                    <button
+                        style={{
+                            background: "#007953",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: 4,
+                            padding: "8px 18px",
+                            fontWeight: "bold",
+                            cursor: "pointer"
+                        }}
+                        onClick={onCancel}
+                    >
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+};
+
 // --- Utilidad para limpiar columnas duplicadas de "Observación" ---
 function limpiarObservacionDuplicada(filas) {
     if (!filas || filas.length === 0) return filas;
@@ -130,7 +175,6 @@ function limpiarObservacionDuplicada(filas) {
     });
     if (obsIndices.length > 1) {
         const idxMantener = obsIndices[0];
-        // Elimina los demás en todas las filas
         for (let i = 0; i < filas.length; i++) {
             filas[i] = filas[i].filter((_, idx) => idx === idxMantener || !obsIndices.slice(1).includes(idx));
         }
@@ -143,7 +187,6 @@ function marcarRepetidosEnFilas(filas, nombreIdx, ipIdx, obsIdx) {
     if (!filas || filas.length < 2) return filas;
     const nombreMap = {};
     const ipMap = {};
-    // Recorre filas de datos (no encabezado)
     for (let i = 1; i < filas.length; i++) {
         const nombre = filas[i][nombreIdx]?.trim().toLowerCase();
         const ip = filas[i][ipIdx]?.trim().toLowerCase();
@@ -156,7 +199,6 @@ function marcarRepetidosEnFilas(filas, nombreIdx, ipIdx, obsIdx) {
             ipMap[ip].push(i);
         }
     }
-    // Marca como repetidos todos menos el primero
     for (const indices of Object.values(nombreMap)) {
         if (indices.length > 1) {
             for (let j = 1; j < indices.length; j++) {
@@ -188,28 +230,23 @@ const ServidorCargaMasiva = () => {
     const [datosCSV, setDatosCSV] = useState([]);
     const [paginaActual, setPaginaActual] = useState(1);
     const [servidoresPorPagina, setServidoresPorPagina] = useState(10);
-    const [showLink, setShowLink] = useState(null); // { link, nombre, ip }
+    const [showLink, setShowLink] = useState(null);
     const [editModal, setEditModal] = useState({ open: false, filaIdx: null, fila: [], encabezado: [] });
-    const filasValidadasRef = useRef([]); // Para mantener los datos validados entre renders
+    const [deleteModal, setDeleteModal] = useState({ open: false, filaIdx: null, renderTablaModal: null });
+    const filasValidadasRef = useRef([]);
 
-    // Función para validar las filas en el backend
     const validarFilas = async (filas) => {
         if (!filas || filas.length === 0) {
             console.error("Error: 'filas' no está definido o está vacío.");
             return [];
         }
-
         try {
             const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/validar_masivo`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ filas }),
             });
-
-            if (!response.ok) {
-                throw new Error("Error en la validación masiva");
-            }
-
+            if (!response.ok) throw new Error("Error en la validación masiva");
             return await response.json();
         } catch (error) {
             Swal.fire("Error", "No se pudo validar el archivo. Verifica la conexión con el servidor.", "error");
@@ -217,10 +254,8 @@ const ServidorCargaMasiva = () => {
         }
     };
 
-    // Modal para cargar el archivo CSV
     const mostrarModalCarga = () => {
         let fileRows = [];
-
         Swal.fire({
             title: "Carga Masiva de Servidores",
             html: `
@@ -249,24 +284,19 @@ const ServidorCargaMasiva = () => {
             didOpen: () => {
                 const input = document.getElementById("input-csv");
                 const nombreArchivo = document.getElementById("nombre-archivo-csv");
-
                 input.addEventListener("change", (e) => {
                     const file = e.target.files[0];
                     if (!file) return;
-
                     const reader = new FileReader();
                     reader.onload = (ev) => {
                         const filas = ev.target.result.split("\n").filter(f => f.trim());
-                        fileRows = filas.map(fila => fila.split(";").map(col => col.replace(/"/g, "").trim()));
-
+                        fileRows = filas.map(fila => fila.split(";").map(col => (col ?? "").replace(/"/g, "").trim()));
                         if (fileRows.length === 0) {
                             Swal.fire("Error", "El archivo CSV está vacío o no es válido.", "error");
                             return;
                         }
-
                         nombreArchivo.innerHTML = `<b>Archivo seleccionado:</b> ${file.name}`;
                     };
-
                     reader.readAsText(file);
                 });
             }
@@ -279,62 +309,63 @@ const ServidorCargaMasiva = () => {
         });
     };
 
-    // Eliminar un servidor de la vista previa (sin cerrar el modal principal)
+    // MODIFICADO: Ahora solo abre un modal sobrepuesto, no cierra el modal principal
     const eliminarServidor = (filaIdx, renderTablaModal) => {
+        setDeleteModal({
+            open: true,
+            filaIdx,
+            renderTablaModal
+        });
+    };
+
+    // Confirmación de eliminación
+    const handleConfirmDelete = () => {
+        const { filaIdx, renderTablaModal } = deleteModal;
+        const filas = filasValidadasRef.current;
+        filas.splice(filaIdx, 1);
+        filasValidadasRef.current = limpiarObservacionDuplicada(filas);
+        const encabezado = filas[0];
+        const nombreIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "nombre" || col.trim().toLowerCase() === "servidor" || col.trim().toLowerCase() === "nombre servidor");
+        const ipIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "ip" || col.trim().toLowerCase() === "ip servidor");
+        const obsIdx = encabezado.length - 1;
+        marcarRepetidosEnFilas(filas, nombreIdx, ipIdx, obsIdx);
+        setDeleteModal({ open: false, filaIdx: null, renderTablaModal: null });
+
+        // Mostrar alerta sobrepuesta y actualizar la tabla al cerrar la alerta
         Swal.fire({
-            title: "¿Eliminar servidor?",
-            text: "¿Estás seguro de eliminar este servidor de la carga masiva?",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#dc3545",
-            cancelButtonColor: "#007953",
-            confirmButtonText: "Eliminar",
-            cancelButtonText: "Cancelar",
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Elimina la fila (recuerda que fila 0 es encabezado)
-                const filas = filasValidadasRef.current;
-                filas.splice(filaIdx, 1);
-                filasValidadasRef.current = limpiarObservacionDuplicada(filas);
-
-                // Recalcula repetidos después de eliminar
-                const encabezado = filas[0];
-                const nombreIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "nombre" || col.trim().toLowerCase() === "servidor" || col.trim().toLowerCase() === "nombre servidor");
-                const ipIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "ip" || col.trim().toLowerCase() === "ip servidor");
-                const obsIdx = encabezado.length - 1;
-                marcarRepetidosEnFilas(filas, nombreIdx, ipIdx, obsIdx);
-
-                // Vuelve a renderizar la tabla
-                renderTablaModal();
+            icon: "success",
+            title: "Servidor eliminado",
+            text: "El servidor fue eliminado de la carga masiva.",
+            timer: 1200,
+            showConfirmButton: false,
+            backdrop: true,
+            didClose: () => {
+                // Recargar la tabla con los datos actualizados
+                if (typeof renderTablaModal === "function") renderTablaModal();
             }
         });
     };
 
-    // Modal de vista previa de la tabla
-    const mostrarModalTabla = async (data) => {
-        // --- LIMPIA COLUMNAS EXTRAS DE OBSERVACIÓN ANTES DE VALIDAR ---
-        const dataLimpia = limpiarObservacionDuplicada([...data.map(f => [...f])]);
+    const handleCancelDelete = () => {
+        setDeleteModal({ open: false, filaIdx: null, renderTablaModal: null });
+    };
 
+    const mostrarModalTabla = async (data) => {
+        const dataLimpia = limpiarObservacionDuplicada([...data.map(f => [...f])]);
         if (!dataLimpia || dataLimpia.length === 0) {
             console.error("Error: 'data' no está definido o está vacío.");
             return;
         }
-
         const filasValidadas = await validarFilas(dataLimpia);
         if (!filasValidadas || filasValidadas.length === 0) {
             Swal.fire("Error", "No se encontraron datos válidos en el archivo CSV.", "error");
             return;
         }
-
-        // Marcar repetidos en nombre o ip antes de mostrar
         const encabezado = filasValidadas[0];
         const nombreIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "nombre" || col.trim().toLowerCase() === "servidor" || col.trim().toLowerCase() === "nombre servidor");
         const ipIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "ip" || col.trim().toLowerCase() === "ip servidor");
         const obsIdx = encabezado.length - 1;
         const filasConRepetidos = marcarRepetidosEnFilas([...filasValidadas.map(f => [...f])], nombreIdx, ipIdx, obsIdx);
-
         filasValidadasRef.current = limpiarObservacionDuplicada(filasConRepetidos);
 
         let pagina = 1;
@@ -346,12 +377,11 @@ const ServidorCargaMasiva = () => {
             const encabezado = filasValidadasRef.current[0];
             const filas = filasValidadasRef.current.slice(1);
 
-            // --- Detectar valores repetidos por columna (ignorando la primera fila de datos) ---
             const repetidosPorColumna = {};
             encabezado.slice(0, -1).forEach((col, colIdx) => {
                 const valores = {};
                 filas.forEach((fila, filaIdx) => {
-                    if (filaIdx === 0) return; // Ignora el primer servidor
+                    if (filaIdx === 0) return;
                     const valor = fila[colIdx];
                     if (valor && valor !== "") {
                         if (!valores[valor]) valores[valor] = [];
@@ -396,7 +426,6 @@ const ServidorCargaMasiva = () => {
                 return `
             <tr>
                 ${row.map((col, idx) => {
-                    // Si es la columna de observación (última), solo muestra el ícono
                     if (idx === row.length - 1) {
                         const tieneError = col !== "Servidor listo para guardar";
                         return `<td style="text-align:center;">
@@ -405,7 +434,6 @@ const ServidorCargaMasiva = () => {
                             </span>
                         </td>`;
                     }
-                    // Si es la columna de link
                     if (idx === linkIdx) {
                         if (!col || col.trim() === "") {
                             return `<td></td>`;
@@ -417,19 +445,16 @@ const ServidorCargaMasiva = () => {
                             </button>
                         </td>`;
                     }
-                    // Resto de columnas normales
                     let esError = false;
                     const observacion = row[row.length - 1];
                     if (observacion !== "Servidor listo para guardar") {
                         const nombreCampo = encabezado[idx].toLowerCase();
                         esError = observacion.split(";").some(err => err.toLowerCase().includes(nombreCampo) || err.toLowerCase().includes("repetido"));
                     }
-                    // --- Marcar en rojo si es repetido (excepto el primer servidor) ---
                     let esRepetido = false;
                     if (filaRealIdx > 0 && repetidosPorColumna[idx] && repetidosPorColumna[idx].has(filaRealIdx - 1)) {
                         esRepetido = true;
                     }
-                    // También marcar en rojo si la observación contiene "repetido"
                     if (idx === nombreIdx && observacion.toLowerCase().includes("nombre repetido")) esRepetido = true;
                     if (idx === ipIdx && observacion.toLowerCase().includes("ip repetida")) esRepetido = true;
 
@@ -456,7 +481,6 @@ const ServidorCargaMasiva = () => {
             document.getElementById("btn-prev").disabled = pagina === 1;
             document.getElementById("btn-next").disabled = pagina >= totalPaginas;
 
-            // Botón del ojo (link)
             if (linkIdx !== -1) {
                 filasPagina.forEach((row, rowIdx) => {
                     const col = row[linkIdx];
@@ -479,7 +503,6 @@ const ServidorCargaMasiva = () => {
                     }
                 });
             }
-            // Botón de editar
             filasPagina.forEach((row, rowIdx) => {
                 const filaRealIdx = inicio + rowIdx;
                 const btnId = `btn-edit-${filaRealIdx}`;
@@ -490,15 +513,14 @@ const ServidorCargaMasiva = () => {
                             e.preventDefault();
                             setEditModal({
                                 open: true,
-                                filaIdx: filaRealIdx + 1, // +1 porque la fila 0 es encabezado
-                                fila: [...filas[filaRealIdx]].slice(0, -1), // sin observación
+                                filaIdx: filaRealIdx + 1,
+                                fila: [...filas[filaRealIdx]].slice(0, -1),
                                 encabezado
                             });
                         };
                     }
                 }, 0);
             });
-            // Botón de eliminar
             filasPagina.forEach((row, rowIdx) => {
                 const filaRealIdx = inicio + rowIdx;
                 const btnId = `btn-delete-${filaRealIdx}`;
@@ -507,7 +529,7 @@ const ServidorCargaMasiva = () => {
                     if (btn) {
                         btn.onclick = (e) => {
                             e.preventDefault();
-                            eliminarServidor(filaRealIdx + 1, renderTablaModal); // +1 porque fila 0 es encabezado
+                            eliminarServidor(filaRealIdx + 1, renderTablaModal);
                         };
                     }
                 }, 0);
@@ -517,46 +539,47 @@ const ServidorCargaMasiva = () => {
         Swal.fire({
             title: "Vista Previa de la Carga Masiva",
             html: `
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span id="contador-servidores" style="font-size: 14px; color: #333;">
-                    <b>Servidores a crear:</b> ${filasValidadas.length - 1}
-                </span>
-                <div>
-                    <label for="select-servidores" style="font-size: 14px;">Servidores por página:</label>
-                    <select id="select-servidores" style="font-size: 14px; padding: 4px; margin-left: 6px;">
-                        <option value="5">5</option>
-                        <option value="10" selected>10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                    </select>
-                </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span id="contador-servidores" style="font-size: 14px; color: #333;">
+                <b>Servidores a crear:</b> ${filasValidadas.length - 1}
+            </span>
+            <div>
+                <label for="select-servidores" style="font-size: 14px;">Servidores por página:</label>
+                <select id="select-servidores" style="font-size: 14px; padding: 4px; margin-left: 6px;">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
             </div>
-            <div id="tabla-container" class="tabla-modal"></div>
-            <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                <button id="btn-prev" class="paginacion-btn">Anterior</button>
-                <span id="pagina-indicador" style="font-size: 14px;"></span>
-                <button id="btn-next" class="paginacion-btn">Siguiente</button>
-            </div>
-        `,
-            confirmButtonText: "Cerrar",
-            confirmButtonColor: "#dc3545",
+        </div>
+        <div id="tabla-container" class="tabla-modal"></div>
+        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+            <button id="btn-prev" class="paginacion-btn">Anterior</button>
+            <span id="pagina-indicador" style="font-size: 14px;"></span>
+            <button id="btn-next" class="paginacion-btn">Siguiente</button>
+        </div>
+    `,
+            showCancelButton: true,
+            showConfirmButton: true,
+            confirmButtonText: "Guardar",
+            cancelButtonText: "Cerrar",
+            confirmButtonColor: "#007953",
+            cancelButtonColor: "#dc3545",
             width: "100%",
             didOpen: () => {
                 renderTablaModal();
-
                 document.getElementById("select-servidores").addEventListener("change", (e) => {
                     porPagina = Number(e.target.value);
                     pagina = 1;
                     renderTablaModal();
                 });
-
                 document.getElementById("btn-prev").addEventListener("click", () => {
                     if (pagina > 1) {
                         pagina--;
                         renderTablaModal();
                     }
                 });
-
                 document.getElementById("btn-next").addEventListener("click", () => {
                     const totalPaginas = Math.max(1, Math.ceil((filasValidadas.length - 1) / porPagina));
                     if (pagina < totalPaginas) {
@@ -565,15 +588,32 @@ const ServidorCargaMasiva = () => {
                     }
                 });
             }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                // Solo envía filas válidas (sin encabezado)
+                const filasParaGuardar = filasValidadasRef.current.filter((fila, idx) => idx === 0 || (fila[fila.length - 1] === "Servidor listo para guardar"));
+                if (filasParaGuardar.length <= 1) {
+                    Swal.fire("Error", "No hay servidores válidos para guardar.", "error");
+                    return;
+                }
+                try {
+                    const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/carga_masiva`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ filas: filasParaGuardar }),
+                    });
+                    if (!response.ok) throw new Error();
+                    Swal.fire("Carga masiva exitosa", "Los servidores fueron guardados correctamente.", "success");
+                } catch (e) {
+                    Swal.fire("Error en la carga masiva", "Ocurrió un error al guardar los servidores.", "error");
+                }
+            }
         });
     };
 
-    // Guardar edición de fila
     const handleSaveEdit = async (newFilaSinObs) => {
         const encabezado = editModal.encabezado;
         let filaAValidar = [...newFilaSinObs];
-
-        // Asegura que la fila tenga la longitud correcta (sin observación)
         if (filaAValidar.length > encabezado.length - 1) {
             filaAValidar = filaAValidar.slice(0, encabezado.length - 1);
         }
@@ -582,29 +622,18 @@ const ServidorCargaMasiva = () => {
                 filaAValidar.push("");
             }
         }
-
-        // Antes de validar, limpia cualquier columna extra de observación
         const filas = filasValidadasRef.current;
-        filas[editModal.filaIdx] = [...filaAValidar, ""]; // temporal, para mantener estructura
+        filas[editModal.filaIdx] = [...filaAValidar, ""];
         filasValidadasRef.current = limpiarObservacionDuplicada(filas);
-
-        // Valida la fila editada con el backend
         const filasValidas = await validarFilas([encabezado, filaAValidar]);
         const filaActualizada = filasValidas[1];
-
-        // Actualiza la fila editada con la nueva observación
         const filasActuales = filasValidadasRef.current;
         filasActuales[editModal.filaIdx] = filaActualizada;
-
-        // Marcar repetidos en nombre o ip después de editar
         const nombreIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "nombre" || col.trim().toLowerCase() === "servidor" || col.trim().toLowerCase() === "nombre servidor");
         const ipIdx = encabezado.findIndex(col => col.trim().toLowerCase() === "ip" || col.trim().toLowerCase() === "ip servidor");
         const obsIdx = encabezado.length - 1;
         marcarRepetidosEnFilas(filasActuales, nombreIdx, ipIdx, obsIdx);
-
         filasValidadasRef.current = limpiarObservacionDuplicada(filasActuales);
-
-        // Si la fila editada tiene repetidos, no guardar y mostrar error
         const obs = filasValidadasRef.current[editModal.filaIdx][obsIdx] || "";
         if (obs.toLowerCase().includes("repetido")) {
             Swal.fire({
@@ -617,7 +646,6 @@ const ServidorCargaMasiva = () => {
             }, 300);
             return;
         }
-
         setEditModal({ open: false, filaIdx: null, fila: [], encabezado: [] });
         Swal.fire({
             icon: "success",
@@ -647,6 +675,11 @@ const ServidorCargaMasiva = () => {
                 fila={editModal.fila}
                 onSave={handleSaveEdit}
                 onClose={() => setEditModal({ open: false, filaIdx: null, fila: [], encabezado: [] })}
+            />
+            <DeleteModal
+                open={deleteModal.open}
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCancelDelete}
             />
         </>
     );
