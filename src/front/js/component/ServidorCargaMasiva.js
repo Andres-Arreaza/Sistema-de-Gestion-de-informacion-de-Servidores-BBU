@@ -821,6 +821,33 @@ const ServidorCargaMasiva = () => {
         const catalogos = { servicios, capas, ambientes, dominios, sistemasOperativos, estatus };
         filaActualizada = mapearIdsANombresFila(filaActualizada, encabezado, catalogos);
 
+        // --- LIMPIAR ERRORES DE CAMPOS SELECCIONABLES SI YA SON VÁLIDOS ---
+        const camposSeleccionables = [
+            "tipo", "servicio", "capa", "ambiente", "dominio", "s.o.", "estatus"
+        ];
+        let obsIdxFila = encabezado.length - 1;
+        let observacion = filaActualizada[obsIdxFila] || "";
+        if (observacion && observacion !== "Servidor listo para guardar") {
+            camposSeleccionables.forEach(campo => {
+                const idxCampo = encabezado.findIndex(col => col.toLowerCase().includes(campo));
+                if (idxCampo !== -1) {
+                    const valorCampo = filaActualizada[idxCampo];
+                    // Si el campo tiene valor válido, elimina el error de la observación
+                    if (valorCampo && valorCampo !== "") {
+                        // Elimina cualquier mención del campo en la observación
+                        observacion = observacion
+                            .split(";")
+                            .map(e => e.trim())
+                            .filter(e => !e.toLowerCase().includes(campo))
+                            .join("; ");
+                    }
+                }
+            });
+            // Si ya no hay errores, deja la observación limpia
+            if (!observacion.trim()) observacion = "Servidor listo para guardar";
+            filaActualizada[obsIdxFila] = observacion;
+        }
+
         // Actualizar la fila editada en el arreglo principal
         filas[editModal.filaIdx] = filaActualizada;
 
