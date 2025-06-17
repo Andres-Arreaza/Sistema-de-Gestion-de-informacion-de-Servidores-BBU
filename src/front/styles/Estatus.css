@@ -1,312 +1,272 @@
-:root {
-  --gradient: linear-gradient(135deg, #004477 0%, #007953 100%);
-  --text-color: white;
+/* ==========================================================================
+   Estilos de la Página de Estatus
+   ========================================================================== */
+
+/* Este archivo utiliza las mismas clases que servicio.css para mantener la consistencia.
+   Asegúrate de que el archivo CSS de servicio.css esté importado de forma global o 
+   copia los estilos aquí si prefieres mantener los archivos completamente separados.
+   Por simplicidad, se asume que los estilos de servicio.css están disponibles.
+*/
+
+/* Contenedor principal de la página */
+.page-container {
+  padding-top: 80px; /* Espacio para el navbar fijo */
 }
 
-/* 🔹 Encabezado con gradiente */
-.estatus-header {
-  padding: 40px 0;
-  background: var(--gradient);
+/* --- Estilos del Encabezado (Hero) --- */
+.hero-section {
+  background: linear-gradient(135deg, #021027 0%, #004477 0%, #007953 90%);
+  padding: 22px 24px !important;
   text-align: center;
+  animation: fadeUp 1s ease-out forwards;
 }
 
-/* .servicio-header-item {
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-} */
-
-/* 🔹 Título con animación */
-.estatus-title {
-  font-size: 32px;
-  font-weight: bold;
-  color: var(--text-color);
-  margin-bottom: 15px;
-  animation: fadeUpSlow 0.8s ease-out;
-}
-
-/* 🔹 Botón de creación con mejor contraste */
-.crear-estatus-btn {
-  background-color: #ffffff;
-  color: #007953;
-  padding: 12px 25px;
-  font-size: 16px;
-  font-weight: bold;
-  border: 2px solid #007953;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.3s ease-in-out;
-  animation: fadeUpSlow 1s ease-out;
-}
-
-.crear-estatus-btn:hover {
-  background-color: #007953;
-  color: white;
-  transform: scale(1.05);
-  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.25);
-}
-
-/* 🔹 Líneas blancas más sutiles */
-.linea-blanca,
-.linea-blanca-2 {
-  margin: 10px auto;
-  height: 3px;
-  background-color: rgba(255, 255, 255, 0.6);
-  width: 25%;
-  animation: expandLine 1s ease-out;
-}
-
-.linea-blanca-2 {
-  height: 2px;
-  width: 15%;
-}
-
-/* 🔹 Mensaje de alerta */
-.alerta {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 12px 20px;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  opacity: 0;
-  animation: fadeIn 0.5s ease-in-out forwards;
-}
-
-/* 🔹 Alertas positivas (verde) */
-.alerta.success {
-  background-color: #28a745;
-  color: white;
-}
-
-/* 🔹 Alertas negativas (rojo) */
-.alerta.error {
-  background-color: #dc3545;
-  color: white;
-}
-
-/* 🔹 Estilo para el icono de error */
-.alerta .icono {
-  color: white;
-  font-size: 18px;
-  margin-right: 8px;
-}
-
-/* 🔹 Animación de aparición */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 🔹 Botón para abrir el modal */
-.crear-estatus-btn {
-  background-color: #007953; /* 🔹 Verde oscuro */
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin: 0 auto; /* 🔹 Centrado */
-  display: block;
-  transition: background-color 0.3s ease;
-}
-
-.crear-estatus-btn:hover {
-  background-color: #006445; /* 🔹 Verde más fuerte */
-}
-
-/* 🔹 Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  animation: fadeIn 0.3s ease-in-out;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-  text-align: center;
-  width: 350px;
-  animation: scaleUp 0.3s ease-in-out;
-}
-
-@keyframes scaleUp {
-  from {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.modal-content input {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-/* 🔹 Contenedor de botones en el modal */
-.modal-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 15px;
-}
-
-/* 🔹 Botón de guardar */
-.guardar-btn {
-  background-color: #007953; /* 🔹 Verde oscuro */
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.guardar-btn:hover {
-  background-color: #006445; /* 🔹 Verde más fuerte */
-}
-
-/* 🔹 Botón de cerrar */
-.cerrar-btn {
-  background-color: #dc3545; /* 🔹 Rojo */
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.cerrar-btn:hover {
-  background-color: #b52b3a; /* 🔹 Rojo más fuerte */
-}
-
-/* 🔹 Contenedor de botones en el modal de eliminación */
-.modal-delete-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 15px;
-}
-
-/* 🔹 Botón de eliminar */
-.eliminar-confirm-btn {
-  background-color: #dc3545; /* 🔹 Rojo */
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.eliminar-confirm-btn:hover {
-  background-color: #b52b3a; /* 🔹 Rojo más fuerte */
-}
-
-/* 🔹 Botón de cancelar */
-.cerrar-modal-btn {
-  background-color: #007953; /* 🔹 Verde oscuro */
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.cerrar-modal-btn:hover {
-  background-color: #006445; /* 🔹 Verde más fuerte */
-}
-
-/* 🔹 Diseño en 4 columnas con ancho limitado */
-.estatus-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  justify-content: center;
-  max-width: 80%;
+.hero-section .title-section {
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-/* 🔹 Estilo de cada estatus */
-.estatus-item {
-  background-color: #f4f4f4;
-  padding: 15px;
-  margin: 15px;
+.hero-section .main-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  animation: fadeUp 1s ease-out forwards 0.3s;
+}
+
+.hero-section .subtitle {
+  font-size: 2.5rem !important;
+  font-family: "Caveat", cursive !important;
+  color: rgba(255, 255, 255, 0.8);
+  opacity: 0;
+  animation: fadeUp 1s ease-out forwards 0.6s;
+}
+
+.hero-section .decorative-line-top,
+.hero-section .decorative-line-bottom {
+  height: 4px;
+  margin: 16px auto;
+  background: #fff;
+  border-radius: 2px;
+  width: 0;
+  opacity: 0;
+  animation: expandWidth 1s ease-out forwards 0.5s;
+}
+
+.hero-section .decorative-line-top {
+  width: 70% !important;
+  margin-bottom: 30px !important;
+}
+.hero-section .decorative-line-bottom {
+  width: 40% !important;
+  margin-top: 30px !important;
+}
+
+/* --- Área de Contenido Principal --- */
+.content-area {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.content-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.content-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-color-dark, #333);
+}
+
+.crear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  color: var(--primary-color, #007953);
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px 24px;
+  border: none;
   border-radius: 8px;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.3s ease;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 24px;
 }
 
-/* 🔹 Efecto hover */
-.estatus-item:hover {
-  background-color: #d6d6d6; /* 🔹 Color más fuerte */
+.crear-btn:hover {
+  background-color: #f0f0f0;
+  color: var(--primary-hover-color, #006845);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
 }
 
-/* 🔹 Estilos para el nombre y descripción */
-.name {
-  color: #004477;
+/* --- Rejilla de Tarjetas --- */
+.servicio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
 }
 
-.descripcion {
-  margin-top: 10px;
-  font-size: 14px;
-  color: #555;
-  text-align: left; /* 🔹 Alinea la descripción a la izquierda */
+.servicio-card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  animation: fadeUp 0.5s ease-out forwards;
 }
 
-/* 🔹 Contenedor del nombre y botones */
-.estatus-header {
+.servicio-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.servicio-card:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.servicio-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.servicio-card:nth-child(4) {
+  animation-delay: 0.25s;
+}
+.servicio-card:nth-child(5) {
+  animation-delay: 0.3s;
+}
+.servicio-card:nth-child(6) {
+  animation-delay: 0.35s;
+}
+.servicio-card:nth-child(7) {
+  animation-delay: 0.4s;
+}
+.servicio-card:nth-child(8) {
+  animation-delay: 0.45s;
+}
+.servicio-card:nth-child(9) {
+  animation-delay: 0.5s;
+}
+.servicio-card:nth-child(10) {
+  animation-delay: 0.55s;
+}
+.servicio-card:nth-child(11) {
+  animation-delay: 0.6s;
+}
+.servicio-card:nth-child(12) {
+  animation-delay: 0.65s;
+}
+
+.servicio-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.servicio-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  margin-bottom: 12px;
 }
 
-/* 🔹 Botones de editar y eliminar */
-.estatus-actions {
+.servicio-nombre {
+  color: #004477;
+  font-weight: bold;
+  font-size: 1.25rem;
+  padding-right: 16px;
+}
+
+.servicio-descripcion {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.6;
+  flex-grow: 1;
+}
+
+.servicio-acciones {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
-.editar-btn,
-.eliminar-btn {
-  background: none;
-  border: none;
+.accion-btn {
+  background: #f1f3f5;
+  border: 1px solid #dee2e6;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: 5px;
-  transition: background-color 0.3s ease;
+  color: #495057;
+  transition: all 0.2s ease;
 }
 
-.editar-btn:hover {
-  color: #007bff;
-  background-color: #d6d6d6; /* 🔹 Color más fuerte */
+.accion-btn:hover {
+  background-color: #e9ecef;
+  color: var(--primary-color, #007953);
 }
 
 .eliminar-btn:hover {
   color: #dc3545;
-  background-color: #d6d6d6; /* 🔹 Color más fuerte */
+}
+
+/* --- Estilos para inputs dentro de SweetAlert2 --- */
+.swal-wide .swal2-html-container {
+  overflow: visible !important;
+}
+
+.swal-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  text-align: left;
+}
+
+.swal-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.swal-form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.swal2-input,
+.swal2-textarea {
+  width: 90% !important;
+  box-sizing: border-box !important;
+  border-radius: 8px !important;
+  border: 1px solid #ccc !important;
+  font-size: 1rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.swal2-input:focus,
+.swal2-textarea:focus {
+  border-color: var(--primary-color, #007953) !important;
+  box-shadow: 0 0 0 3px rgba(0, 121, 83, 0.15) !important;
+}
+
+.swal2-input.swal-input-error,
+.swal2-textarea.swal-input-error {
+  border-color: #dc3545 !important;
+}
+
+.swal2-input.swal-input-error:focus,
+.swal2-textarea.swal-input-error:focus {
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25) !important;
+}
+
+.swal2-textarea {
+  resize: vertical;
+  min-height: 100px;
 }

@@ -1,178 +1,153 @@
-/* Estilos generales del navbar */
-.navbar {
+.navbar-header {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
+  background: var(--bg-color-header);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   z-index: 1000;
-  background-color: #ffffff;
-  box-shadow: 0px 4px 10px rgba(0, 68, 119, 0.3);
-  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px var(--shadow-color);
 }
 
-/* Ajuste para evitar que el contenido se solape con el navbar */
-body {
-  padding-top: 100px;
+.navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80px;
 }
 
-/* Estilos de la imagen del logo */
-.navbar-img {
-  width: 200px;
-  height: auto;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.navbar-logo-link {
+  flex-shrink: 0;
 }
 
-/* Si quieres que el logo se reduzca aún más en pantallas pequeñas */
-@media (max-width: 768px) {
-  .navbar-img {
-    width: 120px;
-  }
+.navbar-logo-img {
+  height: 60px;
+  width: auto;
+  transition: transform var(--transition-speed);
+}
+.navbar-logo-img:hover {
+  transform: scale(1.05);
 }
 
-/* Estilos de los enlaces en el navbar */
-.nav-link {
-  color: #000000;
-  transition: color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    font-weight 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+.navbar-links-desktop {
+  display: flex;
+  align-items: center;
+  gap: 24px;
 }
 
-.nav-item {
-  padding-left: 10px;
-  padding-right: 10px;
-  margin: 10px;
-  border-radius: 5px;
-  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Hover con sombra más clara */
-.nav-item:hover {
-  background-color: #004477;
-  box-shadow: 0px 13px 10px #004377a6;
-}
-
-.nav-item:hover .nav-link {
-  color: #ffffff;
-}
-
-/* Mantener el hover cuando el link está activo */
-.nav-item.active {
-  background-color: #004477;
-  box-shadow: 0px 4px 10px rgba(0, 68, 119, 0.3);
-}
-
-.nav-item.active .nav-link {
-  color: #ffffff;
-}
-
-/* Estilos del botón "Administrar" como botón verde */
-.admin-button {
-  background-color: #007953;
-  padding-left: 30px;
-  padding-right: 30px;
-  border-radius: 5px;
-  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
+.navbar-home {
+  padding: 10px;
+  border-radius: 15%;
+  color: var(--text-color-dark);
+  transition: background var(--transition-speed), color var(--transition-speed),
+    transform var(--transition-speed);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.admin-button:hover {
-  background-color: #006445;
-  box-shadow: 0px 4px 10px rgba(0, 121, 83, 0.3);
+.navbar-home.active,
+.navbar-home:hover {
+  background: var(--secondary-color);
+  color: var(--text-color-light);
+  transform: scale(1.1);
 }
 
-.admin-button .nav-link {
-  color: #ffffff;
-  font-weight: bold;
+.navbar-dropdown {
+  position: relative;
 }
 
-/* Estilos del menú desplegable con transición suave y lenta */
-.dropdown-menu {
+.navbar-dropdown-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  background-color: var(--primary-color);
+  color: var(--text-color-light);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background-color var(--transition-speed),
+    transform var(--transition-speed);
+  border: none;
+}
+
+.navbar-dropdown-label:hover {
+  background-color: var(--primary-hover-color);
+  transform: translateY(-2px);
+}
+
+.navbar-dropdown-arrow {
+  width: 20px;
+  height: 20px;
+  margin-left: 8px;
+  transition: transform var(--transition-speed) ease-in-out;
+}
+
+.navbar-dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.navbar-dropdown-content {
   position: absolute;
-  top: 100%;
   left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  width: max-content;
-  min-width: 100%;
-  background-color: #ffffff;
-  box-shadow: 0px 4px 10px rgba(0, 68, 119, 0.3);
-  border-radius: 5px;
-  padding: 10px;
+  top: calc(100% + 12px);
+  transform: translateX(-50%) translateY(-10px);
+  min-width: 220px;
+  background: var(--bg-color-dropdown);
+  border-radius: 12px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  z-index: 1100;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-top: 2px;
-  display: block;
+  transition: opacity var(--transition-speed) ease,
+    transform var(--transition-speed) ease;
+  padding: 8px;
 }
 
-/* Mostrar el menú cuando el usuario pasa el mouse */
-.nav-item:hover .dropdown-menu,
-.admin-button:focus-within .dropdown-menu {
+.navbar-dropdown-content.show {
   opacity: 1;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0);
 }
 
-/* Estilos de los elementos dentro del menú */
-.dropdown-item {
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  color: #000000;
-  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  text-align: center;
+.navbar-link {
   display: block;
-  border-radius: 5px;
+  padding: 10px 18px;
+  border-radius: 6px;
+  margin: 4px;
+  color: var(--text-color-dark);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background var(--transition-speed), color var(--transition-speed);
+  text-align: left;
 }
 
-/* Hover del menú desplegable con los mismos estilos que "Búsqueda" */
-.dropdown-item:hover {
-  background-color: #004477;
-  box-shadow: 0px 13px 10px #004377a6;
-  color: #ffffff;
+.navbar-link:hover {
+  background: var(--secondary-color);
+  color: var(--text-color-light);
 }
 
-/* Línea separadora dentro del menú */
-.dropdown-divider {
-  height: 1px;
-  background-color: #ccc;
-  margin: 8px 0;
-}
-
-/* Estilos del botón "Crear Servidor" dentro del menú */
-.create-server-button {
-  background-color: #007953;
-  color: #ffffff;
+.navbar-link-highlight {
   font-weight: bold;
-  text-align: center;
-  padding: 8px 10px;
-  margin-bottom: 0;
-  border-radius: 5px;
-  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  display: block;
+  background-color: var(--primary-color);
+  color: var(--text-color-light);
+}
+.navbar-link-highlight:hover {
+  background-color: var(--primary-hover-color);
+  color: var(--text-color-light);
 }
 
-.create-server-button:hover {
-  background-color: #006445;
-  box-shadow: 0px 4px 10px rgba(0, 121, 83, 0.3);
-}
-
-/* Estilos del icono Home */
-.home-icon {
-  display: flex;
-  align-items: center;
-  font-size: 50px;
-}
-
-.material-symbols-outlined {
-  font-variation-settings: "FILL" 0, "WGT" 400, "GRAD" 0, "OPSZ" 24;
-  font-size: 30px;
+.navbar-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 12px;
 }

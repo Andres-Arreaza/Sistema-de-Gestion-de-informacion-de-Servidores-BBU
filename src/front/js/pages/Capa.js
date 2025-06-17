@@ -1,173 +1,195 @@
 import React, { useEffect, useState } from "react";
+import Swal from "sweetalert2";
 
-const Capa = () => {
+
+// --- Iconos SVG ---
+const PlusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+const EditIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>;
+const TrashIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>;
+
+
+export const Capa = () => {
     const [capas, setCapas] = useState([]);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [confirmModalVisible, setConfirmModalVisible] = useState(false);
-    const [alerta, setAlerta] = useState({ mensaje: "", tipo: "" });
-    const [capaActual, setCapaActual] = useState({ id: null, nombre: "", descripcion: "" });
-    const [capaAEliminar, setCapaAEliminar] = useState(null);
+
+    // 🔹 Función para mostrar alertas con SweetAlert2
+    const mostrarAlerta = (mensaje, tipo) => {
+        Swal.fire({
+            position: 'center',
+            icon: tipo,
+            title: mensaje,
+            showConfirmButton: false,
+            timer: 2000,
+            heightAuto: false
+        });
+    };
 
     // 🔹 Obtener capas desde la API
     const fetchCapas = () => {
         fetch(process.env.BACKEND_URL + "/api/capas")
-            .then((response) => {
-                if (!response.ok) throw new Error("Error al obtener capas.");
-                return response.json();
-            })
-            .then((data) => {
-                console.log("Capas recibidas:", data);
-                setCapas(data);
-            })
-            .catch((error) => console.error("Error al obtener capas:", error));
+            .then(response => response.ok ? response.json() : Promise.reject("Error al obtener capas."))
+            .then(data => setCapas(data))
+            .catch(error => console.error("Error al obtener capas:", error));
     };
 
     useEffect(() => {
         fetchCapas();
     }, []);
 
-    // 🔹 Manejar cambios en el formulario
-    const handleChange = (e) => {
-        setCapaActual({ ...capaActual, [e.target.name]: e.target.value });
+    // 🔹 Función para abrir el modal de creación/edición con SweetAlert2
+    const abrirModalFormulario = (capa = null) => {
+        const esEdicion = capa !== null;
+        const valorInicialNombre = esEdicion ? capa.nombre : '';
+        const valorInicialDesc = esEdicion ? capa.descripcion : '';
+
+        Swal.fire({
+            title: esEdicion ? 'Editar Capa' : 'Crear Nueva Capa',
+            html: `
+                <div class="swal-form-container">
+                    <div class="swal-form-group">
+                        <label for="swal-nombre">Nombre de la capa <span class="campo-obligatorio">*</span></label>
+                        <input id="swal-nombre" class="swal2-input" placeholder="Ej: Frontend" value="${valorInicialNombre}">
+                    </div>
+                    <div class="swal-form-group">
+                         <label for="swal-descripcion">Descripción (Opcional)</label>
+                        <textarea id="swal-descripcion" class="swal2-textarea" placeholder="Describe brevemente la capa...">${valorInicialDesc}</textarea>
+                    </div>
+                </div>
+            `,
+            confirmButtonText: 'Guardar',
+            confirmButtonColor: 'var(--primary-color, #007953)',
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+            focusConfirm: false,
+            heightAuto: false,
+            customClass: {
+                popup: 'swal-wide'
+            },
+            preConfirm: () => {
+                const nombreInput = Swal.getPopup().querySelector('#swal-nombre');
+                const descripcionInput = Swal.getPopup().querySelector('#swal-descripcion');
+                const nombre = nombreInput.value;
+                const descripcion = descripcionInput.value;
+
+                if (!nombre.trim()) {
+                    nombreInput.classList.add('swal-input-error');
+                    Swal.showValidationMessage(`El campo "Nombre" es obligatorio.`);
+                    return false;
+                } else {
+                    nombreInput.classList.remove('swal-input-error');
+                }
+
+                if (esEdicion && nombre.trim() === valorInicialNombre.trim() && descripcion.trim() === valorInicialDesc.trim()) {
+                    Swal.showValidationMessage(`No se han realizado cambios.`);
+                    return false;
+                }
+
+                return { nombre: nombre.trim(), descripcion: descripcion.trim() };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const datosCapa = { ...result.value, id: esEdicion ? capa.id : null };
+                guardarCapa(datosCapa);
+            }
+        });
     };
 
-    // 🔹 Crear o actualizar capa
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        const metodo = capaActual.id ? "PUT" : "POST";
-        const url = capaActual.id
-            ? `${process.env.BACKEND_URL}/api/capas/${capaActual.id}`
+    // 🔹 Función para guardar (crear o actualizar) una capa
+    const guardarCapa = (capa) => {
+        const metodo = capa.id ? "PUT" : "POST";
+        const url = capa.id
+            ? `${process.env.BACKEND_URL}/api/capas/${capa.id}`
             : `${process.env.BACKEND_URL}/api/capas`;
 
         fetch(url, {
             method: metodo,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(capaActual),
+            body: JSON.stringify({ nombre: capa.nombre, descripcion: capa.descripcion }),
         })
-            .then((response) => response.json())
-            .then((data) => {
+            .then(response => response.json())
+            .then(data => {
                 if (data.error) {
-                    setAlerta({ mensaje: data.error, tipo: "error" });
+                    mostrarAlerta(data.error, "error");
                 } else {
                     fetchCapas();
-                    setModalVisible(false);
-                    setAlerta({ mensaje: capaActual.id ? "Capa actualizada" : "Capa creada", tipo: "success" });
+                    mostrarAlerta(capa.id ? "Capa actualizada" : "Capa creada", "success");
                 }
-                setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
-            .catch((error) => {
+            .catch(error => {
                 console.error("Error al guardar capa:", error);
-                setAlerta({ mensaje: "Error al guardar la capa", tipo: "error" });
-                setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
+                mostrarAlerta("Error al guardar la capa", "error");
             });
     };
 
-    // 🔹 Mostrar modal de confirmación antes de eliminar
-    const handleDeleteConfirm = (capa) => {
-        setCapaAEliminar(capa);
-        setConfirmModalVisible(true);
-    };
-
-    // 🔹 Eliminar capa (borrado lógico)
-    const handleDelete = () => {
-        if (!capaAEliminar) return;
-
-        fetch(`${process.env.BACKEND_URL}/api/capas/${capaAEliminar.id}`, { method: "DELETE" })
-            .then((response) => response.json())
-            .then(() => {
-                fetchCapas();
-                setConfirmModalVisible(false);
-                setAlerta({ mensaje: "Capa eliminada", tipo: "error" });
-                setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
-            })
-            .catch((error) => {
-                console.error("Error al eliminar capa:", error);
-                setAlerta({ mensaje: "Error al eliminar la capa", tipo: "error" });
-                setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
-            });
+    // 🔹 Función para confirmar y eliminar una capa
+    const confirmarEliminacion = (capa) => {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: `No podrás revertir la eliminación de la capa "${capa.nombre}".`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, ¡eliminar!',
+            cancelButtonText: 'Cancelar',
+            heightAuto: false,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`${process.env.BACKEND_URL}/api/capas/${capa.id}`, { method: "DELETE" })
+                    .then(response => response.json())
+                    .then(() => {
+                        fetchCapas();
+                        mostrarAlerta("Capa eliminada", "success");
+                    })
+                    .catch(error => {
+                        console.error("Error al eliminar capa:", error);
+                        mostrarAlerta("Error al eliminar la capa", "error");
+                    });
+            }
+        });
     };
 
     return (
-        <div className="capa-container">
-            {/* 🔹 Encabezado con gradiente, líneas blancas y botón */}
-            <div className="capa-header">
-                <div className="linea-blanca"></div>
-                <h2 className="capa-title">Gestión de Capas</h2>
-                <button className="crear-capa-btn" onClick={() => {
-                    setCapaActual({ id: null, nombre: "", descripcion: "" });
-                    setModalVisible(true);
-                }}>Crear Capa</button>
-                <div className="linea-blanca-2"></div>
+        <div className="page-container">
+            <div className="hero-section">
+                <div className="title-section">
+                    <div className="decorative-line-top"></div>
+                    <h1 className="main-title">Gestión de Capas</h1>
+                    <p className="subtitle">"Define las capas de tu infraestructura"</p>
+                    <button className="crear-btn" onClick={() => abrirModalFormulario()}>
+                        <PlusIcon />
+                        Crear Capa
+                    </button>
+                    <div className="decorative-line-bottom"></div>
+                </div>
             </div>
 
-            {/* 🔹 Mensaje de alerta */}
-            {alerta.mensaje && (
-                <div className={`alerta ${alerta.tipo}`}>
-                    {alerta.mensaje === "Capa eliminada" ? (
-                        <span className="material-symbols-outlined">cancel</span>
-                    ) : (
-                        <span className="material-symbols-outlined">check_circle</span>
-                    )}
-                    {alerta.mensaje}
+            <div className="content-area">
+                <div className="content-header">
+                    <h2 className="content-title">Listado de Capas</h2>
                 </div>
-            )}
 
-            {/* 🔹 Modal de creación/edición */}
-            {modalVisible && (
-                <div className="modal-overlay" onClick={() => setModalVisible(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h2>{capaActual.id ? "Editar Capa" : "Crear Nueva Capa"}</h2>
-                        <form onSubmit={handleSubmit}>
-                            <input type="text" name="nombre" placeholder="Nombre de la capa" value={capaActual.nombre} onChange={handleChange} required />
-                            <input type="text" name="descripcion" placeholder="Descripción" value={capaActual.descripcion} onChange={handleChange} required />
-                            <div className="modal-buttons">
-                                <button type="submit" className="guardar-btn">Guardar</button>
-                                <button type="button" className="cerrar-btn" onClick={() => setModalVisible(false)}>Cerrar</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* 🔹 Modal de confirmación de eliminación */}
-            {confirmModalVisible && (
-                <div className="modal-overlay" onClick={() => setConfirmModalVisible(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h2>¿Seguro que deseas eliminar esta capa?</h2>
-                        <p>{`La capa "` + capaAEliminar?.nombre + `" será eliminada.`}</p>
-                        <div className="modal-delete-buttons">
-                            <button className="eliminar-confirm-btn" onClick={handleDelete}>Eliminar</button>
-                            <button className="cerrar-modal-btn" onClick={() => setConfirmModalVisible(false)}>Cancelar</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* 🔹 Lista de capas con botones de editar y eliminar */}
-            <div className="capa-grid">
-                {capas.length > 0 ? (
-                    capas.map((capa) => (
-                        <div key={capa.id} className="capa-item">
-                            <div className="capa-header-item">
-                                <div className="capa-actions">
-                                    <strong className="name">{capa.nombre}</strong>
-                                    <button className="editar-btn" onClick={() => {
-                                        setCapaActual(capa);
-                                        setModalVisible(true);
-                                    }}>
-                                        <span className="material-icons"><i className="fas fa-edit"></i></span>
-                                    </button>
-                                    <button className="eliminar-btn" onClick={() => handleDeleteConfirm(capa)}>
-                                        <span className="material-icons"><i className="fas fa-trash"></i></span>
-                                    </button>
+                <div className="servicio-grid">
+                    {capas.length > 0 ? (
+                        capas.map((capa) => (
+                            <div key={capa.id} className="servicio-card">
+                                <div className="servicio-card-header">
+                                    <strong className="servicio-nombre">{capa.nombre}</strong>
+                                    <div className="servicio-acciones">
+                                        <button className="accion-btn editar-btn" onClick={() => abrirModalFormulario(capa)}>
+                                            <EditIcon />
+                                        </button>
+                                        <button className="accion-btn eliminar-btn" onClick={() => confirmarEliminacion(capa)}>
+                                            <TrashIcon />
+                                        </button>
+                                    </div>
                                 </div>
+                                <p className="servicio-descripcion">{capa.descripcion}</p>
                             </div>
-                            <p className="descripcion">{capa.descripcion}</p>
-                        </div>
-                    ))
-                ) : (
-                    <p>No hay capas disponibles.</p>
-                )}
+                        ))
+                    ) : (
+                        <p>No hay capas disponibles.</p>
+                    )}
+                </div>
             </div>
         </div>
     );

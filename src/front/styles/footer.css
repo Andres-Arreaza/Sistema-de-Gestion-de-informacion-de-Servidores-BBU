@@ -1,11 +1,33 @@
-/* Footer */
-.footer {
-    background-color: #ffffff;
-    border-top: 2px solid #007953;
-    padding: 20px;
+/* ==========================================================================
+   6. Estilos del Footer
+   ========================================================================== */
+
+.app-footer {
+  background: var(--bg-color-header);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border-color);
+  color: var(--text-color-dark); /*bcbcbc*/
+  padding: 20px 24px;
+  width: 100%;
+  box-sizing: border-box;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
 }
 
-.footer-logo {
-    height: 35px; 
-    margin-bottom: 10px;
+.app-footer.loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.footer-container p {
+  margin: 0;
+  font-size: 14px; /* CAMBIO: Aumentado de 13px */
 }

@@ -1,129 +1,185 @@
-/* 🔹 Variables globales */
-:root {
-  --paddings-top: 30px;
-  --paddings-bottom: 30px;
-  --margins-top: 0px;
-  --margins-bottom: 0px;
-  --gradient: linear-gradient(93.29deg, #1a61ab -12.85%, #007953 115.58%);
+/* ==========================================================================
+   Estilos de la Página de Servidores
+   ========================================================================== */
+
+/* Contenedor principal de la página */
+.page-container {
+  padding-top: 80px;
 }
 
-/* 🔹 Animaciones */
-@keyframes fadeUpSlow {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes zoomFadeInSlow {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes expandLine {
-  from {
-    width: 0%;
-    opacity: 0;
-  }
-  to {
-    width: 30%;
-    opacity: 1;
-  }
-}
-
-@keyframes expandLine2 {
-  from {
-    width: 0%;
-    opacity: 0;
-  }
-  to {
-    width: 20%;
-    opacity: 1;
-  }
-}
-
-/* 🔹 Contenedor principal */
-.servidores-container {
-  padding: 0px;
+/* --- Estilos del Encabezado (Hero) --- */
+.hero-section {
+  background: linear-gradient(135deg, #021027 0%, #004477 0%, #007953 90%);
+  padding: 22px 24px !important;
   text-align: center;
-  position: relative;
+  animation: fadeUp 1s ease-out forwards;
 }
 
-/* 🔹 Encabezado con gradiente */
-.servidores-header {
-  padding-top: var(--paddings-top);
-  padding-bottom: var(--paddings-bottom);
-  margin-top: var(--margins-top);
-  margin-bottom: var(--margins-bottom);
-  background: var(--gradient);
-  text-align: center;
+.hero-section .title-section {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-/* 🔹 Título con animación */
-.servidores-title {
-  font-size: 40px;
-  font-weight: bold;
-  color: white;
-  margin-bottom: 25px;
-  animation: fadeUpSlow 1s ease-out;
+.hero-section .main-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  animation: fadeUp 1s ease-out forwards 0.3s;
 }
 
-/* 🔹 Botón para abrir el modal */
-.crear-servidores-btn {
-  background-color: #ffff;
-  color: #006243;
-  padding: 10px 30px;
-  border: 2px solid #006847;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  animation: zoomFadeInSlow 1s ease-out;
+.hero-section .subtitle {
+  font-size: 1.5rem;
+  font-family: "Lato", sans-serif;
+  color: rgba(255, 255, 255, 0.8);
+  opacity: 0;
+  animation: fadeUp 1s ease-out forwards 0.6s;
+  margin-bottom: 24px;
 }
 
-.crear-servidores-btn:hover {
-  background-color: #007953;
-  color: white;
-  border: 2px solid rgb(0, 153, 104);
-  transform: scale(1.05);
-  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.25);
+.hero-section .decorative-line-top,
+.hero-section .decorative-line-bottom {
+  height: 4px;
+  margin: 16px auto;
+  background: #fff;
+  border-radius: 2px;
+  width: 0;
+  opacity: 0;
+  animation: expandWidth 1s ease-out forwards;
+  animation-delay: 0.5s;
 }
 
-/* 🔹 Líneas blancas */
-.linea-blanca {
-  margin: auto;
+.hero-section .decorative-line-top {
+  width: 70%;
+}
+
+.hero-section .decorative-line-bottom {
+  margin: 24px auto 0 auto;
   width: 30%;
-  height: 3px;
-  background-color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 20px;
-  animation: expandLine 1s ease-out;
 }
 
-.linea-blanca-2 {
-  margin: auto;
-  width: 20%;
-  height: 2.5px;
-  margin-top: 20px;
-  animation: expandLine2 1s ease-out;
+/* --- Área de Contenido Principal --- */
+.content-area {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 40px 24px;
 }
 
-.modal-title {
-  color: #00794b !important;
+/* --- Estilos para las tarjetas de acción --- */
+.actions-grid {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 40px;
 }
 
-/* 🔹 Modal ampliado */
+.action-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+  width: 100%;
+  max-width: 45%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.action-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.15);
+}
+
+.action-card-icon {
+  color: var(--primary-color, #007953);
+  margin-bottom: 15px;
+}
+
+.action-card-icon svg {
+  width: 56px;
+  height: 56px;
+}
+
+.action-card-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-color-dark, #333);
+}
+
+.action-card-description {
+  color: #6c757d;
+  line-height: 1.6;
+  flex-grow: 1;
+}
+
+/* --- Estilos para el pie de página de la tarjeta --- */
+.action-card-footer {
+  text-align: center; /* Asegura que el contenido esté centrado */
+}
+
+.action-card-button {
+  display: inline-block;
+  background-color: var(--primary-color, #007953);
+  color: var(--text-color-light, #fff);
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.action-card-button:hover {
+  background-color: var(--primary-hover-color, #006845);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 121, 83, 0.2);
+}
+
+/* Botón de carga masiva dentro de la tarjeta */
+.carga-masiva-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--primary-color, #007953);
+  color: var(--text-color-light, #fff);
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.carga-masiva-btn:hover {
+  background-color: var(--primary-hover-color, #006845);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 121, 83, 0.2);
+}
+
+/* --- Estilos para los Modales --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+
 .modal-content-servidor {
   width: 90%;
+  max-width: 1200px;
   max-height: 90vh;
   overflow-y: auto;
   background: white;
@@ -131,4 +187,10 @@
   border-radius: 10px;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-title {
+  color: var(--primary-color, #007953);
+  margin-bottom: 24px;
+  font-size: 1.8rem;
 }

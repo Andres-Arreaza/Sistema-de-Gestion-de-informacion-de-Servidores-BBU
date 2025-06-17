@@ -1,107 +1,96 @@
-import React, { useEffect, useState } from "react";
-import Loading from "../component/Loading"; // Asegúrate de que la ruta sea correcta
-import HomeFiltro from "../component/HomeFiltro";
-import HomeTabla from "../component/HomeTabla";
+import React, { useState, useEffect } from 'react';
+// Asegúrate de que esta importación apunte al archivo CSS correcto
+// En tu proyecto, esta importación es la correcta
+import { useNavigate } from 'react-router-dom';
 
-export const Home = () => {
-    const [servicios, setServicios] = useState([]);
-    const [capas, setCapas] = useState([]);
-    const [ambientes, setAmbientes] = useState([]);
-    const [dominios, setDominios] = useState([]);
-    const [sistemasOperativos, setSistemasOperativos] = useState([]);
-    const [estatus, setEstatus] = useState([]);
+// --- Componente Home ---
+const Home = () => {
+    const [isLoaded, setIsLoaded] = useState(false);
+    // Se utiliza el hook real de react-router-dom
+    const navigate = useNavigate();
 
-    const [filtro, setFiltro] = useState({
-        servicios: [],
-        capas: [],
-        ambientes: [],
-        dominios: [],
-        sistemasOperativos: [],
-        estatus: [],
-        nombre: "",
-        tipo: "",
-        ip: "",
-        balanceador: "",
-        vlan: "",
-        descripcion: "",
-        link: ""
-    });
+    // --- Iconos SVG como componentes internos ---
+    const SearchIcon = (props) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    );
 
-    const [servidores, setServidores] = useState([]);
-    const [loadingFiltros, setLoadingFiltros] = useState(true);
-    const [busquedaRealizada, setBusquedaRealizada] = useState(false); // 🔹 Estado para controlar la búsqueda
+    const UploadIcon = (props) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+    );
+
+    const EditIcon = (props) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+    );
+
+    // --- Componente Botón de Acción ---
+    const ActionButton = ({ icon, text, onClick }) => {
+        return (
+            <button onClick={onClick} className="action-button">
+                {icon}
+                <span>{text}</span>
+            </button>
+        );
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            const urls = [
-                { key: "servicios", url: "http://localhost:3001/api/servicios" },
-                { key: "capas", url: "http://localhost:3001/api/capas" },
-                { key: "ambientes", url: "http://localhost:3001/api/ambientes" },
-                { key: "dominios", url: "http://localhost:3001/api/dominios" },
-                { key: "sistemasOperativos", url: "http://localhost:3001/api/sistemas_operativos" },
-                { key: "estatus", url: "http://localhost:3001/api/estatus" }
-            ];
-            for (const { key, url } of urls) {
-                try {
-                    const res = await fetch(url);
-                    const data = await res.json();
-                    if (key === "servicios") setServicios(data);
-                    if (key === "capas") setCapas(data);
-                    if (key === "ambientes") setAmbientes(data);
-                    if (key === "dominios") setDominios(data);
-                    if (key === "sistemasOperativos") setSistemasOperativos(data);
-                    if (key === "estatus") setEstatus(data);
-                } catch (e) { }
-            }
-            setTimeout(() => setLoadingFiltros(false), {/*650*/ });
-        };
-        fetchData();
+        // Activa la animación de entrada después de que el componente se monte.
+        const timer = setTimeout(() => setIsLoaded(true), 100);
+        return () => clearTimeout(timer);
     }, []);
 
-    const buscarServidores = async (e) => {
-        e.preventDefault();
-        setBusquedaRealizada(true); // 🔹 Solo mostramos resultados después de buscar
-
-        const params = new URLSearchParams();
-        Object.keys(filtro).forEach((key) => {
-            if (Array.isArray(filtro[key])) {
-                filtro[key].forEach(id => params.append(key, id));
-            } else if (filtro[key]) {
-                params.append(key, filtro[key]);
-            }
-        });
-
-        const res = await fetch(`http://localhost:3001/api/servidores/busqueda?${params.toString()}`);
-        const data = await res.json();
-        setServidores(data);
+    const handleNavigate = (ruta) => {
+        navigate(ruta);
     };
 
     return (
-        <div>
-            <div className="home-container">
-                <div className="linea-blanca-1"></div>
-                <h1 className="title">Gerencia de Operaciones de Canales Virtuales y Medios de Pagos</h1>
-                <p className="subtitle">"Gestiona y visualiza servidores"</p>
-                <div className="linea-blanca-4"></div>
+        // Estructura dividida en dos secciones principales
+        <div className={`home-wrapper ${isLoaded ? 'loaded' : ''}`}>
+            {/* Sección superior con el gradiente */}
+            <div className="home-hero-section">
+                <div className="title-section">
+                    <div className="decorative-line-top"></div>
+                    <h1 className="main-title">
+                        Gerencia de Operaciones de Canales Virtuales y Medios de Pagos
+                    </h1>
+                    <p className="subtitle">
+                        "Gestiona y visualiza servidores"
+                    </p>
+                    <div className="decorative-line-bottom"></div>
+                </div>
             </div>
 
-            <h2 className="busqueda-title">Búsqueda de servidores</h2>
-
-            {loadingFiltros ? <Loading /> : (
-                <HomeFiltro
-                    filtro={filtro}
-                    setFiltro={setFiltro}
-                    buscarServidores={buscarServidores}
-                    servicios={servicios}
-                    capas={capas}
-                    ambientes={ambientes}
-                    dominios={dominios}
-                    sistemasOperativos={sistemasOperativos}
-                    estatus={estatus}
-                />
-            )}
-
-            {busquedaRealizada && <HomeTabla servidores={servidores} />}
+            {/* Sección inferior con los botones y fondo blanco */}
+            <div className="home-actions-area">
+                <div className="actions-section">
+                    <ActionButton
+                        text="Búsqueda"
+                        icon={<SearchIcon />}
+                        onClick={() => handleNavigate('/busqueda')}
+                    />
+                    <ActionButton
+                        text="Carga Masiva"
+                        icon={<UploadIcon />}
+                        onClick={() => handleNavigate('/carga-masiva')}
+                    />
+                    <ActionButton
+                        text="Editor Masivo"
+                        icon={<EditIcon />}
+                        onClick={() => handleNavigate('/editor-masivo')}
+                    />
+                </div>
+            </div>
         </div>
     );
 };
+
+export default Home;

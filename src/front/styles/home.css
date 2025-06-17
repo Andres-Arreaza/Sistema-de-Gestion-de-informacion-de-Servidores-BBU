@@ -1,167 +1,118 @@
-/* Variables globales */
-:root {
-  --paddings-top: 60px;
-  --paddings-bottom: 60px;
-  --margins-top: 0px;
-  --margins-bottom: 0px;
-  --gradient: linear-gradient(93.29deg, #1a61ab -12.85%, #007953 115.58%);
+/* --- Estilos para el componente Home --- */
+
+/* Contenedor principal que envuelve todo el componente Home */
+.home-wrapper {
+  padding-top: 80px;
 }
 
-/* 🔹 Animaciones */
-@keyframes fadeUpSlow {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes zoomFadeInSlow {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* 🔹 Contenedor principal */
-.home-container {
-  padding-top: var(--paddings-top);
-  padding-bottom: var(--paddings-bottom);
-  margin-top: var(--margins-top);
-  margin-bottom: var(--margins-bottom);
-  background: var(--gradient);
+/* Sección superior con el gradiente de fondo */
+.home-hero-section {
+  background: linear-gradient(135deg, #021027 0%, #004477 0%, #007953 90%);
+  padding: 40px 24px;
   text-align: center;
 }
 
-.linea-blanca-1 {
-  margin: 10px auto;
-  height: 3px; /* 📌 Más gruesa */
-  background-color: rgba(255, 255, 255, 0.6);
-  width: 50%; /* 📌 Mucho más ancha */
-  opacity: 0;
-  animation: expandLine1 1s ease-out forwards;
+/* Contenedor para el título y subtítulo dentro de la sección hero */
+.title-section {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.linea-blanca-4 {
-  margin: 10px auto;
-  height: 3px; /* 📌 Más delgada */
-  background-color: rgba(255, 255, 255, 0.6);
-  width: 30%; /* 📌 Más estrecha */
-  opacity: 0;
-  animation: expandLine4 1s ease-out forwards;
-}
-
-/* 📌 Animaciones separadas para cada línea */
-@keyframes expandLine1 {
-  from {
-    width: 0%;
-    opacity: 0;
-  }
-  to {
-    width: 50%; /* 📌 Se expande más */
-    opacity: 1;
-  }
-}
-
-@keyframes expandLine4 {
-  from {
-    width: 0%;
-    opacity: 0;
-  }
-  to {
-    width: 30%; /* 📌 Se expande menos */
-    opacity: 1;
-  }
-}
-/* 🔹 Títulos principales */
-.title,
-.subtitle {
-  animation: fadeUpSlow 1s ease-out;
-  color: #ffffff;
-}
-
-.title {
-  width: 800px;
-  margin: auto;
-  font-size: 40px;
-}
-
-.subtitle {
-  font-family: "Caveat", cursive;
-  font-size: 40px;
-}
-
-/* 🔹 Contenedor de resultados */
-.servicios-container {
-  text-align: center;
-  padding: 40px 20px;
-  background-color: #f8f9fa;
-}
-
-/* 🔹 Título de resultados */
-.services-title,
-.busqueda-title {
-  font-size: 30px;
-  color: #333;
-  text-align: center;
-}
-
-.busqueda-title {
-  margin-top: 25px;
-  padding: 10px;
-  width: 100%;
-}
-
-/* 🔹 Filtros de servidores */
-.filtros-servidores {
-  margin: 30px auto;
-  max-width: 90%;
+/* Líneas decorativas encima y debajo del título */
+.decorative-line-top,
+.decorative-line-bottom {
+  height: 4px;
+  margin: 0 auto 24px auto;
   background: #fff;
-  padding: 24px;
-  border-radius: 8px;
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15),
-    0 1.5px 6px 0 rgba(0, 0, 0, 0.08);
-  animation: fadeUpSlow 1.1s;
+  border-radius: 2px;
+  width: 0;
+  opacity: 0;
+  animation: expandWidth 1s ease-out forwards;
 }
 
-/* 🔹 Botón buscar */
-.buscar-servidores-btn {
-  margin-top: 24px;
-  background-color: #0056b3;
-  color: white;
-  padding: 10px 20px;
-  border: none;
+.decorative-line-top {
+  animation-delay: 0.6s;
+  width: 70%;
+}
+
+.decorative-line-bottom {
+  margin: 24px auto 0 auto;
+  animation-delay: 0.6s;
+  width: 30%;
+}
+
+/* Título principal */
+.main-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  width: 65%;
+  color: #fff;
+  margin: 0 auto 10px auto;
+  line-height: 1.1;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  animation: fadeUp 1s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+/* Subtítulo con fuente especial */
+.subtitle {
+  font-size: 2.5rem;
+  font-family: "Caveat", cursive;
+  color: #fff;
+  font-weight: 400;
+  margin-bottom: 10px;
+  margin-top: 0;
+  opacity: 0;
+  animation: fadeUp 1s ease-out forwards;
+  animation-delay: 0.9s;
+}
+
+/* Área inferior con fondo blanco para los botones */
+.home-actions-area {
+  background-color: #ffffff;
+  padding: 80px 24px;
+}
+
+/* Contenedor de los botones de acción */
+.actions-section {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  opacity: 0;
+  animation: fadeUp 1s ease-out forwards;
+  animation-delay: 1.1s;
+}
+
+/* Estilo de los botones de acción para el fondo claro */
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  /* Estas variables (--primary-color, etc.) deben estar definidas en tu CSS global (ej. index.css) */
+  color: var(--primary-color, #007953);
+  border: 1.5px solid var(--primary-color, #007953);
+  border-radius: 12px;
+  padding: 16px 32px;
+  font-size: 1.2rem;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 16px;
-  border-radius: 5px;
-  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+  outline: none;
+  width: 250px;
 }
 
-.buscar-servidores-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.13);
+.action-button:hover {
+  background: var(--primary-color, #007953);
+  color: var(--text-color-light, #fff);
+  transform: translateY(-3px);
 }
 
-/* 🔹 Tabla de resultados */
-.tabla-servidores {
-  border-collapse: collapse;
-}
-
-.tabla-servidores th,
-.tabla-servidores td {
-  border: 1px solid #ddd;
-  padding: 7px;
-  text-align: center;
-}
-
-.tabla-servidores th {
-  background-color: #f2f2f2;
-  font-weight: bold;
+.action-button svg {
+  display: inline-block;
+  vertical-align: middle;
+  color: inherit;
 }

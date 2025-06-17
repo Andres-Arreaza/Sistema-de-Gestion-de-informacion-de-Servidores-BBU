@@ -1,72 +1,97 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 
+// --- Icono de Home ---
+const HomeIcon = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    </svg>
+);
+
+// --- Componente Navbar ---
 export const Navbar = () => {
     const location = useLocation();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    // --- Datos para los enlaces del dropdown ---
+    const adminLinks = [
+        { to: "/servicio", label: "Servicios" },
+        { to: "/capa", label: "Capa" },
+        { to: "/ambiente", label: "Ambiente" },
+        { to: "/dominio", label: "Dominio" },
+        { to: "/sistemaOperativo", label: "Sistema Operativo" },
+        { to: "/estatus", label: "Estatus" },
+        { type: 'divider' },
+        { to: "/servidor", label: "Crear Servidor", isHighlight: true },
+    ];
+
+    // Cierra el dropdown cuando cambia la ruta
+    useEffect(() => {
+        setIsDropdownOpen(false);
+    }, [location]);
+
+    // Cierra el dropdown si se hace clic fuera de él
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    const toggleDropdown = () => {
+        setIsDropdownOpen(!isDropdownOpen);
+    };
 
     return (
-        <nav className="navbar navbar-expand-lg">
-            <div className="container">
-                {/* Logo */}
-                <Link to="/" className="navbar-brand">
+        <header className="navbar-header">
+            <nav className="navbar-container">
+                <Link to="/" className="navbar-logo-link">
                     <img
+                        className="navbar-logo-img"
                         src="https://banesco-prod-2020.s3.amazonaws.com/wp-content/themes/banescocontigo/assets/images/header/logotype.png"
-                        className="navbar-img"
-                        alt="Banesco"
+                        alt="Logo Banesco"
                     />
                 </Link>
 
-                {/* Botón de menú en dispositivos móviles */}
-                <button
-                    className="navbar-toggler"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#navbarNav"
-                >
-                    <span className="navbar-toggler-icon"></span>
-                </button>
-
-                {/* Menú de navegación */}
-                <div className="collapse navbar-collapse" id="navbarNav">
-                    <ul className="navbar-nav ms-auto">
-                        {/* Búsqueda */}
-                        {/*
-                        <li className={`nav-item ${location.pathname === "/loading" ? "active" : ""}`}>
-                            <Link className="nav-link" to="/loading">Búsqueda Específica</Link>
-                        </li>
-                        */}
-
-                        {/* Administrar con menú desplegable */}
-                        <li
-                            className="nav-item dropdown admin-button"
-                            onMouseEnter={() => setIsDropdownOpen(true)}
-                            onMouseLeave={() => setIsDropdownOpen(false)}
+                <div className="navbar-links-desktop">
+                    <div className="navbar-dropdown" ref={dropdownRef}>
+                        <button
+                            className="navbar-dropdown-label"
+                            onClick={toggleDropdown}
+                            aria-haspopup="true"
+                            aria-expanded={isDropdownOpen}
                         >
-                            <span className="nav-link dropdown-toggle">Administrar</span>
-                            {isDropdownOpen && ({/***************-----------------ELIMINARR------------------------********************/ },
-                                <div className="dropdown-menu">
-                                    <Link className="dropdown-item" to="/servicio">Servicios</Link>
-                                    <Link className="dropdown-item" to="/capa">Capa</Link>
-                                    <Link className="dropdown-item" to="/ambiente">Ambiente</Link>
-                                    <Link className="dropdown-item" to="/dominio">Dominio</Link>
-                                    <Link className="dropdown-item" to="/sistemaOperativo">Sistema Operativo</Link>
-                                    <Link className="dropdown-item" to="/estatus">Estatus</Link>
-                                    <div className="dropdown-divider"></div>
-                                    <Link className="dropdown-item create-server-button" to="/servidor">Crear Servidor</Link>
-                                </div>
-                            )}
-                        </li>
-
-                        {/* Icono Home */}
-                        <li className={`nav-item ${location.pathname === "/" ? "active" : ""}`}>
-                            <Link className="nav-link home-icon" to="/">
-                                <span className="material-symbols-outlined">home</span>
-                            </Link>
-                        </li>
-                    </ul>
+                            Administrar
+                            <svg className={`navbar-dropdown-arrow ${isDropdownOpen ? "open" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div className={`navbar-dropdown-content ${isDropdownOpen ? "show" : ""}`}>
+                            {adminLinks.map((link, index) => (
+                                link.type === 'divider' ? (
+                                    <div key={index} className="navbar-divider"></div>
+                                ) : (
+                                    <Link
+                                        key={index}
+                                        className={`navbar-link ${link.isHighlight ? "navbar-link-highlight" : ""}`}
+                                        to={link.to}
+                                    >
+                                        {link.label}
+                                    </Link>
+                                )
+                            ))}
+                        </div>
+                    </div>
+                    <Link className={`navbar-home ${location.pathname === "/" ? "active" : ""}`} to="/" aria-label="Página de inicio">
+                        <HomeIcon />
+                    </Link>
                 </div>
-            </div>
-        </nav>
+            </nav>
+        </header>
     );
 };

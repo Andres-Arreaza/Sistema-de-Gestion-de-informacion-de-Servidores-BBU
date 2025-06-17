@@ -1,26 +1,53 @@
-html,
+@import url("https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap");
+
+:root {
+  --primary-color: #007953;
+  --primary-hover-color: #008f61;
+  --secondary-color: #004477;
+  --text-color-light: #fff;
+  --text-color-dark: #333;
+  --bg-color-header: rgb(255, 255, 255);
+  --bg-color-dropdown: #f7f9f7;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --transition-speed: 0.3s;
+  --font-main: "Lato", sans-serif;
+}
+
 body {
-  height: 100%;
+  font-family: var(--font-main);
   margin: 0;
-  display: flex;
-  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .layout-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* 🔹 La página siempre tendrá la altura completa */
+  min-height: 100vh;
+  overflow: hidden;
 }
 
-.main-content {
-  flex: 1; /* 🔹 Empuja el footer hacia abajo */
+.main-content-area {
+  flex-grow: 1;
+}
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.footer {
-  background-color: #ffffff;
-  border-top: 2px solid #007953;
-  padding: 20px;
-  width: 100%;
-  text-align: center;
-  position: relative;
+@keyframes expandWidth {
+  from {
+    width: 0%;
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

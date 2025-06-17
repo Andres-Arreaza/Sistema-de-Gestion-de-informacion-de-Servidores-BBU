@@ -1,134 +1,148 @@
-/* 🔹 Botón "Guardar" */
-.guardar-servidores-btn {
-  background-color: #007953;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-}
+/* ==========================================================================
+   Estilos del Formulario de Servidor (ServidorFormulario.js) - Versión Mejorada
+   ========================================================================== */
 
-.guardar-servidores-btn:hover {
-  background-color: #00563b;
-}
-
-/* 🔹 Botón "Cerrar" */
-.cerrar-servidores-btn {
-  background-color: #dc3545;
-  color: #ffff;
-  padding: 10px 20px;
-  margin-left: 30px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-}
-
-.cerrar-servidores-btn:hover {
-  background-color: #b52b3a;
-}
-
-/* 🔹 Formulario organizado en filas */
+/* Contenedor principal del formulario. Se convierte en la rejilla principal. */
 .grid-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  padding: 24px;
+  background-color: #f8f9fa;
+  border-top: 1px solid var(--border-color, #e9ecef);
+  display: grid;
+  /* Rejilla adaptable, similar al BusquedaFiltro */
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 24px;
 }
 
-/* 🔹 Filas alineadas horizontalmente */
+/* Las filas intermedias no son necesarias para el layout adaptable, 
+   pero esta regla asegura que no interfieran si se mantienen en el JS. */
 .grid-form-row {
-  display: flex;
-  width: 100%;
-  justify-content: center;
-  gap: 20px;
+  display: contents;
 }
 
-/* 🔹 Campos del formulario */
+/* Campo de formulario individual, con los mismos estilos que .filtro-grupo */
 .form-field {
   display: flex;
   flex-direction: column;
-  width: 18%;
-}
-
-/* 🔹 Estilo para los labels */
-.form-field label {
-  font-weight: bold;
-  margin-bottom: 5px;
-  text-align: left;
-}
-
-/* 🔹 Estilo para los inputs, select y textarea */
-.form-field input,
-.form-field select,
-.form-field textarea {
-  width: 100%;
-  padding: 15px; /* 🔹 Ajuste en el padding */
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  position: relative;
+  background-color: var(--bg-color-dropdown, #f7f9f7);
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
   transition: all 0.3s ease-in-out;
 }
 
-/* 🔹 Asegurar que el campo Descripción tenga el mismo padding */
-.form-field textarea {
-  height: 40px;
-  resize: none;
-  padding: 25px; /* 🔹 Ahora igualado con los demás */
+.form-field:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 20px var(--shadow-color, rgba(0, 0, 0, 0.1));
 }
 
-/* 🔹 Efecto al hacer foco en inputs */
-.form-field input:focus,
+.form-field:focus-within {
+  background-color: var(--text-color-light, #fff);
+  border-color: var(--primary-color, #007953);
+  box-shadow: 0 4px 20px rgba(0, 121, 83, 0.1);
+  transform: translateY(-3px);
+  z-index: 11;
+}
+
+/* Etiqueta de cada campo */
+.form-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color-dark, #333);
+  opacity: 0.8;
+  margin-bottom: 8px;
+  text-align: left;
+  transition: color 0.3s ease-in-out;
+}
+
+.form-field:focus-within label {
+  color: var(--primary-color, #007953);
+  opacity: 1;
+}
+
+/* Estilo común para todos los inputs y selects */
+.form-field input[type="text"],
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color, #ccc);
+  background-color: var(--text-color-light, #fff);
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.form-field input[type="text"]:focus,
 .form-field select:focus,
 .form-field textarea:focus {
-  border-color: #007953 !important;
-  box-shadow: 0 0 5px rgba(0, 121, 83, 0.5);
+  outline: none;
+  border-color: var(--primary-color, #007953);
+  box-shadow: 0 0 0 3px rgba(0, 121, 83, 0.2);
 }
 
-/* 🔹 Botones del formulario */
+/* Estilo para campos con error */
+.form-field .input-error {
+  border-color: #dc3545 !important;
+}
+.form-field .input-error:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25) !important;
+}
+
+/* Estilo específico para el textarea */
+.form-field textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
+/* Campo que ocupa todo el ancho */
+.field-full-width {
+  grid-column: 1 / -1;
+}
+
+/* --- Botones del Modal --- */
 .modal-buttons {
+  grid-column: 1 / -1; /* Ocupa todo el ancho de la rejilla */
   display: flex;
-  justify-content: center; /* 🔹 Centra los botones */
-  gap: 10px; /* 🔹 Reduce la separación entre ellos */
-  width: 100%;
-  margin-top: 20px; /* 🔹 Ajuste en la separación superior */
-  margin-left: 20px; /* 🔹 Ajuste en la separación superior */
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color, #e9ecef);
 }
 
-.toast-success {
-  position: fixed;
-  top: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #4caf50;
-  color: #fff;
-  padding: 16px 32px;
+.btn-primary,
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px 28px;
+  border: none;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 9999;
-  font-size: 1.1rem;
-  animation: fadeInOut 3s forwards;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-@keyframes fadeInOut {
-  0% {
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
+.btn-primary {
+  background-color: var(--primary-color, #007953);
+  color: #fff;
+}
+.btn-primary:hover {
+  background-color: var(--primary-hover-color, #006845);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 121, 83, 0.25);
 }
 
-.alerta-campos-faltantes {
-  font-size: 12px;
-  margin: 2px 0;
-  color: #d9534f;
+.btn-secondary {
+  background-color: #f1f3f5;
+  color: #495057;
+  border: 1px solid #dee2e6;
+}
+.btn-secondary:hover {
+  background-color: #e9ecef;
 }

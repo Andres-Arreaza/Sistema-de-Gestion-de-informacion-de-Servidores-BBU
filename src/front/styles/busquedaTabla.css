@@ -1,0 +1,189 @@
+/* ==========================================================================
+   Estilos de la Tabla de Resultados (BusquedaTabla)
+   ========================================================================== */
+
+.resultados-container {
+  max-width: 1800px;
+  margin: 40px auto 0 auto;
+  background: var(--text-color-light, #fff);
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px var(--shadow-color, rgba(0, 0, 0, 0.1));
+  border: 1px solid var(--border-color, #e9ecef);
+  animation: fadeUp 1s ease-out forwards;
+  animation-delay: 0.6s;
+}
+
+.resultados-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-color, #e9ecef);
+  flex-wrap: wrap; /* Para adaptabilidad */
+  gap: 16px;
+}
+
+.resultados-titulo {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary-color, #007953);
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.table-controls {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.servidores-contador,
+.select-wrapper label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+
+.select-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.select-wrapper select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color, #ccc);
+  background-color: #fff;
+  font-size: 14px;
+}
+
+.export-csv-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--primary-color, #007953);
+  color: var(--text-color-light, #fff);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.export-csv-btn:hover {
+  background-color: var(--primary-hover-color, #006845);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 121, 83, 0.2);
+}
+
+.tabla-servidores-container {
+  overflow-x: auto; /* Permite scroll horizontal en pantallas pequeñas */
+}
+
+.tabla-servidores {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  white-space: nowrap; /* Evita que el texto se rompa en varias líneas */
+}
+
+.tabla-servidores thead th {
+  background-color: var(--bg-color-dropdown, #f7f9f7);
+  padding: 12px 15px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-color-dark, #333);
+  border-bottom: 2px solid #dee2e6;
+}
+
+.tabla-servidores tbody td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.tabla-servidores tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla-servidores tbody tr:hover {
+  background-color: #f1f3f5;
+}
+
+/* Columna de descripción con ajuste de texto */
+.col-descripcion {
+  white-space: normal;
+  max-width: 300px; /* Limita el ancho máximo */
+  word-wrap: break-word;
+}
+
+.ver-link-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+.ver-link-btn:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+.ver-link-btn svg {
+  color: var(--primary-color, #007953);
+}
+
+.paginacion-servidores {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color, #e9ecef);
+}
+
+.paginacion-btn {
+  background: #fff;
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.paginacion-btn:hover {
+  border-color: var(--primary-color, #007953);
+  color: var(--primary-color, #007953);
+}
+.paginacion-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--border-color, #ccc);
+  color: #6c757d;
+}
+
+.pagina-numero {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.no-resultados-mensaje {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 1.1rem;
+  color: #6c757d;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}

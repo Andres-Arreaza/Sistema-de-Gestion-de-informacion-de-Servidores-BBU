@@ -1,205 +1,107 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-import ServidorCargaMasiva from "./ServidorCargaMasiva";
 
-const ServidorTabla = ({ obtenerServidorPorId, servidores, setServidores }) => {
-    const [paginaActual, setPaginaActual] = useState(1);
-    const [servidoresPorPagina, setServidoresPorPagina] = useState(20);
+// Importa los componentes que se usarán
+import ServidorFormulario from "../component/ServidorFormulario";
+import ServidorCargaMasiva from "../component/ServidorCargaMasiva";
+import Loading from "../component/Loading";
 
-    const handleCantidadCambio = (e) => {
-        setServidoresPorPagina(Number(e.target.value));
-        setPaginaActual(1);
-    };
 
-    // 🔹 Obtener servidores activos desde la API
-    const actualizarServidores = async () => {
-        try {
-            const response = await fetch(`${process.env.BACKEND_URL}/api/servidores`);
-            const data = await response.json();
-            const servidoresFiltrados = data.filter((servidor) => servidor.activo === true);
-            setServidores(servidoresFiltrados);
-        } catch (error) {
-            console.error("Error al obtener servidores:", error);
-        }
-    };
+// --- Iconos SVG para las tarjetas de acción ---
+const PlusCircleIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="16"></line>
+        <line x1="8" y1="12" x2="16" y2="12"></line>
+    </svg>
+);
+const UploadCloudIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+        <polyline points="16 16 12 12 8 16"></polyline>
+    </svg>
+);
 
-    useEffect(() => {
-        actualizarServidores();
-    }, []);
 
-    // 🔹 Calcular total de páginas con validación segura
-    const totalPaginas = servidores.length ? Math.max(1, Math.ceil(servidores.length / servidoresPorPagina)) : 1;
+const Servidor = () => {
+    // Estado para controlar la visibilidad del modal de creación
+    const [modalCrearVisible, setModalCrearVisible] = useState(false);
+    const [servidores, setServidores] = useState([]); // Aunque no se muestre la tabla, se mantiene para la lógica de éxito
 
-    // 🔹 Obtener los servidores de la página actual
-    const inicioIndex = (paginaActual - 1) * servidoresPorPagina;
-    const finIndex = inicioIndex + servidoresPorPagina;
-    const servidoresVisibles = servidores.slice(inicioIndex, finIndex);
-
-    const abrirModalLink = (servidor) => {
-        if (!servidor || !servidor.link) return;
-
+    // Función que se ejecuta cuando un servidor se crea o edita con éxito
+    const handleSuccess = (mensaje) => {
         Swal.fire({
-            title: "Información del Enlace",
-            html: `
-                <div class="modal-link-container">
-                    <p><strong>Servidor:</strong> ${servidor.nombre || "No disponible"}</p>
-                    <p><strong>Descripción:</strong> ${servidor.descripcion || "No disponible"}</p>
-                    <p><strong>Enlace:</strong> <a href="${servidor.link}" target="_blank" rel="noopener noreferrer">${servidor.link}</a></p>
-                </div>
-            `,
-            showConfirmButton: true,
-            confirmButtonText: "Cerrar",
-            confirmButtonColor: "#dc3545",
-            width: "50%",
-            customClass: { title: "swal-title-green" }
+            icon: "success",
+            title: mensaje,
+            showConfirmButton: false,
+            timer: 2000,
+            heightAuto: false
         });
-    };
-
-    const handleEliminarConfirmacion = (servidor) => {
-        Swal.fire({
-            title: `¿Seguro que desea eliminar el servidor ${servidor.nombre}?`,
-            text: "El servidor será eliminado de forma permanente.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#dc3545",
-            cancelButtonColor: "#3349",
-            confirmButtonText: "Eliminar",
-            cancelButtonText: "Cancelar",
-            width: "50%",
-            customClass: { title: "swal-title-green" }
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                await handleBorradoLogico(servidor.id);
-                actualizarServidores();
-            }
-        });
-    };
-
-    const handleBorradoLogico = async (id) => {
-        try {
-            const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/${id}`, {
-                method: "DELETE"
-            });
-
-            if (response.ok) {
-                Swal.fire({
-                    title: "Eliminado",
-                    text: "El servidor se ha eliminado exitosamente.",
-                    icon: "success",
-                    timer: 2000,
-                    showConfirmButton: false,
-                    width: "50%",
-                    customClass: { title: "swal-title-green" }
-                }).then(() => {
-                    actualizarServidores();
-                });
-            } else {
-                Swal.fire("Error", "No se pudo eliminar el servidor.", "error");
-            }
-        } catch (error) {
-            console.error("Error al eliminar el servidor:", error);
-            Swal.fire("Error", "No se pudo conectar con el servidor.", "error");
-        }
+        // Si se necesitara recargar una lista de servidores en otra vista, se haría aquí
+        // fetchServidores(); 
     };
 
     return (
-        <div>
-            {/* 🔹 Paginación y opciones */}
-            <div className="cantidad-servidores">
-                <span className="servidores-contador">Servidores creados: {servidores.length}</span>
-                <label>Servidores por página:</label>
-                <select onChange={handleCantidadCambio} value={servidoresPorPagina}>
-                    <option value="20">20</option>
-                    <option value="30">30</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                    <option value="150">150</option>
-                    <option value="200">200</option>
-                </select>
-                {/* 🔹 Botón de carga masiva ahora es un componente aparte */}
-                <ServidorCargaMasiva actualizarServidores={actualizarServidores} />
+        <div className="page-container">
+            {/* Encabezado de la página */}
+            <div className="hero-section">
+                <div className="title-section">
+                    <div className="decorative-line-top"></div>
+                    <h1 className="main-title">Gestión de Servidores</h1>
+                    <p className="subtitle">Crea servidores de forma individual o mediante carga masiva.</p>
+                    <div className="decorative-line-bottom"></div>
+                </div>
             </div>
 
-            {/* 🔹 Tabla de servidores */}
-            <table className="tabla-servidores">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Tipo</th>
-                        <th>IP</th>
-                        <th>Servicio</th>
-                        <th>Capa</th>
-                        <th>Ambiente</th>
-                        <th>Balanceador</th>
-                        <th>VLAN</th>
-                        <th>Dominio</th>
-                        <th>S.O.</th>
-                        <th>Estatus</th>
-                        <th>Descripción</th>
-                        <th>Link</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {servidoresVisibles.length > 0 ? (
-                        servidoresVisibles.map((servidor) => (
-                            <tr key={servidor.id}>
-                                <td>{servidor.nombre || "Sin nombre"}</td>
-                                <td>{servidor.tipo || "Sin tipo"}</td>
-                                <td>{servidor.ip || "Sin IP"}</td>
-                                <td>{servidor.servicios?.[0]?.nombre || "Sin servicio"}</td>
-                                <td>{servidor.capas?.[0]?.nombre || "Sin capa"}</td>
-                                <td>{servidor.ambientes?.[0]?.nombre || "Sin ambiente"}</td>
-                                <td>{servidor.balanceador || "Sin balanceador"}</td>
-                                <td>{servidor.vlan || "Sin VLAN"}</td>
-                                <td>{servidor.dominios?.[0]?.nombre || "Sin dominio"}</td>
-                                <td>{servidor.sistemasOperativos?.[0]?.nombre || "Sin S.O."}</td>
-                                {/* 🔹 Mostrar correctamente el estatus actualizado */}
-                                <td>{servidor.estatus?.[0]?.nombre || servidor.estatus?.nombre || "Sin estatus"}</td>
-                                <td>{servidor.descripcion || "Sin descripción"}</td>
-                                <td>
-                                    <button className="ver-link-btn icon-btn" onClick={() => abrirModalLink(servidor)}>
-                                        <span className="material-symbols-outlined">visibility</span>
-                                    </button>
-                                </td>
-                                <td>
-                                    <button className="editar-btn icon-btn" onClick={() => obtenerServidorPorId(servidor.id)}>
-                                        <span className="material-icons"><i className="fas fa-edit"></i></span>
-                                    </button>
-                                    <button className="eliminar-btn icon-btn" onClick={() => handleEliminarConfirmacion(servidor)}>
-                                        <span className="material-icons"><i className="fas fa-trash"></i></span>
-                                    </button>
-                                </td>
-                            </tr>
-                        ))
-                    ) : (
-                        <tr>
-                            <td colSpan="14">No hay servidores disponibles en esta página.</td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
+            {/* Área de contenido con las acciones principales */}
+            <div className="content-area">
+                <div className="actions-grid">
+                    {/* Tarjeta de Acción: Crear Servidor */}
+                    <div className="action-card" onClick={() => setModalCrearVisible(true)}>
+                        <div>
+                            <div className="action-card-icon">
+                                <PlusCircleIcon />
+                            </div>
+                            <h3 className="action-card-title">Crear Servidor</h3>
+                            <p className="action-card-description">Añade un nuevo servidor a la infraestructura completando el formulario de manera individual.</p>
+                        </div>
+                        <div className="action-card-footer">
+                            <span className="action-card-button">Crear Individualmente</span>
+                        </div>
+                    </div>
 
-            {/* 🔹 Paginación */}
-            <div className="paginacion-servidores">
-                <button
-                    onClick={() => setPaginaActual(Math.max(1, paginaActual - 1))}
-                    className={`paginacion-btn ${paginaActual === 1 ? "btn-disabled" : ""}`}
-                    disabled={paginaActual === 1}
-                >
-                    <span className="material-symbols-outlined">arrow_back_ios</span>
-                </button>
-                <span className="pagina-numero">Página {paginaActual} de {totalPaginas}</span>
-                <button
-                    onClick={() => setPaginaActual(Math.min(totalPaginas, paginaActual + 1))}
-                    className={`paginacion-btn ${paginaActual === totalPaginas ? "btn-disabled" : ""}`}
-                    disabled={paginaActual === totalPaginas}
-                >
-                    <span className="material-symbols-outlined">arrow_forward_ios</span>
-                </button>
+                    {/* Tarjeta de Acción: Carga Masiva */}
+                    <div className="action-card">
+                        <div>
+                            <div className="action-card-icon">
+                                <UploadCloudIcon />
+                            </div>
+                            <h3 className="action-card-title">Carga Masiva</h3>
+                            <p className="action-card-description">Sube un archivo CSV para registrar múltiples servidores de forma simultánea y eficiente.</p>
+                        </div>
+                        {/* El componente ServidorCargaMasiva ahora es un botón que activa su propio modal */}
+                        <div className="action-card-footer">
+                            <ServidorCargaMasiva onUploadSuccess={handleSuccess} />
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            {/* Modal para el formulario de creación de servidor */}
+            {modalCrearVisible && (
+                <div className="modal-overlay" onClick={() => setModalCrearVisible(false)}>
+                    <div className="modal-content-servidor" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="modal-title">Crear Nuevo Servidor</h2>
+                        <ServidorFormulario
+                            setModalVisible={setModalCrearVisible}
+                            onSuccess={handleSuccess}
+                            esEdicion={false}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
-export default ServidorTabla;
+export default Servidor;

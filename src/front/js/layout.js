@@ -10,7 +10,8 @@ import ServidorTabla from "./component/ServidorTabla";
 import ServidorFormulario from "./component/ServidorFormulario";
 import Loading from "./component/Loading";
 
-import { Home } from "./pages/home";
+import Home from "./pages/home";
+import { Busqueda } from "./pages/Busqueda";
 import Servicio from "./pages/Servicio";
 import Capa from "./pages/Capa";
 import Ambiente from "./pages/Ambiente";
@@ -25,13 +26,17 @@ const Layout = () => {
     if (!process.env.BACKEND_URL || process.env.BACKEND_URL === "") return <BackendURL />;
 
     return (
-        <div className="layout-container"> {/* 🔹 Contenedor principal */}
+        // 1. Contenedor principal con la clase para el layout flex
+        <div className="layout-container">
             <BrowserRouter basename={basename}>
                 <ScrollToTop>
                     <Navbar />
-                    <div className="main-content"> {/* 🔹 Contenedor que ocupa el espacio disponible */}
+
+                    {/* 2. El contenido principal ahora es un <main> con la clase que lo hace crecer */}
+                    <main className="main-content-area">
                         <Routes>
                             <Route element={<Home />} path="/" />
+                            <Route element={<Busqueda />} path="/busqueda" />
                             <Route element={<Servicio />} path="/servicio" />
                             <Route element={<Capa />} path="/capa" />
                             <Route element={<Ambiente />} path="/ambiente" />
@@ -44,8 +49,9 @@ const Layout = () => {
                             <Route element={<Loading />} path="/loading" />
                             <Route element={<h1>Not found!</h1>} path="*" />
                         </Routes>
-                    </div>
-                    <Footer /> {/* 🔹 Siempre estará abajo */}
+                    </main>
+
+                    <Footer />
                 </ScrollToTop>
             </BrowserRouter>
         </div>

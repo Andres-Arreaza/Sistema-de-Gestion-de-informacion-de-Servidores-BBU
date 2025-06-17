@@ -1,173 +1,194 @@
 import React, { useEffect, useState } from "react";
+import Swal from "sweetalert2";
 
-const Ambiente = () => {
+// --- Iconos SVG ---
+const PlusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+const EditIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>;
+const TrashIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>;
+
+
+export const Ambiente = () => {
     const [ambientes, setAmbientes] = useState([]);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [confirmModalVisible, setConfirmModalVisible] = useState(false);
-    const [alerta, setAlerta] = useState({ mensaje: "", tipo: "" });
-    const [ambienteActual, setAmbienteActual] = useState({ id: null, nombre: "", descripcion: "" });
-    const [ambienteAEliminar, setAmbienteAEliminar] = useState(null);
+
+    // 🔹 Función para mostrar alertas con SweetAlert2
+    const mostrarAlerta = (mensaje, tipo) => {
+        Swal.fire({
+            position: 'center',
+            icon: tipo,
+            title: mensaje,
+            showConfirmButton: false,
+            timer: 2000,
+            heightAuto: false
+        });
+    };
 
     // 🔹 Obtener ambientes desde la API
     const fetchAmbientes = () => {
         fetch(process.env.BACKEND_URL + "/api/ambientes")
-            .then((response) => {
-                if (!response.ok) throw new Error("Error al obtener ambientes.");
-                return response.json();
-            })
-            .then((data) => {
-                console.log("Ambientes recibidos:", data);
-                setAmbientes(data);
-            })
-            .catch((error) => console.error("Error al obtener ambientes:", error));
+            .then(response => response.ok ? response.json() : Promise.reject("Error al obtener ambientes."))
+            .then(data => setAmbientes(data))
+            .catch(error => console.error("Error al obtener ambientes:", error));
     };
 
     useEffect(() => {
         fetchAmbientes();
     }, []);
 
-    // 🔹 Manejar cambios en el formulario
-    const handleChange = (e) => {
-        setAmbienteActual({ ...ambienteActual, [e.target.name]: e.target.value });
+    // 🔹 Función para abrir el modal de creación/edición con SweetAlert2
+    const abrirModalFormulario = (ambiente = null) => {
+        const esEdicion = ambiente !== null;
+        const valorInicialNombre = esEdicion ? ambiente.nombre : '';
+        const valorInicialDesc = esEdicion ? ambiente.descripcion : '';
+
+        Swal.fire({
+            title: esEdicion ? 'Editar Ambiente' : 'Crear Nuevo Ambiente',
+            html: `
+                <div class="swal-form-container">
+                    <div class="swal-form-group">
+                        <label for="swal-nombre">Nombre del ambiente <span class="campo-obligatorio">*</span></label>
+                        <input id="swal-nombre" class="swal2-input" placeholder="Ej: Producción" value="${valorInicialNombre}">
+                    </div>
+                    <div class="swal-form-group">
+                         <label for="swal-descripcion">Descripción (Opcional)</label>
+                        <textarea id="swal-descripcion" class="swal2-textarea" placeholder="Describe brevemente el ambiente...">${valorInicialDesc}</textarea>
+                    </div>
+                </div>
+            `,
+            confirmButtonText: 'Guardar',
+            confirmButtonColor: 'var(--primary-color, #007953)',
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+            focusConfirm: false,
+            heightAuto: false,
+            customClass: {
+                popup: 'swal-wide'
+            },
+            preConfirm: () => {
+                const nombreInput = Swal.getPopup().querySelector('#swal-nombre');
+                const descripcionInput = Swal.getPopup().querySelector('#swal-descripcion');
+                const nombre = nombreInput.value;
+                const descripcion = descripcionInput.value;
+
+                if (!nombre.trim()) {
+                    nombreInput.classList.add('swal-input-error');
+                    Swal.showValidationMessage(`El campo "Nombre" es obligatorio.`);
+                    return false;
+                } else {
+                    nombreInput.classList.remove('swal-input-error');
+                }
+
+                if (esEdicion && nombre.trim() === valorInicialNombre.trim() && descripcion.trim() === valorInicialDesc.trim()) {
+                    Swal.showValidationMessage(`No se han realizado cambios.`);
+                    return false;
+                }
+
+                return { nombre: nombre.trim(), descripcion: descripcion.trim() };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const datosAmbiente = { ...result.value, id: esEdicion ? ambiente.id : null };
+                guardarAmbiente(datosAmbiente);
+            }
+        });
     };
 
-    // 🔹 Crear o actualizar ambiente
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        const metodo = ambienteActual.id ? "PUT" : "POST";
-        const url = ambienteActual.id
-            ? `${process.env.BACKEND_URL}/api/ambientes/${ambienteActual.id}`
+    // 🔹 Función para guardar (crear o actualizar) un ambiente
+    const guardarAmbiente = (ambiente) => {
+        const metodo = ambiente.id ? "PUT" : "POST";
+        const url = ambiente.id
+            ? `${process.env.BACKEND_URL}/api/ambientes/${ambiente.id}`
             : `${process.env.BACKEND_URL}/api/ambientes`;
 
         fetch(url, {
             method: metodo,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(ambienteActual),
+            body: JSON.stringify({ nombre: ambiente.nombre, descripcion: ambiente.descripcion }),
         })
-            .then((response) => response.json())
-            .then((data) => {
+            .then(response => response.json())
+            .then(data => {
                 if (data.error) {
-                    setAlerta({ mensaje: data.error, tipo: "error" });
+                    mostrarAlerta(data.error, "error");
                 } else {
                     fetchAmbientes();
-                    setModalVisible(false);
-                    setAlerta({ mensaje: ambienteActual.id ? "Ambiente actualizado" : "Ambiente creado", tipo: "success" });
+                    mostrarAlerta(ambiente.id ? "Ambiente actualizado" : "Ambiente creado", "success");
                 }
-                setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
             })
-            .catch((error) => {
+            .catch(error => {
                 console.error("Error al guardar ambiente:", error);
-                setAlerta({ mensaje: "Error al guardar el ambiente", tipo: "error" });
-                setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
+                mostrarAlerta("Error al guardar el ambiente", "error");
             });
     };
 
-    // 🔹 Mostrar modal de confirmación antes de eliminar
-    const handleDeleteConfirm = (ambiente) => {
-        setAmbienteAEliminar(ambiente);
-        setConfirmModalVisible(true);
-    };
-
-    // 🔹 Eliminar ambiente (borrado lógico)
-    const handleDelete = () => {
-        if (!ambienteAEliminar) return;
-
-        fetch(`${process.env.BACKEND_URL}/api/ambientes/${ambienteAEliminar.id}`, { method: "DELETE" })
-            .then((response) => response.json())
-            .then(() => {
-                fetchAmbientes();
-                setConfirmModalVisible(false);
-                setAlerta({ mensaje: "Ambiente eliminado", tipo: "error" });
-                setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
-            })
-            .catch((error) => {
-                console.error("Error al eliminar ambiente:", error);
-                setAlerta({ mensaje: "Error al eliminar el ambiente", tipo: "error" });
-                setTimeout(() => setAlerta({ mensaje: "", tipo: "" }), 3000);
-            });
+    // 🔹 Función para confirmar y eliminar un ambiente
+    const confirmarEliminacion = (ambiente) => {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: `No podrás revertir la eliminación del ambiente "${ambiente.nombre}".`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, ¡eliminar!',
+            cancelButtonText: 'Cancelar',
+            heightAuto: false,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`${process.env.BACKEND_URL}/api/ambientes/${ambiente.id}`, { method: "DELETE" })
+                    .then(response => response.json())
+                    .then(() => {
+                        fetchAmbientes();
+                        mostrarAlerta("Ambiente eliminado", "success");
+                    })
+                    .catch(error => {
+                        console.error("Error al eliminar ambiente:", error);
+                        mostrarAlerta("Error al eliminar el ambiente", "error");
+                    });
+            }
+        });
     };
 
     return (
-        <div className="ambiente-container">
-            {/* 🔹 Encabezado con gradiente, líneas blancas y botón */}
-            <div className="ambiente-header">
-                <div className="linea-blanca"></div>
-                <h2 className="ambiente-title">Gestión de Ambientes</h2>
-                <button className="crear-ambiente-btn" onClick={() => {
-                    setAmbienteActual({ id: null, nombre: "", descripcion: "" });
-                    setModalVisible(true);
-                }}>Crear Ambiente</button>
-                <div className="linea-blanca-2"></div>
+        <div className="page-container">
+            <div className="hero-section">
+                <div className="title-section">
+                    <div className="decorative-line-top"></div>
+                    <h1 className="main-title">Gestión de Ambientes</h1>
+                    <p className="subtitle">"Administra los entornos de tus servidores"</p>
+                    <button className="crear-btn" onClick={() => abrirModalFormulario()}>
+                        <PlusIcon />
+                        Crear Ambiente
+                    </button>
+                    <div className="decorative-line-bottom"></div>
+                </div>
             </div>
 
-            {/* 🔹 Mensaje de alerta */}
-            {alerta.mensaje && (
-                <div className={`alerta ${alerta.tipo}`}>
-                    {alerta.mensaje === "Ambiente eliminado" ? (
-                        <span className="material-symbols-outlined">cancel</span>
-                    ) : (
-                        <span className="material-symbols-outlined">check_circle</span>
-                    )}
-                    {alerta.mensaje}
+            <div className="content-area">
+                <div className="content-header">
+                    <h2 className="content-title">Listado de Ambientes</h2>
                 </div>
-            )}
 
-            {/* 🔹 Modal de creación/edición */}
-            {modalVisible && (
-                <div className="modal-overlay" onClick={() => setModalVisible(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h2>{ambienteActual.id ? "Editar Ambiente" : "Crear Nuevo Ambiente"}</h2>
-                        <form onSubmit={handleSubmit}>
-                            <input type="text" name="nombre" placeholder="Nombre del ambiente" value={ambienteActual.nombre} onChange={handleChange} required />
-                            <input type="text" name="descripcion" placeholder="Descripción" value={ambienteActual.descripcion} onChange={handleChange} required />
-                            <div className="modal-buttons">
-                                <button type="submit" className="guardar-btn">Guardar</button>
-                                <button type="button" className="cerrar-btn" onClick={() => setModalVisible(false)}>Cerrar</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* 🔹 Modal de confirmación de eliminación */}
-            {confirmModalVisible && (
-                <div className="modal-overlay" onClick={() => setConfirmModalVisible(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h2>¿Seguro que deseas eliminar este ambiente?</h2>
-                        <p>{`El ambiente "` + ambienteAEliminar?.nombre + `" será eliminado.`}</p>
-                        <div className="modal-delete-buttons">
-                            <button className="eliminar-confirm-btn" onClick={handleDelete}>Eliminar</button>
-                            <button className="cerrar-modal-btn" onClick={() => setConfirmModalVisible(false)}>Cancelar</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* 🔹 Lista de ambientes con botones de editar y eliminar */}
-            <div className="ambiente-grid">
-                {ambientes.length > 0 ? (
-                    ambientes.map((ambiente) => (
-                        <div key={ambiente.id} className="ambiente-item">
-                            <div className="ambiente-header-item">
-                                <div className="ambiente-actions">
-                                    <strong className="name">{ambiente.nombre}</strong>
-                                    <button className="editar-btn" onClick={() => {
-                                        setAmbienteActual(ambiente);
-                                        setModalVisible(true);
-                                    }}>
-                                        <span className="material-icons"><i className="fas fa-edit"></i></span>
-                                    </button>
-                                    <button className="eliminar-btn" onClick={() => handleDeleteConfirm(ambiente)}>
-                                        <span className="material-icons"><i className="fas fa-trash"></i></span>
-                                    </button>
+                <div className="servicio-grid">
+                    {ambientes.length > 0 ? (
+                        ambientes.map((ambiente) => (
+                            <div key={ambiente.id} className="servicio-card">
+                                <div className="servicio-card-header">
+                                    <strong className="servicio-nombre">{ambiente.nombre}</strong>
+                                    <div className="servicio-acciones">
+                                        <button className="accion-btn editar-btn" onClick={() => abrirModalFormulario(ambiente)}>
+                                            <EditIcon />
+                                        </button>
+                                        <button className="accion-btn eliminar-btn" onClick={() => confirmarEliminacion(ambiente)}>
+                                            <TrashIcon />
+                                        </button>
+                                    </div>
                                 </div>
+                                <p className="servicio-descripcion">{ambiente.descripcion}</p>
                             </div>
-                            <p className="descripcion">{ambiente.descripcion}</p>
-                        </div>
-                    ))
-                ) : (
-                    <p>No hay ambientes disponibles.</p>
-                )}
+                        ))
+                    ) : (
+                        <p>No hay ambientes disponibles.</p>
+                    )}
+                </div>
             </div>
         </div>
     );
