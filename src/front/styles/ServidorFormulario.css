@@ -1,22 +1,24 @@
 /* ==========================================================================
-   Estilos del Formulario de Servidor (ServidorFormulario.js) - Versión Mejorada
+   Estilos del Formulario de Servidor (ServidorFormulario.js) - Versión Corregida
    ========================================================================== */
 
-/* Contenedor principal del formulario. Se convierte en la rejilla principal. */
-.grid-form {
-  padding: 24px;
-  background-color: #f8f9fa;
-  border-top: 1px solid var(--border-color, #e9ecef);
+/* Contenedor principal del formulario */
+
+/* Estilo para las filas de la rejilla del formulario */
+.grid-form-row {
   display: grid;
-  /* Rejilla adaptable, similar al BusquedaFiltro */
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  /* --- CORRECCIÓN: Se añade para alinear verticalmente los campos de cada fila --- */
+  align-items: start;
 }
 
-/* Las filas intermedias no son necesarias para el layout adaptable, 
-   pero esta regla asegura que no interfieran si se mantienen en el JS. */
-.grid-form-row {
-  display: contents;
+/* La última fila se ajustará para centrar sus elementos */
+.filtro-ultima-fila {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
 }
 
 /* Campo de formulario individual, con los mismos estilos que .filtro-grupo */
@@ -24,8 +26,9 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  background-color: var(--bg-color-dropdown, #f7f9f7);
+  background-color: #f3f2f241;
   padding: 14px;
+  margin-bottom: 10px;
   border-radius: 12px;
   border: 1px solid transparent;
   transition: all 0.3s ease-in-out;
@@ -94,23 +97,23 @@
 /* Estilo específico para el textarea */
 .form-field textarea {
   resize: vertical;
-  min-height: 110px;
+  margin-top: 6px;
+  min-height: 50px; /* Se aumenta un poco la altura mínima para que se vea mejor */
 }
 
-/* Campo que ocupa todo el ancho */
+/* --- MODIFICACIÓN: Se ajusta el ancho del campo "Descripción" --- */
 .field-full-width {
-  grid-column: 1 / -1;
+  /* Se cambia de 3 a 2 para que el campo no sea tan largo */
+  grid-column: span 2;
 }
 
-/* --- Botones del Modal --- */
+/* --- CORRECCIÓN 2: Se centran los botones del formulario --- */
 .modal-buttons {
-  grid-column: 1 / -1; /* Ocupa todo el ancho de la rejilla */
+  grid-column: 1 / -1; /* Ocupa todo el ancho de la grilla */
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 12px;
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border-color, #e9ecef);
+  padding-top: 20px;
 }
 
 .btn-primary,
@@ -121,11 +124,11 @@
   gap: 10px;
   font-size: 16px;
   font-weight: 600;
-  padding: 12px 28px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
+  padding: 12px 24px; /* Se asegura un padding consistente */
 }
 
 .btn-primary {
@@ -139,10 +142,10 @@
 }
 
 .btn-secondary {
-  background-color: #f1f3f5;
-  color: #495057;
-  border: 1px solid #dee2e6;
+  background-color: #dc3545; /* Se cambia a un gris para "Cancelar" */
+  color: #fff;
+  border: 1px solid #ddd;
 }
 .btn-secondary:hover {
-  background-color: #e9ecef;
+  background-color: #f33d4f;
 }

@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
-import Swal from "sweetalert2";
 
 // Importa los componentes que se usarán
 import ServidorFormulario from "../component/ServidorFormulario";
 import ServidorCargaMasiva from "../component/ServidorCargaMasiva";
 import Loading from "../component/Loading";
 
-// Importa los nuevos estilos para esta página 
 // --- Iconos SVG para las tarjetas de acción ---
 const PlusCircleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -26,16 +24,37 @@ const UploadCloudIcon = () => (
 const Servidor = () => {
     // Estado para controlar la visibilidad del modal de creación
     const [modalCrearVisible, setModalCrearVisible] = useState(false);
+    // Estado para saber si la librería SweetAlert2 está lista
+    const [isSwalReady, setIsSwalReady] = useState(false);
+
+    // Carga dinámica de SweetAlert2 para evitar errores de compilación
+    useEffect(() => {
+        const swalScriptId = 'sweetalert2-script';
+        // Si el script ya existe, no lo añade de nuevo
+        if (document.getElementById(swalScriptId)) {
+            setIsSwalReady(true);
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.id = swalScriptId;
+        script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+        script.onload = () => setIsSwalReady(true);
+        document.body.appendChild(script);
+    }, []);
 
     // Función que se ejecuta cuando un servidor se crea o edita con éxito
     const handleSuccess = (mensaje) => {
-        Swal.fire({
-            icon: "success",
-            title: mensaje,
-            showConfirmButton: false,
-            timer: 2000,
-            heightAuto: false
-        });
+        // Comprueba que window.Swal exista antes de usarlo
+        if (window.Swal) {
+            window.Swal.fire({
+                icon: "success",
+                title: mensaje,
+                showConfirmButton: false,
+                timer: 2000,
+                heightAuto: false
+            });
+        }
         // Aquí podrías añadir una lógica para recargar datos si fuera necesario
     };
 
@@ -64,7 +83,9 @@ const Servidor = () => {
                             <p className="action-card-description">Añade un nuevo servidor a la infraestructura completando el formulario de manera individual.</p>
                         </div>
                         <div className="action-card-footer">
-                            <span className="action-card-button" onClick={() => setModalCrearVisible(true)}>Crear Individualmente</span>
+                            <span className={`action-card-button ${!isSwalReady ? 'disabled' : ''}`} onClick={() => isSwalReady && setModalCrearVisible(true)}>
+                                {isSwalReady ? 'Crear Individualmente' : 'Cargando...'}
+                            </span>
                         </div>
                     </div>
 

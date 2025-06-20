@@ -2,11 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
 
 // --- Componente Reutilizable para Dropdowns de Selección Única ---
-const SingleSelectDropdown = ({ name, label, options, selectedValue, onSelect, error }) => {
+const SingleSelectDropdown = ({ name, label, options, selectedValue, onSelect, error, icon }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
-    // Cierra el dropdown si se hace clic fuera
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -22,13 +21,12 @@ const SingleSelectDropdown = ({ name, label, options, selectedValue, onSelect, e
         setIsOpen(false);
     };
 
-    // Encuentra la etiqueta de la opción seleccionada para mostrarla en el botón
     const selectedOption = options.find(opt => String(opt.value) === String(selectedValue));
     const displayLabel = selectedOption ? selectedOption.label : "Seleccionar...";
 
     return (
         <div className={`form-field ${isOpen ? 'is-open' : ''}`} ref={dropdownRef}>
-            <label>{label}</label>
+            <div className="filtro-label-con-icono">{icon}<label>{label}</label></div>
             <div className="custom-select">
                 <button type="button" className={`custom-select__trigger ${error ? 'input-error' : ''}`} onClick={() => setIsOpen(!isOpen)}>
                     <span>{displayLabel}</span>
@@ -36,23 +34,38 @@ const SingleSelectDropdown = ({ name, label, options, selectedValue, onSelect, e
                 </button>
                 <div className={`custom-select__panel ${isOpen ? "open" : ""}`}>
                     {options.map((option) => (
-                        <div key={option.value} className={`custom-select__option ${String(selectedValue) === String(option.value) ? 'selected' : ''}`} onClick={() => handleOptionClick(option.value)}>
+                        <label key={option.value} className={`custom-select__option ${String(selectedValue) === String(option.value) ? 'selected' : ''}`}>
                             <input
                                 type="radio"
-                                id={`${name}-${option.value}`}
                                 name={name}
                                 value={option.value}
                                 checked={String(selectedValue) === String(option.value)}
-                                readOnly
+                                onChange={() => handleOptionClick(option.value)}
                             />
-                            <label htmlFor={`${name}-${option.value}`}>{option.label}</label>
-                        </div>
+                            <span>{option.label}</span>
+                        </label>
                     ))}
                 </div>
             </div>
         </div>
     );
 };
+
+// --- Componente de Campo de Texto Reutilizable ---
+const CampoTexto = ({ name, label, value, onChange, error, icon, placeholder = '' }) => (
+    <div className="form-field">
+        <div className="filtro-label-con-icono">{icon}<label htmlFor={name}>{label}</label></div>
+        <input
+            type="text"
+            id={name}
+            name={name}
+            value={value}
+            onChange={onChange}
+            className={error ? 'input-error' : ''}
+            placeholder={placeholder || label + "..."}
+        />
+    </div>
+);
 
 
 const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdicion }) => {
@@ -119,7 +132,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
 
     const validateForm = () => {
         const newErrors = {};
-        const requiredFields = ["nombre", "tipo", "ip", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id"];
+        const requiredFields = ["nombre", "tipo", "ip", "balanceador", "vlan", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id"];
         requiredFields.forEach(field => {
             if (!formData[field] || String(formData[field]).trim() === "") {
                 newErrors[field] = true;
@@ -128,74 +141,71 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
         return newErrors;
     };
 
+    const guardarServidor = () => {
+        const url = esEdicion ? `${process.env.BACKEND_URL}/api/servidores/${servidorInicial.id}` : `${process.env.BACKEND_URL}/api/servidores`;
+        const method = esEdicion ? "PUT" : "POST";
+        fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...formData, activo: true })
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Error al guardar el servidor');
+                return response.json();
+            })
+            .then(() => {
+                onSuccess(esEdicion ? "Servidor actualizado" : "Servidor creado");
+                setModalVisible(false);
+            })
+            .catch(error => {
+                Swal.fire("Error", error.message, "error");
+            });
+    };
+
     const handleFormSubmit = async (e) => {
         e.preventDefault();
         const validationErrors = validateForm();
         setErrors(validationErrors);
 
         if (Object.keys(validationErrors).length > 0) {
-            Swal.fire({
-                icon: "error",
-                title: "Campos Incompletos",
-                text: "Por favor, revisa los campos marcados en rojo.",
-                heightAuto: false
-            });
+            Swal.fire({ icon: "error", title: "Campos Incompletos", text: "Por favor, revisa los campos marcados en rojo.", heightAuto: false });
             return;
         }
 
-        Swal.fire({
-            title: esEdicion ? "Confirmar actualización" : "Confirmar creación",
-            text: "¿Estás seguro de que deseas guardar los cambios?",
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonColor: "#007953",
-            cancelButtonColor: "#6c757d",
-            confirmButtonText: "Sí, guardar"
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                const url = esEdicion
-                    ? `${process.env.BACKEND_URL}/api/servidores/${servidorInicial.id}`
-                    : `${process.env.BACKEND_URL}/api/servidores`;
-                const method = esEdicion ? "PUT" : "POST";
+        const camposOpcionalesVacios = [];
+        if (!formData.link.trim()) camposOpcionalesVacios.push("Link");
+        if (!formData.descripcion.trim()) camposOpcionalesVacios.push("Descripción");
 
-                try {
-                    const response = await fetch(url, {
-                        method,
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ ...formData, activo: true })
-                    });
-                    if (!response.ok) throw new Error('Error al guardar el servidor');
-
-                    onSuccess(esEdicion ? "Servidor actualizado" : "Servidor creado");
-                    setModalVisible(false);
-                } catch (error) {
-                    Swal.fire("Error", error.message, "error");
+        if (camposOpcionalesVacios.length > 0) {
+            const camposTexto = camposOpcionalesVacios.join(' y ');
+            Swal.fire({
+                title: "Campos opcionales vacíos",
+                text: `El campo ${camposTexto} está vacío. ¿Deseas guardar de todas formas?`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#007953",
+                cancelButtonColor: "#6c757d",
+                confirmButtonText: "Guardar",
+                cancelButtonText: "Volver"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    guardarServidor();
                 }
-            }
-        });
+            });
+        } else {
+            guardarServidor();
+        }
     };
 
     return (
         <form onSubmit={handleFormSubmit} className="grid-form">
             <div className="grid-form-row">
-                <div className="form-field">
-                    <label>Nombre</label>
-                    <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} className={errors.nombre ? 'input-error' : ''} />
-                </div>
+                <CampoTexto name="nombre" label="Nombre" value={formData.nombre} onChange={handleChange} error={errors.nombre} />
                 <SingleSelectDropdown name="tipo" label="Tipo" selectedValue={formData.tipo} onSelect={handleChange} error={errors.tipo}
                     options={[{ value: "FISICO", label: "FISICO" }, { value: "VIRTUAL", label: "VIRTUAL" }]} />
-                <div className="form-field">
-                    <label>IP</label>
-                    <input type="text" name="ip" value={formData.ip} onChange={handleChange} className={errors.ip ? 'input-error' : ''} />
-                </div>
-                <div className="form-field">
-                    <label>Balanceador</label>
-                    <input type="text" name="balanceador" value={formData.balanceador} onChange={handleChange} />
-                </div>
-                <div className="form-field">
-                    <label>VLAN</label>
-                    <input type="text" name="vlan" value={formData.vlan} onChange={handleChange} />
-                </div>
+                <CampoTexto name="ip" label="IP" value={formData.ip} onChange={handleChange} error={errors.ip} />
+                <CampoTexto name="balanceador" label="Balanceador" value={formData.balanceador} onChange={handleChange} error={errors.balanceador} />
+                <CampoTexto name="vlan" label="VLAN" value={formData.vlan} onChange={handleChange} error={errors.vlan} />
             </div>
             <div className="grid-form-row">
                 <SingleSelectDropdown name="servicio_id" label="Servicio" selectedValue={formData.servicio_id} onSelect={handleChange} error={errors.servicio_id}
@@ -212,10 +222,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             <div className="grid-form-row">
                 <SingleSelectDropdown name="estatus_id" label="Estatus" selectedValue={formData.estatus_id} onSelect={handleChange} error={errors.estatus_id}
                     options={catalogos.estatus.map(e => ({ value: e.id, label: e.nombre }))} />
-                <div className="form-field">
-                    <label>Link</label>
-                    <input type="text" name="link" value={formData.link} onChange={handleChange} />
-                </div>
+                <CampoTexto name="link" label="Link" value={formData.link} onChange={handleChange} />
                 <div className="form-field field-full-width">
                     <label>Descripción</label>
                     <textarea name="descripcion" value={formData.descripcion} onChange={handleChange}></textarea>
