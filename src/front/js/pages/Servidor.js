@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import Swal from "sweetalert2";
 
 // Importa los componentes que se usarán
 import ServidorFormulario from "../component/ServidorFormulario";
 import ServidorCargaMasiva from "../component/ServidorCargaMasiva";
 import Loading from "../component/Loading";
+
 
 // --- Iconos SVG para las tarjetas de acción ---
 const PlusCircleIcon = () => (
@@ -24,39 +26,27 @@ const UploadCloudIcon = () => (
 const Servidor = () => {
     // Estado para controlar la visibilidad del modal de creación
     const [modalCrearVisible, setModalCrearVisible] = useState(false);
-    // Estado para saber si la librería SweetAlert2 está lista
-    const [isSwalReady, setIsSwalReady] = useState(false);
 
-    // Carga dinámica de SweetAlert2 para evitar errores de compilación
-    useEffect(() => {
-        const swalScriptId = 'sweetalert2-script';
-        // Si el script ya existe, no lo añade de nuevo
-        if (document.getElementById(swalScriptId)) {
-            setIsSwalReady(true);
-            return;
-        }
-
-        const script = document.createElement('script');
-        script.id = swalScriptId;
-        script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
-        script.onload = () => setIsSwalReady(true);
-        document.body.appendChild(script);
-    }, []);
+    // --- CORRECCIÓN: Se añade este estado para controlar el modal de carga masiva ---
+    const [modalCargaVisible, setModalCargaVisible] = useState(false);
 
     // Función que se ejecuta cuando un servidor se crea o edita con éxito
     const handleSuccess = (mensaje) => {
-        // Comprueba que window.Swal exista antes de usarlo
-        if (window.Swal) {
-            window.Swal.fire({
-                icon: "success",
-                title: mensaje,
-                showConfirmButton: false,
-                timer: 2000,
-                heightAuto: false
-            });
-        }
-        // Aquí podrías añadir una lógica para recargar datos si fuera necesario
+        Swal.fire({
+            icon: "success",
+            title: mensaje,
+            showConfirmButton: false,
+            timer: 2000,
+            heightAuto: false
+        });
     };
+
+    // --- CORRECCIÓN: Se crea una función para manejar el éxito de la carga y cerrar el modal ---
+    const handleUploadSuccess = (mensaje) => {
+        handleSuccess(mensaje);
+        setModalCargaVisible(false); // Cierra el modal de carga al finalizar
+    };
+
 
     return (
         <div className="page-container">
@@ -65,7 +55,7 @@ const Servidor = () => {
                 <div className="title-section">
                     <div className="decorative-line-top"></div>
                     <h1 className="main-title">Gestión de Servidores</h1>
-                    <p className="subtitle">"Crea servidores de forma individual o mediante carga masiva"</p>
+                    <p className="subtitle">"Crea servidores de forma individual o mediante carga masiva".</p>
                     <div className="decorative-line-bottom"></div>
                 </div>
             </div>
@@ -74,7 +64,7 @@ const Servidor = () => {
             <div className="content-area">
                 <div className="actions-grid">
                     {/* Tarjeta de Acción: Crear Servidor */}
-                    <div className="action-card" >
+                    <div className="action-card" onClick={() => setModalCrearVisible(true)}>
                         <div>
                             <div className="action-card-icon">
                                 <PlusCircleIcon />
@@ -83,14 +73,12 @@ const Servidor = () => {
                             <p className="action-card-description">Añade un nuevo servidor a la infraestructura completando el formulario de manera individual.</p>
                         </div>
                         <div className="action-card-footer">
-                            <span className={`action-card-button ${!isSwalReady ? 'disabled' : ''}`} onClick={() => isSwalReady && setModalCrearVisible(true)}>
-                                {isSwalReady ? 'Crear Individualmente' : 'Cargando...'}
-                            </span>
+                            <span className="action-card-button">Crear Individualmente</span>
                         </div>
                     </div>
 
-                    {/* Tarjeta de Acción: Carga Masiva (MODIFICADA) */}
-                    <div className="action-card">
+                    {/* Tarjeta de Acción: Carga Masiva */}
+                    <div className="action-card" onClick={() => setModalCargaVisible(true)}>
                         <div>
                             <div className="action-card-icon">
                                 <UploadCloudIcon />
@@ -98,8 +86,9 @@ const Servidor = () => {
                             <h3 className="action-card-title">Carga Masiva</h3>
                             <p className="action-card-description">Sube un archivo CSV para registrar múltiples servidores de forma simultánea y eficiente.</p>
                         </div>
+                        {/* --- CORRECCIÓN: El botón ahora solo es visual, el onClick está en la tarjeta --- */}
                         <div className="action-card-footer">
-                            <ServidorCargaMasiva onUploadSuccess={handleSuccess} />
+                            <span className="action-card-button">Realizar Carga Masiva</span>
                         </div>
                     </div>
                 </div>
@@ -117,6 +106,14 @@ const Servidor = () => {
                         />
                     </div>
                 </div>
+            )}
+
+            {/* --- CORRECCIÓN: Se renderiza el modal de carga masiva cuando el estado es true --- */}
+            {modalCargaVisible && (
+                <ServidorCargaMasiva
+                    onClose={() => setModalCargaVisible(false)}
+                    actualizarServidores={handleUploadSuccess}
+                />
             )}
         </div>
     );

@@ -2,222 +2,166 @@ import React, { useState, useRef, useEffect } from "react";
 import ReactDOM from "react-dom";
 import Swal from "sweetalert2";
 
-/**
- * Modal flotante para mostrar el link, nombre e IP del servidor.
- */
+// --- Se importa el formulario de servidor para la edición ---
+import ServidorFormulario from "../component/ServidorFormulario";
+
+// ========================================================
+// Componentes de Modales e Iconos (Completos)
+// ========================================================
+
 const LinkFloatModal = ({ link, nombre, ip, onClose }) => {
     if (!link) return null;
     return ReactDOM.createPortal(
         <div className="link-float-modal-overlay" onClick={onClose}>
             <div className="link-float-modal-content" onClick={e => e.stopPropagation()}>
                 <h3>Enlace del servidor</h3>
-                <div className="modal-link-row">
-                    <b>Nombre:</b> {nombre || "-"}
-                </div>
-                <div className="modal-link-row">
-                    <b>IP:</b> {ip || "-"}
-                </div>
-                <div className="modal-link-url">
-                    <a href={link} target="_blank" rel="noopener noreferrer">{link}</a>
-                </div>
-                <button onClick={onClose} className="cerrar-link-btn">
-                    Cerrar
-                </button>
+                <div className="modal-link-row"><b>Nombre:</b> {nombre || "-"}</div>
+                <div className="modal-link-row"><b>IP:</b> {ip || "-"}</div>
+                <div className="modal-link-url"><a href={link} target="_blank" rel="noopener noreferrer">{link}</a></div>
+                <button onClick={onClose} className="cerrar-link-btn">Cerrar</button>
             </div>
         </div>,
         document.body
     );
 };
 
-/**
- * Modal para editar una fila de la tabla de carga masiva.
- */
-const EditarFilaModal = ({ open, encabezado, fila, onSave, onClose, catalogos }) => {
-    const [form, setForm] = useState(fila.map(col => col ?? ""));
-    const [errores, setErrores] = useState([]);
-
-    useEffect(() => {
-        setForm(fila.map(col => col ?? ""));
-        let obs = fila[fila.length - 1] || "";
-        let nuevosErrores = [];
-        if (obs && obs !== "Servidor listo para guardar") {
-            nuevosErrores = encabezado.slice(0, -1).map((col, idx) => {
-                const nombreCampo = col.toLowerCase();
-                return obs.toLowerCase().includes(nombreCampo);
-            });
-        } else {
-            nuevosErrores = encabezado.slice(0, -1).map(() => false);
-        }
-        setErrores(nuevosErrores);
-    }, [fila, open, encabezado]);
-
+const EditarFilaModal = ({ open, onClose, initialData, onSave }) => {
     if (!open) return null;
-
-    // Mapeo de campos seleccionables
-    const camposSelect = {
-        "tipo": (
-            <select value={form[encabezado.findIndex(c => c.toLowerCase().includes("tipo"))] || ""} onChange={e => {
-                const idx = encabezado.findIndex(c => c.toLowerCase().includes("tipo"));
-                const newForm = [...form];
-                newForm[idx] = e.target.value;
-                setForm(newForm);
-            }}>
-                <option value="">Seleccione el Tipo</option>
-                <option value="FISICO">FISICO</option>
-                <option value="VIRTUAL">VIRTUAL</option>
-            </select>
-        ),
-        "servicio": (
-            <select value={form[encabezado.findIndex(c => c.toLowerCase().includes("servicio"))] || ""} onChange={e => {
-                const idx = encabezado.findIndex(c => c.toLowerCase().includes("servicio"));
-                const newForm = [...form];
-                newForm[idx] = e.target.value;
-                setForm(newForm);
-            }}>
-                <option value="">Seleccione un Servicio</option>
-                {catalogos.servicios.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-            </select>
-        ),
-        "capa": (
-            <select value={form[encabezado.findIndex(c => c.toLowerCase().includes("capa"))] || ""} onChange={e => {
-                const idx = encabezado.findIndex(c => c.toLowerCase().includes("capa"));
-                const newForm = [...form];
-                newForm[idx] = e.target.value;
-                setForm(newForm);
-            }}>
-                <option value="">Seleccione una Capa</option>
-                {catalogos.capas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-            </select>
-        ),
-        "ambiente": (
-            <select value={form[encabezado.findIndex(c => c.toLowerCase().includes("ambiente"))] || ""} onChange={e => {
-                const idx = encabezado.findIndex(c => c.toLowerCase().includes("ambiente"));
-                const newForm = [...form];
-                newForm[idx] = e.target.value;
-                setForm(newForm);
-            }}>
-                <option value="">Seleccione un Ambiente</option>
-                {catalogos.ambientes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
-            </select>
-        ),
-        "dominio": (
-            <select value={form[encabezado.findIndex(c => c.toLowerCase().includes("dominio"))] || ""} onChange={e => {
-                const idx = encabezado.findIndex(c => c.toLowerCase().includes("dominio"));
-                const newForm = [...form];
-                newForm[idx] = e.target.value;
-                setForm(newForm);
-            }}>
-                <option value="">Seleccione un Dominio</option>
-                {catalogos.dominios.map(d => <option key={d.id} value={d.id}>{d.nombre}</option>)}
-            </select>
-        ),
-        "s.o.": (
-            <select value={form[encabezado.findIndex(c => c.toLowerCase().includes("s.o."))] || ""} onChange={e => {
-                const idx = encabezado.findIndex(c => c.toLowerCase().includes("s.o."));
-                const newForm = [...form];
-                newForm[idx] = e.target.value;
-                setForm(newForm);
-            }}>
-                <option value="">Seleccione un S.O.</option>
-                {catalogos.sistemasOperativos.map(so => <option key={so.id} value={so.id}>{so.nombre}</option>)}
-            </select>
-        ),
-        "estatus": (
-            <select value={form[encabezado.findIndex(c => c.toLowerCase().includes("estatus"))] || ""} onChange={e => {
-                const idx = encabezado.findIndex(c => c.toLowerCase().includes("estatus"));
-                const newForm = [...form];
-                newForm[idx] = e.target.value;
-                setForm(newForm);
-            }}>
-                <option value="">Seleccione un Estatus</option>
-                {catalogos.estatus.map(est => <option key={est.id} value={est.id}>{est.nombre}</option>)}
-            </select>
-        ),
+    
+    const handleSuccess = (mensaje) => {
+        Swal.fire("Fila Actualizada", "Los cambios se reflejarán en la vista previa.", "success");
+        onClose();
     };
 
-    // Render dinámico de campos
     return ReactDOM.createPortal(
-        <div className="editar-fila-modal-overlay" onClick={onClose}>
-            <form
-                className="editar-fila-modal-content grid-form"
-                onClick={e => e.stopPropagation()}
-                onSubmit={e => {
-                    e.preventDefault();
-                    onSave(form);
-                }}
-            >
-                <h3>Editar servidor</h3>
-                <div className="grid-form-row">
-                    {encabezado.slice(0, -1).map((col, idx) => {
-                        const key = col.trim().toLowerCase();
-                        let campoSelect = null;
-                        if (key === "tipo") campoSelect = camposSelect["tipo"];
-                        else if (key.includes("servicio")) campoSelect = camposSelect["servicio"];
-                        else if (key.includes("capa")) campoSelect = camposSelect["capa"];
-                        else if (key.includes("ambiente")) campoSelect = camposSelect["ambiente"];
-                        else if (key.includes("dominio")) campoSelect = camposSelect["dominio"];
-                        else if (key.includes("s.o.")) campoSelect = camposSelect["s.o."];
-                        else if (key.includes("estatus")) campoSelect = camposSelect["estatus"];
-
-                        return (
-                            <div className="form-field" key={col}>
-                                <label>{col}</label>
-                                {campoSelect ? React.cloneElement(campoSelect, { key: col }) : (
-                                    <input
-                                        type="text"
-                                        value={form[idx] ?? ""}
-                                        className={errores[idx] ? "input-error" : ""}
-                                        onChange={e => {
-                                            const newForm = [...form];
-                                            newForm[idx] = e.target.value;
-                                            setForm(newForm);
-                                            if (errores[idx]) {
-                                                const nuevosErrores = [...errores];
-                                                nuevosErrores[idx] = false;
-                                                setErrores(nuevosErrores);
-                                            }
-                                        }}
-                                    />
-                                )}
-                                {errores[idx] && (
-                                    <span style={{ color: "#dc3545", fontSize: "13px", marginTop: "2px" }}>
-                                        Corrige este campo
-                                    </span>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-                <div className="modal-buttons">
-                    <button type="submit" className="guardar-servidores-btn">
-                        Guardar
-                    </button>
-                    <button type="button" className="cerrar-servidores-btn" onClick={onClose}>
-                        Cancelar
-                    </button>
-                </div>
-            </form>
-        </div>,
-        document.body
-    );
+        <div className="modal-overlay" style={{zIndex: 1003}}>
+            <div className="modal-content-servidor" onClick={(e) => e.stopPropagation()}>
+                 <h2 className="modal-title">Editar Servidor de Carga Masiva</h2>
+                 <ServidorFormulario
+                    esEdicion={true}
+                    servidorInicial={initialData}
+                    setModalVisible={onClose}
+                    onSuccess={handleSuccess}
+                    onSaveRow={onSave}
+                 />
+            </div>
+        </div>, document.body);
 };
 
-// --- Modal personalizado para eliminar, sobrepone sin cerrar el modal principal ---
+
 const DeleteModal = ({ open, onConfirm, onCancel }) => {
     if (!open) return null;
     return ReactDOM.createPortal(
-        <div className="custom-delete-modal-overlay">
-            <div className="custom-delete-modal-content">
-                <span className="material-symbols-outlined" style={{ fontSize: 48, color: "#dc3545" }}>warning</span>
-                <h2 style={{ margin: "16px 0 8px 0" }}>¿Eliminar servidor?</h2>
-                <div style={{ marginBottom: 24 }}>¿Estás seguro de eliminar este servidor de la carga masiva?</div>
-                <div style={{ display: "flex", justifyContent: "center", gap: 16 }}>
-                    <button className="eliminar-confirm-btn" onClick={onConfirm}>
-                        Eliminar
-                    </button>
-                    <button className="cerrar-modal-btn" onClick={onCancel}>
-                        Cancelar
-                    </button>
+        <div className="custom-delete-modal-overlay" onClick={onCancel}>
+            <div className="custom-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                <h3>Confirmar Eliminación</h3>
+                <p>¿Estás seguro de que deseas eliminar este registro?</p>
+                <button onClick={onConfirm}>Eliminar</button>
+                <button onClick={onCancel}>Cancelar</button>
+            </div>
+        </div>, document.body);
+};
+
+const EditIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+);
+
+const DeleteIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+);
+
+const CheckIcon = () => (
+    <span className="material-symbols-outlined icono-check">check_circle</span>
+);
+
+const XIcon = () => (
+    <span className="material-symbols-outlined icono-error">cancel</span>
+);
+
+const FileUploadIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="12" y1="18" x2="12" y2="12"></line>
+        <polyline points="9 15 12 12 15 15"></polyline>
+    </svg>
+);
+
+const getHeaderKey = (header) => {
+    if (!header || typeof header !== 'string') return '';
+    return header.toLowerCase().trim().replace(/ /g, '_').replace(/\./g, '');
+};
+
+const TablaPrevisualizacion = ({ datos, encabezado, onEdit, onDelete }) => {
+    if (!datos || datos.length === 0) {
+        return <p style={{marginTop: "20px", textAlign: "center"}}>No hay datos para previsualizar.</p>;
+    }
+    const obsIndex = encabezado.findIndex(h => h && typeof h === 'string' && h.toLowerCase() === 'observación');
+
+    return (
+        <div className="table-container" style={{ marginTop: "20px" }}>
+            <table className="tabla-carga-masiva">
+                <thead>
+                    <tr>
+                        {encabezado.map((col, index) => <th key={index}>{col}</th>)}
+                        <th className="columna-acciones">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {datos.map(({ fila, errores }, rowIndex) => {
+                        const tieneError = Object.keys(errores).length > 0;
+                        const observacion = tieneError ? fila[obsIndex] : "Fila correcta";
+                        return (
+                            <tr key={rowIndex} className={tieneError ? 'fila-con-error' : 'fila-correcta'}>
+                                {fila.map((celda, cellIndex) => {
+                                    const headerKey = getHeaderKey(encabezado[cellIndex]);
+                                    const esCeldaConError = errores[headerKey];
+
+                                    if (cellIndex === obsIndex) {
+                                        return (
+                                            <td key={cellIndex} title={observacion} className="celda-observacion">
+                                                {tieneError ? <XIcon /> : <CheckIcon />}
+                                            </td>
+                                        );
+                                    }
+
+                                    return (
+                                        <td key={cellIndex} title={celda} className={esCeldaConError ? 'celda-con-error-texto' : ''}>
+                                            {celda}
+                                        </td>
+                                    );
+                                })}
+                                <td className="acciones-tabla">
+                                    <button onClick={() => onEdit(rowIndex)} className="btn-accion-tabla btn-editar" title="Editar Fila">
+                                        <EditIcon />
+                                    </button>
+                                    <button onClick={() => onDelete(rowIndex)} className="btn-accion-tabla btn-eliminar" title="Eliminar Fila">
+                                        <DeleteIcon />
+                                    </button>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
+const PreviewModal = ({ datos, encabezado, onClose, onSave, onEdit, onDelete }) => {
+    return ReactDOM.createPortal(
+        <div className="modal-overlay" style={{ zIndex: 1002 }}>
+            <div className="modal-content-carga-masiva" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '95%', width: '95%' }}>
+                <div className="modal-header">
+                    <h2 className="modal-title">Vista Previa de Carga</h2>
+                    <button onClick={onClose} className="close-button">&times;</button>
+                </div>
+                <div className="modal-body">
+                    <TablaPrevisualizacion datos={datos} encabezado={encabezado} onEdit={onEdit} onDelete={onDelete} />
+                </div>
+                <div className="modal-footer">
+                    <button onClick={onClose} className="btn-secondary">Volver</button>
+                    <button onClick={onSave} className="btn-primary" disabled={datos.length === 0}>Guardar Válidos</button>
                 </div>
             </div>
         </div>,
@@ -225,166 +169,325 @@ const DeleteModal = ({ open, onConfirm, onCancel }) => {
     );
 };
 
-// --- Utilidad para limpiar columnas duplicadas de "Observación" ---
-function limpiarObservacionDuplicada(filas) {
-    if (!filas || filas.length === 0) return filas;
-    const encabezado = filas[0];
-    const obsIndices = [];
-    encabezado.forEach((col, idx) => {
-        if (col.trim().toLowerCase() === "observación") obsIndices.push(idx);
-    });
-    if (obsIndices.length > 1) {
-        const idxMantener = obsIndices[0];
-        for (let i = 0; i < filas.length; i++) {
-            filas[i] = filas[i].filter((_, idx) => idx === idxMantener || !obsIndices.slice(1).includes(idx));
-        }
-    }
-    return filas;
-}
 
-// --- Marcar repetidos en nombre o ip (excepto el primero que aparece) ---
-function marcarRepetidosEnFilas(filas, nombreIdx, ipIdx, obsIdx) {
-    if (!filas || filas.length < 2) return filas;
-    const nombreMap = {};
-    const ipMap = {};
-    for (let i = 1; i < filas.length; i++) {
-        const nombre = filas[i][nombreIdx]?.trim().toLowerCase();
-        const ip = filas[i][ipIdx]?.trim().toLowerCase();
-        if (nombre) {
-            if (!nombreMap[nombre]) nombreMap[nombre] = [];
-            nombreMap[nombre].push(i);
-        }
-        if (ip) {
-            if (!ipMap[ip]) ipMap[ip] = [];
-            ipMap[ip].push(i);
-        }
-    }
-    for (const indices of Object.values(nombreMap)) {
-        if (indices.length > 1) {
-            for (let j = 1; j < indices.length; j++) {
-                const idx = indices[j];
-                let obs = filas[idx][obsIdx] || "";
-                if (!obs.toLowerCase().includes("nombre repetido")) {
-                    obs += (obs ? "; " : "") + "Nombre repetido";
-                }
-                filas[idx][obsIdx] = obs;
-            }
-        }
-    }
-    for (const indices of Object.values(ipMap)) {
-        if (indices.length > 1) {
-            for (let j = 1; j < indices.length; j++) {
-                const idx = indices[j];
-                let obs = filas[idx][obsIdx] || "";
-                if (!obs.toLowerCase().includes("ip repetida")) {
-                    obs += (obs ? "; " : "") + "IP repetida";
-                }
-                filas[idx][obsIdx] = obs;
-            }
-        }
-    }
-    return filas;
-}
-
-// Utilidad para mapear ids a nombres en la fila editada
-function mapearIdsANombresFila(fila, encabezado, catalogos) {
-    return fila.map((valor, idx) => {
-        const col = encabezado[idx].toLowerCase();
-        if (col === "tipo") {
-            if (valor === "FISICO" || valor === "VIRTUAL") return valor;
-        }
-        if (col.includes("servicio")) {
-            const obj = catalogos.servicios.find(s => String(s.id) === String(valor));
-            return obj ? obj.nombre : valor;
-        }
-        if (col.includes("capa")) {
-            const obj = catalogos.capas.find(c => String(c.id) === String(valor));
-            return obj ? obj.nombre : valor;
-        }
-        if (col.includes("ambiente")) {
-            const obj = catalogos.ambientes.find(a => String(a.id) === String(valor));
-            return obj ? obj.nombre : valor;
-        }
-        if (col.includes("dominio")) {
-            const obj = catalogos.dominios.find(d => String(d.id) === String(valor));
-            return obj ? obj.nombre : valor;
-        }
-        if (col.includes("s.o.")) {
-            const obj = catalogos.sistemasOperativos.find(so => String(so.id) === String(valor));
-            return obj ? obj.nombre : valor;
-        }
-        if (col.includes("estatus")) {
-            const obj = catalogos.estatus.find(e => String(e.id) === String(valor));
-            return obj ? obj.nombre : valor;
-        }
-        return valor;
-    });
-}
-
-const ServidorCargaMasiva = ({ actualizarServidores }) => {
+const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
+    const [selectedFile, setSelectedFile] = useState(null);
     const [datosCSV, setDatosCSV] = useState([]);
+    const [encabezadoCSV, setEncabezadoCSV] = useState([]);
+    const [nombreArchivo, setNombreArchivo] = useState("");
+    const [isPreviewVisible, setPreviewVisible] = useState(false);
+    const fileInputRef = useRef(null);
     const [showLink, setShowLink] = useState(null);
-    const [editModal, setEditModal] = useState({ open: false, filaIdx: null, fila: [], encabezado: [] });
+    const [editModal, setEditModal] = useState({ open: false, data: null, rowIndex: null });
     const [deleteModal, setDeleteModal] = useState({ open: false, filaIdx: null, renderTablaModal: null });
-    const filasValidadasRef = useRef([]);
-
-    // --- Catálogos globales para edición y mapeo ---
-    const [catalogos, setCatalogos] = useState({
-        servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
-    });
+    const [catalogos, setCatalogos] = useState({});
+    const [servidoresExistentes, setServidoresExistentes] = useState([]);
 
     useEffect(() => {
-        // Cargar catálogos al montar el componente
-        const fetchCatalogos = async () => {
+        const fetchData = async () => {
             try {
+                const backendUrl = process.env.BACKEND_URL;
+                if (!backendUrl) {
+                    Swal.fire("Error de Configuración", "La URL del servidor no está configurada.", "error");
+                    return;
+                }
+                
                 const urls = [
-                    { name: "servicios", url: `${process.env.BACKEND_URL}/api/servicios` },
-                    { name: "capas", url: `${process.env.BACKEND_URL}/api/capas` },
-                    { name: "ambientes", url: `${process.env.BACKEND_URL}/api/ambientes` },
-                    { name: "dominios", url: `${process.env.BACKEND_URL}/api/dominios` },
-                    { name: "sistemasOperativos", url: `${process.env.BACKEND_URL}/api/sistemas_operativos` },
-                    { name: "estatus", url: `${process.env.BACKEND_URL}/api/estatus` }
+                    { name: "servidores", url: `${backendUrl}/api/servidores` },
+                    { name: "servicios", url: `${backendUrl}/api/servicios` },
+                    { name: "capas", url: `${backendUrl}/api/capas` },
+                    { name: "ambientes", url: `${backendUrl}/api/ambientes` },
+                    { name: "dominios", url: `${backendUrl}/api/dominios` },
+                    { name: "sistemasOperativos", url: `${backendUrl}/api/sistemas_operativos` },
+                    { name: "estatus", url: `${backendUrl}/api/estatus` }
                 ];
-                const responses = await Promise.all(urls.map(({ url }) =>
-                    fetch(url).then(res => res.ok ? res.json() : [])
-                ));
+
+                const responses = await Promise.all(urls.map(item => fetch(item.url).then(res => res.json())));
+                
+                const [servidoresData, ...catalogosData] = responses;
+                
+                setServidoresExistentes(servidoresData || []);
                 setCatalogos({
-                    servicios: responses[0], capas: responses[1], ambientes: responses[2],
-                    dominios: responses[3], sistemasOperativos: responses[4], estatus: responses[5]
+                    servicios: catalogosData[0] || [],
+                    capas: catalogosData[1] || [],
+                    ambientes: catalogosData[2] || [],
+                    dominios: catalogosData[3] || [],
+                    sistemasOperativos: catalogosData[4] || [],
+                    estatus: catalogosData[5] || [],
                 });
+
             } catch (e) {
-                console.error("Error fetching catalogs:", e);
+                console.error("Error cargando datos iniciales:", e);
+                Swal.fire("Error de Conexión", `No se pudieron cargar los datos del servidor para validar: ${e.message}`, "error");
             }
         };
-        fetchCatalogos();
+        fetchData();
     }, []);
 
-    // ... (El resto de la lógica como validarFilas, mostrarModalCarga, etc. iría aquí)
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            Swal.fire("Archivo no válido", "Por favor, selecciona un archivo con formato .csv.", "warning");
+            setSelectedFile(null);
+            setNombreArchivo("");
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            return;
+        }
+        setSelectedFile(file);
+        setNombreArchivo(file.name);
+    };
+    
+    const revalidarFila = (fila, encabezado) => {
+        let observaciones = [];
+        let errores = {};
+        
+        const findIndex = (keyword) => encabezado.findIndex(h => h && typeof h === 'string' && h.toLowerCase().trim() === keyword.toLowerCase());
+        const getValue = (index) => (index !== -1 ? String(fila[index] || '').trim() : '');
 
+        const checkCatalog = (catalogName, header, value) => {
+            const catalog = catalogos[catalogName];
+            if (!catalog || catalog.length === 0) return; 
+
+            if (!catalog.some(item => item.nombre.toLowerCase() === value.toLowerCase())) {
+                observaciones.push(`'${value}' no es un ${header} válido.`);
+                errores[getHeaderKey(header)] = true;
+            }
+        };
+
+        const columnas = [
+            { key: 'nombre', header: 'Nombre', required: true },
+            { key: 'ip', header: 'IP', required: true },
+            { key: 'tipo', header: 'Tipo', required: true, values: ['FISICO', 'VIRTUAL'] },
+            { key: 'servicio', header: 'Servicio', required: true, catalog: 'servicios' },
+            { key: 'capa', header: 'Capa', required: true, catalog: 'capas' },
+            { key: 'ambiente', header: 'Ambiente', required: true, catalog: 'ambientes' },
+            { key: 'dominio', header: 'Dominio', required: true, catalog: 'dominios' },
+            { key: 's.o.', header: 'S.O.', required: true, catalog: 'sistemasOperativos' },
+            { key: 'estatus', header: 'Estatus', required: true, catalog: 'estatus' },
+        ];
+
+        columnas.forEach(col => {
+            const index = findIndex(col.header);
+            const value = getValue(index);
+            const headerKey = getHeaderKey(col.header);
+
+            if (col.required && value === '') {
+                observaciones.push(`El campo ${col.header} es requerido.`);
+                errores[headerKey] = true;
+            } else if (value !== '') {
+                if (col.values && !col.values.some(v => v.toLowerCase() === value.toLowerCase())) {
+                    observaciones.push(`Valor para ${col.header} no es válido.`);
+                    errores[headerKey] = true;
+                }
+                if (col.catalog) {
+                    checkCatalog(col.catalog, col.header, value);
+                }
+                if (col.key === 'nombre' && servidoresExistentes.some(s => s.nombre.toLowerCase() === value.toLowerCase())) {
+                    observaciones.push("Nombre ya existe en la BD.");
+                    errores.nombre = true;
+                }
+                if (col.key === 'ip' && servidoresExistentes.some(s => s.ip === value)) {
+                    observaciones.push("IP ya existe en la BD.");
+                    errores.ip = true;
+                }
+            }
+        });
+
+        const observacionFinal = observaciones.length > 0 ? observaciones.join('; ') : "Servidor listo para guardar";
+        return { observacion: observacionFinal, errores };
+    };
+
+    const procesarYValidarDatos = (datos) => {
+        if (!datos || datos.length < 1 || !Array.isArray(datos[0])) {
+            Swal.fire("Archivo inválido", "El archivo CSV no tiene un formato correcto o está vacío.", "info");
+            return;
+        }
+        const encabezado = datos[0];
+        const filas = datos.slice(1);
+        const encabezadoConObs = [...encabezado, "Observación"];
+        setEncabezadoCSV(encabezadoConObs);
+
+        const filasProcesadas = filas.map(fila => {
+            const { observacion, errores } = revalidarFila(fila, encabezado);
+            return { fila: [...fila, observacion], errores };
+        });
+
+        setDatosCSV(filasProcesadas);
+        setPreviewVisible(true);
+    };
+
+    const handleAcceptAndPreview = () => {
+        if (!selectedFile) {
+            Swal.fire("Sin archivo", "Por favor, selecciona un archivo primero.", "info");
+            return;
+        }
+        if (!window.Papa) {
+            Swal.fire("Error de Librería", "La librería para leer archivos (PapaParse) no está cargada.", "error");
+            return;
+        }
+        window.Papa.parse(selectedFile, {
+            header: false,
+            skipEmptyLines: true,
+            complete: (results) => {
+                procesarYValidarDatos(results.data);
+            },
+            error: (error) => {
+                Swal.fire("Error de lectura", `No se pudo leer el archivo CSV. Error: ${error.message}`, "error");
+            }
+        });
+    };
+    
+    const handleGuardar = async () => { /* Tu lógica de guardado */ };
+
+    const handleEditRow = (rowIndex) => {
+        const { fila } = datosCSV[rowIndex];
+        const initialData = {};
+        const findIdByName = (catalogName, name) => {
+            const catalog = catalogos[catalogName];
+            if (!catalog || !name) return '';
+            const item = catalog.find(i => i.nombre && i.nombre.toLowerCase() === name.trim().toLowerCase());
+            return item ? item.id : '';
+        };
+        encabezadoCSV.forEach((header, index) => {
+            if (header && typeof header === 'string' && header !== 'Observación') {
+                const key = getHeaderKey(header);
+                const value = fila[index];
+                switch (key) {
+                    case 'servicio': initialData['servicio_id'] = findIdByName('servicios', value); break;
+                    case 'capa': initialData['capa_id'] = findIdByName('capas', value); break;
+                    case 'ambiente': initialData['ambiente_id'] = findIdByName('ambientes', value); break;
+                    case 'dominio': initialData['dominio_id'] = findIdByName('dominios', value); break;
+                    case 'sistema_operativo': initialData['sistema_operativo_id'] = findIdByName('sistemasOperativos', value); break;
+                    case 'estatus': initialData['estatus_id'] = findIdByName('estatus', value); break;
+                    default: initialData[key] = value;
+                }
+            }
+        });
+        const { errores } = revalidarFila(fila, encabezadoCSV.slice(0, -1));
+        initialData.errors = errores;
+        setEditModal({ open: true, data: initialData, rowIndex: rowIndex });
+    };
+
+    const handleUpdateRow = (updatedData, rowIndex) => {
+        const findNameById = (catalogName, id) => {
+            const catalog = catalogos[catalogName];
+            if (!catalog || !id) return '';
+            const item = catalog.find(i => String(i.id) === String(id));
+            return item ? item.nombre : '';
+        };
+        const filaActualizadaArray = encabezadoCSV.slice(0, -1).map(header => {
+            const key = getHeaderKey(header);
+            let value;
+            switch (key) {
+                case 'servicio': value = findNameById('servicios', updatedData['servicio_id']); break;
+                case 'capa': value = findNameById('capas', updatedData['capa_id']); break;
+                case 'ambiente': value = findNameById('ambientes', updatedData['ambiente_id']); break;
+                case 'dominio': value = findNameById('dominios', updatedData['dominio_id']); break;
+                case 'sistema_operativo': value = findNameById('sistemasOperativos', updatedData['sistema_operativo_id']); break;
+                case 'estatus': value = findNameById('estatus', updatedData['estatus_id']); break;
+                default: value = updatedData[key] || '';
+            }
+            return value;
+        });
+        const { observacion, errores } = revalidarFila(filaActualizadaArray, encabezadoCSV.slice(0, -1));
+        const filaConNuevaObservacion = {
+            fila: [...filaActualizadaArray, observacion],
+            errores: errores
+        };
+        const nuevosDatos = [...datosCSV];
+        nuevosDatos[rowIndex] = filaConNuevaObservacion;
+        setDatosCSV(nuevosDatos);
+        setEditModal({ open: false, data: null, rowIndex: null });
+    };
+
+    const handleDeleteRow = (rowIndex) => {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "La fila se eliminará de esta carga.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const nuevosDatos = [...datosCSV];
+                nuevosDatos.splice(rowIndex, 1);
+                setDatosCSV(nuevosDatos);
+                Swal.fire('Eliminado', 'La fila ha sido eliminada.', 'success')
+            }
+        })
+    };
+    
     return (
         <>
-            <button className="carga-masiva-btn" onClick={() => { /* Lógica para mostrarModalCarga */ }}>
-                Carga Masiva
-            </button>
-            <LinkFloatModal
-                link={showLink?.link}
-                nombre={showLink?.nombre}
-                ip={showLink?.ip}
-                onClose={() => setShowLink(null)}
+            {ReactDOM.createPortal(
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal-content-carga-masiva" onClick={(e) => e.stopPropagation()} style={{maxWidth: '700px'}}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">Carga Masiva de Servidores</h2>
+                            <button onClick={onClose} className="close-button">&times;</button>
+                        </div>
+                        <div className="modal-body" style={{textAlign: "center", padding: "40px 0"}}>
+                            <input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} />
+                            <button onClick={() => fileInputRef.current && fileInputRef.current.click()} className="action-card-button">
+                                <FileUploadIcon />
+                                Seleccionar archivo
+                            </button>
+                            <div style={{
+                                border: '2px solid #ffc107',
+                                backgroundColor: '#fffbeb',
+                                padding: '20px',
+                                margin: '25px auto',
+                                borderRadius: '8px',
+                                maxWidth: '80%',
+                                textAlign: 'left',
+                                boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
+                            }}>
+                                <p style={{ color: '#b45309', fontSize: '16px', margin: '0', fontWeight: 'bold' }}>
+                                    <span style={{fontSize: '24px', marginRight: '10px'}}>⚠️</span>
+                                    Instrucción Importante
+                                </p>
+                                <p style={{ color: '#78350f', fontSize: '14px', margin: '10px 0 0 0' }}>
+                                    El archivo debe estar en formato <strong>CSV (delimitado por comas)</strong>.
+                                    Si usas Excel, asegúrate de ir a "Guardar como" y seleccionar explícitamente la opción <strong>"CSV (delimitado por comas) (*.csv)"</strong>.
+                                </p>
+                            </div>
+                            {nombreArchivo && <p style={{ fontWeight: 'bold', marginTop: '10px' }}>Archivo seleccionado: {nombreArchivo}</p>}
+                        </div>
+                        <div className="modal-footer">
+                            <button onClick={onClose} className="btn-secondary">Cancelar</button>
+                            <button onClick={handleAcceptAndPreview} className="btn-primary" disabled={!selectedFile}>
+                               Aceptar y Previsualizar
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {isPreviewVisible && (
+                <PreviewModal 
+                    datos={datosCSV}
+                    encabezado={encabezadoCSV}
+                    onClose={() => setPreviewVisible(false)}
+                    onSave={handleGuardar}
+                    onEdit={handleEditRow}
+                    onDelete={handleDeleteRow}
+                />
+            )}
+            
+            <EditarFilaModal 
+                open={editModal.open} 
+                onClose={() => setEditModal({ open: false, data: null, rowIndex: null })}
+                initialData={editModal.data}
+                onSave={(updatedData) => handleUpdateRow(updatedData, editModal.rowIndex)}
             />
-            <EditarFilaModal
-                open={editModal.open}
-                encabezado={editModal.encabezado}
-                fila={editModal.fila}
-                onSave={() => { /* Lógica handleSaveEdit */ }}
-                onClose={() => setEditModal({ open: false, filaIdx: null, fila: [], encabezado: [] })}
-                catalogos={catalogos}
-            />
-            <DeleteModal
-                open={deleteModal.open}
-                onConfirm={() => { /* Lógica handleConfirmDelete */ }}
-                onCancel={() => setDeleteModal({ open: false, filaIdx: null, renderTablaModal: null })}
-            />
+
+            <LinkFloatModal link={showLink?.link} nombre={showLink?.nombre} ip={showLink?.ip} onClose={() => setShowLink(null)} />
+            <DeleteModal open={deleteModal.open} onCancel={() => setDeleteModal({ ...deleteModal, open: false })} />
         </>
     );
 };
