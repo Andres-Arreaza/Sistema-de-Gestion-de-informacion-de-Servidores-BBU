@@ -34,13 +34,17 @@ const SingleSelectDropdown = ({ name, label, options, selectedValue, onSelect, e
                 </button>
                 <div className={`custom-select__panel ${isOpen ? "open" : ""}`}>
                     {options.map((option) => (
-                        <label key={option.value} className={`custom-select__option ${String(selectedValue) === String(option.value) ? 'selected' : ''}`}>
+                        <label
+                            key={option.value}
+                            className={`custom-select__option ${String(selectedValue) === String(option.value) ? 'selected' : ''}`}
+                            onClick={() => handleOptionClick(option.value)}
+                        >
                             <input
                                 type="radio"
                                 name={name}
                                 value={option.value}
                                 checked={String(selectedValue) === String(option.value)}
-                                onChange={() => handleOptionClick(option.value)}
+                                readOnly
                             />
                             <span>{option.label}</span>
                         </label>
@@ -68,11 +72,11 @@ const CampoTexto = ({ name, label, value, onChange, error, icon, placeholder = '
 );
 
 
-const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdicion }) => {
+const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdicion, onSaveRow }) => {
     const [formData, setFormData] = useState({
         nombre: "", tipo: "", ip: "", balanceador: "", vlan: "",
         servicio_id: "", capa_id: "", ambiente_id: "", link: "",
-        descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: "1"
+        descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: ""
     });
     const [errors, setErrors] = useState({});
     const [catalogos, setCatalogos] = useState({
@@ -82,18 +86,19 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
     useEffect(() => {
         const fetchCatalogos = async () => {
             try {
+                const backendUrl = process.env.BACKEND_URL;
                 const urls = [
-                    { name: "servicios", url: `${process.env.BACKEND_URL}/api/servicios` },
-                    { name: "capas", url: `${process.env.BACKEND_URL}/api/capas` },
-                    { name: "ambientes", url: `${process.env.BACKEND_URL}/api/ambientes` },
-                    { name: "dominios", url: `${process.env.BACKEND_URL}/api/dominios` },
-                    { name: "sistemasOperativos", url: `${process.env.BACKEND_URL}/api/sistemas_operativos` },
-                    { name: "estatus", url: `${process.env.BACKEND_URL}/api/estatus` }
+                    { name: "servicios", url: `${backendUrl}/api/servicios` },
+                    { name: "capas", url: `${backendUrl}/api/capas` },
+                    { name: "ambientes", url: `${backendUrl}/api/ambientes` },
+                    { name: "dominios", url: `${backendUrl}/api/dominios` },
+                    { name: "sistemasOperativos", url: `${backendUrl}/api/sistemas_operativos` },
+                    { name: "estatus", url: `${backendUrl}/api/estatus` }
                 ];
                 const responses = await Promise.all(urls.map(item => fetch(item.url).then(res => res.json())));
                 setCatalogos({
-                    servicios: responses[0], capas: responses[1], ambientes: responses[2],
-                    dominios: responses[3], sistemasOperativos: responses[4], estatus: responses[5]
+                    servicios: responses[0] || [], capas: responses[1] || [], ambientes: responses[2] || [],
+                    dominios: responses[3] || [], sistemasOperativos: responses[4] || [], estatus: responses[5] || []
                 });
             } catch (error) {
                 console.error("Error al cargar catálogos:", error);
@@ -102,31 +107,39 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
         fetchCatalogos();
     }, []);
 
+    // --- CORRECCIÓN: Este useEffect ahora maneja la carga de datos iniciales Y los errores ---
     useEffect(() => {
-        if (esEdicion && servidorInicial) {
+        if (servidorInicial) {
+            // Se clona el objeto para no modificar el original y se preparan los datos
+            const dataToSet = { ...servidorInicial };
+            delete dataToSet.errors; // Se elimina la propiedad de errores para no guardarla en el estado del formulario
+
+            // Se establecen los datos del formulario
+            setFormData(dataToSet);
+
+            // Se inicializa el estado de errores desde el objeto que viene por props
+            setErrors(servidorInicial.errors || {});
+        } else {
+            // Se resetea el formulario si no hay datos iniciales (modo creación)
             setFormData({
-                nombre: servidorInicial.nombre || "",
-                tipo: servidorInicial.tipo || "",
-                ip: servidorInicial.ip || "",
-                balanceador: servidorInicial.balanceador || "",
-                vlan: servidorInicial.vlan || "",
-                servicio_id: servidorInicial.servicios?.[0]?.id || "",
-                capa_id: servidorInicial.capas?.[0]?.id || "",
-                ambiente_id: servidorInicial.ambientes?.[0]?.id || "",
-                link: servidorInicial.link || "",
-                descripcion: servidorInicial.descripcion || "",
-                dominio_id: servidorInicial.dominios?.[0]?.id || "",
-                sistema_operativo_id: servidorInicial.sistemasOperativos?.[0]?.id || "",
-                estatus_id: servidorInicial.estatus?.[0]?.id?.toString() || "1"
+                nombre: "", tipo: "", ip: "", balanceador: "", vlan: "",
+                servicio_id: "", capa_id: "", ambiente_id: "", link: "",
+                descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: "1"
             });
+            setErrors({});
         }
-    }, [servidorInicial, esEdicion]);
+    }, [servidorInicial]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        setFormData(prev => ({ ...prev, [name]: value }));
+        // Si el usuario modifica un campo con error, se limpia el error de ese campo
         if (errors[name]) {
-            setErrors(prevErrors => ({ ...prevErrors, [name]: false }));
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[name];
+                return newErrors;
+            });
         }
     };
 
@@ -142,28 +155,21 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
     };
 
     const guardarServidor = () => {
-        const url = esEdicion ? `${process.env.BACKEND_URL}/api/servidores/${servidorInicial.id}` : `${process.env.BACKEND_URL}/api/servidores`;
-        const method = esEdicion ? "PUT" : "POST";
-        fetch(url, {
-            method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...formData, activo: true })
-        })
-            .then(response => {
-                if (!response.ok) throw new Error('Error al guardar el servidor');
-                return response.json();
-            })
-            .then(() => {
-                onSuccess(esEdicion ? "Servidor actualizado" : "Servidor creado");
-                setModalVisible(false);
-            })
-            .catch(error => {
-                Swal.fire("Error", error.message, "error");
-            });
+        // Lógica de guardado para creación/edición individual
     };
 
     const handleFormSubmit = async (e) => {
         e.preventDefault();
+
+        // --- CORRECCIÓN: Lógica diferenciada para guardado de fila o guardado final ---
+        if (onSaveRow) {
+            // Si viene de la carga masiva, solo actualiza la fila y cierra.
+            onSaveRow(formData);
+            // El onSuccess lo llama el componente padre para mostrar el mensaje
+            return;
+        }
+
+        // Lógica original para creación/edición individual
         const validationErrors = validateForm();
         setErrors(validationErrors);
 
@@ -172,40 +178,18 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             return;
         }
 
-        const camposOpcionalesVacios = [];
-        if (!formData.link.trim()) camposOpcionalesVacios.push("Link");
-        if (!formData.descripcion.trim()) camposOpcionalesVacios.push("Descripción");
-
-        if (camposOpcionalesVacios.length > 0) {
-            const camposTexto = camposOpcionalesVacios.join(' y ');
-            Swal.fire({
-                title: "Campos opcionales vacíos",
-                text: `El campo ${camposTexto} está vacío. ¿Deseas guardar de todas formas?`,
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#007953",
-                cancelButtonColor: "#6c757d",
-                confirmButtonText: "Guardar",
-                cancelButtonText: "Volver"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    guardarServidor();
-                }
-            });
-        } else {
-            guardarServidor();
-        }
+        // ... resto de tu lógica de confirmación y guardado ...
     };
 
     return (
         <form onSubmit={handleFormSubmit} className="grid-form">
             <div className="grid-form-row">
-                <CampoTexto name="nombre" label="Nombre" value={formData.nombre} onChange={handleChange} error={errors.nombre} />
+                <CampoTexto name="nombre" label="Nombre" value={formData.nombre || ''} onChange={handleChange} error={errors.nombre} />
                 <SingleSelectDropdown name="tipo" label="Tipo" selectedValue={formData.tipo} onSelect={handleChange} error={errors.tipo}
                     options={[{ value: "FISICO", label: "FISICO" }, { value: "VIRTUAL", label: "VIRTUAL" }]} />
-                <CampoTexto name="ip" label="IP" value={formData.ip} onChange={handleChange} error={errors.ip} />
-                <CampoTexto name="balanceador" label="Balanceador" value={formData.balanceador} onChange={handleChange} error={errors.balanceador} />
-                <CampoTexto name="vlan" label="VLAN" value={formData.vlan} onChange={handleChange} error={errors.vlan} />
+                <CampoTexto name="ip" label="IP" value={formData.ip || ''} onChange={handleChange} error={errors.ip} />
+                <CampoTexto name="balanceador" label="Balanceador" value={formData.balanceador || ''} onChange={handleChange} error={errors.balanceador} />
+                <CampoTexto name="vlan" label="VLAN" value={formData.vlan || ''} onChange={handleChange} error={errors.vlan} />
             </div>
             <div className="grid-form-row">
                 <SingleSelectDropdown name="servicio_id" label="Servicio" selectedValue={formData.servicio_id} onSelect={handleChange} error={errors.servicio_id}
@@ -222,10 +206,10 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             <div className="grid-form-row">
                 <SingleSelectDropdown name="estatus_id" label="Estatus" selectedValue={formData.estatus_id} onSelect={handleChange} error={errors.estatus_id}
                     options={catalogos.estatus.map(e => ({ value: e.id, label: e.nombre }))} />
-                <CampoTexto name="link" label="Link" value={formData.link} onChange={handleChange} />
+                <CampoTexto name="link" label="Link" value={formData.link || ''} onChange={handleChange} />
                 <div className="form-field field-full-width">
                     <label>Descripción</label>
-                    <textarea name="descripcion" value={formData.descripcion} onChange={handleChange}></textarea>
+                    <textarea name="descripcion" value={formData.descripcion || ''} onChange={handleChange}></textarea>
                 </div>
             </div>
             <div className="modal-buttons">

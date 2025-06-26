@@ -27,23 +27,23 @@ const LinkFloatModal = ({ link, nombre, ip, onClose }) => {
 
 const EditarFilaModal = ({ open, onClose, initialData, onSave }) => {
     if (!open) return null;
-    
+
     const handleSuccess = (mensaje) => {
         Swal.fire("Fila Actualizada", "Los cambios se reflejarán en la vista previa.", "success");
         onClose();
     };
 
     return ReactDOM.createPortal(
-        <div className="modal-overlay" style={{zIndex: 1003}}>
+        <div className="modal-overlay" style={{ zIndex: 1003 }}>
             <div className="modal-content-servidor" onClick={(e) => e.stopPropagation()}>
-                 <h2 className="modal-title">Editar Servidor de Carga Masiva</h2>
-                 <ServidorFormulario
+                <h2 className="modal-title">Editar Servidor de Carga Masiva</h2>
+                <ServidorFormulario
                     esEdicion={true}
                     servidorInicial={initialData}
                     setModalVisible={onClose}
                     onSuccess={handleSuccess}
                     onSaveRow={onSave}
-                 />
+                />
             </div>
         </div>, document.body);
 };
@@ -94,7 +94,7 @@ const getHeaderKey = (header) => {
 
 const TablaPrevisualizacion = ({ datos, encabezado, onEdit, onDelete }) => {
     if (!datos || datos.length === 0) {
-        return <p style={{marginTop: "20px", textAlign: "center"}}>No hay datos para previsualizar.</p>;
+        return <p style={{ marginTop: "20px", textAlign: "center" }}>No hay datos para previsualizar.</p>;
     }
     const obsIndex = encabezado.findIndex(h => h && typeof h === 'string' && h.toLowerCase() === 'observación');
 
@@ -116,7 +116,6 @@ const TablaPrevisualizacion = ({ datos, encabezado, onEdit, onDelete }) => {
                                 {fila.map((celda, cellIndex) => {
                                     const headerKey = getHeaderKey(encabezado[cellIndex]);
                                     const esCeldaConError = errores[headerKey];
-
                                     if (cellIndex === obsIndex) {
                                         return (
                                             <td key={cellIndex} title={observacion} className="celda-observacion">
@@ -124,7 +123,6 @@ const TablaPrevisualizacion = ({ datos, encabezado, onEdit, onDelete }) => {
                                             </td>
                                         );
                                     }
-
                                     return (
                                         <td key={cellIndex} title={celda} className={esCeldaConError ? 'celda-con-error-texto' : ''}>
                                             {celda}
@@ -191,7 +189,7 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
                     Swal.fire("Error de Configuración", "La URL del servidor no está configurada.", "error");
                     return;
                 }
-                
+
                 const urls = [
                     { name: "servidores", url: `${backendUrl}/api/servidores` },
                     { name: "servicios", url: `${backendUrl}/api/servicios` },
@@ -203,9 +201,9 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
                 ];
 
                 const responses = await Promise.all(urls.map(item => fetch(item.url).then(res => res.json())));
-                
+
                 const [servidoresData, ...catalogosData] = responses;
-                
+
                 setServidoresExistentes(servidoresData || []);
                 setCatalogos({
                     servicios: catalogosData[0] || [],
@@ -237,17 +235,17 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
         setSelectedFile(file);
         setNombreArchivo(file.name);
     };
-    
+
     const revalidarFila = (fila, encabezado) => {
         let observaciones = [];
         let errores = {};
-        
+
         const findIndex = (keyword) => encabezado.findIndex(h => h && typeof h === 'string' && h.toLowerCase().trim() === keyword.toLowerCase());
         const getValue = (index) => (index !== -1 ? String(fila[index] || '').trim() : '');
 
         const checkCatalog = (catalogName, header, value) => {
             const catalog = catalogos[catalogName];
-            if (!catalog || catalog.length === 0) return; 
+            if (!catalog || catalog.length === 0) return;
 
             if (!catalog.some(item => item.nombre.toLowerCase() === value.toLowerCase())) {
                 observaciones.push(`'${value}' no es un ${header} válido.`);
@@ -337,7 +335,7 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
             }
         });
     };
-    
+
     const handleGuardar = async () => { /* Tu lógica de guardado */ };
 
     const handleEditRow = (rowIndex) => {
@@ -353,14 +351,23 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
             if (header && typeof header === 'string' && header !== 'Observación') {
                 const key = getHeaderKey(header);
                 const value = fila[index];
-                switch (key) {
-                    case 'servicio': initialData['servicio_id'] = findIdByName('servicios', value); break;
-                    case 'capa': initialData['capa_id'] = findIdByName('capas', value); break;
-                    case 'ambiente': initialData['ambiente_id'] = findIdByName('ambientes', value); break;
-                    case 'dominio': initialData['dominio_id'] = findIdByName('dominios', value); break;
-                    case 'sistema_operativo': initialData['sistema_operativo_id'] = findIdByName('sistemasOperativos', value); break;
-                    case 'estatus': initialData['estatus_id'] = findIdByName('estatus', value); break;
-                    default: initialData[key] = value;
+
+                const catalogMap = {
+                    servicio: 'servicios',
+                    capa: 'capas',
+                    ambiente: 'ambientes',
+                    dominio: 'dominios',
+                    sistema_operativo: 'sistemasOperativos',
+                    estatus: 'estatus'
+                };
+
+                const catalogKey = catalogMap[key];
+                const idKey = `${key}_id`;
+
+                if (catalogKey) {
+                    initialData[idKey] = findIdByName(catalogKey, value);
+                } else {
+                    initialData[key] = value;
                 }
             }
         });
@@ -378,15 +385,24 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
         };
         const filaActualizadaArray = encabezadoCSV.slice(0, -1).map(header => {
             const key = getHeaderKey(header);
+            const idKey = `${key}_id`;
+
+            const catalogMap = {
+                servicio: 'servicios',
+                capa: 'capas',
+                ambiente: 'ambientes',
+                dominio: 'dominios',
+                sistema_operativo: 'sistemasOperativos',
+                estatus: 'estatus'
+            };
+
+            const catalogKey = catalogMap[key];
             let value;
-            switch (key) {
-                case 'servicio': value = findNameById('servicios', updatedData['servicio_id']); break;
-                case 'capa': value = findNameById('capas', updatedData['capa_id']); break;
-                case 'ambiente': value = findNameById('ambientes', updatedData['ambiente_id']); break;
-                case 'dominio': value = findNameById('dominios', updatedData['dominio_id']); break;
-                case 'sistema_operativo': value = findNameById('sistemasOperativos', updatedData['sistema_operativo_id']); break;
-                case 'estatus': value = findNameById('estatus', updatedData['estatus_id']); break;
-                default: value = updatedData[key] || '';
+
+            if (catalogKey) {
+                value = findNameById(catalogKey, updatedData[idKey]);
+            } else {
+                value = updatedData[key] || '';
             }
             return value;
         });
@@ -420,17 +436,17 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
             }
         })
     };
-    
+
     return (
         <>
             {ReactDOM.createPortal(
                 <div className="modal-overlay" onClick={onClose}>
-                    <div className="modal-content-carga-masiva" onClick={(e) => e.stopPropagation()} style={{maxWidth: '700px'}}>
+                    <div className="modal-content-carga-masiva" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px' }}>
                         <div className="modal-header">
                             <h2 className="modal-title">Carga Masiva de Servidores</h2>
                             <button onClick={onClose} className="close-button">&times;</button>
                         </div>
-                        <div className="modal-body" style={{textAlign: "center", padding: "40px 0"}}>
+                        <div className="modal-body" style={{ textAlign: "center", padding: "40px 0" }}>
                             <input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} />
                             <button onClick={() => fileInputRef.current && fileInputRef.current.click()} className="action-card-button">
                                 <FileUploadIcon />
@@ -447,7 +463,7 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
                                 boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
                             }}>
                                 <p style={{ color: '#b45309', fontSize: '16px', margin: '0', fontWeight: 'bold' }}>
-                                    <span style={{fontSize: '24px', marginRight: '10px'}}>⚠️</span>
+                                    <span style={{ fontSize: '24px', marginRight: '10px' }}>⚠️</span>
                                     Instrucción Importante
                                 </p>
                                 <p style={{ color: '#78350f', fontSize: '14px', margin: '10px 0 0 0' }}>
@@ -460,7 +476,7 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
                         <div className="modal-footer">
                             <button onClick={onClose} className="btn-secondary">Cancelar</button>
                             <button onClick={handleAcceptAndPreview} className="btn-primary" disabled={!selectedFile}>
-                               Aceptar y Previsualizar
+                                Aceptar y Previsualizar
                             </button>
                         </div>
                     </div>
@@ -469,7 +485,7 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
             )}
 
             {isPreviewVisible && (
-                <PreviewModal 
+                <PreviewModal
                     datos={datosCSV}
                     encabezado={encabezadoCSV}
                     onClose={() => setPreviewVisible(false)}
@@ -478,9 +494,9 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
                     onDelete={handleDeleteRow}
                 />
             )}
-            
-            <EditarFilaModal 
-                open={editModal.open} 
+
+            <EditarFilaModal
+                open={editModal.open}
                 onClose={() => setEditModal({ open: false, data: null, rowIndex: null })}
                 initialData={editModal.data}
                 onSave={(updatedData) => handleUpdateRow(updatedData, editModal.rowIndex)}

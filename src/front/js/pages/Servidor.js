@@ -26,11 +26,25 @@ const UploadCloudIcon = () => (
 const Servidor = () => {
     // Estado para controlar la visibilidad del modal de creación
     const [modalCrearVisible, setModalCrearVisible] = useState(false);
-
-    // --- CORRECCIÓN: Se añade este estado para controlar el modal de carga masiva ---
     const [modalCargaVisible, setModalCargaVisible] = useState(false);
 
-    // Función que se ejecuta cuando un servidor se crea o edita con éxito
+    // --- CORRECCIÓN: Este useEffect controla el scroll del body ---
+    useEffect(() => {
+        // Si cualquiera de los modales está visible, se deshabilita el scroll de la página
+        if (modalCrearVisible || modalCargaVisible) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+
+        // Función de limpieza para restaurar el scroll si el componente se desmonta
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [modalCrearVisible, modalCargaVisible]); // Se ejecuta cada vez que cambia la visibilidad de un modal
+
+
+    // Función que se ejecuta cuando una operación tiene éxito
     const handleSuccess = (mensaje) => {
         Swal.fire({
             icon: "success",
@@ -41,7 +55,6 @@ const Servidor = () => {
         });
     };
 
-    // --- CORRECCIÓN: Se crea una función para manejar el éxito de la carga y cerrar el modal ---
     const handleUploadSuccess = (mensaje) => {
         handleSuccess(mensaje);
         setModalCargaVisible(false); // Cierra el modal de carga al finalizar
@@ -55,7 +68,7 @@ const Servidor = () => {
                 <div className="title-section">
                     <div className="decorative-line-top"></div>
                     <h1 className="main-title">Gestión de Servidores</h1>
-                    <p className="subtitle">"Crea servidores de forma individual o mediante carga masiva".</p>
+                    <p className="subtitle">Crea servidores de forma individual o mediante carga masiva.</p>
                     <div className="decorative-line-bottom"></div>
                 </div>
             </div>
@@ -86,7 +99,6 @@ const Servidor = () => {
                             <h3 className="action-card-title">Carga Masiva</h3>
                             <p className="action-card-description">Sube un archivo CSV para registrar múltiples servidores de forma simultánea y eficiente.</p>
                         </div>
-                        {/* --- CORRECCIÓN: El botón ahora solo es visual, el onClick está en la tarjeta --- */}
                         <div className="action-card-footer">
                             <span className="action-card-button">Realizar Carga Masiva</span>
                         </div>
@@ -108,7 +120,7 @@ const Servidor = () => {
                 </div>
             )}
 
-            {/* --- CORRECCIÓN: Se renderiza el modal de carga masiva cuando el estado es true --- */}
+            {/* Se renderiza el modal de carga masiva cuando el estado es true */}
             {modalCargaVisible && (
                 <ServidorCargaMasiva
                     onClose={() => setModalCargaVisible(false)}

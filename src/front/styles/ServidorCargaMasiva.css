@@ -20,7 +20,7 @@
 /* --- Contenido del Modal --- */
 .modal-content-carga-masiva {
   width: 90%;
-  max-width: 1200px; /* Ancho máximo por defecto, se puede sobreescribir */
+  max-width: 1200px;
   max-height: 90vh;
   background: white;
   padding: 24px 32px;
@@ -70,6 +70,16 @@
   padding: 24px 0;
 }
 
+/* --- NUEVO: Estilo para la sección de carga para reservar espacio --- */
+.upload-section {
+  text-align: center;
+  padding: 40px 0;
+  min-height: 250px; /* Altura mínima para evitar el salto visual */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -81,28 +91,25 @@
 
 /* --- Tabla de Previsualización --- */
 .table-container {
-  overflow-x: auto; /* Permite el scroll horizontal */
+  overflow-x: auto;
   border: 1px solid #dee2e6;
   border-radius: 8px;
 }
 
 .tabla-carga-masiva {
-  width: 100%;
   border-collapse: collapse;
   font-size: 14px;
-  table-layout: auto;
+  width: auto;
 }
 
 /* --- Estilos de las celdas y encabezados de la tabla --- */
 .tabla-carga-masiva th,
 .tabla-carga-masiva td {
-  padding: 8px 10px; /* Padding reducido para compactar */
+  padding: 10px 15px;
   border-bottom: 1px solid #dee2e6;
   text-align: left;
   vertical-align: middle;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .tabla-carga-masiva th {
@@ -192,13 +199,14 @@
   cursor: not-allowed;
 }
 
-/* --- Estilos para la columna de acciones --- */
+/* --- Estilos para la columna de acciones y observación --- */
 .columna-acciones {
   width: 100px;
   min-width: 100px;
 }
 
-.acciones-tabla {
+.acciones-tabla,
+.celda-observacion {
   text-align: center;
   width: 100px;
 }
@@ -230,11 +238,6 @@
 .btn-eliminar:hover {
   background-color: #ffebee;
   color: #d94854;
-}
-
-/* --- Estilos para la celda de observación y sus iconos --- */
-.celda-observacion {
-  text-align: center;
 }
 
 .icono-check {
