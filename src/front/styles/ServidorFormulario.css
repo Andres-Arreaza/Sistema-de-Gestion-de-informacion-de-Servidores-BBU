@@ -105,7 +105,7 @@
 .form-field textarea {
   resize: vertical;
   margin-top: 6.5px;
-  min-height: 50px; /* Se cambia max-height por min-height para permitir que crezca */
+  max-height: 50px; /* Se cambia max-height por min-height para permitir que crezca */
 }
 
 .field-full-width {
