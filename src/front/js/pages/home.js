@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-// Asegúrate de que esta importación apunte al archivo CSS correcto
-// En tu proyecto, esta importación es la correcta
 import { useNavigate } from 'react-router-dom';
+import Swal from "sweetalert2";
+
+// Importa el componente para el modal de carga masiva
+import ServidorCargaMasiva from '../component/ServidorCargaMasiva';
 
 // --- Componente Home ---
 const Home = () => {
     const [isLoaded, setIsLoaded] = useState(false);
-    // Se utiliza el hook real de react-router-dom
     const navigate = useNavigate();
+
+    // Estado para controlar la visibilidad del modal de carga masiva
+    const [modalCargaVisible, setModalCargaVisible] = useState(false);
 
     // --- Iconos SVG como componentes internos ---
     const SearchIcon = (props) => (
@@ -42,54 +46,86 @@ const Home = () => {
         );
     };
 
+    // Efecto para la animación de entrada
     useEffect(() => {
-        // Activa la animación de entrada después de que el componente se monte.
         const timer = setTimeout(() => setIsLoaded(true), 100);
         return () => clearTimeout(timer);
     }, []);
+
+    // Efecto para controlar el scroll del body cuando el modal está abierto
+    useEffect(() => {
+        if (modalCargaVisible) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [modalCargaVisible]);
+
 
     const handleNavigate = (ruta) => {
         navigate(ruta);
     };
 
+    // Función para manejar el éxito de la carga y cerrar el modal
+    const handleUploadSuccess = (mensaje) => {
+        Swal.fire({
+            icon: "success",
+            title: mensaje,
+            showConfirmButton: false,
+            timer: 2000,
+            heightAuto: false
+        });
+        setModalCargaVisible(false);
+    };
+
     return (
-        // Estructura dividida en dos secciones principales
-        <div className={`home-wrapper ${isLoaded ? 'loaded' : ''}`}>
-            {/* Sección superior con el gradiente */}
-            <div className="home-hero-section">
-                <div className="title-section">
-                    <div className="decorative-line-top"></div>
-                    <h1 className="main-title">
-                        Gerencia de Operaciones de Canales Virtuales y Medios de Pagos
-                    </h1>
-                    <p className="subtitle">
-                        "Gestiona y visualiza servidores"
-                    </p>
-                    <div className="decorative-line-bottom"></div>
+        <>
+            <div className={`home-wrapper ${isLoaded ? 'loaded' : ''}`}>
+                <div className="home-hero-section">
+                    <div className="title-section">
+                        <div className="decorative-line-top"></div>
+                        <h1 className="main-title">
+                            Gerencia de Operaciones de Canales Virtuales y Medios de Pagos
+                        </h1>
+                        <p className="subtitle">
+                            "Gestiona y visualiza servidores"
+                        </p>
+                        <div className="decorative-line-bottom"></div>
+                    </div>
+                </div>
+
+                <div className="home-actions-area">
+                    <div className="actions-section">
+                        <ActionButton
+                            text="Búsqueda"
+                            icon={<SearchIcon />}
+                            onClick={() => handleNavigate('/busqueda')}
+                        />
+                        <ActionButton
+                            text="Carga Masiva"
+                            icon={<UploadIcon />}
+                            onClick={() => setModalCargaVisible(true)}
+                        />
+                        <ActionButton
+                            text="Editor Masivo"
+                            icon={<EditIcon />}
+                            onClick={() => handleNavigate('/editor-masivo')}
+                        />
+                    </div>
                 </div>
             </div>
 
-            {/* Sección inferior con los botones y fondo blanco */}
-            <div className="home-actions-area">
-                <div className="actions-section">
-                    <ActionButton
-                        text="Búsqueda"
-                        icon={<SearchIcon />}
-                        onClick={() => handleNavigate('/busqueda')}
-                    />
-                    <ActionButton
-                        text="Carga Masiva"
-                        icon={<UploadIcon />}
-                        onClick={() => handleNavigate('/carga-masiva')}
-                    />
-                    <ActionButton
-                        text="Editor Masivo"
-                        icon={<EditIcon />}
-                        onClick={() => handleNavigate('/editor-masivo')}
-                    />
-                </div>
-            </div>
-        </div>
+            {/* Renderiza el modal de carga masiva cuando el estado es true */}
+            {modalCargaVisible && (
+                <ServidorCargaMasiva
+                    onClose={() => setModalCargaVisible(false)}
+                    actualizarServidores={handleUploadSuccess}
+                />
+            )}
+        </>
     );
 };
 
