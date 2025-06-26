@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 import ServidorFormulario from "../component/ServidorFormulario";
 
 // ========================================================
-// Componentes de Modales e Iconos (Completos)
+// Componentes de Modales e Iconos (Sin cambios)
 // ========================================================
 
 const LinkFloatModal = ({ link, nombre, ip, onClose }) => {
@@ -92,14 +92,14 @@ const getHeaderKey = (header) => {
     return header.toLowerCase().trim().replace(/ /g, '_').replace(/\./g, '');
 };
 
-const TablaPrevisualizacion = ({ datos, encabezado, onEdit, onDelete }) => {
+const TablaPrevisualizacion = ({ datos, encabezado, onEdit, onDelete, startIndex = 0 }) => {
     if (!datos || datos.length === 0) {
         return <p style={{ marginTop: "20px", textAlign: "center" }}>No hay datos para previsualizar.</p>;
     }
     const obsIndex = encabezado.findIndex(h => h && typeof h === 'string' && h.toLowerCase() === 'observación');
 
     return (
-        <div className="table-container" style={{ marginTop: "20px" }}>
+        <div className="table-container" style={{ marginTop: "10px" }}>
             <table className="tabla-carga-masiva">
                 <thead>
                     <tr>
@@ -115,7 +115,7 @@ const TablaPrevisualizacion = ({ datos, encabezado, onEdit, onDelete }) => {
                             <tr key={rowIndex} className={tieneError ? 'fila-con-error' : 'fila-correcta'}>
                                 {fila.map((celda, cellIndex) => {
                                     const headerKey = getHeaderKey(encabezado[cellIndex]);
-                                    const esCeldaConError = errores[headerKey];
+                                    const esCeldaConError = Object.values(errores).some(errKey => getHeaderKey(errKey) === headerKey);
                                     if (cellIndex === obsIndex) {
                                         return (
                                             <td key={cellIndex} title={observacion} className="celda-observacion">
@@ -130,10 +130,10 @@ const TablaPrevisualizacion = ({ datos, encabezado, onEdit, onDelete }) => {
                                     );
                                 })}
                                 <td className="acciones-tabla">
-                                    <button onClick={() => onEdit(rowIndex)} className="btn-accion-tabla btn-editar" title="Editar Fila">
+                                    <button onClick={() => onEdit(startIndex + rowIndex)} className="btn-accion-tabla btn-editar" title="Editar Fila">
                                         <EditIcon />
                                     </button>
-                                    <button onClick={() => onDelete(rowIndex)} className="btn-accion-tabla btn-eliminar" title="Eliminar Fila">
+                                    <button onClick={() => onDelete(startIndex + rowIndex)} className="btn-accion-tabla btn-eliminar" title="Eliminar Fila">
                                         <DeleteIcon />
                                     </button>
                                 </td>
@@ -147,6 +147,48 @@ const TablaPrevisualizacion = ({ datos, encabezado, onEdit, onDelete }) => {
 };
 
 const PreviewModal = ({ datos, encabezado, onClose, onSave, onEdit, onDelete }) => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = datos.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(datos.length / itemsPerPage);
+
+    const handlePageChange = (newPage) => {
+        if (newPage > 0 && newPage <= totalPages) {
+            setCurrentPage(newPage);
+        }
+    };
+
+    const handleItemsPerPageChange = (event) => {
+        setItemsPerPage(Number(event.target.value));
+        setCurrentPage(1);
+    };
+
+    const PaginationControls = () => (
+        <div className="pagination-controls">
+            <div className="items-per-page-selector">
+                <label htmlFor="itemsPerPage">Registros por página:</label>
+                <select id="itemsPerPage" value={itemsPerPage} onChange={handleItemsPerPageChange}>
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                </select>
+            </div>
+            <div className="page-navigation">
+                <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+                    Anterior
+                </button>
+                <span>Página {currentPage} de {totalPages}</span>
+                <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+                    Siguiente
+                </button>
+            </div>
+        </div>
+    );
+
     return ReactDOM.createPortal(
         <div className="modal-overlay" style={{ zIndex: 1002 }}>
             <div className="modal-content-carga-masiva" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '95%', width: '95%' }}>
@@ -155,11 +197,20 @@ const PreviewModal = ({ datos, encabezado, onClose, onSave, onEdit, onDelete }) 
                     <button onClick={onClose} className="close-button">&times;</button>
                 </div>
                 <div className="modal-body">
-                    <TablaPrevisualizacion datos={datos} encabezado={encabezado} onEdit={onEdit} onDelete={onDelete} />
+                    <PaginationControls />
+                    <TablaPrevisualizacion
+                        datos={currentItems}
+                        encabezado={encabezado}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                        startIndex={indexOfFirstItem}
+                    />
                 </div>
-                <div className="modal-footer">
-                    <button onClick={onClose} className="btn-secondary">Volver</button>
-                    <button onClick={onSave} className="btn-primary" disabled={datos.length === 0}>Guardar Válidos</button>
+                <div className="modal-footer" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        <button onClick={onClose} className="btn-secondary">Volver</button>
+                        <button onClick={onSave} className="btn-primary" disabled={datos.length === 0}>Guardar Válidos</button>
+                    </div>
                 </div>
             </div>
         </div>,
@@ -243,43 +294,46 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
         const findIndex = (keyword) => encabezado.findIndex(h => h && typeof h === 'string' && h.toLowerCase().trim() === keyword.toLowerCase());
         const getValue = (index) => (index !== -1 ? String(fila[index] || '').trim() : '');
 
-        const checkCatalog = (catalogName, header, value) => {
+        const checkCatalog = (catalogName, header, value, formKey) => {
             const catalog = catalogos[catalogName];
             if (!catalog || catalog.length === 0) return;
 
             if (!catalog.some(item => item.nombre.toLowerCase() === value.toLowerCase())) {
                 observaciones.push(`'${value}' no es un ${header} válido.`);
-                errores[getHeaderKey(header)] = true;
+                errores[formKey] = true;
             }
         };
 
         const columnas = [
-            { key: 'nombre', header: 'Nombre', required: true },
-            { key: 'ip', header: 'IP', required: true },
-            { key: 'tipo', header: 'Tipo', required: true, values: ['FISICO', 'VIRTUAL'] },
-            { key: 'servicio', header: 'Servicio', required: true, catalog: 'servicios' },
-            { key: 'capa', header: 'Capa', required: true, catalog: 'capas' },
-            { key: 'ambiente', header: 'Ambiente', required: true, catalog: 'ambientes' },
-            { key: 'dominio', header: 'Dominio', required: true, catalog: 'dominios' },
-            { key: 's.o.', header: 'S.O.', required: true, catalog: 'sistemasOperativos' },
-            { key: 'estatus', header: 'Estatus', required: true, catalog: 'estatus' },
+            { key: 'nombre', header: 'Nombre', required: true, formKey: 'nombre' },
+            { key: 'tipo', header: 'Tipo', required: true, values: ['FISICO', 'VIRTUAL'], formKey: 'tipo' },
+            { key: 'ip', header: 'IP', required: true, formKey: 'ip' },
+            { key: 'balanceador', header: 'Balanceador', required: true, formKey: 'balanceador' },
+            { key: 'vlan', header: 'VLAN', required: true, formKey: 'vlan' },
+            { key: 'servicio', header: 'Servicio', required: true, catalog: 'servicios', formKey: 'servicio_id' },
+            { key: 'capa', header: 'Capa', required: true, catalog: 'capas', formKey: 'capa_id' },
+            { key: 'ambiente', header: 'Ambiente', required: true, catalog: 'ambientes', formKey: 'ambiente_id' },
+            { key: 'link', header: 'Link', required: false, formKey: 'link' },
+            { key: 'descripcion', header: 'Descripcion', required: false, formKey: 'descripcion' },
+            { key: 'dominio', header: 'Dominio', required: true, catalog: 'dominios', formKey: 'dominio_id' },
+            { key: 's.o.', header: 'S.O.', required: true, catalog: 'sistemasOperativos', formKey: 'sistema_operativo_id' },
+            { key: 'estatus', header: 'Estatus', required: true, catalog: 'estatus', formKey: 'estatus_id' },
         ];
 
         columnas.forEach(col => {
             const index = findIndex(col.header);
             const value = getValue(index);
-            const headerKey = getHeaderKey(col.header);
 
             if (col.required && value === '') {
                 observaciones.push(`El campo ${col.header} es requerido.`);
-                errores[headerKey] = true;
+                errores[col.formKey] = true;
             } else if (value !== '') {
                 if (col.values && !col.values.some(v => v.toLowerCase() === value.toLowerCase())) {
                     observaciones.push(`Valor para ${col.header} no es válido.`);
-                    errores[headerKey] = true;
+                    errores[col.formKey] = true;
                 }
                 if (col.catalog) {
-                    checkCatalog(col.catalog, col.header, value);
+                    checkCatalog(col.catalog, col.header, value, col.formKey);
                 }
                 if (col.key === 'nombre' && servidoresExistentes.some(s => s.nombre.toLowerCase() === value.toLowerCase())) {
                     observaciones.push("Nombre ya existe en la BD.");
@@ -295,6 +349,7 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
         const observacionFinal = observaciones.length > 0 ? observaciones.join('; ') : "Servidor listo para guardar";
         return { observacion: observacionFinal, errores };
     };
+
 
     const procesarYValidarDatos = (datos) => {
         if (!datos || datos.length < 1 || !Array.isArray(datos[0])) {
@@ -347,74 +402,115 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
             const item = catalog.find(i => i.nombre && i.nombre.toLowerCase() === name.trim().toLowerCase());
             return item ? item.id : '';
         };
-        encabezadoCSV.forEach((header, index) => {
+
+        const encabezadosOriginales = encabezadoCSV.slice(0, -1);
+
+        encabezadosOriginales.forEach((header, index) => {
             if (header && typeof header === 'string' && header !== 'Observación') {
                 const key = getHeaderKey(header);
-                const value = fila[index];
+                const value = fila[index] || '';
 
                 const catalogMap = {
-                    servicio: 'servicios',
-                    capa: 'capas',
-                    ambiente: 'ambientes',
-                    dominio: 'dominios',
-                    sistema_operativo: 'sistemasOperativos',
-                    estatus: 'estatus'
+                    servicio: 'servicios', capa: 'capas', ambiente: 'ambientes',
+                    dominio: 'dominios', 's.o.': 'sistemasOperativos', estatus: 'estatus'
+                };
+                const formKeyMap = {
+                    servicio: 'servicio_id', capa: 'capa_id', ambiente: 'ambiente_id',
+                    dominio: 'dominio_id', 's.o.': 'sistema_operativo_id', estatus: 'estatus_id',
+                    nombre: 'nombre', tipo: 'tipo', ip: 'ip', balanceador: 'balanceador',
+                    vlan: 'vlan', link: 'link', descripcion: 'descripcion'
                 };
 
-                const catalogKey = catalogMap[key];
-                const idKey = `${key}_id`;
+                const formKey = formKeyMap[key];
+                const catalogName = catalogMap[key];
 
-                if (catalogKey) {
-                    initialData[idKey] = findIdByName(catalogKey, value);
-                } else {
-                    initialData[key] = value;
+                if (formKey) {
+                    if (catalogName) {
+                        initialData[formKey] = findIdByName(catalogName, value);
+                    } else {
+                        initialData[formKey] = value;
+                    }
                 }
             }
         });
-        const { errores } = revalidarFila(fila, encabezadoCSV.slice(0, -1));
+
+        const { errores } = revalidarFila(fila, encabezadosOriginales);
         initialData.errors = errores;
+
         setEditModal({ open: true, data: initialData, rowIndex: rowIndex });
     };
 
+    // --- CORRECCIÓN: Se añade la validación de campos opcionales al guardar una fila editada ---
     const handleUpdateRow = (updatedData, rowIndex) => {
-        const findNameById = (catalogName, id) => {
-            const catalog = catalogos[catalogName];
-            if (!catalog || !id) return '';
-            const item = catalog.find(i => String(i.id) === String(id));
-            return item ? item.nombre : '';
-        };
-        const filaActualizadaArray = encabezadoCSV.slice(0, -1).map(header => {
-            const key = getHeaderKey(header);
-            const idKey = `${key}_id`;
+        const camposOpcionalesVacios = [];
+        if (!updatedData.link || !updatedData.link.trim()) {
+            camposOpcionalesVacios.push("Link");
+        }
+        if (!updatedData.descripcion || !updatedData.descripcion.trim()) {
+            camposOpcionalesVacios.push("Descripción");
+        }
 
-            const catalogMap = {
-                servicio: 'servicios',
-                capa: 'capas',
-                ambiente: 'ambientes',
-                dominio: 'dominios',
-                sistema_operativo: 'sistemasOperativos',
-                estatus: 'estatus'
+        const performUpdate = () => {
+            const findNameById = (catalogName, id) => {
+                const catalog = catalogos[catalogName];
+                if (!catalog || !id) return '';
+                const item = catalog.find(i => String(i.id) === String(id));
+                return item ? item.nombre : '';
             };
 
-            const catalogKey = catalogMap[key];
-            let value;
+            const encabezadosOriginales = encabezadoCSV.slice(0, -1);
 
-            if (catalogKey) {
-                value = findNameById(catalogKey, updatedData[idKey]);
-            } else {
-                value = updatedData[key] || '';
-            }
-            return value;
-        });
-        const { observacion, errores } = revalidarFila(filaActualizadaArray, encabezadoCSV.slice(0, -1));
-        const filaConNuevaObservacion = {
-            fila: [...filaActualizadaArray, observacion],
-            errores: errores
+            const filaActualizadaArray = encabezadosOriginales.map(header => {
+                const headerLower = header.toLowerCase().trim();
+                switch (headerLower) {
+                    case 'nombre': return updatedData.nombre;
+                    case 'tipo': return updatedData.tipo;
+                    case 'ip': return updatedData.ip;
+                    case 'balanceador': return updatedData.balanceador;
+                    case 'vlan': return updatedData.vlan;
+                    case 'link': return updatedData.link;
+                    case 'descripcion': return updatedData.descripcion;
+                    case 'servicio': return findNameById('servicios', updatedData.servicio_id);
+                    case 'capa': return findNameById('capas', updatedData.capa_id);
+                    case 'ambiente': return findNameById('ambientes', updatedData.ambiente_id);
+                    case 'dominio': return findNameById('dominios', updatedData.dominio_id);
+                    case 's.o.': return findNameById('sistemasOperativos', updatedData.sistema_operativo_id);
+                    case 'estatus': return findNameById('estatus', updatedData.estatus_id);
+                    default: return '';
+                }
+            });
+
+            const { observacion, errores } = revalidarFila(filaActualizadaArray, encabezadosOriginales);
+            const filaConNuevaObservacion = {
+                fila: [...filaActualizadaArray, observacion],
+                errores: errores
+            };
+            const nuevosDatos = [...datosCSV];
+            nuevosDatos[rowIndex] = filaConNuevaObservacion;
+            setDatosCSV(nuevosDatos);
+            setEditModal({ open: false, data: null, rowIndex: null });
         };
-        const nuevosDatos = [...datosCSV];
-        nuevosDatos[rowIndex] = filaConNuevaObservacion;
-        setDatosCSV(nuevosDatos);
-        setEditModal({ open: false, data: null, rowIndex: null });
+
+        if (camposOpcionalesVacios.length > 0) {
+            const camposTexto = camposOpcionalesVacios.join(' y ');
+            Swal.fire({
+                title: "Campos opcionales vacíos",
+                text: `El campo ${camposTexto} está vacío. ¿Deseas guardar de todas formas?`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#007953",
+                cancelButtonColor: "#6c757d",
+                confirmButtonText: "Guardar",
+                cancelButtonText: "Volver",
+                heightAuto: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performUpdate();
+                }
+            });
+        } else {
+            performUpdate();
+        }
     };
 
     const handleDeleteRow = (rowIndex) => {

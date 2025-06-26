@@ -20,7 +20,7 @@
 /* --- Contenido del Modal --- */
 .modal-content-carga-masiva {
   width: 90%;
-  max-width: 1200px;
+  max-width: 1200px; /* Ancho máximo por defecto, se puede sobreescribir */
   max-height: 90vh;
   background: white;
   padding: 24px 32px;
@@ -70,19 +70,10 @@
   padding: 24px 0;
 }
 
-/* --- NUEVO: Estilo para la sección de carga para reservar espacio --- */
-.upload-section {
-  text-align: center;
-  padding: 40px 0;
-  min-height: 250px; /* Altura mínima para evitar el salto visual */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
 .modal-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 12px;
   padding-top: 16px;
   border-top: 1px solid #e9ecef;
@@ -91,21 +82,22 @@
 
 /* --- Tabla de Previsualización --- */
 .table-container {
-  overflow-x: auto;
+  overflow-x: auto; /* Permite el scroll horizontal */
   border: 1px solid #dee2e6;
   border-radius: 8px;
 }
 
 .tabla-carga-masiva {
+  width: 100%;
   border-collapse: collapse;
   font-size: 14px;
-  width: auto;
+  table-layout: auto;
 }
 
 /* --- Estilos de las celdas y encabezados de la tabla --- */
 .tabla-carga-masiva th,
 .tabla-carga-masiva td {
-  padding: 10px 15px;
+  padding: 10px 12px;
   border-bottom: 1px solid #dee2e6;
   text-align: left;
   vertical-align: middle;
@@ -199,14 +191,13 @@
   cursor: not-allowed;
 }
 
-/* --- Estilos para la columna de acciones y observación --- */
+/* --- Estilos para la columna de acciones --- */
 .columna-acciones {
   width: 100px;
   min-width: 100px;
 }
 
-.acciones-tabla,
-.celda-observacion {
+.acciones-tabla {
   text-align: center;
   width: 100px;
 }
@@ -240,6 +231,11 @@
   color: #d94854;
 }
 
+/* --- Estilos para la celda de observación y sus iconos --- */
+.celda-observacion {
+  text-align: center;
+}
+
 .icono-check {
   color: #16a34a; /* Verde */
   font-size: 24px;
@@ -250,4 +246,72 @@
   color: #d94854; /* Rojo */
   font-size: 24px;
   vertical-align: middle;
+}
+
+/* --- Estilos para la Paginación --- */
+.pagination-top-controls {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 15px;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+}
+
+.items-per-page-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.items-per-page-selector label {
+  font-size: 14px;
+  color: #495057;
+}
+
+.items-per-page-selector select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.page-navigation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-navigation button {
+  background-color: #f8f9fa;
+  color: #495057;
+  border: 1px solid #ced4da;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  font-weight: 500;
+}
+
+.page-navigation button:hover:not(:disabled) {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.page-navigation button:disabled {
+  background-color: #f1f3f5;
+  color: #adb5bd;
+  cursor: not-allowed;
+  border-color: #e9ecef;
+}
+
+.page-navigation span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+  min-width: 120px;
+  text-align: center;
 }

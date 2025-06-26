@@ -155,30 +155,64 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
     };
 
     const guardarServidor = () => {
-        // Lógica de guardado para creación/edición individual
+        const url = esEdicion ? `${process.env.BACKEND_URL}/api/servidores/${servidorInicial.id}` : `${process.env.BACKEND_URL}/api/servidores`;
+        const method = esEdicion ? "PUT" : "POST";
+        fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...formData, activo: true })
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Error al guardar el servidor');
+                return response.json();
+            })
+            .then(() => {
+                onSuccess(esEdicion ? "Servidor actualizado" : "Servidor creado");
+                setModalVisible(false);
+            })
+            .catch(error => {
+                Swal.fire("Error", error.message, "error");
+            });
     };
 
     const handleFormSubmit = async (e) => {
         e.preventDefault();
 
-        // --- CORRECCIÓN: Lógica diferenciada para guardado de fila o guardado final ---
-        if (onSaveRow) {
-            // Si viene de la carga masiva, solo actualiza la fila y cierra.
-            onSaveRow(formData);
-            // El onSuccess lo llama el componente padre para mostrar el mensaje
-            return;
-        }
-
-        // Lógica original para creación/edición individual
         const validationErrors = validateForm();
-        setErrors(validationErrors);
-
         if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
             Swal.fire({ icon: "error", title: "Campos Incompletos", text: "Por favor, revisa los campos marcados en rojo.", heightAuto: false });
             return;
         }
 
-        // ... resto de tu lógica de confirmación y guardado ...
+        if (onSaveRow) {
+            onSaveRow(formData);
+        } else {
+            // Lógica original para creación/edición individual
+            const camposOpcionalesVacios = [];
+            if (!formData.link.trim()) camposOpcionalesVacios.push("Link");
+            if (!formData.descripcion.trim()) camposOpcionalesVacios.push("Descripción");
+
+            if (camposOpcionalesVacios.length > 0) {
+                const camposTexto = camposOpcionalesVacios.join(' y ');
+                Swal.fire({
+                    title: "Campos opcionales vacíos",
+                    text: `El campo ${camposTexto} está vacío. ¿Deseas guardar de todas formas?`,
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#007953",
+                    cancelButtonColor: "#6c757d",
+                    confirmButtonText: "Guardar",
+                    cancelButtonText: "Volver"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        guardarServidor();
+                    }
+                });
+            } else {
+                guardarServidor();
+            }
+        }
     };
 
     return (
