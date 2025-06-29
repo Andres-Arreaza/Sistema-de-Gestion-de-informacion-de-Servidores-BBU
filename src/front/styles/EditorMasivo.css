@@ -1,0 +1,107 @@
+/* ==========================================================================
+   Estilos para el Editor Masivo
+   ========================================================================== */
+
+.editor-masivo-container {
+  padding: 2rem;
+  background-color: #f4f7f9;
+}
+
+.resultados-editor {
+  margin-top: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.editor-acciones {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.guardar-cambios-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--primary-color, #007953);
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.guardar-cambios-btn:hover:not(:disabled) {
+  background-color: var(--primary-hover-color, #006845);
+  box-shadow: 0 4px 15px rgba(0, 121, 83, 0.2);
+  transform: translateY(-2px);
+}
+
+.guardar-cambios-btn:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}
+
+.editor-tabla-container {
+  overflow-x: auto;
+}
+
+.editor-tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.editor-tabla th,
+.editor-tabla td {
+  padding: 8px;
+  border: 1px solid #dee2e6;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.editor-tabla thead {
+  background-color: #f8f9fa;
+}
+
+.editor-tabla th {
+  font-weight: 600;
+  padding: 12px 8px;
+}
+
+.editor-tabla input,
+.editor-tabla select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background-color: transparent;
+  transition: all 0.2s ease;
+}
+
+.editor-tabla input:focus,
+.editor-tabla select:focus {
+  outline: none;
+  border-color: var(--primary-color, #007953);
+  background-color: #fff;
+  box-shadow: 0 0 0 2px rgba(0, 121, 83, 0.15);
+}
+
+.editor-tabla tbody tr:hover {
+  background-color: #f1f3f5;
+}
+
+.editor-tabla tbody tr:hover input,
+.editor-tabla tbody tr:hover select {
+  border-color: #ced4da;
+}
+
+.no-resultados {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+}

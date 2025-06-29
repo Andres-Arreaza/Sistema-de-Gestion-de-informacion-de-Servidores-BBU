@@ -7,6 +7,7 @@ import "../styles/home.css";
 import "../styles/busqueda.css";
 import "../styles/busquedaFiltro.css";
 import "../styles/busquedaTabla.css";
+import "../styles/EditorMasivo.css";
 import "../styles/Servicio.css";
 import "../styles/Capa.css";
 import "../styles/Ambiente.css";

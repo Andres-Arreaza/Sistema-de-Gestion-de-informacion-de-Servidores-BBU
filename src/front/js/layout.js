@@ -10,8 +10,9 @@ import ServidorTabla from "./component/ServidorTabla";
 import ServidorFormulario from "./component/ServidorFormulario";
 import Loading from "./component/Loading";
 
-import Home from "./pages/home";
+import Home from "./pages/Home";
 import { Busqueda } from "./pages/Busqueda";
+import EditorMasivo from './pages/EditorMasivo'; // Ajusta la ruta
 import Servicio from "./pages/Servicio";
 import Capa from "./pages/Capa";
 import Ambiente from "./pages/Ambiente";
@@ -37,6 +38,7 @@ const Layout = () => {
                         <Routes>
                             <Route element={<Home />} path="/" />
                             <Route element={<Busqueda />} path="/busqueda" />
+                            <Route element={<EditorMasivo />} path="/editor-masivo" />
                             <Route element={<Servicio />} path="/servicio" />
                             <Route element={<Capa />} path="/capa" />
                             <Route element={<Ambiente />} path="/ambiente" />
