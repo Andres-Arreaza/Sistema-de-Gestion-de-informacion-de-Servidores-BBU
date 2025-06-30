@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Swal from 'sweetalert2';
 import { BusquedaFiltro } from '../component/BusquedaFiltro'; // Asegúrate que la ruta es correcta
 import Loading from '../component/Loading'; // Componente de carga que ya debes tener
 
-// --- Icono para el botón de guardar ---
+// --- Iconos ---
 const SaveIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
@@ -12,18 +12,88 @@ const SaveIcon = () => (
     </svg>
 );
 
+const ColumnsIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="12" y1="3" x2="12" y2="21"></line>
+    </svg>
+);
+
+const ApplyIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+);
+
+
+// --- Componente para seleccionar columnas a editar ---
+const SelectorColumnasEditables = ({ opciones, seleccionadas, onChange }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleCheckboxChange = (e) => {
+        const { value, checked } = e.target;
+        const nuevasColumnas = checked
+            ? [...seleccionadas, value]
+            : seleccionadas.filter(col => col !== value);
+        onChange(nuevasColumnas);
+    };
+
+    return (
+        <div className="selector-columnas-container" ref={dropdownRef}>
+            <label className="selector-columnas-label">
+                <ColumnsIcon />
+                Columnas a editar:
+            </label>
+            <div className="custom-select">
+                <button type="button" className="custom-select__trigger" onClick={() => setIsOpen(!isOpen)}>
+                    <span>{seleccionadas.length > 0 ? `${seleccionadas.length} seleccionada(s)` : "Ninguna"}</span>
+                    <div className={`chevron ${isOpen ? "open" : ""}`}></div>
+                </button>
+                <div className={`custom-select__panel ${isOpen ? "open" : ""}`}>
+                    {opciones.map((opcion) => (
+                        <label key={opcion.value} className="custom-select__option">
+                            <input
+                                type="checkbox"
+                                value={opcion.value}
+                                checked={seleccionadas.includes(opcion.value)}
+                                onChange={handleCheckboxChange}
+                                disabled={opcion.disabled}
+                            />
+                            <span className={opcion.disabled ? 'disabled-option' : ''}>{opcion.label}</span>
+                        </label>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 const EditorMasivo = () => {
     // --- Estados del componente ---
-    const [filtro, setFiltro] = useState({});
+    const [filtro, setFiltro] = useState({
+        nombre: '', ip: '', balanceador: '', vlan: '', descripcion: '', link: '',
+        tipo: [], servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [],
+    });
     const [servidores, setServidores] = useState([]);
     const [cargando, setCargando] = useState(false);
     const [busquedaRealizada, setBusquedaRealizada] = useState(false);
-
-    // Almacena solo los cambios realizados por el usuario
     const [cambios, setCambios] = useState({});
+    const [columnasEditables, setColumnasEditables] = useState([]);
+    const [bulkEditValues, setBulkEditValues] = useState({});
+    const [validationErrors, setValidationErrors] = useState([]); // Nuevo estado para errores de validación
 
-    // Estados para los catálogos de los dropdowns
     const [catalogos, setCatalogos] = useState({
         servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
     });
@@ -60,7 +130,10 @@ const EditorMasivo = () => {
         setCargando(true);
         setBusquedaRealizada(true);
         setServidores([]);
-        setCambios({}); // Limpia cambios anteriores
+        setCambios({});
+        setBulkEditValues({});
+        setColumnasEditables([]);
+        setValidationErrors([]); // Limpiar errores de validación al buscar
 
         try {
             const queryParams = new URLSearchParams();
@@ -74,77 +147,179 @@ const EditorMasivo = () => {
                 }
             }
 
-            const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/buscar?${queryParams.toString()}`);
-            if (!response.ok) throw new Error('Error en la respuesta del servidor');
+            const apiUrl = `${process.env.BACKEND_URL}/api/servidores/busqueda?${queryParams.toString()}`;
+            const response = await fetch(apiUrl);
+
+            if (!response.ok) throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
 
             const data = await response.json();
-            setServidores(data);
+            const normalizedData = data.map(srv => ({
+                ...srv,
+                servicio_id: srv.servicios?.[0]?.id || srv.servicio_id || null,
+                capa_id: srv.capas?.[0]?.id || srv.capa_id || null,
+                ambiente_id: srv.ambientes?.[0]?.id || srv.ambiente_id || null,
+                dominio_id: srv.dominios?.[0]?.id || srv.dominio_id || null,
+                sistema_operativo_id: srv.sistemasOperativos?.[0]?.id || srv.sistema_operativo_id || null,
+                estatus_id: srv.estatus?.[0]?.id || srv.estatus_id || null,
+            }));
+            setServidores(normalizedData);
 
         } catch (error) {
-            console.error("Error al buscar servidores:", error);
-            Swal.fire("Error", "Ocurrió un error al realizar la búsqueda.", "error");
+            Swal.fire("Error de Búsqueda", `${error.message}`, "error");
         } finally {
             setCargando(false);
         }
     };
 
-    // --- Maneja los cambios en la tabla editable ---
-    const handleCellChange = (servidorId, campo, valor) => {
-        setCambios(prev => ({
-            ...prev,
-            [servidorId]: {
-                ...prev[servidorId],
-                [campo]: valor
-            }
-        }));
+    // --- Opciones de columnas dinámicas basadas en el número de servidores ---
+    const opcionesColumnas = [
+        { value: 'nombre', label: 'Nombre', type: 'input', disabled: servidores.length > 1 },
+        { value: 'tipo', label: 'Tipo', type: 'select', options: [{ id: 'VIRTUAL', nombre: 'Virtual' }, { id: 'FISICO', nombre: 'Físico' }] },
+        { value: 'ip', label: 'IP', type: 'input', disabled: servidores.length > 1 },
+        { value: 'balanceador', label: 'Balanceador', type: 'input' },
+        { value: 'vlan', label: 'VLAN', type: 'input' },
+        { value: 'link', label: 'Link', type: 'input', disabled: servidores.length > 1 },
+        { value: 'descripcion', label: 'Descripción', type: 'input' },
+        { value: 'servicio_id', label: 'Servicio', type: 'select', catalog: 'servicios' },
+        { value: 'capa_id', label: 'Capa', type: 'select', catalog: 'capas' },
+        { value: 'ambiente_id', label: 'Ambiente', type: 'select', catalog: 'ambientes' },
+        { value: 'dominio_id', label: 'Dominio', type: 'select', catalog: 'dominios' },
+        { value: 'sistema_operativo_id', label: 'S.O.', type: 'select', catalog: 'sistemasOperativos' },
+        { value: 'estatus_id', label: 'Estatus', type: 'select', catalog: 'estatus' },
+    ];
 
-        setServidores(prev => prev.map(servidor =>
-            servidor.id === servidorId ? { ...servidor, [campo]: valor } : servidor
-        ));
+    // --- Manejadores para la edición en lote ---
+    const handleBulkEditChange = (campo, valor) => {
+        setBulkEditValues(prev => ({ ...prev, [campo]: valor }));
     };
 
-    // --- Función para guardar todos los cambios ---
+    const handleApplyBulkEdit = async (campo) => {
+        const valor = bulkEditValues[campo];
+        if (valor === undefined || valor === '') {
+            Swal.fire("Valor no válido", "Por favor, selecciona un valor para aplicar.", "warning");
+            return;
+        }
+
+        const campoLabel = opcionesColumnas.find(c => c.value === campo)?.label || campo;
+
+        const result = await Swal.fire({
+            title: `¿Aplicar a todos?`,
+            text: `Se establecerá el campo "${campoLabel}" a un nuevo valor para los ${servidores.length} servidores encontrados.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#007953',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, aplicar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            let nuevosCambios = { ...cambios };
+            const servidoresActualizados = servidores.map(servidor => {
+                nuevosCambios[servidor.id] = { ...nuevosCambios[servidor.id], [campo]: valor };
+                return { ...servidor, [campo]: valor };
+            });
+
+            setServidores(servidoresActualizados);
+            setCambios(nuevosCambios);
+            setValidationErrors([]); // Limpiar errores al aplicar un nuevo cambio
+
+            Swal.fire("Aplicado", `El campo "${campoLabel}" ha sido actualizado en la vista previa.`, "success");
+        }
+    };
+
+    // --- Guardar cambios en el backend ---
     const handleGuardarCambios = async () => {
+        setValidationErrors([]); // Limpiar errores previos
         const numCambios = Object.keys(cambios).length;
         if (numCambios === 0) {
             Swal.fire("Sin cambios", "No se ha modificado ningún servidor.", "info");
             return;
         }
 
+        // --- Validación Previa al Guardado ---
+        const validaciones = [];
+        for (const id in cambios) {
+            const cambio = cambios[id];
+            if (cambio.nombre || cambio.ip || cambio.link) {
+                validaciones.push({
+                    id: parseInt(id, 10),
+                    nombre: cambio.nombre,
+                    ip: cambio.ip,
+                    link: cambio.link,
+                });
+            }
+        }
+
+        if (validaciones.length > 0) {
+            try {
+                const res = await fetch(`${process.env.BACKEND_URL}/api/servidores/validar-actualizaciones`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ validaciones }),
+                });
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    Swal.fire('Error de Validación', errorData.detalles.join('<br>'), 'error');
+
+                    // Identificar y marcar las filas con errores
+                    const errorValues = new Set();
+                    errorData.detalles.forEach(detail => {
+                        const match = detail.match(/'([^']+)'/);
+                        if (match && match[1]) errorValues.add(match[1]);
+                    });
+
+                    const errorIds = servidores
+                        .filter(srv => errorValues.has(srv.nombre) || errorValues.has(srv.ip) || errorValues.has(srv.link))
+                        .map(srv => srv.id);
+
+                    setValidationErrors(errorIds);
+                    return;
+                }
+            } catch (error) {
+                Swal.fire('Error de Conexión', 'No se pudo contactar al servidor para validar los datos.', 'error');
+                return;
+            }
+        }
+        // --- Fin de la Validación ---
+
         const result = await Swal.fire({
-            title: `¿Confirmar cambios?`,
-            text: `Se actualizarán ${numCambios} servidor(es). Esta acción no se puede deshacer.`,
+            title: `¿Guardar cambios en la BD?`,
+            text: `Se actualizarán ${numCambios} servidor(es) permanentemente.`,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#007953',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, guardar',
-            cancelButtonText: 'Cancelar'
+            confirmButtonColor: '#007953', cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, guardar', cancelButtonText: 'Cancelar'
         });
 
         if (result.isConfirmed) {
             setCargando(true);
             const promesas = Object.keys(cambios).map(id => {
-                const servidorActualizado = cambios[id];
+                const servidorOriginal = servidores.find(s => s.id === parseInt(id, 10));
+                const cambiosParaServidor = cambios[id];
+                const payload = { ...servidorOriginal, ...cambiosParaServidor };
+
+                delete payload.servicios;
+                delete payload.capas;
+                delete payload.ambientes;
+                delete payload.dominios;
+                delete payload.sistemasOperativos;
+                delete payload.sistemas_operativos;
+                delete payload.estatus;
+
                 return fetch(`${process.env.BACKEND_URL}/api/servidores/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(servidorActualizado)
+                    body: JSON.stringify(payload)
                 });
             });
-
             try {
                 const responses = await Promise.all(promesas);
                 const errores = responses.filter(res => !res.ok);
-
-                if (errores.length > 0) {
-                    throw new Error(`${errores.length} servidor(es) no se pudieron actualizar.`);
-                }
-
+                if (errores.length > 0) throw new Error(`${errores.length} servidor(es) no se pudieron actualizar.`);
                 Swal.fire('¡Guardado!', `${numCambios} servidor(es) han sido actualizados.`, 'success');
-                setCambios({}); // Limpiar cambios después de guardar
+                setCambios({});
             } catch (error) {
-                console.error("Error al guardar cambios:", error);
                 Swal.fire('Error', `Ocurrió un problema: ${error.message}`, 'error');
             } finally {
                 setCargando(false);
@@ -152,106 +327,121 @@ const EditorMasivo = () => {
         }
     };
 
-    // --- Renderizado de la tabla editable ---
-    const renderTablaEditable = () => (
-        <div className="editor-tabla-container">
-            <table className="editor-tabla">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Tipo</th>
-                        <th>IP</th>
-                        <th>Servicio</th>
-                        <th>Capa</th>
-                        <th>Ambiente</th>
-                        <th>Estatus</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {servidores.map(servidor => (
-                        <tr key={servidor.id}>
-                            <td>
-                                <input
-                                    type="text"
-                                    value={servidor.nombre}
-                                    onChange={(e) => handleCellChange(servidor.id, 'nombre', e.target.value)}
-                                />
-                            </td>
-                            <td>
-                                <select
-                                    value={servidor.tipo}
-                                    onChange={(e) => handleCellChange(servidor.id, 'tipo', e.target.value)}
-                                >
-                                    <option value="VIRTUAL">Virtual</option>
-                                    <option value="FISICO">Físico</option>
-                                </select>
-                            </td>
-                            <td>
-                                <input
-                                    type="text"
-                                    value={servidor.ip}
-                                    onChange={(e) => handleCellChange(servidor.id, 'ip', e.target.value)}
-                                />
-                            </td>
-                            <td>
-                                <select value={servidor.servicio_id} onChange={(e) => handleCellChange(servidor.id, 'servicio_id', e.target.value)}>
-                                    {catalogos.servicios.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-                                </select>
-                            </td>
-                            <td>
-                                <select value={servidor.capa_id} onChange={(e) => handleCellChange(servidor.id, 'capa_id', e.target.value)}>
-                                    {catalogos.capas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                                </select>
-                            </td>
-                            <td>
-                                <select value={servidor.ambiente_id} onChange={(e) => handleCellChange(servidor.id, 'ambiente_id', e.target.value)}>
-                                    {catalogos.ambientes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
-                                </select>
-                            </td>
-                            <td>
-                                <select value={servidor.estatus_id} onChange={(e) => handleCellChange(servidor.id, 'estatus_id', e.target.value)}>
-                                    {catalogos.estatus.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
-                                </select>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+    // --- Renderizado de los controles de edición en lote ---
+    const renderBulkEditControls = () => (
+        <div className="bulk-edit-controls">
+            {columnasEditables.map(colKey => {
+                const colDef = opcionesColumnas.find(c => c.value === colKey);
+                if (!colDef) return null;
+
+                return (
+                    <div key={colKey} className="bulk-edit-field">
+                        <label>{colDef.label}:</label>
+                        {colDef.type === 'input' ? (
+                            <input
+                                type="text"
+                                value={bulkEditValues[colKey] || ''}
+                                onChange={(e) => handleBulkEditChange(colKey, e.target.value)}
+                            />
+                        ) : (
+                            <select
+                                value={bulkEditValues[colKey] || ''}
+                                onChange={(e) => handleBulkEditChange(colKey, e.target.value)}
+                            >
+                                <option value="" disabled>Seleccionar un valor...</option>
+                                {(colDef.options || catalogos[colDef.catalog] || []).map(opt => (
+                                    <option key={opt.id} value={opt.id}>{opt.nombre}</option>
+                                ))}
+                            </select>
+                        )}
+                        <button className="apply-bulk-btn" onClick={() => handleApplyBulkEdit(colKey)} title={`Aplicar a todos`}>
+                            <ApplyIcon />
+                        </button>
+                    </div>
+                );
+            })}
         </div>
     );
+
+    // --- Renderizado de la tabla de resultados (solo vista) ---
+    const renderResultadosTabla = () => {
+        const columnas = [
+            { header: 'Nombre', key: 'nombre' }, { header: 'Tipo', key: 'tipo' }, { header: 'IP', key: 'ip' },
+            { header: 'Servicio', key: 'servicio_id', catalog: 'servicios' },
+            { header: 'Capa', key: 'capa_id', catalog: 'capas' },
+            { header: 'Ambiente', key: 'ambiente_id', catalog: 'ambientes' },
+            { header: 'Balanceador', key: 'balanceador' },
+            { header: 'VLAN', key: 'vlan' },
+            { header: 'Dominio', key: 'dominio_id', catalog: 'dominios' },
+            { header: 'S.O.', key: 'sistema_operativo_id', catalog: 'sistemasOperativos' },
+            { header: 'Estatus', key: 'estatus_id', catalog: 'estatus' },
+            { header: 'Descripción', key: 'descripcion' },
+            { header: 'Link', key: 'link' }
+        ];
+        return (
+            <div className="editor-tabla-container">
+                <table className="editor-tabla">
+                    <thead>
+                        <tr>{columnas.map(c => <th key={c.key}>{c.header}</th>)}</tr>
+                    </thead>
+                    <tbody>
+                        {servidores.map(servidor => {
+                            const isModified = !!cambios[servidor.id];
+                            const hasError = validationErrors.includes(servidor.id);
+                            const rowClass = `${isModified ? 'fila-modificada' : ''} ${hasError ? 'fila-con-error-validacion' : ''}`;
+
+                            return (
+                                <tr key={servidor.id} className={rowClass}>
+                                    {columnas.map(col => {
+                                        let displayValue = servidor[col.key];
+                                        if (col.catalog) {
+                                            const found = catalogos[col.catalog]?.find(c => String(c.id) === String(displayValue));
+                                            displayValue = found ? found.nombre : 'N/A';
+                                        }
+                                        return <td key={`${servidor.id}-${col.key}`} title={displayValue}>{displayValue}</td>;
+                                    })}
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
 
     return (
         <div className="editor-masivo-container">
             <BusquedaFiltro
-                filtro={filtro}
-                setFiltro={setFiltro}
-                buscarServidores={buscarServidores}
-                cargando={cargando}
+                filtro={filtro} setFiltro={setFiltro}
+                buscarServidores={buscarServidores} cargando={cargando}
                 {...catalogos}
             />
-
             <div className="resultados-editor">
                 {cargando && <Loading />}
                 {!cargando && busquedaRealizada && servidores.length > 0 && (
                     <>
-                        <div className="editor-acciones">
-                            <button className="guardar-cambios-btn" onClick={handleGuardarCambios} disabled={Object.keys(cambios).length === 0}>
-                                <SaveIcon />
-                                Guardar Cambios
-                            </button>
+                        <div className="editor-controles-superiores">
+                            <SelectorColumnasEditables
+                                opciones={opcionesColumnas} seleccionadas={columnasEditables}
+                                onChange={setColumnasEditables}
+                            />
+                            <div className="editor-acciones">
+                                <button className="guardar-cambios-btn" onClick={handleGuardarCambios} disabled={Object.keys(cambios).length === 0}>
+                                    <SaveIcon /> Guardar Cambios
+                                </button>
+                            </div>
                         </div>
-                        {renderTablaEditable()}
+
+                        {columnasEditables.length > 0 && renderBulkEditControls()}
+
+                        {renderResultadosTabla()}
                     </>
                 )}
                 {!cargando && busquedaRealizada && servidores.length === 0 && (
-                    <div className="no-resultados">
-                        <p>No se encontraron servidores con los filtros seleccionados.</p>
-                    </div>
+                    <div className="no-resultados"><p>No se encontraron servidores con los filtros seleccionados.</p></div>
                 )}
                 {!cargando && !busquedaRealizada && (
-                    <div className="no-resultados">
-                        <p>Realiza una búsqueda para empezar a editar.</p>
-                    </div>
+                    <div className="no-resultados"><p>Realiza una búsqueda para empezar a editar.</p></div>
                 )}
             </div>
         </div>

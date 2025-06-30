@@ -176,13 +176,12 @@ def get_sistema_operativo_by_id(record_id):
 def create_sistema_operativo():
     data = request.get_json()
 
-    # Validar que los datos no sean `None`
     if not data or "nombre" not in data or "version" not in data:
         return jsonify({"error": "Faltan datos obligatorios"}), 400
 
     nuevo_sistema = SistemaOperativo(
         nombre=data["nombre"],
-        version=data["version"].strip(),  # 🔹 Asegura que no sea None
+        version=data["version"].strip(),
         descripcion=data.get("descripcion", "")
     )
 
@@ -223,9 +222,8 @@ def delete_estatus(record_id):
 # Ejemplo para Servidor:
 @api.route("/servidores", methods=["GET"])
 def get_servidores():
-    """Obtiene solo los servidores activos."""
     try:
-        query = Servidor.query.filter_by(activo=True)  # 🔹 Solo servidores activos (`True`)
+        query = Servidor.query.filter_by(activo=True)
         servidores = query.all()
         return jsonify([servidor.serialize() for servidor in servidores]), 200
     except Exception as e:
@@ -234,17 +232,14 @@ def get_servidores():
 
 @api.route("/servidores/<int:record_id>", methods=["GET"])
 def get_servidor_by_id(record_id):
-    """Obtiene un servidor por ID con datos completos."""
     return get_generic_by_id(Servidor, record_id)
 
 @api.route("/servidores", methods=["POST"])
 def create_servidor():
-    """Crea un nuevo servidor con validación de datos y evita duplicados por nombre o IP."""
     try:
         data = request.get_json()
-        print("DATOS RECIBIDOS:", data)  # 🔹 Verifica qué datos recibe el backend
+        print("DATOS RECIBIDOS:", data)
 
-        # 🔹 Validación de datos obligatorios
         required_fields = [
             "nombre", "tipo", "ip", "servicio_id", "capa_id", "ambiente_id", 
             "dominio_id", "sistema_operativo_id", "estatus_id"
@@ -254,76 +249,48 @@ def create_servidor():
         if missing_fields:
             return jsonify({"error": f"Faltan datos obligatorios: {', '.join(missing_fields)}"}), 400
 
-        # 🔹 Validación de duplicidad por nombre
         if Servidor.query.filter_by(nombre=data["nombre"]).first():
             return jsonify({"msg": "Ya existe un servidor con ese nombre"}), 400
 
-        # 🔹 Validación de duplicidad por IP
         if Servidor.query.filter_by(ip=data["ip"]).first():
             return jsonify({"msg": "Ya existe un servidor con esa IP"}), 400
 
-        # 🔹 Asegura que `estatus_id` nunca sea `None`
-        data["estatus_id"] = data.get("estatus_id", 1)  # 🔹 Valor por defecto si falta
+        data["estatus_id"] = data.get("estatus_id", 1)
 
-        # 🔹 Crear nuevo servidor
         nuevo_servidor = Servidor(
-            nombre=data["nombre"],
-            tipo=data["tipo"],
-            ip=data["ip"],
-            balanceador=data.get("balanceador", ""),
-            vlan=data.get("vlan", ""),
-            link=data.get("link", ""),
-            descripcion=data.get("descripcion", ""),
-            servicio_id=data["servicio_id"],
-            capa_id=data["capa_id"],
-            ambiente_id=data["ambiente_id"],
-            dominio_id=data["dominio_id"],
-            sistema_operativo_id=data["sistema_operativo_id"],
-            estatus_id=data["estatus_id"],
-            activo=True,  # 🔹 Se crea como activo (`True`)
-            fecha_creacion=datetime.utcnow(),
-            fecha_modificacion=datetime.utcnow()
+            nombre=data["nombre"], tipo=data["tipo"], ip=data["ip"],
+            balanceador=data.get("balanceador", ""), vlan=data.get("vlan", ""),
+            link=data.get("link", ""), descripcion=data.get("descripcion", ""),
+            servicio_id=data["servicio_id"], capa_id=data["capa_id"],
+            ambiente_id=data["ambiente_id"], dominio_id=data["dominio_id"],
+            sistema_operativo_id=data["sistema_operativo_id"], estatus_id=data["estatus_id"],
+            activo=True, fecha_creacion=datetime.utcnow(), fecha_modificacion=datetime.utcnow()
         )
 
-        # 🔹 Guardar en la base de datos
         db.session.add(nuevo_servidor)
         db.session.commit()
 
         response = jsonify(nuevo_servidor.serialize())
-        response.headers.add("Access-Control-Allow-Origin", "*")  # 🔹 Evita bloqueo por CORS
+        response.headers.add("Access-Control-Allow-Origin", "*")
         return response, 201
 
     except Exception as e:
-        db.session.rollback()  # 🔹 Evita datos corruptos si ocurre un error
-        print("ERROR AL GUARDAR SERVIDOR:", e)  # 🔹 Mensaje detallado en consola
+        db.session.rollback()
+        print("ERROR AL GUARDAR SERVIDOR:", e)
         return jsonify({"error": f"Error interno: {str(e)}"}), 500
 
 @api.route("/servidores/<int:record_id>", methods=["PUT"])
 def update_servidor(record_id):
-    """Actualiza un servidor por ID con validación de datos."""
     try:
         servidor = Servidor.query.get(record_id)
         if not servidor:
             return jsonify({"error": "Servidor no encontrado"}), 404
 
         data = request.get_json()
-        def sanitize(value):
-            return None if value in ["", None] else value
-
-        servidor.nombre = sanitize(data.get("nombre"))
-        servidor.tipo = sanitize(data.get("tipo"))
-        servidor.ip = sanitize(data.get("ip"))
-        servidor.balanceador = sanitize(data.get("balanceador"))
-        servidor.vlan = sanitize(data.get("vlan"))
-        servidor.link = sanitize(data.get("link"))
-        servidor.descripcion = sanitize(data.get("descripcion"))
-        servidor.servicio_id = sanitize(data.get("servicio_id"))
-        servidor.capa_id = sanitize(data.get("capa_id"))
-        servidor.ambiente_id = sanitize(data.get("ambiente_id"))
-        servidor.dominio_id = sanitize(data.get("dominio_id"))
-        servidor.sistema_operativo_id = sanitize(data.get("sistema_operativo_id"))
-        servidor.estatus_id = sanitize(data.get("estatus_id"))  # <-- AGREGA ESTA LÍNEA
-        servidor.activo = sanitize(data.get("activo"))
+        
+        for key, value in data.items():
+            if hasattr(servidor, key):
+                setattr(servidor, key, value)
 
         servidor.fecha_modificacion = datetime.utcnow()
         db.session.commit()
@@ -335,13 +302,12 @@ def update_servidor(record_id):
 
 @api.route("/servidores/<int:record_id>", methods=["DELETE"])
 def delete_servidor(record_id):
-    """Marca un servidor como eliminado en lugar de borrarlo físicamente."""
     try:
         servidor = Servidor.query.get(record_id)
         if not servidor:
             return jsonify({"error": "Servidor no encontrado"}), 404
 
-        servidor.activo = False  # 🔹 Marca el servidor como eliminado (`False`)
+        servidor.activo = False
         db.session.commit()
 
         return jsonify({"message": "Servidor marcado como eliminado"}), 200
@@ -349,7 +315,6 @@ def delete_servidor(record_id):
         print("ERROR EN ELIMINACIÓN:", e)
         return jsonify({"error": str(e)}), 500
 
-# Ruta de búsqueda filtrada para servidores
 from api.models import TipoServidorEnum
 
 @api.route("/servidores/busqueda", methods=["GET"])
@@ -357,39 +322,24 @@ def buscar_servidores():
     try:
         query = Servidor.query.filter_by(activo=True)
 
-        # Filtros simples
-        if request.args.get("nombre"):
-            query = query.filter(Servidor.nombre.ilike(f"%{request.args['nombre']}%"))
+        if request.args.get("nombre"): query = query.filter(Servidor.nombre.ilike(f"%{request.args['nombre']}%"))
         if request.args.get("tipo"):
             try:
                 tipo_val = TipoServidorEnum[request.args["tipo"]]
                 query = query.filter(Servidor.tipo == tipo_val)
-            except KeyError:
-                pass
-        if request.args.get("ip"):
-            query = query.filter(Servidor.ip.ilike(f"%{request.args['ip']}%"))
-        if request.args.get("balanceador"):
-            query = query.filter(Servidor.balanceador.ilike(f"%{request.args['balanceador']}%"))
-        if request.args.get("vlan"):
-            query = query.filter(Servidor.vlan.ilike(f"%{request.args['vlan']}%"))
-        if request.args.get("link"):
-            query = query.filter(Servidor.link.ilike(f"%{request.args['link']}%"))
-        if request.args.get("descripcion"):
-            query = query.filter(Servidor.descripcion.ilike(f"%{request.args['descripcion']}%"))
-
-        # Filtros por relación (pueden venir varios valores)
-        if request.args.getlist("servicios"):
-            query = query.filter(Servidor.servicio_id.in_(request.args.getlist("servicios")))
-        if request.args.getlist("capas"):
-            query = query.filter(Servidor.capa_id.in_(request.args.getlist("capas")))
-        if request.args.getlist("ambientes"):
-            query = query.filter(Servidor.ambiente_id.in_(request.args.getlist("ambientes")))
-        if request.args.getlist("dominios"):
-            query = query.filter(Servidor.dominio_id.in_(request.args.getlist("dominios")))
-        if request.args.getlist("sistemas_operativos"):
-            query = query.filter(Servidor.sistema_operativo_id.in_(request.args.getlist("sistemas_operativos")))
-        if request.args.getlist("estatus"):
-            query = query.filter(Servidor.estatus_id.in_(request.args.getlist("estatus")))
+            except KeyError: pass
+        if request.args.get("ip"): query = query.filter(Servidor.ip.ilike(f"%{request.args['ip']}%"))
+        if request.args.get("balanceador"): query = query.filter(Servidor.balanceador.ilike(f"%{request.args['balanceador']}%"))
+        if request.args.get("vlan"): query = query.filter(Servidor.vlan.ilike(f"%{request.args['vlan']}%"))
+        if request.args.get("link"): query = query.filter(Servidor.link.ilike(f"%{request.args['link']}%"))
+        if request.args.get("descripcion"): query = query.filter(Servidor.descripcion.ilike(f"%{request.args['descripcion']}%"))
+        
+        if request.args.getlist("servicios"): query = query.filter(Servidor.servicio_id.in_(request.args.getlist("servicios")))
+        if request.args.getlist("capas"): query = query.filter(Servidor.capa_id.in_(request.args.getlist("capas")))
+        if request.args.getlist("ambientes"): query = query.filter(Servidor.ambiente_id.in_(request.args.getlist("ambientes")))
+        if request.args.getlist("dominios"): query = query.filter(Servidor.dominio_id.in_(request.args.getlist("dominios")))
+        if request.args.getlist("sistemas_operativos"): query = query.filter(Servidor.sistema_operativo_id.in_(request.args.getlist("sistemas_operativos")))
+        if request.args.getlist("estatus"): query = query.filter(Servidor.estatus_id.in_(request.args.getlist("estatus")))
 
         servidores = query.all()
         return jsonify([servidor.serialize() for servidor in servidores]), 200
@@ -397,133 +347,48 @@ def buscar_servidores():
         print("ERROR EN BUSQUEDA:", e)
         return jsonify({"error": str(e)}), 500
 
-@api.route("/servidores/validar_masivo", methods=["POST"])
-def validar_masivo():
-    """
-    Recibe filas del CSV y devuelve la observación para cada una.
-    """
-    from api.models import Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, TipoServidorEnum
+# --- NUEVA RUTA DE VALIDACIÓN ---
+@api.route("/servidores/validar-actualizaciones", methods=["POST"])
+def validar_actualizaciones():
     data = request.get_json()
-    filas = data.get("filas", [])
-    if not filas or len(filas) < 2:
-        return jsonify([])
+    if not data or "validaciones" not in data:
+        return jsonify({"error": "Petición inválida"}), 400
 
-    encabezado = filas[0]
-    resultado = [encabezado + ["Observación"]]
+    validaciones = data["validaciones"]
+    errores_detalle = []
 
-    # Mapas para buscar por nombre
-    servicios = {s.nombre.upper(): s.id for s in Servicio.query.filter_by(activo=True).all()}
-    capas = {c.nombre.upper(): c.id for c in Capa.query.filter_by(activo=True).all()}
-    ambientes = {a.nombre.upper(): a.id for a in Ambiente.query.filter_by(activo=True).all()}
-    dominios = {d.nombre.upper(): d.id for d in Dominio.query.filter_by(activo=True).all()}
-    sistemas = {s.nombre.upper(): s.id for s in SistemaOperativo.query.filter_by(activo=True).all()}
-    estatuses = {e.nombre.upper(): e.id for e in Estatus.query.filter_by(activo=True).all()}
+    for v in validaciones:
+        servidor_id = v.get("id")
+        
+        # Validar Nombre si se está cambiando
+        if v.get("nombre"):
+            conflicto_nombre = Servidor.query.filter(
+                Servidor.nombre == v["nombre"],
+                Servidor.id != servidor_id
+            ).first()
+            if conflicto_nombre:
+                errores_detalle.append(f"El nombre '{v['nombre']}' ya está en uso.")
 
-    for fila in filas[1:]:
-        # Ajusta los índices según el orden de tu CSV
-        nombre, tipo, ip, servicio, capa, ambiente, balanceador, vlan, dominio, so, estatus, descripcion, link = fila[:13]
-        observacion = []
+        # Validar IP si se está cambiando
+        if v.get("ip"):
+            conflicto_ip = Servidor.query.filter(
+                Servidor.ip == v["ip"],
+                Servidor.id != servidor_id
+            ).first()
+            if conflicto_ip:
+                errores_detalle.append(f"La IP '{v['ip']}' ya está en uso.")
 
-        # Validar nombre e IP duplicados
-        if Servidor.query.filter_by(nombre=nombre).first():
-            observacion.append("Nombre ya existe")
-        if Servidor.query.filter_by(ip=ip).first():
-            observacion.append("IP ya existe")
+        # Validar Link si se está cambiando
+        if v.get("link"):
+            conflicto_link = Servidor.query.filter(
+                Servidor.link == v["link"],
+                Servidor.id != servidor_id
+            ).first()
+            if conflicto_link:
+                errores_detalle.append(f"El Link '{v['link']}' ya está en uso.")
 
-        # Validar existencia de campos relacionados
-        if tipo.upper() not in ["FISICO", "FÍSICO", "VIRTUAL"]:
-            observacion.append("Tipo no válido")
-        if servicio.upper() not in servicios:
-            observacion.append("Servicio no existe")
-        if capa.upper() not in capas:
-            observacion.append("Capa no existe")
-        if ambiente.upper() not in ambientes:
-            observacion.append("Ambiente no existe")
-        if dominio.upper() not in dominios:
-            observacion.append("Dominio no existe")
-        if so.upper() not in sistemas:
-            observacion.append("S.O. no existe")
-        if estatus.upper() not in estatuses:
-            observacion.append("Estatus no existe")
+    if errores_detalle:
+        return jsonify({"detalles": errores_detalle}), 400
 
-        if not observacion:
-            observacion = ["Servidor listo para guardar"]
+    return jsonify({"msg": "Validación exitosa"}), 200
 
-        resultado.append(fila + ["; ".join(observacion)])
-
-    return jsonify(resultado)
-
-@api.route("/servidores/carga_masiva", methods=["POST"])
-def carga_masiva_servidores():
-    """
-    Recibe una lista de filas (incluyendo encabezado) y crea los servidores en la base de datos.
-    Devuelve éxito o error.
-    """
-    from api.models import Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor
-    data = request.get_json()
-    filas = data.get("filas", [])
-    if not filas or len(filas) < 2:
-        return jsonify({"error": "No hay datos para guardar"}), 400
-
-    encabezado = filas[0]
-    # Ajusta los índices según el orden de tu CSV
-    # nombre, tipo, ip, servicio, capa, ambiente, balanceador, vlan, dominio, so, estatus, descripcion, link
-    servidores_creados = []
-    errores = []
-
-    # Mapas para buscar por nombre
-    servicios = {s.nombre.upper(): s.id for s in Servicio.query.filter_by(activo=True).all()}
-    capas = {c.nombre.upper(): c.id for c in Capa.query.filter_by(activo=True).all()}
-    ambientes = {a.nombre.upper(): a.id for a in Ambiente.query.filter_by(activo=True).all()}
-    dominios = {d.nombre.upper(): d.id for d in Dominio.query.filter_by(activo=True).all()}
-    sistemas = {s.nombre.upper(): s.id for s in SistemaOperativo.query.filter_by(activo=True).all()}
-    estatuses = {e.nombre.upper(): e.id for e in Estatus.query.filter_by(activo=True).all()}
-
-    for fila in filas[1:]:
-        try:
-            nombre, tipo, ip, servicio, capa, ambiente, balanceador, vlan, dominio, so, estatus, descripcion, link = fila[:13]
-            # Validar duplicados en BD
-            if Servidor.query.filter_by(nombre=nombre).first() or Servidor.query.filter_by(ip=ip).first():
-                errores.append(f"Servidor duplicado: {nombre} / {ip}")
-                continue
-            # Validar relaciones
-            servicio_id = servicios.get(servicio.upper())
-            capa_id = capas.get(capa.upper())
-            ambiente_id = ambientes.get(ambiente.upper())
-            dominio_id = dominios.get(dominio.upper())
-            so_id = sistemas.get(so.upper())
-            estatus_id = estatuses.get(estatus.upper())
-            if not all([servicio_id, capa_id, ambiente_id, dominio_id, so_id, estatus_id]):
-                errores.append(f"Relaciones inválidas para: {nombre}")
-                continue
-            nuevo_servidor = Servidor(
-                nombre=nombre,
-                tipo=tipo,
-                ip=ip,
-                balanceador=balanceador,
-                vlan=vlan,
-                link=link,
-                descripcion=descripcion,
-                servicio_id=servicio_id,
-                capa_id=capa_id,
-                ambiente_id=ambiente_id,
-                dominio_id=dominio_id,
-                sistema_operativo_id=so_id,
-                estatus_id=estatus_id,
-                activo=True,
-                fecha_creacion=datetime.utcnow(),
-                fecha_modificacion=datetime.utcnow()
-            )
-            db.session.add(nuevo_servidor)
-            servidores_creados.append(nombre)
-        except Exception as e:
-            errores.append(f"Error en {fila}: {str(e)}")
-    try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": f"Error al guardar en base de datos: {str(e)}"}), 500
-
-    if errores:
-        return jsonify({"msg": "Carga masiva finalizada con errores", "errores": errores, "creados": servidores_creados}), 207
-    return jsonify({"msg": "Carga masiva exitosa", "creados": servidores_creados}), 201

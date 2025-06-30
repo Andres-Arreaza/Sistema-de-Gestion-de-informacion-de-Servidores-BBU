@@ -1,31 +1,137 @@
 /* ==========================================================================
-   Estilos para el Editor Masivo
+   Estilos Mejorados para el Editor Masivo
    ========================================================================== */
 
 .editor-masivo-container {
   padding: 2rem;
-  background-color: #f4f7f9;
+  background-color: #f8fafc; /* Un fondo más suave */
 }
 
 .resultados-editor {
   margin-top: 2rem;
   background-color: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+  border: 1px solid #e2e8f0;
 }
 
+.editor-controles-superiores {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+/* --- Estilos para el selector de columnas --- */
+.selector-columnas-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.selector-columnas-label {
+  font-weight: 500;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selector-columnas-container .custom-select {
+  min-width: 220px;
+}
+.selector-columnas-container .custom-select__trigger {
+  background-color: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 14px;
+  transition: all 0.2s ease-in-out;
+}
+.selector-columnas-container .custom-select__trigger:hover {
+  border-color: var(--primary-color, #007953);
+}
+.selector-columnas-container .custom-select__panel {
+  top: calc(100% + 8px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+.selector-columnas-container .disabled-option {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* --- Panel de Edición en Lote --- */
+.bulk-edit-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background-color: #fdfdff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+}
+
+.bulk-edit-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bulk-edit-field label {
+  font-weight: 500;
+  flex-shrink: 0;
+  width: 90px;
+  color: #334155;
+}
+
+.bulk-edit-field input,
+.bulk-edit-field select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+}
+.bulk-edit-field input:focus,
+.bulk-edit-field select:focus {
+  border-color: var(--primary-color, #007953);
+  box-shadow: 0 0 0 3px rgba(0, 121, 83, 0.1);
+  outline: none;
+}
+
+.apply-bulk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  background-color: #f8fafc;
+  color: var(--primary-color, #007953);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.apply-bulk-btn:hover {
+  background-color: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+/* --- Acciones y Tabla --- */
 .editor-acciones {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 1.5rem;
 }
 
 .guardar-cambios-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background-color: var(--primary-color, #007953);
+  background-image: linear-gradient(to right, #059669, #067e5b);
   color: white;
   font-size: 1rem;
   font-weight: 500;
@@ -37,18 +143,22 @@
 }
 
 .guardar-cambios-btn:hover:not(:disabled) {
-  background-color: var(--primary-hover-color, #006845);
-  box-shadow: 0 4px 15px rgba(0, 121, 83, 0.2);
+  box-shadow: 0 6px 18px rgba(5, 150, 105, 0.3);
   transform: translateY(-2px);
 }
 
 .guardar-cambios-btn:disabled {
-  background-color: #a5d6a7;
+  background: #9ca3af;
   cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
 .editor-tabla-container {
   overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .editor-tabla {
@@ -58,50 +168,56 @@
 
 .editor-tabla th,
 .editor-tabla td {
-  padding: 8px;
-  border: 1px solid #dee2e6;
+  padding: 14px 12px;
+  border-bottom: 1px solid #e2e8f0;
   text-align: left;
   vertical-align: middle;
+  white-space: nowrap;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .editor-tabla thead {
-  background-color: #f8f9fa;
+  background-color: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .editor-tabla th {
   font-weight: 600;
-  padding: 12px 8px;
+  color: #475569;
+  border-bottom-width: 2px;
 }
 
-.editor-tabla input,
-.editor-tabla select {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  background-color: transparent;
-  transition: all 0.2s ease;
-}
-
-.editor-tabla input:focus,
-.editor-tabla select:focus {
-  outline: none;
-  border-color: var(--primary-color, #007953);
-  background-color: #fff;
-  box-shadow: 0 0 0 2px rgba(0, 121, 83, 0.15);
+.editor-tabla tbody tr {
+  transition: background-color 0.2s ease-in-out;
 }
 
 .editor-tabla tbody tr:hover {
-  background-color: #f1f3f5;
+  background-color: #f0f9ff;
 }
 
-.editor-tabla tbody tr:hover input,
-.editor-tabla tbody tr:hover select {
-  border-color: #ced4da;
+/* Fila modificada */
+.editor-tabla tbody tr.fila-modificada td {
+  background-color: #fffbeb;
+}
+.editor-tabla tbody tr.fila-modificada td:first-child {
+  border-left: 3px solid #facc15;
+}
+
+/* Celda con error de validación */
+.editor-tabla td.celda-con-error-validacion {
+  color: #d32f2f; /* Color rojo para el texto del error */
+  font-weight: 600; /* Opcional: para que resalte más */
 }
 
 .no-resultados {
   text-align: center;
   padding: 3rem;
-  color: #6c757d;
+  color: #64748b;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
 }
