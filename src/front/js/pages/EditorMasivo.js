@@ -102,7 +102,7 @@ const EditorMasivo = () => {
     const [bulkEditValues, setBulkEditValues] = useState({});
     const [validationErrors, setValidationErrors] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(50);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const [catalogos, setCatalogos] = useState({
         servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
@@ -405,11 +405,10 @@ const EditorMasivo = () => {
                         setCurrentPage(1);
                     }}
                 >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
                     <option value={50}>50</option>
                     <option value={100}>100</option>
-                    <option value={150}>150</option>
-                    <option value={200}>200</option>
-                    <option value={300}>300</option>
                 </select>
             </div>
             <div className="navegacion-paginas">
@@ -479,48 +478,59 @@ const EditorMasivo = () => {
     };
 
     return (
-        <div className="editor-masivo-container">
-            <BusquedaFiltro
-                filtro={filtro} setFiltro={setFiltro}
-                buscarServidores={buscarServidores} cargando={cargando}
-                {...catalogos}
-            />
-            <div className="resultados-editor">
-                {cargando && <Loading />}
-                {!cargando && busquedaRealizada && (
-                    <>
-                        <div className="resultados-header">
-                            <h2 className="resultados-titulo">Resultados de la Búsqueda</h2>
-                            <span className="servidores-contador">{servidores.length} {servidores.length === 1 ? 'servidor encontrado' : 'servidores encontrados'}</span>
-                        </div>
+        <div className="page-container">
+            <div className="editor-hero-section">
+                <div className="title-section">
+                    <div className="decorative-line-top"></div>
+                    <h1 className="main-title">Editor Masivo de Servidores</h1>
+                    <p className="subtitle">"Filtra y modifica múltiples servidores a la vez"</p>
+                    <div className="decorative-line-bottom"></div>
+                </div>
+            </div>
 
-                        {servidores.length > 0 ? (
-                            <>
-                                <div className="editor-controles-superiores">
-                                    <SelectorColumnasEditables
-                                        opciones={opcionesColumnas} seleccionadas={columnasEditables}
-                                        onChange={setColumnasEditables}
-                                    />
-                                    <div className="editor-acciones">
-                                        <button className="guardar-cambios-btn" onClick={handleGuardarCambios} disabled={Object.keys(cambios).length === 0}>
-                                            <SaveIcon /> Guardar Cambios
-                                        </button>
+            <div className="editor-masivo-container">
+                <BusquedaFiltro
+                    filtro={filtro} setFiltro={setFiltro}
+                    buscarServidores={buscarServidores} cargando={cargando}
+                    {...catalogos}
+                />
+                <div className="resultados-editor">
+                    {cargando && <Loading />}
+                    {!cargando && busquedaRealizada && (
+                        <>
+                            <div className="resultados-header">
+                                <h2 className="resultados-titulo">Resultados de la Búsqueda</h2>
+                                <span className="servidores-contador">{servidores.length} {servidores.length === 1 ? 'servidor encontrado' : 'servidores encontrados'}</span>
+                            </div>
+
+                            {servidores.length > 0 ? (
+                                <>
+                                    <div className="editor-controles-superiores">
+                                        <SelectorColumnasEditables
+                                            opciones={opcionesColumnas} seleccionadas={columnasEditables}
+                                            onChange={setColumnasEditables}
+                                        />
+                                        <div className="editor-acciones">
+                                            <button className="guardar-cambios-btn" onClick={handleGuardarCambios} disabled={Object.keys(cambios).length === 0}>
+                                                <SaveIcon /> Guardar Cambios
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
 
-                                {columnasEditables.length > 0 && renderBulkEditControls()}
+                                    {columnasEditables.length > 0 && renderBulkEditControls()}
 
-                                <PaginacionControles />
-                                {renderResultadosTabla()}
-                            </>
-                        ) : (
-                            <div className="no-resultados"><p>No se encontraron servidores con los filtros seleccionados.</p></div>
-                        )}
-                    </>
-                )}
-                {!cargando && !busquedaRealizada && (
-                    <div className="no-resultados"><p>Realiza una búsqueda para empezar a editar.</p></div>
-                )}
+                                    <PaginacionControles />
+                                    {renderResultadosTabla()}
+                                </>
+                            ) : (
+                                <div className="no-resultados"><p>No se encontraron servidores con los filtros seleccionados.</p></div>
+                            )}
+                        </>
+                    )}
+                    {!cargando && !busquedaRealizada && (
+                        <div className="no-resultados"><p>Realiza una búsqueda para empezar a editar.</p></div>
+                    )}
+                </div>
             </div>
         </div>
     );

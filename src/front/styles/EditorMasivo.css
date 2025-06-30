@@ -2,9 +2,74 @@
    Estilos Mejorados para el Editor Masivo
    ========================================================================== */
 
+.editor-hero-section {
+  background: linear-gradient(135deg, #021027 0%, #004477 0%, #007953 90%);
+  padding: 40px 24px;
+  text-align: center;
+  color: white;
+  overflow: hidden; /* Evita que los elementos se salgan durante la animación */
+}
+
+.editor-hero-section .title-section {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.editor-hero-section .main-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 auto 10px auto;
+  line-height: 1.1;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  animation: fadeUp 0.8s ease-out 0.3s forwards;
+}
+
+.editor-hero-section .subtitle {
+  font-size: 2.5rem;
+  font-family: "Caveat", cursive;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+  opacity: 0;
+  animation: fadeUp 0.8s ease-out 0.5s forwards;
+}
+
+.editor-hero-section .decorative-line-top,
+.editor-hero-section .decorative-line-bottom {
+  height: 3px;
+  margin: 1rem auto;
+  background: #fff;
+  border-radius: 2px;
+  width: 0;
+  opacity: 0;
+  animation: expandWidth 1s ease-out 0.7s forwards;
+}
+
+.editor-hero-section .decorative-line-top {
+  width: 60%;
+}
+
+.editor-hero-section .decorative-line-bottom {
+  width: 30%;
+}
+
 .editor-masivo-container {
   padding: 2rem;
   background-color: #f8fafc;
+}
+
+/* --- Estilos y animación para el contenedor de filtros --- */
+.filtros-servidores {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+  border: 1px solid #e2e8f0;
+  opacity: 0;
+  animation: fadeUp 0.8s ease-out 0.9s forwards;
 }
 
 .resultados-editor {
@@ -14,6 +79,12 @@
   padding: 2rem;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
   border: 1px solid #e2e8f0;
+  opacity: 0;
+  animation: fadeUp 0.8s ease-out 1.1s forwards; /* Animación añadida */
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh; /* Altura aumentada para alargar la tabla */
+  min-height: 800px;
 }
 
 .resultados-header {
@@ -23,12 +94,13 @@
   padding-bottom: 1rem;
   margin-bottom: 1.5rem;
   border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .resultados-titulo {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #007953;
+  color: #334155;
   margin: 0;
 }
 
@@ -48,6 +120,7 @@
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
   gap: 1.5rem;
+  flex-shrink: 0;
 }
 
 /* --- Estilos para el selector de columnas --- */
@@ -98,6 +171,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   margin-bottom: 2rem;
+  flex-shrink: 0;
 }
 
 .bulk-edit-field {
@@ -179,10 +253,9 @@
   transform: none;
 }
 
-/* CORRECCIÓN: Contenedor de la tabla ahora es el que se desplaza */
 .editor-tabla-container {
-  overflow: auto; /* Permite scroll vertical y horizontal */
-  max-height: 60vh; /* Altura máxima para que aparezca el scroll */
+  overflow: auto;
+  flex-grow: 1;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
@@ -216,6 +289,16 @@
   font-weight: 600;
   color: #475569;
   border-bottom-width: 2px;
+}
+
+.editor-tabla .columna-numero {
+  width: 50px;
+  text-align: center;
+  font-weight: 500;
+  color: #64748b;
+  background-color: #f8fafc;
+  position: sticky;
+  left: 0;
 }
 
 .editor-tabla tbody tr {
@@ -254,7 +337,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 1.5rem;
+  padding: 1.5rem 0;
+  flex-shrink: 0;
 }
 
 .items-por-pagina-selector {
@@ -292,23 +376,60 @@
   justify-content: center;
   transition: all 0.2s ease;
 }
-
 .navegacion-paginas button:hover:not(:disabled) {
   background-color: #f0f9ff;
   border-color: var(--primary-color, #007953);
   color: var(--primary-color, #007953);
 }
-
 .navegacion-paginas button:disabled {
-  background-color: #f8fafc;
-  color: #cbd5e1;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
 .navegacion-paginas span {
-  font-size: 0.9rem;
   font-weight: 500;
+  font-size: 1rem;
   color: #475569;
-  min-width: 100px;
-  text-align: center;
+}
+
+/* --- Animaciones --- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes expandWidth {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

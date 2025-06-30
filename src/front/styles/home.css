@@ -68,10 +68,16 @@
   animation-delay: 0.9s;
 }
 
-/* Área inferior con fondo blanco para los botones */
+/* --- CORRECCIÓN: Área inferior con fondo blanco para los botones --- */
 .home-actions-area {
   background-color: #ffffff;
-  padding: 80px 24px;
+  padding: 40px 24px; /* Reducido el padding vertical */
+  display: flex; /* Habilita Flexbox */
+  justify-content: center; /* Centra horizontalmente */
+  align-items: center; /* Centra verticalmente */
+  min-height: calc(
+    80vh - 300px
+  ); /* Ajusta la altura para ocupar el espacio restante */
 }
 
 /* Contenedor de los botones de acción */
@@ -92,7 +98,6 @@
   align-items: center;
   gap: 12px;
   background: transparent;
-  /* Estas variables (--primary-color, etc.) deben estar definidas en tu CSS global (ej. index.css) */
   color: var(--primary-color, #007953);
   border: 1.5px solid var(--primary-color, #007953);
   border-radius: 12px;
