@@ -9,12 +9,12 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(18, 26, 33, 0.7); /* Tono más oscuro y profesional */
+  background: rgba(18, 26, 33, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1001;
-  backdrop-filter: blur(8px); /* desenfoque más pronunciado */
+  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   opacity: 0;
   animation: fadeIn 0.3s ease-out forwards;
@@ -24,7 +24,7 @@
 .modal-content-carga-masiva {
   width: 90%;
   background: #ffffff;
-  border-radius: 16px; /* Bordes más redondeados */
+  border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
@@ -58,7 +58,7 @@
 
 .modal-title {
   color: var(--primary-color, #007953);
-  font-size: 1.6rem; /* Ajuste de tamaño */
+  font-size: 1.6rem;
   font-weight: 600;
   margin: 0;
 }
@@ -66,7 +66,7 @@
 .close-button {
   background: #f1f3f5;
   border: none;
-  font-size: 1.2rem; /* Ajuste de tamaño */
+  font-size: 1.2rem;
   color: #6c757d;
   cursor: pointer;
   width: 32px;
@@ -83,11 +83,25 @@
   transform: rotate(90deg);
 }
 
+/* CORRECCIÓN: Estilos diferenciados para el cuerpo del modal */
 .modal-body {
   flex-grow: 1;
   overflow-y: auto;
-  padding: 32px;
+}
+
+/* Estilos para el modal de carga de archivo (centrado) */
+.modal-content-carga-masiva:not(.modal-preview) .modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
   text-align: center;
+}
+
+/* Estilos para el modal de vista previa (solo scroll) */
+.modal-content-carga-masiva.modal-preview .modal-body {
+  padding: 0 32px;
 }
 
 /* Contenedor fijo para paginación */
@@ -143,9 +157,10 @@
 
 /* --- Tabla de Previsualización --- */
 .table-container {
-  overflow: auto; /* Permite scroll en ambas direcciones si es necesario */
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .tabla-carga-masiva {
@@ -158,13 +173,13 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background-color: #f8f9fa;
+  background-color: #f8fafc;
 }
 
 .tabla-carga-masiva th,
 .tabla-carga-masiva td {
-  padding: 12px 15px;
-  border-bottom: 1px solid #dee2e6;
+  padding: 14px 12px;
+  border-bottom: 1px solid #e2e8f0;
   text-align: left;
   vertical-align: middle;
   white-space: nowrap;
@@ -172,8 +187,9 @@
 
 .tabla-carga-masiva th {
   font-weight: 600;
-  color: #343a40;
+  color: #475569;
   text-transform: capitalize;
+  border-bottom-width: 2px;
 }
 
 .tabla-carga-masiva tbody tr:last-child td {
@@ -181,12 +197,22 @@
 }
 
 .tabla-carga-masiva tbody tr:hover {
-  background-color: #eef3ff;
+  background-color: #f0f9ff;
+}
+
+.tabla-carga-masiva .columna-numero {
+  width: 50px;
+  text-align: center;
+  font-weight: 500;
+  color: #64748b;
+  background-color: #f8fafc;
+  position: sticky;
+  left: 0;
 }
 
 /* --- Estilos de Filas para Validación --- */
 .fila-con-error {
-  background-color: #fff1f2 !important; /* Prioridad sobre hover */
+  background-color: #fff1f2 !important;
   color: #58151c;
 }
 
@@ -204,7 +230,7 @@
   color: #6c757d;
   font-style: italic;
   padding: 50px 20px;
-  background-color: #f8f9fa;
+  background-color: #f8fafc;
   border-radius: 8px;
 }
 
@@ -224,7 +250,8 @@
   color: white;
 }
 .btn-primary:disabled {
-  background-color: #0079535e;
+  background-color: #eee;
+  color: #a2a2a282;
   cursor: not-allowed;
 }
 
@@ -235,7 +262,6 @@
 
 /* --- Acciones y Paginación --- */
 .columna-acciones {
-  width: 120px;
   text-align: center;
 }
 .acciones-tabla {
@@ -303,11 +329,11 @@
 .items-per-page-selector select {
   padding: 8px 12px;
   border-radius: 6px;
-  border: 1px solid #ced4da;
+  border: 1px solid #cbd5e1;
 }
 .page-navigation button {
   background-color: #fff;
-  border: 1px solid #ced4da;
+  border: 1px solid #cbd5e1;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -318,7 +344,6 @@
   transition: all 0.2s ease;
 }
 
-/* Color para los íconos de paginación */
 .page-navigation button svg {
   color: #6c757d;
   transition: color 0.2s ease;
@@ -329,17 +354,15 @@
   border-color: #007953;
 }
 
-/* Color para los íconos al pasar el cursor */
 .page-navigation button:hover:not(:disabled) svg {
   color: var(--primary-color, #000);
 }
 
 .page-navigation button:disabled {
-  background-color: #f8f9fa;
+  background-color: #f8fafc;
   cursor: not-allowed;
 }
 
-/* Color para los íconos deshabilitados */
 .page-navigation button:disabled svg {
   color: #adb5bd;
 }
@@ -350,6 +373,15 @@
   color: #495057;
   min-width: 100px;
   text-align: center;
+}
+
+.servidores-contador {
+  font-size: 0.9rem;
+  font-weight: 500;
+  background-color: #eef2ff;
+  color: #007953;
+  padding: 6px 12px;
+  border-radius: 9999px;
 }
 
 /* --- Animaciones --- */
