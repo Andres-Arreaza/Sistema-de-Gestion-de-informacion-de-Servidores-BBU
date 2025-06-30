@@ -4,7 +4,7 @@
 
 .editor-masivo-container {
   padding: 2rem;
-  background-color: #f8fafc; /* Un fondo más suave */
+  background-color: #f8fafc;
 }
 
 .resultados-editor {
@@ -14,6 +14,31 @@
   padding: 2rem;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
   border: 1px solid #e2e8f0;
+}
+
+.resultados-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.resultados-titulo {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #007953;
+  margin: 0;
+}
+
+.servidores-contador {
+  font-size: 0.9rem;
+  font-weight: 500;
+  background-color: #eef2ff;
+  color: #007953;
+  padding: 6px 12px;
+  border-radius: 9999px;
 }
 
 .editor-controles-superiores {
@@ -154,8 +179,10 @@
   transform: none;
 }
 
+/* CORRECCIÓN: Contenedor de la tabla ahora es el que se desplaza */
 .editor-tabla-container {
-  overflow-x: auto;
+  overflow: auto; /* Permite scroll vertical y horizontal */
+  max-height: 60vh; /* Altura máxima para que aparezca el scroll */
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
@@ -209,8 +236,8 @@
 
 /* Celda con error de validación */
 .editor-tabla td.celda-con-error-validacion {
-  color: #d32f2f; /* Color rojo para el texto del error */
-  font-weight: 600; /* Opcional: para que resalte más */
+  color: #d32f2f;
+  font-weight: 600;
 }
 
 .no-resultados {
@@ -220,4 +247,68 @@
   background-color: #f8fafc;
   border-radius: 8px;
   border: 1px dashed #cbd5e1;
+}
+
+/* --- Paginación --- */
+.paginacion-controles {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1.5rem;
+}
+
+.items-por-pagina-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.items-por-pagina-selector label {
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.items-por-pagina-selector select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+}
+
+.navegacion-paginas {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navegacion-paginas button {
+  background-color: #fff;
+  border: 1px solid #cbd5e1;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.navegacion-paginas button:hover:not(:disabled) {
+  background-color: #f0f9ff;
+  border-color: var(--primary-color, #007953);
+  color: var(--primary-color, #007953);
+}
+
+.navegacion-paginas button:disabled {
+  background-color: #f8fafc;
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.navegacion-paginas span {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #475569;
+  min-width: 100px;
+  text-align: center;
 }

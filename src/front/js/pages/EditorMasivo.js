@@ -25,6 +25,14 @@ const ApplyIcon = () => (
     </svg>
 );
 
+const ChevronLeftIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+);
+
+const ChevronRightIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+);
+
 
 // --- Componente para seleccionar columnas a editar ---
 const SelectorColumnasEditables = ({ opciones, seleccionadas, onChange }) => {
@@ -92,7 +100,9 @@ const EditorMasivo = () => {
     const [cambios, setCambios] = useState({});
     const [columnasEditables, setColumnasEditables] = useState([]);
     const [bulkEditValues, setBulkEditValues] = useState({});
-    const [validationErrors, setValidationErrors] = useState([]); // Nuevo estado para errores de validación
+    const [validationErrors, setValidationErrors] = useState({});
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(50);
 
     const [catalogos, setCatalogos] = useState({
         servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
@@ -133,7 +143,8 @@ const EditorMasivo = () => {
         setCambios({});
         setBulkEditValues({});
         setColumnasEditables([]);
-        setValidationErrors([]); // Limpiar errores de validación al buscar
+        setValidationErrors({});
+        setCurrentPage(1);
 
         try {
             const queryParams = new URLSearchParams();
@@ -159,7 +170,7 @@ const EditorMasivo = () => {
                 capa_id: srv.capas?.[0]?.id || srv.capa_id || null,
                 ambiente_id: srv.ambientes?.[0]?.id || srv.ambiente_id || null,
                 dominio_id: srv.dominios?.[0]?.id || srv.dominio_id || null,
-                sistema_operativo_id: srv.sistemasOperativos?.[0]?.id || srv.sistema_operativo_id || null,
+                sistema_operativo_id: srv.sistemasOperativos?.[0]?.id || srv.sistemas_operativos?.[0]?.id || srv.sistema_operativo_id || null,
                 estatus_id: srv.estatus?.[0]?.id || srv.estatus_id || null,
             }));
             setServidores(normalizedData);
@@ -222,7 +233,7 @@ const EditorMasivo = () => {
 
             setServidores(servidoresActualizados);
             setCambios(nuevosCambios);
-            setValidationErrors([]); // Limpiar errores al aplicar un nuevo cambio
+            setValidationErrors({});
 
             Swal.fire("Aplicado", `El campo "${campoLabel}" ha sido actualizado en la vista previa.`, "success");
         }
@@ -230,14 +241,13 @@ const EditorMasivo = () => {
 
     // --- Guardar cambios en el backend ---
     const handleGuardarCambios = async () => {
-        setValidationErrors([]); // Limpiar errores previos
+        setValidationErrors({});
         const numCambios = Object.keys(cambios).length;
         if (numCambios === 0) {
             Swal.fire("Sin cambios", "No se ha modificado ningún servidor.", "info");
             return;
         }
 
-        // --- Validación Previa al Guardado ---
         const validaciones = [];
         for (const id in cambios) {
             const cambio = cambios[id];
@@ -260,20 +270,35 @@ const EditorMasivo = () => {
                 });
                 if (!res.ok) {
                     const errorData = await res.json();
-                    Swal.fire('Error de Validación', errorData.detalles.join('<br>'), 'error');
-
-                    // Identificar y marcar las filas con errores
-                    const errorValues = new Set();
-                    errorData.detalles.forEach(detail => {
-                        const match = detail.match(/'([^']+)'/);
-                        if (match && match[1]) errorValues.add(match[1]);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de Validación',
+                        text: 'Por favor, revise los campos marcados en rojo.',
+                        heightAuto: false,
                     });
 
-                    const errorIds = servidores
-                        .filter(srv => errorValues.has(srv.nombre) || errorValues.has(srv.ip) || errorValues.has(srv.link))
-                        .map(srv => srv.id);
+                    const errorsMap = {};
+                    errorData.detalles.forEach(detail => {
+                        const valorEnConflictoMatch = detail.match(/'([^']+)'/);
+                        if (!valorEnConflictoMatch) return;
+                        const valorEnConflicto = valorEnConflictoMatch[1];
 
-                    setValidationErrors(errorIds);
+                        const servidorConError = servidores.find(srv =>
+                            srv.nombre === valorEnConflicto ||
+                            srv.ip === valorEnConflicto ||
+                            srv.link === valorEnConflicto
+                        );
+
+                        if (servidorConError) {
+                            if (!errorsMap[servidorConError.id]) {
+                                errorsMap[servidorConError.id] = {};
+                            }
+                            if (detail.includes('nombre')) errorsMap[servidorConError.id].nombre = true;
+                            if (detail.includes('IP')) errorsMap[servidorConError.id].ip = true;
+                            if (detail.includes('Link')) errorsMap[servidorConError.id].link = true;
+                        }
+                    });
+                    setValidationErrors(errorsMap);
                     return;
                 }
             } catch (error) {
@@ -281,7 +306,6 @@ const EditorMasivo = () => {
                 return;
             }
         }
-        // --- Fin de la Validación ---
 
         const result = await Swal.fire({
             title: `¿Guardar cambios en la BD?`,
@@ -363,7 +387,44 @@ const EditorMasivo = () => {
         </div>
     );
 
-    // --- Renderizado de la tabla de resultados (solo vista) ---
+    // --- Lógica y renderizado de paginación ---
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentServidores = servidores.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(servidores.length / itemsPerPage);
+
+    const PaginacionControles = () => (
+        <div className="paginacion-controles">
+            <div className="items-por-pagina-selector">
+                <label htmlFor="items-per-page">Servidores por página:</label>
+                <select
+                    id="items-per-page"
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                    }}
+                >
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                    <option value={150}>150</option>
+                    <option value={200}>200</option>
+                    <option value={300}>300</option>
+                </select>
+            </div>
+            <div className="navegacion-paginas">
+                <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
+                    <ChevronLeftIcon />
+                </button>
+                <span>Página {currentPage} de {totalPages}</span>
+                <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>
+                    <ChevronRightIcon />
+                </button>
+            </div>
+        </div>
+    );
+
+    // --- Renderizado de la tabla de resultados ---
     const renderResultadosTabla = () => {
         const columnas = [
             { header: 'Nombre', key: 'nombre' }, { header: 'Tipo', key: 'tipo' }, { header: 'IP', key: 'ip' },
@@ -382,23 +443,31 @@ const EditorMasivo = () => {
             <div className="editor-tabla-container">
                 <table className="editor-tabla">
                     <thead>
-                        <tr>{columnas.map(c => <th key={c.key}>{c.header}</th>)}</tr>
+                        <tr>
+                            <th className="columna-numero">#</th>
+                            {columnas.map(c => <th key={c.key}>{c.header}</th>)}
+                        </tr>
                     </thead>
                     <tbody>
-                        {servidores.map(servidor => {
+                        {currentServidores.map((servidor, index) => {
                             const isModified = !!cambios[servidor.id];
-                            const hasError = validationErrors.includes(servidor.id);
-                            const rowClass = `${isModified ? 'fila-modificada' : ''} ${hasError ? 'fila-con-error-validacion' : ''}`;
+                            const errorsInRow = validationErrors[servidor.id] || {};
 
                             return (
-                                <tr key={servidor.id} className={rowClass}>
+                                <tr key={servidor.id} className={isModified ? 'fila-modificada' : ''}>
+                                    <td className="columna-numero">{indexOfFirstItem + index + 1}</td>
                                     {columnas.map(col => {
                                         let displayValue = servidor[col.key];
                                         if (col.catalog) {
                                             const found = catalogos[col.catalog]?.find(c => String(c.id) === String(displayValue));
                                             displayValue = found ? found.nombre : 'N/A';
                                         }
-                                        return <td key={`${servidor.id}-${col.key}`} title={displayValue}>{displayValue}</td>;
+                                        const hasError = !!errorsInRow[col.key];
+                                        return (
+                                            <td key={`${servidor.id}-${col.key}`} title={displayValue} className={hasError ? 'celda-con-error-validacion' : ''}>
+                                                {displayValue}
+                                            </td>
+                                        );
                                     })}
                                 </tr>
                             );
@@ -418,27 +487,36 @@ const EditorMasivo = () => {
             />
             <div className="resultados-editor">
                 {cargando && <Loading />}
-                {!cargando && busquedaRealizada && servidores.length > 0 && (
+                {!cargando && busquedaRealizada && (
                     <>
-                        <div className="editor-controles-superiores">
-                            <SelectorColumnasEditables
-                                opciones={opcionesColumnas} seleccionadas={columnasEditables}
-                                onChange={setColumnasEditables}
-                            />
-                            <div className="editor-acciones">
-                                <button className="guardar-cambios-btn" onClick={handleGuardarCambios} disabled={Object.keys(cambios).length === 0}>
-                                    <SaveIcon /> Guardar Cambios
-                                </button>
-                            </div>
+                        <div className="resultados-header">
+                            <h2 className="resultados-titulo">Resultados de la Búsqueda</h2>
+                            <span className="servidores-contador">{servidores.length} {servidores.length === 1 ? 'servidor encontrado' : 'servidores encontrados'}</span>
                         </div>
 
-                        {columnasEditables.length > 0 && renderBulkEditControls()}
+                        {servidores.length > 0 ? (
+                            <>
+                                <div className="editor-controles-superiores">
+                                    <SelectorColumnasEditables
+                                        opciones={opcionesColumnas} seleccionadas={columnasEditables}
+                                        onChange={setColumnasEditables}
+                                    />
+                                    <div className="editor-acciones">
+                                        <button className="guardar-cambios-btn" onClick={handleGuardarCambios} disabled={Object.keys(cambios).length === 0}>
+                                            <SaveIcon /> Guardar Cambios
+                                        </button>
+                                    </div>
+                                </div>
 
-                        {renderResultadosTabla()}
+                                {columnasEditables.length > 0 && renderBulkEditControls()}
+
+                                <PaginacionControles />
+                                {renderResultadosTabla()}
+                            </>
+                        ) : (
+                            <div className="no-resultados"><p>No se encontraron servidores con los filtros seleccionados.</p></div>
+                        )}
                     </>
-                )}
-                {!cargando && busquedaRealizada && servidores.length === 0 && (
-                    <div className="no-resultados"><p>No se encontraron servidores con los filtros seleccionados.</p></div>
                 )}
                 {!cargando && !busquedaRealizada && (
                     <div className="no-resultados"><p>Realiza una búsqueda para empezar a editar.</p></div>
