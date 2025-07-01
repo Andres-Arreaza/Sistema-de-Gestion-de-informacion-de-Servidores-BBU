@@ -243,11 +243,13 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
         setNombreArchivo(file.name);
     };
 
-    const revalidarFila = (fila, encabezado) => {
+    const revalidarFila = (fila, encabezado, todasLasFilas, rowIndex) => {
         let observaciones = [];
         let errores = {};
+
         const findIndex = (keyword) => encabezado.findIndex(h => getHeaderKey(h) === getHeaderKey(keyword));
         const getValue = (index) => (index !== -1 ? String(fila[index] || '').trim() : '');
+
         const checkCatalog = (catalogName, header, value, formKey) => {
             const catalog = catalogos[catalogName];
             if (!catalog || catalog.length === 0) return;
@@ -276,26 +278,35 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
         columnas.forEach(col => {
             const index = findIndex(col.header);
             const value = getValue(index);
-            if (col.required && value === '') {
+            if (col.required && !value) {
                 observaciones.push(`El campo ${col.header} es requerido.`);
                 errores[col.formKey] = true;
-            } else if (value !== '') {
+            } else if (value) {
                 if (col.values && !col.values.some(v => v.toLowerCase() === value.toLowerCase())) {
                     observaciones.push(`Valor para ${col.header} no es válido.`);
                     errores[col.formKey] = true;
                 }
                 if (col.catalog) checkCatalog(col.catalog, col.header, value, col.formKey);
-                if (col.key === 'nombre' && servidoresExistentes.some(s => s.nombre.toLowerCase() === value.toLowerCase())) {
-                    observaciones.push("Nombre ya existe en la BD.");
-                    errores.nombre = true;
-                }
-                if (col.key === 'ip' && servidoresExistentes.some(s => s.ip === value)) {
-                    observaciones.push("IP ya existe en la BD.");
-                    errores.ip = true;
+
+                if (['nombre', 'ip', 'link'].includes(col.key)) {
+                    if (servidoresExistentes.some(s => s[col.key] && s[col.key].toLowerCase() === value.toLowerCase())) {
+                        observaciones.push(`${col.header} ya existe en la BD.`);
+                        errores[col.formKey] = true;
+                    }
+
+                    // CORRECCIÓN: Usar findIndex para validar duplicados internos
+                    const firstIndex = todasLasFilas.findIndex(otraFila =>
+                        (otraFila[index] || '').toLowerCase() === value.toLowerCase()
+                    );
+
+                    if (firstIndex !== rowIndex) {
+                        observaciones.push(`${col.header} duplicado en el archivo.`);
+                        errores[col.formKey] = true;
+                    }
                 }
             }
         });
-        const observacionFinal = observaciones.length > 0 ? observaciones.join('; ') : "Servidor listo para guardar";
+        const observacionFinal = [...new Set(observaciones)].join('; ') || "Servidor listo para guardar";
         return { observacion: observacionFinal, errores };
     };
 
@@ -304,13 +315,15 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
             Swal.fire("Archivo inválido", "El archivo CSV no tiene un formato correcto o está vacío.", "info"); return;
         }
         const encabezado = datos[0];
-        const filas = datos.slice(1);
+        const filasData = datos.slice(1);
         const encabezadoConObs = [...encabezado, "Observación"];
         setEncabezadoCSV(encabezadoConObs);
-        const filasProcesadas = filas.map(fila => {
-            const { observacion, errores } = revalidarFila(fila, encabezado);
+
+        const filasProcesadas = filasData.map((fila, index) => {
+            const { observacion, errores } = revalidarFila(fila, encabezado, filasData, index);
             return { fila: [...fila, observacion], errores };
         });
+
         setDatosCSV(filasProcesadas);
         setPreviewVisible(true);
     };
@@ -387,9 +400,7 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
             title: `Guardando ${servidoresParaGuardar.length} servidores...`,
             text: 'Por favor, espere.',
             allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            },
+            didOpen: () => Swal.showLoading(),
             heightAuto: false,
         });
 
@@ -467,7 +478,7 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
                 }
             }
         });
-        const { errores } = revalidarFila(fila, encabezadosOriginales);
+        const { errores } = revalidarFila(fila, encabezadosOriginales, datosCSV.map(d => d.fila.slice(0, -1)), rowIndex);
         initialData.errors = errores;
         setEditModal({ open: true, data: initialData, rowIndex });
     };
@@ -504,11 +515,19 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
                     default: return '';
                 }
             });
-            const { observacion, errores } = revalidarFila(filaActualizadaArray, encabezadosOriginales);
-            const filaConNuevaObservacion = { fila: [...filaActualizadaArray, observacion], errores };
-            const nuevosDatos = [...datosCSV];
-            nuevosDatos[rowIndex] = filaConNuevaObservacion;
-            setDatosCSV(nuevosDatos);
+
+            // CORRECCIÓN: Re-validar todas las filas después de una actualización
+            const filasActuales = datosCSV.map(d => d.fila.slice(0, -1));
+            const nuevasFilasData = filasActuales.map((fila, i) =>
+                i === rowIndex ? filaActualizadaArray : fila
+            );
+
+            const nuevosDatosCSV = nuevasFilasData.map((fila, index) => {
+                const { observacion, errores } = revalidarFila(fila, encabezadosOriginales, nuevasFilasData, index);
+                return { fila: [...fila, observacion], errores };
+            });
+
+            setDatosCSV(nuevosDatosCSV);
             setEditModal({ open: false, data: null, rowIndex: null });
         };
 
