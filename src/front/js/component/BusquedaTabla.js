@@ -36,7 +36,7 @@ const exportarCSV = (servidores) => {
     const filas = servidores.map(srv =>
         `"${srv.nombre || 'N/A'}";"${srv.tipo || 'N/A'}";"${srv.ip || 'N/A'}";"${srv.servicios?.[0]?.nombre || 'N/A'}";` +
         `"${srv.capas?.[0]?.nombre || 'N/A'}";"${srv.ambientes?.[0]?.nombre || 'N/A'}";"${srv.balanceador || 'N/A'}";"${srv.vlan || 'N/A'}";` +
-        `"${srv.dominios?.[0]?.nombre || 'N/A'}";"${srv.sistemasOperativos?.[0]?.nombre || 'N/A'}";"${srv.estatus?.[0]?.nombre || 'N/A'}";"${srv.descripcion || 'N/A'}";` +
+        `"${srv.dominios?.[0]?.nombre || 'N/A'}";"${srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : 'N/A'}";"${srv.estatus?.[0]?.nombre || 'N/A'}";"${srv.descripcion || 'N/A'}";` +
         `"${srv.link || 'N/A'}"`
     ).join("\n");
 
@@ -140,7 +140,7 @@ export const BusquedaTabla = ({ servidores }) => {
                                         <td>{srv.balanceador}</td>
                                         <td>{srv.vlan}</td>
                                         <td>{Array.isArray(srv.dominios) ? srv.dominios.map(d => d.nombre).join(", ") : srv.dominios?.nombre || ""}</td>
-                                        <td>{Array.isArray(srv.sistemasOperativos) ? srv.sistemasOperativos.map(so => so.nombre).join(", ") : srv.sistemasOperativos?.nombre || ""}</td>
+                                        <td>{Array.isArray(srv.sistemasOperativos) ? srv.sistemasOperativos.map(so => `${so.nombre} - V${so.version}`).join(", ") : ''}</td>
                                         <td>{Array.isArray(srv.estatus) ? srv.estatus.map(es => es.nombre).join(", ") : srv.estatus?.nombre || ""}</td>
                                         <td className="col-descripcion">{srv.descripcion}</td>
                                         <td>

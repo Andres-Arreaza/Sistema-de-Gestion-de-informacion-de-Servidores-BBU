@@ -6,13 +6,12 @@ import injectContext from "./store/appContext";
 
 import { Navbar } from "./component/navbar";
 import { Footer } from "./component/footer";
-import ServidorTabla from "./component/ServidorTabla";
 import ServidorFormulario from "./component/ServidorFormulario";
 import Loading from "./component/Loading";
 
 import Home from "./pages/Home";
 import { Busqueda } from "./pages/Busqueda";
-import EditorMasivo from './pages/EditorMasivo'; // Ajusta la ruta
+import EditorMasivo from './pages/EditorMasivo';
 import Servicio from "./pages/Servicio";
 import Capa from "./pages/Capa";
 import Ambiente from "./pages/Ambiente";
@@ -46,7 +45,6 @@ const Layout = () => {
                             <Route element={<SistemaOperativo />} path="/sistemaOperativo" />
                             <Route element={<Estatus />} path="/estatus" />
                             <Route element={<Servidor />} path="/servidor" />
-                            <Route element={<ServidorTabla />} path="/servidorTabla" />
                             <Route element={<ServidorFormulario />} path="/servidorFormulario" />
                             <Route element={<Loading />} path="/loading" />
                             <Route element={<h1>Not found!</h1>} path="*" />

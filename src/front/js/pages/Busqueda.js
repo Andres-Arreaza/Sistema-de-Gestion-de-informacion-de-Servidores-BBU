@@ -1,146 +1,116 @@
-import React, { useEffect, useState } from "react";
-// Se elimina la importación del componente Loading
-// import Loading from "../component/Loading";
-import BusquedaFiltro from "../component/BusquedaFiltro";
-import HomeTabla from "../component/BusquedaTabla";
-// Importa el archivo CSS para esta página
+import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
+import { BusquedaFiltro } from '../component/BusquedaFiltro'; // Asegúrate que la ruta es correcta
+import { BusquedaTabla } from '../component/BusquedaTabla';   // Asegúrate que la ruta es correcta
+import Loading from '../component/Loading';                   // Asegúrate de tener este componente
 
 export const Busqueda = () => {
-    // Estado consolidado para las opciones de los filtros.
-    const [opcionesFiltro, setOpcionesFiltro] = useState({
-        servicios: [],
-        capas: [],
-        ambientes: [],
-        dominios: [],
-        sistemasOperativos: [],
-        estatus: []
-    });
-
-    // Estado para los valores seleccionados en el filtro
     const [filtro, setFiltro] = useState({
-        servicios: [],
-        capas: [],
-        ambientes: [],
-        dominios: [],
-        sistemasOperativos: [],
-        estatus: [],
-        nombre: "",
-        tipo: "",
-        ip: "",
-        balanceador: "",
-        vlan: "",
-        descripcion: "",
-        link: ""
+        nombre: '', ip: '', balanceador: '', vlan: '', descripcion: '', link: '',
+        tipo: [], servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [],
+    });
+    const [servidores, setServidores] = useState([]);
+    const [cargando, setCargando] = useState(false);
+    const [busquedaRealizada, setBusquedaRealizada] = useState(false);
+    const [catalogos, setCatalogos] = useState({
+        servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
     });
 
-    // Estados para los resultados y el control de la UI
-    const [servidores, setServidores] = useState([]);
-    // Se eliminan los estados de carga
-    // const [cargandoFiltros, setCargandoFiltros] = useState(true);
-    // const [realizandoBusqueda, setRealizandoBusqueda] = useState(false);
-    const [busquedaRealizada, setBusquedaRealizada] = useState(false);
-
+    // --- Carga inicial de catálogos ---
     useEffect(() => {
-        const urls = [
-            { key: "servicios", url: process.env.BACKEND_URL + "/api/servicios" },
-            { key: "capas", url: process.env.BACKEND_URL + "/api/capas" },
-            { key: "ambientes", url: process.env.BACKEND_URL + "/api/ambientes" },
-            { key: "dominios", url: process.env.BACKEND_URL + "/api/dominios" },
-            { key: "sistemasOperativos", url: process.env.BACKEND_URL + "/api/sistemas_operativos" },
-            { key: "estatus", url: process.env.BACKEND_URL + "/api/estatus" }
-        ];
-
-        const fetchAllOptions = async () => {
+        const fetchCatalogos = async () => {
             try {
-                const responses = await Promise.all(
-                    urls.map(item => fetch(item.url).then(res => {
-                        if (!res.ok) throw new Error(`Fallo al cargar ${item.key}`);
-                        return res.json();
-                    }))
-                );
-                const nuevasOpciones = {
-                    servicios: responses[0],
-                    capas: responses[1],
-                    ambientes: responses[2],
-                    dominios: responses[3],
-                    sistemasOperativos: responses[4],
-                    estatus: responses[5]
-                };
-                setOpcionesFiltro(nuevasOpciones);
+                const backendUrl = process.env.BACKEND_URL;
+                const urls = [
+                    { name: "servicios", url: `${backendUrl}/api/servicios` },
+                    { name: "capas", url: `${backendUrl}/api/capas` },
+                    { name: "ambientes", url: `${backendUrl}/api/ambientes` },
+                    { name: "dominios", url: `${backendUrl}/api/dominios` },
+                    { name: "sistemasOperativos", url: `${backendUrl}/api/sistemas_operativos` },
+                    { name: "estatus", url: `${backendUrl}/api/estatus` }
+                ];
+                const responses = await Promise.all(urls.map(item => fetch(item.url).then(res => res.json())));
+                setCatalogos({
+                    servicios: responses[0] || [], capas: responses[1] || [], ambientes: responses[2] || [],
+                    dominios: responses[3] || [], sistemasOperativos: responses[4] || [], estatus: responses[5] || []
+                });
             } catch (error) {
-                console.error("Error al cargar los filtros:", error);
+                console.error("Error al cargar catálogos:", error);
+                Swal.fire("Error", "No se pudieron cargar los catálogos para los filtros.", "error");
             }
-            // Se elimina la lógica de setCargandoFiltros
         };
-        fetchAllOptions();
+        fetchCatalogos();
     }, []);
 
+    // --- Función para buscar servidores ---
     const buscarServidores = async (e) => {
-        e.preventDefault();
-        // Ya no se activa un estado de carga
+        if (e) e.preventDefault();
+        setCargando(true);
         setBusquedaRealizada(true);
         setServidores([]);
 
-        const params = new URLSearchParams();
-        Object.keys(filtro).forEach((key) => {
-            if (Array.isArray(filtro[key]) && filtro[key].length > 0) {
-                filtro[key].forEach(id => params.append(key, id));
-            } else if (!Array.isArray(filtro[key]) && filtro[key]) {
-                params.append(key, filtro[key]);
-            }
-        });
-
         try {
-            const res = await fetch(`${process.env.BACKEND_URL}/api/servidores/busqueda?${params.toString()}`);
-            if (!res.ok) throw new Error('La búsqueda de servidores falló');
-            const data = await res.json();
+            const queryParams = new URLSearchParams();
+            for (const key in filtro) {
+                if (filtro[key] && filtro[key].length > 0) {
+                    // CORRECCIÓN: Mapear la clave del frontend a la del backend
+                    const backendKey = key === 'sistemasOperativos' ? 'sistemas_operativos' : key;
+                    if (Array.isArray(filtro[key])) {
+                        filtro[key].forEach(val => queryParams.append(backendKey, val));
+                    } else {
+                        queryParams.append(backendKey, filtro[key]);
+                    }
+                }
+            }
+
+            const apiUrl = `${process.env.BACKEND_URL}/api/servidores/busqueda?${queryParams.toString()}`;
+            const response = await fetch(apiUrl);
+
+            if (!response.ok) throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
+
+            const data = await response.json();
             setServidores(data);
+
         } catch (error) {
-            console.error("Error al buscar servidores:", error);
+            Swal.fire("Error de Búsqueda", `${error.message}`, "error");
+        } finally {
+            setCargando(false);
         }
-        // Ya no se desactiva un estado de carga
     };
 
     return (
-        <div className="busqueda-wrapper">
-            {/* 1. Sección superior con el gradiente (Hero) */}
-            <div className="busqueda-hero-section">
+        <div className="page-container">
+            <div className="editor-hero-section">
                 <div className="title-section">
                     <div className="decorative-line-top"></div>
-                    <h1 className="main-title">Búsqueda Avanzada</h1>
-                    <p className="subtitle busqueda-subtitle">"Encuentra servidores con precisión"</p>
+                    <h1 className="main-title">Búsqueda de Servidores</h1>
+                    <p className="subtitle">"Encuentra servidores por criterios específicos"</p>
                     <div className="decorative-line-bottom"></div>
                 </div>
             </div>
 
-            {/* 2. Área de contenido principal (filtros y resultados) */}
-            <div className="busqueda-content-area">
-                {/* Se renderiza el filtro directamente sin comprobar el estado de carga */}
+            <div className="editor-masivo-container">
                 <BusquedaFiltro
                     filtro={filtro}
                     setFiltro={setFiltro}
                     buscarServidores={buscarServidores}
-                    servicios={opcionesFiltro.servicios}
-                    capas={opcionesFiltro.capas}
-                    ambientes={opcionesFiltro.ambientes}
-                    dominios={opcionesFiltro.dominios}
-                    sistemasOperativos={opcionesFiltro.sistemasOperativos}
-                    estatus={opcionesFiltro.estatus}
-                    // La prop 'cargando' se puede eliminar si BusquedaFiltro ya no la necesita
-                    cargando={false}
+                    cargando={cargando}
+                    {...catalogos}
                 />
 
                 {busquedaRealizada && (
-                    <div>
-                        {/* Se eliminó la comprobación de realizandoBusqueda */}
-                        {servidores.length > 0 ? (
-                            <HomeTabla servidores={servidores} />
-                        ) : (
-                            <p className="no-resultados-mensaje">No se encontraron servidores que coincidan con los criterios de búsqueda.</p>
-                        )}
+                    <div className="resultados-editor">
+                        {cargando ? <Loading /> :
+                            <BusquedaTabla
+                                servidores={servidores}
+                                catalogos={catalogos}
+                            />
+                        }
                     </div>
                 )}
             </div>
         </div>
     );
 };
+
+export default Busqueda;

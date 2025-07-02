@@ -253,9 +253,18 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
         const checkCatalog = (catalogName, header, value, formKey) => {
             const catalog = catalogos[catalogName];
             if (!catalog || catalog.length === 0) return;
-            if (!catalog.some(item => item.nombre.toLowerCase() === value.toLowerCase())) {
-                observaciones.push(`'${value}' no es un ${header} válido.`);
-                errores[formKey] = true;
+
+            let matchFound = false;
+            if (catalogName === 'sistemasOperativos') {
+                matchFound = catalog.some(item => `${item.nombre} - V${item.version}`.toLowerCase() === value.toLowerCase());
+            } else {
+                matchFound = catalog.some(item => item.nombre.toLowerCase() === value.toLowerCase());
+            }
+
+            if (!matchFound) {
+                const msg = `'${value}' no es un ${header} válido.`;
+                observaciones.push(msg);
+                errores[formKey] = msg;
             }
         };
 
@@ -278,30 +287,37 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
         columnas.forEach(col => {
             const index = findIndex(col.header);
             const value = getValue(index);
+            const formKey = col.formKey;
+
             if (col.required && !value) {
-                observaciones.push(`El campo ${col.header} es requerido.`);
-                errores[col.formKey] = true;
+                const msg = `El campo ${col.header} es requerido.`;
+                observaciones.push(msg);
+                errores[formKey] = msg;
             } else if (value) {
                 if (col.values && !col.values.some(v => v.toLowerCase() === value.toLowerCase())) {
-                    observaciones.push(`Valor para ${col.header} no es válido.`);
-                    errores[col.formKey] = true;
+                    const msg = `Valor para ${col.header} no es válido.`;
+                    observaciones.push(msg);
+                    errores[formKey] = msg;
                 }
-                if (col.catalog) checkCatalog(col.catalog, col.header, value, col.formKey);
+                if (col.catalog) {
+                    checkCatalog(col.catalog, col.header, value, formKey);
+                }
 
                 if (['nombre', 'ip', 'link'].includes(col.key)) {
                     if (servidoresExistentes.some(s => s[col.key] && s[col.key].toLowerCase() === value.toLowerCase())) {
-                        observaciones.push(`${col.header} ya existe en la BD.`);
-                        errores[col.formKey] = true;
+                        const msg = `${col.header} ya existe en la BD.`;
+                        observaciones.push(msg);
+                        errores[formKey] = msg;
                     }
 
-                    // CORRECCIÓN: Usar findIndex para validar duplicados internos
                     const firstIndex = todasLasFilas.findIndex(otraFila =>
                         (otraFila[index] || '').toLowerCase() === value.toLowerCase()
                     );
 
                     if (firstIndex !== rowIndex) {
-                        observaciones.push(`${col.header} duplicado en el archivo.`);
-                        errores[col.formKey] = true;
+                        const msg = `${col.header} duplicado en el archivo.`;
+                        observaciones.push(msg);
+                        errores[formKey] = msg;
                     }
                 }
             }
@@ -364,6 +380,10 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
         const findIdByName = (catalogName, name) => {
             const catalog = catalogos[catalogName];
             if (!catalog || !name) return null;
+            if (catalogName === 'sistemasOperativos') {
+                const soMatch = catalog.find(item => `${item.nombre} - V${item.version}`.toLowerCase() === name.trim().toLowerCase());
+                return soMatch ? soMatch.id : null;
+            }
             const item = catalog.find(i => i.nombre.toLowerCase() === name.trim().toLowerCase());
             return item ? item.id : null;
         };
@@ -440,11 +460,15 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
 
 
     const handleEditRow = (rowIndex) => {
-        const { fila } = datosCSV[rowIndex];
+        const { fila, errores } = datosCSV[rowIndex];
         const initialData = {};
         const findIdByName = (catalogName, name) => {
             const catalog = catalogos[catalogName];
             if (!catalog || !name) return '';
+            if (catalogName === 'sistemasOperativos') {
+                const soMatch = catalog.find(item => `${item.nombre} - V${item.version}`.toLowerCase() === name.trim().toLowerCase());
+                return soMatch ? String(soMatch.id) : '';
+            }
             const item = catalog.find(i => i.nombre && i.nombre.toLowerCase() === name.trim().toLowerCase());
             return item ? String(item.id) : '';
         };
@@ -478,8 +502,8 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
                 }
             }
         });
-        const { errores } = revalidarFila(fila, encabezadosOriginales, datosCSV.map(d => d.fila.slice(0, -1)), rowIndex);
-        initialData.errors = errores;
+
+        initialData.errors = errores; // Pasar los errores existentes al modal
         setEditModal({ open: true, data: initialData, rowIndex });
     };
 
@@ -493,6 +517,9 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
                 const catalog = catalogos[catalogName];
                 if (!catalog || !id) return '';
                 const item = catalog.find(i => String(i.id) === String(id));
+                if (catalogName === 'sistemasOperativos' && item) {
+                    return `${item.nombre} - V${item.version}`;
+                }
                 return item ? item.nombre : '';
             };
             const encabezadosOriginales = encabezadoCSV.slice(0, -1);
@@ -516,7 +543,6 @@ const ServidorCargaMasiva = ({ onClose, actualizarServidores }) => {
                 }
             });
 
-            // CORRECCIÓN: Re-validar todas las filas después de una actualización
             const filasActuales = datosCSV.map(d => d.fila.slice(0, -1));
             const nuevasFilasData = filasActuales.map((fila, i) =>
                 i === rowIndex ? filaActualizadaArray : fila

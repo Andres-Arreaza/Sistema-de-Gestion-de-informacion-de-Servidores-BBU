@@ -243,8 +243,14 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                     options={catalogos.ambientes.map(a => ({ value: a.id, label: a.nombre }))} />
                 <SingleSelectDropdown name="dominio_id" label="Dominio" selectedValue={formData.dominio_id} onSelect={handleChange} error={errors.dominio_id}
                     options={catalogos.dominios.map(d => ({ value: d.id, label: d.nombre }))} />
-                <SingleSelectDropdown name="sistema_operativo_id" label="Sistema Operativo" selectedValue={formData.sistema_operativo_id} onSelect={handleChange} error={errors.sistema_operativo_id}
-                    options={catalogos.sistemasOperativos.map(so => ({ value: so.id, label: so.nombre }))} />
+                <SingleSelectDropdown
+                    name="sistema_operativo_id"
+                    label="Sistema Operativo"
+                    selectedValue={formData.sistema_operativo_id}
+                    onSelect={handleChange}
+                    error={errors.sistema_operativo_id}
+                    options={catalogos.sistemasOperativos.map(so => ({ value: so.id, label: `${so.nombre} - V${so.version}` }))}
+                />
             </div>
             <div className="grid-form-row">
                 <SingleSelectDropdown name="estatus_id" label="Estatus" selectedValue={formData.estatus_id} onSelect={handleChange} error={errors.estatus_id}

@@ -150,10 +150,12 @@ const EditorMasivo = () => {
             const queryParams = new URLSearchParams();
             for (const key in filtro) {
                 if (filtro[key] && filtro[key].length > 0) {
+                    // CORRECCIÓN: Mapear la clave del frontend a la del backend
+                    const backendKey = key === 'sistemasOperativos' ? 'sistemas_operativos' : key;
                     if (Array.isArray(filtro[key])) {
-                        filtro[key].forEach(val => queryParams.append(key, val));
+                        filtro[key].forEach(val => queryParams.append(backendKey, val));
                     } else {
-                        queryParams.append(key, filtro[key]);
+                        queryParams.append(backendKey, filtro[key]);
                     }
                 }
             }
@@ -374,7 +376,9 @@ const EditorMasivo = () => {
                             >
                                 <option value="" disabled>Seleccionar un valor...</option>
                                 {(colDef.options || catalogos[colDef.catalog] || []).map(opt => (
-                                    <option key={opt.id} value={opt.id}>{opt.nombre}</option>
+                                    <option key={opt.id} value={opt.id}>
+                                        {colDef.catalog === 'sistemasOperativos' ? `${opt.nombre} - V${opt.version}` : opt.nombre}
+                                    </option>
                                 ))}
                             </select>
                         )}
@@ -459,7 +463,15 @@ const EditorMasivo = () => {
                                         let displayValue = servidor[col.key];
                                         if (col.catalog) {
                                             const found = catalogos[col.catalog]?.find(c => String(c.id) === String(displayValue));
-                                            displayValue = found ? found.nombre : 'N/A';
+                                            if (found) {
+                                                if (col.catalog === 'sistemasOperativos') {
+                                                    displayValue = `${found.nombre} - V${found.version}`;
+                                                } else {
+                                                    displayValue = found.nombre;
+                                                }
+                                            } else {
+                                                displayValue = 'N/A';
+                                            }
                                         }
                                         const hasError = !!errorsInRow[col.key];
                                         return (
