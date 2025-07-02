@@ -51,6 +51,7 @@ const SingleSelectDropdown = ({ name, label, options, selectedValue, onSelect, e
                     ))}
                 </div>
             </div>
+            {error && <p className="error-mensaje">{error}</p>}
         </div>
     );
 };
@@ -68,6 +69,7 @@ const CampoTexto = ({ name, label, value, onChange, error, icon, placeholder = '
             className={error ? 'input-error' : ''}
             placeholder={placeholder || label + "..."}
         />
+        {error && <p className="error-mensaje">{error}</p>}
     </div>
 );
 
@@ -82,9 +84,11 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
     const [catalogos, setCatalogos] = useState({
         servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
     });
+    const [allServers, setAllServers] = useState([]);
 
+    // --- Carga de datos inicial (catálogos y servidores existentes) ---
     useEffect(() => {
-        const fetchCatalogos = async () => {
+        const fetchAllData = async () => {
             try {
                 const backendUrl = process.env.BACKEND_URL;
                 const urls = [
@@ -93,34 +97,29 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                     { name: "ambientes", url: `${backendUrl}/api/ambientes` },
                     { name: "dominios", url: `${backendUrl}/api/dominios` },
                     { name: "sistemasOperativos", url: `${backendUrl}/api/sistemas_operativos` },
-                    { name: "estatus", url: `${backendUrl}/api/estatus` }
+                    { name: "estatus", url: `${backendUrl}/api/estatus` },
+                    { name: "allServers", url: `${backendUrl}/api/servidores` }
                 ];
                 const responses = await Promise.all(urls.map(item => fetch(item.url).then(res => res.json())));
                 setCatalogos({
                     servicios: responses[0] || [], capas: responses[1] || [], ambientes: responses[2] || [],
                     dominios: responses[3] || [], sistemasOperativos: responses[4] || [], estatus: responses[5] || []
                 });
+                setAllServers(responses[6] || []);
             } catch (error) {
-                console.error("Error al cargar catálogos:", error);
+                console.error("Error al cargar datos:", error);
             }
         };
-        fetchCatalogos();
+        fetchAllData();
     }, []);
 
-    // --- CORRECCIÓN: Este useEffect ahora maneja la carga de datos iniciales Y los errores ---
     useEffect(() => {
         if (servidorInicial) {
-            // Se clona el objeto para no modificar el original y se preparan los datos
             const dataToSet = { ...servidorInicial };
-            delete dataToSet.errors; // Se elimina la propiedad de errores para no guardarla en el estado del formulario
-
-            // Se establecen los datos del formulario
+            delete dataToSet.errors;
             setFormData(dataToSet);
-
-            // Se inicializa el estado de errores desde el objeto que viene por props
             setErrors(servidorInicial.errors || {});
         } else {
-            // Se resetea el formulario si no hay datos iniciales (modo creación)
             setFormData({
                 nombre: "", tipo: "", ip: "", balanceador: "", vlan: "",
                 servicio_id: "", capa_id: "", ambiente_id: "", link: "",
@@ -133,7 +132,6 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        // Si el usuario modifica un campo con error, se limpia el error de ese campo
         if (errors[name]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
@@ -146,11 +144,24 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
     const validateForm = () => {
         const newErrors = {};
         const requiredFields = ["nombre", "tipo", "ip", "balanceador", "vlan", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id"];
+
         requiredFields.forEach(field => {
             if (!formData[field] || String(formData[field]).trim() === "") {
-                newErrors[field] = true;
+                newErrors[field] = "Este campo es obligatorio.";
             }
         });
+
+        const idActual = servidorInicial?.id;
+        if (formData.nombre && allServers.some(s => s.nombre.toLowerCase() === formData.nombre.toLowerCase() && s.id !== idActual)) {
+            newErrors.nombre = 'Este nombre ya está en uso.';
+        }
+        if (formData.ip && allServers.some(s => s.ip === formData.ip && s.id !== idActual)) {
+            newErrors.ip = 'Esta IP ya está en uso.';
+        }
+        if (formData.link && formData.link.trim() && allServers.some(s => s.link === formData.link && s.id !== idActual)) {
+            newErrors.link = 'Este link ya está en uso.';
+        }
+
         return newErrors;
     };
 
@@ -181,14 +192,12 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
         const validationErrors = validateForm();
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
-            Swal.fire({ icon: "error", title: "Campos Incompletos", text: "Por favor, revisa los campos marcados en rojo.", heightAuto: false });
             return;
         }
 
         if (onSaveRow) {
             onSaveRow(formData);
         } else {
-            // Lógica original para creación/edición individual
             const camposOpcionalesVacios = [];
             if (!formData.link.trim()) camposOpcionalesVacios.push("Link");
             if (!formData.descripcion.trim()) camposOpcionalesVacios.push("Descripción");
@@ -240,7 +249,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             <div className="grid-form-row">
                 <SingleSelectDropdown name="estatus_id" label="Estatus" selectedValue={formData.estatus_id} onSelect={handleChange} error={errors.estatus_id}
                     options={catalogos.estatus.map(e => ({ value: e.id, label: e.nombre }))} />
-                <CampoTexto name="link" label="Link" value={formData.link || ''} onChange={handleChange} />
+                <CampoTexto name="link" label="Link" value={formData.link || ''} onChange={handleChange} error={errors.link} />
                 <div className="form-field field-full-width">
                     <label>Descripción</label>
                     <textarea name="descripcion" value={formData.descripcion || ''} onChange={handleChange}></textarea>
