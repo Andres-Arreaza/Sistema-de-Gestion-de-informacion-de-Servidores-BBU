@@ -99,7 +99,7 @@ export const Busqueda = () => {
                 />
 
                 {busquedaRealizada && (
-                    <div className="resultados-editor">
+                    <div className="">
                         {cargando ? <Loading /> :
                             <BusquedaTabla
                                 servidores={servidores}

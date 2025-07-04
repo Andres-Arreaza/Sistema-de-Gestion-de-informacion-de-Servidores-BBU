@@ -87,6 +87,7 @@
 .modal-body {
   flex-grow: 1;
   overflow-y: auto;
+  padding: 1rem 32px;
 }
 
 /* Estilos para el modal de carga de archivo (centrado) */
@@ -97,11 +98,6 @@
   justify-content: center;
   padding: 40px 32px;
   text-align: center;
-}
-
-/* Estilos para el modal de vista previa (solo scroll) */
-.modal-content-carga-masiva.modal-preview .modal-body {
-  padding: 0 32px;
 }
 
 /* Contenedor fijo para paginación */
@@ -157,7 +153,7 @@
 
 /* --- Tabla de Previsualización --- */
 .table-container {
-  overflow: auto;
+  overflow: auto; /* Permite scroll en ambas direcciones si es necesario */
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
@@ -230,7 +226,7 @@
   color: #6c757d;
   font-style: italic;
   padding: 50px 20px;
-  background-color: #f8fafc;
+  background-color: #f8f9fa;
   border-radius: 8px;
 }
 
@@ -401,6 +397,16 @@
   }
   to {
     transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes expandWidth {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
     opacity: 1;
   }
 }
