@@ -1,0 +1,169 @@
+/* ==========================================================================
+   Estilos para la Página de Configuración (con Menú Lateral)
+   ========================================================================== */
+
+.config-page-container {
+  padding-top: 80px;
+}
+
+.config-hero-section {
+  background: linear-gradient(135deg, #021027 0%, #004477 0%, #007953 90%);
+  padding: 30px 24px;
+  text-align: center;
+  color: white;
+  overflow: hidden; /* Evita que los elementos se salgan durante la animación */
+}
+
+.config-main-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  animation: fadeUp 0.8s ease-out 0.3s forwards;
+}
+
+.config-subtitle {
+  font-size: 1.25rem;
+  font-family: "Lato", sans-serif;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 0.1rem !important;
+  margin-bottom: 0.1rem !important;
+  opacity: 0;
+  animation: fadeUp 0.8s ease-out 0.5s forwards;
+}
+
+.decorative-line-top,
+.decorative-line-bottom {
+  height: 3px;
+  margin: 1rem auto;
+  background: #fff;
+  border-radius: 2px;
+  width: 0; /* Inicia con ancho 0 para la animación */
+  opacity: 0; /* Inicia invisible */
+}
+
+.decorative-line-top {
+  animation: expandWidthTop 1s ease-out 0.7s forwards;
+}
+
+.decorative-line-bottom {
+  margin-bottom: 0.4rem !important;
+  animation: expandWidthBottom 1s ease-out 0.7s forwards;
+}
+
+.config-page-layout {
+  display: flex;
+  max-width: 1800px;
+  margin: 0 auto;
+  background-color: #f8fafc;
+}
+
+.config-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background-color: #fff;
+  border-right: 1px solid #e2e8f0;
+  padding: 2rem 0;
+}
+
+.config-menu {
+  display: flex;
+  flex-direction: column;
+}
+
+.config-menu-item {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.config-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  transition: background-color 0.4s ease; /* Transición más lenta */
+}
+
+.config-menu-header:hover {
+  background-color: #f8fafc;
+}
+
+.config-menu-arrow {
+  transition: transform 0.3s ease;
+}
+
+.config-menu-arrow.open {
+  transform: rotate(180deg);
+}
+
+.config-submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease-in-out;
+  background-color: #f8fafc;
+}
+
+.config-submenu.open {
+  max-height: 500px;
+}
+
+.config-submenu-link {
+  display: block;
+  padding: 0.75rem 1.5rem 0.75rem 2.5rem;
+  color: #007953;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.config-submenu-link:hover {
+  background-color: #007953;
+  color: #fff;
+}
+
+.config-main-content {
+  flex-grow: 1;
+  padding: 2rem;
+}
+
+/* --- Definiciones de Animaciones --- */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes expandWidthTop {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: 60%;
+    opacity: 1;
+  }
+}
+
+@keyframes expandWidthBottom {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: 30%;
+    opacity: 1;
+  }
+}

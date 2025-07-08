@@ -258,12 +258,8 @@ export const Capa = () => {
             <div className="hero-section">
                 <div className="title-section">
                     <div className="decorative-line-top"></div>
-                    <h1 className="main-title">Gestión de Capas</h1>
-                    <p className="subtitle">"Define las capas de tu infraestructura"</p>
-                    <button className="crear-btn" onClick={() => handleOpenModal()}>
-                        <PlusIcon />
-                        Crear Capa
-                    </button>
+                    <h1 className="main-title">Configuración  de Servidores</h1>
+                    <p className="subtitle">"Administra la Información de los Servidores"</p>
                     <div className="decorative-line-bottom"></div>
                 </div>
             </div>

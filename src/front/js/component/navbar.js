@@ -17,12 +17,7 @@ export const Navbar = () => {
 
     // --- Datos para los enlaces del dropdown ---
     const adminLinks = [
-        { to: "/servicio", label: "Servicios" },
-        { to: "/capa", label: "Capa" },
-        { to: "/ambiente", label: "Ambiente" },
-        { to: "/dominio", label: "Dominio" },
-        { to: "/sistemaOperativo", label: "Sistema Operativo" },
-        { to: "/estatus", label: "Estatus" },
+        { to: "/configuracion", label: "Configuración" },
         { type: 'divider' },
         { to: "/servidor", label: "Crear Servidor", isHighlight: true },
     ];
