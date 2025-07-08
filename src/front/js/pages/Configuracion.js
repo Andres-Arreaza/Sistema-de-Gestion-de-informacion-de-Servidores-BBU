@@ -56,9 +56,9 @@ const configItems = [
     }
 ];
 
-// El componente ahora recibe 'activeView' para saber qué enlace resaltar
-const AccordionItem = ({ item, isOpen, onClick, onShowCreate, onShowList, activeView }) => (
-    <div className="config-menu-item">
+// El componente ahora recibe 'activeView' para resaltar el enlace interno
+const AccordionItem = ({ item, isOpen, onClick, onShowCreate, onShowList, isModuleActive, activeView }) => (
+    <div className={`config-menu-item ${isModuleActive ? 'module-active' : ''}`}>
         <button className="config-menu-header" onClick={onClick}>
             <span>{item.label}</span>
             <span className={`config-menu-arrow ${isOpen ? 'open' : ''}`}>
@@ -66,7 +66,7 @@ const AccordionItem = ({ item, isOpen, onClick, onShowCreate, onShowList, active
             </span>
         </button>
         <div className={`config-submenu ${isOpen ? 'open' : ''}`}>
-            {/* Se añade la clase 'active' condicionalmente a los enlaces internos */}
+            {/* Se añade la clase 'active' al enlace específico que está seleccionado */}
             <a href="#" className={`config-submenu-link ${activeView === item.createView ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); onShowCreate(item.createView); }}>
                 Crear {item.label}
             </a>
@@ -243,20 +243,24 @@ const Configuracion = () => {
             <div className="config-page-layout">
                 <aside className="config-sidebar">
                     <div className="sidebar-header">
-                        <h2 className="sidebar-title">BanescOnline Empresas</h2>
+                        <h2 className="sidebar-title">Banesco Servers</h2>
                     </div>
                     <nav className="config-menu">
-                        {configItems.map((item, index) => (
-                            <AccordionItem
-                                key={index}
-                                item={item}
-                                isOpen={openIndex === index}
-                                onClick={() => handleAccordionClick(index)}
-                                onShowCreate={handleShowCreateForm}
-                                onShowList={handleShowList}
-                                activeView={activeView}
-                            />
-                        ))}
+                        {configItems.map((item, index) => {
+                            const isModuleActive = activeView.includes(item.label.toLowerCase().replace(/ /g, '-'));
+                            return (
+                                <AccordionItem
+                                    key={index}
+                                    item={item}
+                                    isOpen={openIndex === index}
+                                    onClick={() => handleAccordionClick(index)}
+                                    onShowCreate={handleShowCreateForm}
+                                    onShowList={handleShowList}
+                                    isModuleActive={isModuleActive}
+                                    activeView={activeView}
+                                />
+                            );
+                        })}
                     </nav>
                 </aside>
                 <main className="config-main-content">

@@ -11,7 +11,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 70vh;
+  min-height: 79vh;
   padding: 2rem;
 }
 
@@ -119,6 +119,18 @@
   background-color: #f8fafc;
 }
 
+/* Estilo para el encabezado del módulo que está activo */
+.config-menu-item.module-active .config-menu-header,
+.config-menu-item.module-active .config-menu-header:hover {
+  background-color: #007953;
+  color: #fff;
+}
+
+/* Cambia el color de la flecha cuando el header está activo */
+.config-menu-item.module-active .config-menu-header .config-menu-arrow {
+  color: #fff;
+}
+
 .config-menu-arrow {
   transition: transform 0.3s ease;
   color: #94a3b8;
@@ -156,12 +168,12 @@
   letter-spacing: 0.5px;
 }
 
-/* Estilo para el enlace del menú que está activo */
+/* Estilo para el enlace específico que está activo dentro del submenú */
 .config-submenu-link.active,
 .config-submenu-link.active:hover {
-  background-color: #007953;
-  color: #fff;
-  font-weight: 600;
+  background-color: #e6f2ef; /* Un verde muy claro para el fondo */
+  color: #005a3e; /* Un verde más oscuro para el texto */
+  font-weight: 700; /* Texto en negrita */
 }
 
 /* --- Contenido Principal --- */
