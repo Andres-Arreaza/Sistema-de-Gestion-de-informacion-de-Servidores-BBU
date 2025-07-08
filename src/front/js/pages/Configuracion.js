@@ -13,10 +13,11 @@ const configItems = [
         createView: "crear-servicio",
         listView: "listar-servicios"
     },
-    // Aquí puedes añadir los demás items de configuración (Capa, Ambiente, etc.)
+    // Añade aquí los demás items de configuración (Capa, Ambiente, etc.)
 ];
 
-const AccordionItem = ({ item, isOpen, onClick, setActiveView }) => (
+// CORRECCIÓN 1: El componente del menú ahora recibe funciones específicas para cada acción
+const AccordionItem = ({ item, isOpen, onClick, onShowCreate, onShowList }) => (
     <div className="config-menu-item">
         <button className="config-menu-header" onClick={onClick}>
             <span>{item.label}</span>
@@ -25,10 +26,12 @@ const AccordionItem = ({ item, isOpen, onClick, setActiveView }) => (
             </span>
         </button>
         <div className={`config-submenu ${isOpen ? 'open' : ''}`}>
-            <a href="#" className="config-submenu-link" onClick={(e) => { e.preventDefault(); setActiveView(item.createView); }}>
+            {/* Al hacer clic, llama a la función para mostrar el formulario de creación */}
+            <a href="#" className="config-submenu-link" onClick={(e) => { e.preventDefault(); onShowCreate(item.createView); }}>
                 Crear {item.label}
             </a>
-            <a href="#" className="config-submenu-link" onClick={(e) => { e.preventDefault(); setActiveView(item.listView); }}>
+            {/* Al hacer clic, llama a la función para mostrar la lista */}
+            <a href="#" className="config-submenu-link" onClick={(e) => { e.preventDefault(); onShowList(item.listView); }}>
                 Listar {item.label}s
             </a>
         </div>
@@ -59,15 +62,30 @@ const Configuracion = () => {
         setOpenIndex(openIndex === index ? null : index);
     };
 
+    // Esta función se llama al hacer clic en "Editar" desde la lista
     const handleEdit = (item, type) => {
-        setCurrentItem(item);
-        setActiveView(`crear-${type}`);
+        setCurrentItem(item); // Guarda el item a editar
+        setActiveView(`crear-${type}`); // Muestra el formulario
     };
 
+    // Esta función se llama al hacer clic en "Cancelar" desde el formulario
     const handleCancel = () => {
-        setCurrentItem(null);
+        setCurrentItem(null); // Limpia el item
         const type = activeView.split('-')[1];
-        setActiveView(`listar-${type}s`);
+        setActiveView(`listar-${type}s`); // Vuelve a la lista
+    };
+
+    // CORRECCIÓN 2: Nuevas funciones para manejar la navegación desde el menú
+    // Esta se activa al hacer clic en "Crear Servicio"
+    const handleShowCreateForm = (view) => {
+        setCurrentItem(null); // <-- LA CLAVE: Limpia el item actual
+        setActiveView(view);  // Muestra el formulario vacío
+    };
+
+    // Esta se activa al hacer clic en "Listar Servicios"
+    const handleShowList = (view) => {
+        setCurrentItem(null); // Limpia el item actual por si acaso
+        setActiveView(view);  // Muestra la lista
     };
 
     const handleSave = (formData) => {
@@ -94,13 +112,27 @@ const Configuracion = () => {
                 }
             })
             .then(() => {
-                fetchServicios(); // Recarga la lista después de guardar
-                Swal.fire('¡Éxito!', `Servicio ${esEdicion ? 'actualizado' : 'creado'} correctamente.`, 'success');
+                fetchServicios();
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Éxito!',
+                    text: `Servicio ${esEdicion ? 'actualizado' : 'creado'} correctamente.`,
+                    timer: 2500,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
                 setCurrentItem(null);
-                setActiveView('listar-servicios'); // Vuelve a la lista de servicios
+                setActiveView('listar-servicios');
             })
             .catch(err => {
-                Swal.fire('Error', err.msg || 'No se pudo guardar el servicio.', 'error');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.msg || 'No se pudo guardar el servicio.',
+                    timer: 2500,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
             });
     };
 
@@ -127,12 +159,14 @@ const Configuracion = () => {
                 <aside className="config-sidebar">
                     <nav className="config-menu">
                         {configItems.map((item, index) => (
+                            // CORRECCIÓN 3: Se pasan las nuevas funciones al componente del menú
                             <AccordionItem
                                 key={index}
                                 item={item}
                                 isOpen={openIndex === index}
                                 onClick={() => handleAccordionClick(index)}
-                                setActiveView={setActiveView}
+                                onShowCreate={handleShowCreateForm}
+                                onShowList={handleShowList}
                             />
                         ))}
                     </nav>
