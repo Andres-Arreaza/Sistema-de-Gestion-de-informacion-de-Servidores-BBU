@@ -19,12 +19,6 @@ import Loading from "./component/Loading";
 import Home from "./pages/Home";
 import { Busqueda } from "./pages/Busqueda";
 import EditorMasivo from './pages/EditorMasivo';
-import Servicio from "./pages/Servicio";
-import Capa from "./pages/Capa";
-import Ambiente from "./pages/Ambiente";
-import Dominio from "./pages/Dominio";
-import SistemaOperativo from "./pages/SistemaOperativo";
-import Estatus from "./pages/Estatus";
 import Servidor from "./pages/Servidor";
 
 const Layout = () => {
@@ -49,12 +43,6 @@ const Layout = () => {
                             <Route element={<ServicioLista />} path="/ServicioLista " />
 
                             <Route element={<EditorMasivo />} path="/editor-masivo" />
-                            <Route element={<Servicio />} path="/servicio" />
-                            <Route element={<Capa />} path="/capa" />
-                            <Route element={<Ambiente />} path="/ambiente" />
-                            <Route element={<Dominio />} path="/dominio" />
-                            <Route element={<SistemaOperativo />} path="/sistemaOperativo" />
-                            <Route element={<Estatus />} path="/estatus" />
                             <Route element={<Servidor />} path="/servidor" />
                             <Route element={<ServidorFormulario />} path="/servidorFormulario" />
                             <Route element={<Loading />} path="/loading" />

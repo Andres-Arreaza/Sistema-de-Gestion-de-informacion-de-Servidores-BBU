@@ -242,9 +242,6 @@ const Configuracion = () => {
         <div className="page-container">
             <div className="config-page-layout">
                 <aside className="config-sidebar">
-                    <div className="sidebar-header">
-                        <h2 className="sidebar-title">Banesco Servers</h2>
-                    </div>
                     <nav className="config-menu">
                         {configItems.map((item, index) => {
                             const isModuleActive = activeView.includes(item.label.toLowerCase().replace(/ /g, '-'));

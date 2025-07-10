@@ -10,7 +10,6 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
   min-height: 79vh;
   padding: 2rem;
 }
@@ -65,7 +64,7 @@
 
 /* --- Barra Lateral (Sidebar) --- */
 .config-sidebar {
-  width: 280px;
+  width: 320px;
   flex-shrink: 0;
   background-color: #fff;
   border-right: 1px solid #e2e8f0;
@@ -92,7 +91,6 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  padding-top: 0.5rem;
 }
 
 .config-menu-item {
@@ -104,7 +102,7 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: 1rem 1.5rem;
+  padding: 1rem 2rem 1rem 3.5rem;
   background: none;
   border: none;
   cursor: pointer;
@@ -116,7 +114,8 @@
 }
 
 .config-menu-header:hover {
-  background-color: #f8fafc;
+  background-color: #007953;
+  color: #fff;
 }
 
 /* Estilo para el encabezado del módulo que está activo */
@@ -153,7 +152,7 @@
 
 .config-submenu-link {
   display: block;
-  padding: 0.7rem 1.5rem 0.7rem 2.5rem;
+  padding: 0.7rem 1.5rem 0.7rem 4.5rem;
   color: #007953;
   text-decoration: none;
   font-size: 0.95rem;

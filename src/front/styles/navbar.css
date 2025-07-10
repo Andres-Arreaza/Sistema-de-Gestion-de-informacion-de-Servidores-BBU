@@ -12,7 +12,7 @@
 }
 
 .navbar-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 24px;
   display: flex;
@@ -26,7 +26,7 @@
 }
 
 .navbar-logo-img {
-  height: 60px;
+  height: 70px;
   width: auto;
   transition: transform var(--transition-speed);
 }

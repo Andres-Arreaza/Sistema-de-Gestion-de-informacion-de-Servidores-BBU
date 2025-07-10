@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
+import banescoLogo from '../../img/BanescoServers.png';
 
 // --- Icono de Home ---
 const HomeIcon = (props) => (
@@ -50,7 +51,7 @@ export const Navbar = () => {
                 <Link to="/" className="navbar-logo-link">
                     <img
                         className="navbar-logo-img"
-                        src="https://banesco-prod-2020.s3.amazonaws.com/wp-content/themes/banescocontigo/assets/images/header/logotype.png"
+                        src={banescoLogo}
                         alt="Logo Banesco"
                     />
                 </Link>
