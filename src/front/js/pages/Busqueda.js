@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { BusquedaFiltro } from '../component/BusquedaFiltro'; // Asegúrate que la ruta es correcta
 import { BusquedaTabla } from '../component/BusquedaTabla';   // Asegúrate que la ruta es correcta
-import Loading from '../component/Loading';                   // Asegúrate de tener este componente
+import Loading from '../component/Loading';                     // Asegúrate de tener este componente
 
 export const Busqueda = () => {
     const [filtro, setFiltro] = useState({
@@ -11,7 +11,7 @@ export const Busqueda = () => {
     });
     const [servidores, setServidores] = useState([]);
     const [cargando, setCargando] = useState(false);
-    const [busquedaRealizada, setBusquedaRealizada] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false); // Estado para controlar el modal
     const [catalogos, setCatalogos] = useState({
         servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
     });
@@ -46,14 +46,12 @@ export const Busqueda = () => {
     const buscarServidores = async (e) => {
         if (e) e.preventDefault();
         setCargando(true);
-        setBusquedaRealizada(true);
         setServidores([]);
 
         try {
             const queryParams = new URLSearchParams();
             for (const key in filtro) {
                 if (filtro[key] && filtro[key].length > 0) {
-                    // CORRECCIÓN: Mapear la clave del frontend a la del backend
                     const backendKey = key === 'sistemasOperativos' ? 'sistemas_operativos' : key;
                     if (Array.isArray(filtro[key])) {
                         filtro[key].forEach(val => queryParams.append(backendKey, val));
@@ -71,6 +69,19 @@ export const Busqueda = () => {
             const data = await response.json();
             setServidores(data);
 
+            // Si no hay resultados, muestra una alerta. Si hay, abre el modal.
+            if (data.length === 0) {
+                Swal.fire({
+                    title: "Sin Resultados",
+                    text: "No se encontraron servidores que coincidan con los filtros aplicados.",
+                    icon: "info",
+                    timer: 3000,
+                    showConfirmButton: false,
+                });
+            } else {
+                setIsModalOpen(true);
+            }
+
         } catch (error) {
             Swal.fire("Error de Búsqueda", `${error.message}`, "error");
         } finally {
@@ -78,18 +89,14 @@ export const Busqueda = () => {
         }
     };
 
+    // --- Función para cerrar el modal ---
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
     return (
         <div className="page-container">
-            <div className="editor-hero-section">
-                <div className="title-section">
-                    <div className="decorative-line-top"></div>
-                    <h1 className="main-title">Búsqueda de Servidores</h1>
-                    <p className="subtitle">"Encuentra servidores por criterios específicos"</p>
-                    <div className="decorative-line-bottom"></div>
-                </div>
-            </div>
-
-            <div className="editor-masivo-container">
+            <div className="busqueda-page-container">
                 <BusquedaFiltro
                     filtro={filtro}
                     setFiltro={setFiltro}
@@ -98,14 +105,22 @@ export const Busqueda = () => {
                     {...catalogos}
                 />
 
-                {busquedaRealizada && (
-                    <div className="">
-                        {cargando ? <Loading /> :
-                            <BusquedaTabla
-                                servidores={servidores}
-                                catalogos={catalogos}
-                            />
-                        }
+                {/* Renderizado condicional del modal */}
+                {isModalOpen && (
+                    <div className="modal-overlay" onClick={handleCloseModal}>
+                        <div className="modal-content-busqueda" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <button onClick={handleCloseModal} className="close-button">&times;</button>
+                            </div>
+                            <div className="modal-body">
+                                {cargando ? <Loading /> :
+                                    <BusquedaTabla
+                                        servidores={servidores}
+                                        catalogos={catalogos}
+                                    />
+                                }
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
