@@ -1,0 +1,142 @@
+/* src/front/styles/tables.css */
+
+/* --- Contenedor principal de la vista de tabla --- */
+.table-view-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Ocupa toda la altura disponible en el modal */
+  overflow: hidden; /* Previene que este contenedor tenga scroll */
+}
+
+.table-container {
+  /* ESTE es el único contenedor que debe tener scroll */
+  overflow-y: auto;
+  flex-grow: 1; /* Permite que ocupe el espacio restante */
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-borde);
+  background-color: var(--color-superficie);
+}
+
+.table,
+.tabla-servidores,
+.editor-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th,
+.tabla-servidores th,
+.editor-tabla th {
+  background-color: var(--color-superficie); /* Un fondo sólido es crucial */
+  padding: 14px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-texto-secundario);
+  border-bottom: 2px solid var(--color-borde);
+  /* Se asegura que el encabezado sea estático (sticky) */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table td,
+.tabla-servidores td,
+.editor-tabla td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--color-borde);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td,
+.tabla-servidores tbody tr:last-child td,
+.editor-tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover,
+.tabla-servidores tbody tr:hover,
+.editor-tabla tbody tr:hover {
+  background-color: #f0f9ff;
+}
+
+/* Estilos para el encabezado y paginación (no se encogen) */
+.resultados-header,
+.pagination-controls {
+  flex-shrink: 0;
+}
+
+.resultados-header {
+  display: flex;
+  align-items: center;
+  padding-bottom: var(--espaciado-md);
+  margin-bottom: var(--espaciado-md);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.resultados-titulo {
+  font-size: var(--tamano-titulo-h2);
+  color: var(--color-primario);
+  flex-grow: 1;
+}
+
+.table-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-md);
+  margin-left: auto;
+}
+
+.badge,
+.servidores-contador {
+  font-size: 0.9rem;
+  font-weight: 500;
+  background-color: #eef2ff;
+  color: var(--color-primario);
+  padding: 6px 12px;
+  border-radius: 9999px;
+}
+
+/* Estilos para la paginación */
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--espaciado-md) 0;
+  gap: var(--espaciado-lg);
+}
+
+.pagination__items-per-page {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-sm);
+}
+
+.pagination-select {
+  width: 80px;
+}
+
+.pagination__navigation {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-sm);
+}
+
+.pagination__navigation span {
+  color: var(--color-texto-secundario);
+  font-weight: 600;
+}
+
+/* Estilos para la Validación en la Vista Previa */
+.fila-con-error {
+  background-color: #fff1f2 !important;
+}
+
+.celda-con-error {
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.fila-correcta {
+  background-color: #f0fdf4;
+}

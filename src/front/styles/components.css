@@ -1,0 +1,300 @@
+/* src/front/styles/components.css */
+
+/* --- Tarjetas (Cards) --- */
+.catalog-list {
+  padding: var(--espaciado-lg);
+  background-color: var(--color-superficie);
+  border-radius: var(--radio-borde);
+}
+
+.catalog-list .content-title {
+  color: var(--color-primario);
+  text-align: left;
+  margin-bottom: var(--espaciado-lg);
+  font-size: var(--tamano-titulo-h2);
+}
+
+.card-grid,
+.servicio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--espaciado-lg);
+}
+
+.card,
+.servicio-card {
+  background: var(--color-superficie);
+  padding: var(--espaciado-lg);
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra-caja);
+  border: 1px solid var(--color-borde);
+  transition: var(--transicion-media);
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover,
+.servicio-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos mejorados para las tarjetas de acción */
+.action-card {
+  background: var(--color-superficie);
+  padding: var(--espaciado-lg);
+  border-radius: var(--radio-borde);
+  border: 1px solid var(--color-borde);
+  display: flex;
+  flex-direction: column;
+  position: relative; /* Necesario para el borde de gradiente */
+  cursor: pointer;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  max-width: 420px;
+  width: 100%;
+}
+
+/* Pseudo-elemento para el borde de gradiente */
+.action-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--radio-borde);
+  border: 2px solid transparent;
+  background: linear-gradient(
+      135deg,
+      var(--color-primario),
+      var(--color-acento)
+    )
+    border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.action-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.12);
+}
+
+.action-card:hover::before {
+  opacity: 1;
+}
+
+.card__header,
+.servicio-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--espaciado-md);
+}
+
+.card__title,
+.servicio-nombre {
+  color: var(--color-primario);
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.card__description,
+.servicio-descripcion {
+  color: var(--color-texto-secundario);
+  flex-grow: 1;
+}
+
+/* =====> ESTA ES LA REGLA QUE ALINEA LOS ICONOS <===== */
+.card__actions {
+  display: flex; /* Alinea los botones uno al lado del otro */
+  gap: var(--espaciado-sm); /* Espacio entre los botones */
+}
+
+.action-card > div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0 var(--espaciado-md);
+}
+
+.action-card .card__icon {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  color: var(--color-primario);
+}
+
+.action-card .card__title {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  text-align: left;
+  margin: 0;
+}
+
+.action-card .card__description {
+  grid-column: 1 / 3;
+  grid-row: 2 / 3;
+  margin-top: var(--espaciado-md);
+}
+
+.card__footer {
+  margin-top: auto; /* Empuja el footer hacia abajo */
+}
+
+/* --- Modales --- */
+.modal__overlay,
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(18, 26, 33, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  backdrop-filter: blur(8px);
+}
+
+.modal__content,
+.modal-content-servicio,
+.modal-content-busqueda,
+.modal-content-carga-masiva {
+  background: var(--color-superficie);
+  border-radius: var(--radio-borde);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  width: 90%;
+  overflow: hidden; /* Asegura que los bordes redondeados se apliquen a todo */
+}
+
+/* Ancho por defecto para modales genéricos */
+.modal__content {
+  max-width: 600px;
+}
+
+/* Ancho específico para el modal de crear/editar servidor */
+.modal-content-servidor {
+  max-width: 90vw; /* Aumentado para que sea mucho más ancho */
+}
+
+.modal-content-busqueda,
+.modal-content-preview {
+  max-width: 95%;
+}
+
+.modal__header,
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--espaciado-md) var(--espaciado-lg);
+  border-bottom: 1px solid var(--color-borde);
+  flex-shrink: 0;
+}
+
+.modal__title,
+.modal-title {
+  color: var(--color-primario);
+  font-size: 1.6rem;
+}
+
+.modal__body,
+.modal-body {
+  padding: var(--espaciado-lg);
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.modal__footer,
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--espaciado-md);
+  padding: var(--espaciado-md) var(--espaciado-lg);
+  background-color: var(--color-fondo);
+  border-top: 1px solid var(--color-borde);
+  flex-shrink: 0;
+  border-bottom-left-radius: var(--radio-borde);
+  border-bottom-right-radius: var(--radio-borde);
+}
+
+/* Estilos para los radio buttons dentro de los dropdowns personalizados */
+.custom-select__option input[type="radio"] {
+  margin-right: 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.custom-select__option input[type="radio"]:checked {
+  border: 5px solid var(--color-primario);
+}
+
+.custom-select__option:hover input[type="radio"] {
+  border-color: var(--color-primario);
+}
+
+/* --- Componente de Carga (Loading) --- */
+.loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--espaciado-xl);
+}
+
+.loading-logo {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+
+.loading-logo__circle {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  position: absolute;
+}
+.loading-logo__circle--green {
+  background-color: #007953;
+  top: 10px;
+  left: 20px;
+}
+.loading-logo__circle--blue {
+  background-color: #004477;
+  top: 23px;
+  left: 32px;
+}
+/* ... (y así sucesivamente para los otros círculos) */
+
+.loading-text {
+  margin-top: var(--espaciado-md);
+  color: var(--color-secundario);
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+/* Anula los estilos del contenedor del formulario cuando está en la página de configuración */
+.config-main-content .modal__content {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  border-radius: 0;
+  max-width: 100%; /* Para que ocupe el espacio disponible */
+  max-height: none;
+}

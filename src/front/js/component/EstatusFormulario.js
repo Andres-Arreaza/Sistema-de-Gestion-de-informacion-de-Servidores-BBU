@@ -44,39 +44,41 @@ const EstatusFormulario = ({ onSave, onCancel, estatus, estatusExistentes }) => 
     };
 
     return (
-        <div className="form-container">
-            <div className="form-header">
-                <h2 className="form-title">{titulo}</h2>
-                <button onClick={onCancel} className="close-button-form">&times;</button>
+        <div className="modal__content">
+            <div className="modal__header">
+                <h2 className="modal__title">{titulo}</h2>
+                {/* Se elimina el texto de adentro del botón */}
+                <button onClick={onCancel} className="btn-close" />
             </div>
-            <form onSubmit={handleSubmit} className="servicio-form-fields">
-                <div className="form-field">
-                    <label htmlFor="nombre">Nombre del estatus <span className="campo-obligatorio">*</span></label>
+            <form onSubmit={handleSubmit} className="form modal__body">
+                <div className="form__group">
+                    <label className="form__label" htmlFor="nombre">Nombre del estatus <span style={{ color: 'var(--color-error)' }}>*</span></label>
                     <input
                         id="nombre"
                         name="nombre"
                         type="text"
-                        placeholder="Ej: Activo, Inactivo, Mantenimiento"
+                        placeholder="Ingresa el nombre del estatus..."
                         value={formData.nombre}
                         onChange={handleChange}
-                        className={error ? 'input-error' : ''}
+                        className={`form__input ${error ? 'input-error' : ''}`}
                         autoComplete="off"
                     />
-                    {error && <p className="error-mensaje">{error}</p>}
+                    {error && <p className="form__error-text">{error}</p>}
                 </div>
-                <div className="form-field">
-                    <label htmlFor="descripcion">Descripción (Opcional)</label>
+                <div className="form__group">
+                    <label className="form__label" htmlFor="descripcion">Descripción (Opcional)</label>
                     <textarea
                         id="descripcion"
                         name="descripcion"
                         placeholder="Describe brevemente el estatus..."
                         value={formData.descripcion}
                         onChange={handleChange}
+                        className="form__input"
                     />
                 </div>
-                <div className="form-buttons">
-                    <button type="button" className="btn-secondary" onClick={onCancel}>Cancelar</button>
-                    <button type="submit" className="btn-primary">Guardar</button>
+                <div className="form__actions">
+                    <button type="button" className="btn btn--secondary" onClick={onCancel}>Cancelar</button>
+                    <button type="submit" className="btn btn--primary">Guardar</button>
                 </div>
             </form>
         </div>

@@ -1,0 +1,156 @@
+/* src/front/styles/layout.css */
+
+/* --- Estructura Principal --- */
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content-area {
+  flex-grow: 1;
+  padding-top: 80px; /* Espacio para el navbar fijo */
+}
+
+/* --- Navbar --- */
+.navbar-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: var(--color-superficie);
+  z-index: 1000;
+  border-bottom: 1px solid var(--color-borde);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.navbar-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--espaciado-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80px;
+}
+
+.navbar-logo-img {
+  height: 70px;
+  transition: transform 0.3s ease-in-out;
+}
+
+.navbar-logo-img:hover {
+  transform: scale(1.05);
+}
+
+.navbar-links-desktop {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-sm);
+}
+
+.navbar-links-desktop .btn-icon {
+  border-radius: var(--radio-borde);
+  padding: 8px;
+  color: var(--color-secundario);
+  border: 1px solid transparent;
+}
+
+.navbar-links-desktop .btn-icon:hover,
+.navbar-links-desktop .btn-icon.active {
+  background-color: var(--color-secundario);
+  color: var(--color-superficie);
+}
+
+/* --- Estilos para el Dropdown del Navbar --- */
+.navbar-dropdown {
+  position: relative;
+}
+
+.navbar-dropdown .btn--primary:hover {
+  background-color: var(--color-primario-hover);
+  color: var(--color-superficie);
+}
+
+.navbar-dropdown .btn--primary .chevron {
+  border-color: var(--color-superficie);
+  opacity: 1;
+  transition: transform 0.3s ease-in-out;
+}
+
+.navbar-dropdown-content {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 2px);
+  transform: translateX(-50%) translateY(-10px);
+  min-width: 220px;
+  background: var(--color-superficie);
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra-caja);
+  border: 1px solid var(--color-borde);
+  overflow: hidden;
+  z-index: 1100;
+  padding: var(--espaciado-sm);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
+}
+
+.navbar-dropdown-content.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.navbar-link {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 6px;
+  margin: 2px;
+  color: var(--color-texto-principal);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    color 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  text-align: left;
+}
+
+.navbar-link:hover,
+.navbar-link.active {
+  background: var(--color-secundario);
+  color: var(--color-superficie);
+}
+
+.navbar-link-highlight,
+.navbar-link-highlight:hover,
+.navbar-link-highlight.active {
+  font-weight: bold;
+  background-color: var(--color-primario);
+  color: var(--color-superficie);
+}
+
+.navbar-divider {
+  height: 1px;
+  background: var(--color-borde);
+  margin: 4px 0;
+}
+
+/* --- Footer --- */
+.app-footer {
+  background: var(--color-fondo);
+  color: var(--color-primario-hover);
+  padding: var(--espaciado-md) 0;
+  font-size: 0.9rem;
+  /*border-top: 1px solid #c9c9c9;*/
+  display: flex;
+  justify-content: center; /* Centra horizontalmente */
+  align-items: center; /* Centra verticalmente */
+}
+
+/* =====> AQUÍ ESTÁ LA CORRECCIÓN <===== */
+/* Se elimina el margen del párrafo para un centrado perfecto */
+.app-footer p {
+  margin: 0;
+}

@@ -4,49 +4,44 @@ import ScrollToTop from "./component/scrollToTop";
 import { BackendURL } from "./component/backendURL";
 import injectContext from "./store/appContext";
 
+// Importación de componentes de layout
 import { Navbar } from "./component/navbar";
 import { Footer } from "./component/footer";
 
-
+// Importación de las páginas
 import Configuracion from "./pages/Configuracion";
-import ServicioFormulario from "./component/ServicioFormulario";
-import ServicioLista from "./component/ServicioLista";
-
-
-import ServidorFormulario from "./component/ServidorFormulario";
-import Loading from "./component/Loading";
-
 import Home from "./pages/Home";
 import { Busqueda } from "./pages/Busqueda";
 import EditorMasivo from './pages/EditorMasivo';
 import Servidor from "./pages/Servidor";
+import SistemaOperativo from "./pages/SistemaOperativo"; // Asegúrate que la importación sea correcta si es una página
 
 const Layout = () => {
     const basename = process.env.BASENAME || "";
 
-    if (!process.env.BACKEND_URL || process.env.BACKEND_URL === "") return <BackendURL />;
+    if (!process.env.BACKEND_URL || process.env.BACKEND_URL === "") {
+        return <BackendURL />;
+    }
 
     return (
-        // 1. Contenedor principal con la clase para el layout flex
+        // El div principal con la clase para el layout de columna (flex)
         <div className="layout-container">
             <BrowserRouter basename={basename}>
                 <ScrollToTop>
                     <Navbar />
 
-                    {/* 2. El contenido principal ahora es un <main> con la clase que lo hace crecer */}
+                    {/* El contenido principal que crece para ocupar el espacio disponible */}
                     <main className="main-content-area">
                         <Routes>
                             <Route element={<Home />} path="/" />
                             <Route element={<Busqueda />} path="/busqueda" />
                             <Route element={<Configuracion />} path="/configuracion" />
-                            <Route element={<ServicioFormulario />} path="/ServicioFormulario" />
-                            <Route element={<ServicioLista />} path="/ServicioLista " />
-
                             <Route element={<EditorMasivo />} path="/editor-masivo" />
                             <Route element={<Servidor />} path="/servidor" />
-                            <Route element={<ServidorFormulario />} path="/servidorFormulario" />
-                            <Route element={<Loading />} path="/loading" />
-                            <Route element={<h1>Not found!</h1>} path="*" />
+                            <Route element={<SistemaOperativo />} path="/sistema-operativo" />
+
+                            {/* Ruta para "Not Found" */}
+                            <Route element={<h1>¡Página no encontrada!</h1>} path="*" />
                         </Routes>
                     </main>
 

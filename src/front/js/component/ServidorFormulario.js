@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
+import Icon from './Icon'; // Asegúrate de tener un componente Icon.js
 
 // --- Componente Reutilizable para Dropdowns de Selección Única ---
-const SingleSelectDropdown = ({ name, label, options, selectedValue, onSelect, error, icon }) => {
+const SingleSelectDropdown = ({ name, label, options, selectedValue, onSelect, error }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -25,10 +26,10 @@ const SingleSelectDropdown = ({ name, label, options, selectedValue, onSelect, e
     const displayLabel = selectedOption ? selectedOption.label : "Seleccionar...";
 
     return (
-        <div className={`form-field ${isOpen ? 'is-open' : ''}`} ref={dropdownRef}>
-            <div className="filtro-label-con-icono">{icon}<label>{label}</label></div>
+        <div className={`form__group ${isOpen ? 'is-open' : ''}`} ref={dropdownRef}>
+            <label className="form__label">{label} <span style={{ color: 'var(--color-error)' }}>*</span></label>
             <div className="custom-select">
-                <button type="button" className={`custom-select__trigger ${error ? 'input-error' : ''}`} onClick={() => setIsOpen(!isOpen)}>
+                <button type="button" className={`form__input custom-select__trigger ${error ? 'form__input--error' : ''}`} onClick={() => setIsOpen(!isOpen)}>
                     <span>{displayLabel}</span>
                     <div className={`chevron ${isOpen ? "open" : ""}`}></div>
                 </button>
@@ -37,43 +38,42 @@ const SingleSelectDropdown = ({ name, label, options, selectedValue, onSelect, e
                         <label
                             key={option.value}
                             className={`custom-select__option ${String(selectedValue) === String(option.value) ? 'selected' : ''}`}
-                            onClick={() => handleOptionClick(option.value)}
                         >
                             <input
                                 type="radio"
                                 name={name}
                                 value={option.value}
                                 checked={String(selectedValue) === String(option.value)}
-                                readOnly
+                                onChange={() => handleOptionClick(option.value)}
                             />
                             <span>{option.label}</span>
                         </label>
                     ))}
                 </div>
             </div>
-            {error && <p className="error-mensaje">{error}</p>}
+            {error && <p className="form__error-text">{error}</p>}
         </div>
     );
 };
 
 // --- Componente de Campo de Texto Reutilizable ---
-const CampoTexto = ({ name, label, value, onChange, error, icon, placeholder = '' }) => (
-    <div className="form-field">
-        <div className="filtro-label-con-icono">{icon}<label htmlFor={name}>{label}</label></div>
+const CampoTexto = ({ name, label, value, onChange, error, placeholder = '', required = true }) => (
+    <div className="form__group">
+        <label className="form__label" htmlFor={name}>{label} {required && <span style={{ color: 'var(--color-error)' }}>*</span>}</label>
         <input
             type="text"
             id={name}
             name={name}
             value={value}
             onChange={onChange}
-            className={error ? 'input-error' : ''}
+            className={`form__input ${error ? 'form__input--error' : ''}`}
             placeholder={placeholder || label + "..."}
         />
-        {error && <p className="error-mensaje">{error}</p>}
+        {error && <p className="form__error-text">{error}</p>}
     </div>
 );
 
-
+// --- Componente Principal del Formulario ---
 const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdicion, onSaveRow }) => {
     const [formData, setFormData] = useState({
         nombre: "", tipo: "", ip: "", balanceador: "", vlan: "",
@@ -86,7 +86,6 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
     });
     const [allServers, setAllServers] = useState([]);
 
-    // --- Carga de datos inicial (catálogos y servidores existentes) ---
     useEffect(() => {
         const fetchAllData = async () => {
             try {
@@ -165,35 +164,34 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
         return newErrors;
     };
 
-    const guardarServidor = () => {
-        const url = esEdicion ? `${process.env.BACKEND_URL}/api/servidores/${servidorInicial.id}` : `${process.env.BACKEND_URL}/api/servidores`;
-        const method = esEdicion ? "PUT" : "POST";
-        fetch(url, {
-            method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...formData, activo: true })
-        })
-            .then(response => {
-                if (!response.ok) throw new Error('Error al guardar el servidor');
-                return response.json();
-            })
-            .then(() => {
-                onSuccess(esEdicion ? "Servidor actualizado" : "Servidor creado");
-                setModalVisible(false);
-            })
-            .catch(error => {
-                Swal.fire("Error", error.message, "error");
-            });
-    };
-
     const handleFormSubmit = async (e) => {
         e.preventDefault();
-
         const validationErrors = validateForm();
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
             return;
         }
+
+        const guardarServidor = () => {
+            const url = esEdicion ? `${process.env.BACKEND_URL}/api/servidores/${servidorInicial.id}` : `${process.env.BACKEND_URL}/api/servidores`;
+            const method = esEdicion ? "PUT" : "POST";
+            fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...formData, activo: true })
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Error al guardar el servidor');
+                    return response.json();
+                })
+                .then(() => {
+                    onSuccess(esEdicion ? "Servidor actualizado" : "Servidor creado");
+                    setModalVisible(false);
+                })
+                .catch(error => {
+                    Swal.fire("Error", error.message, "error");
+                });
+        };
 
         if (onSaveRow) {
             onSaveRow(formData);
@@ -209,8 +207,8 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                     text: `El campo ${camposTexto} está vacío. ¿Deseas guardar de todas formas?`,
                     icon: "warning",
                     showCancelButton: true,
-                    confirmButtonColor: "#007953",
-                    cancelButtonColor: "#6c757d",
+                    confirmButtonColor: "var(--color-primario)",
+                    cancelButtonColor: "var(--color-texto-secundario)",
                     confirmButtonText: "Guardar",
                     cancelButtonText: "Volver"
                 }).then((result) => {
@@ -224,9 +222,10 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
         }
     };
 
+
     return (
-        <form onSubmit={handleFormSubmit} className="grid-form">
-            <div className="grid-form-row">
+        <form onSubmit={handleFormSubmit} className="form grid-form">
+            <div className="form__row">
                 <CampoTexto name="nombre" label="Nombre" value={formData.nombre || ''} onChange={handleChange} error={errors.nombre} />
                 <SingleSelectDropdown name="tipo" label="Tipo" selectedValue={formData.tipo} onSelect={handleChange} error={errors.tipo}
                     options={[{ value: "FISICO", label: "FISICO" }, { value: "VIRTUAL", label: "VIRTUAL" }]} />
@@ -234,7 +233,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                 <CampoTexto name="balanceador" label="Balanceador" value={formData.balanceador || ''} onChange={handleChange} error={errors.balanceador} />
                 <CampoTexto name="vlan" label="VLAN" value={formData.vlan || ''} onChange={handleChange} error={errors.vlan} />
             </div>
-            <div className="grid-form-row">
+            <div className="form__row">
                 <SingleSelectDropdown name="servicio_id" label="Servicio" selectedValue={formData.servicio_id} onSelect={handleChange} error={errors.servicio_id}
                     options={catalogos.servicios.map(s => ({ value: s.id, label: s.nombre }))} />
                 <SingleSelectDropdown name="capa_id" label="Capa" selectedValue={formData.capa_id} onSelect={handleChange} error={errors.capa_id}
@@ -243,27 +242,21 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                     options={catalogos.ambientes.map(a => ({ value: a.id, label: a.nombre }))} />
                 <SingleSelectDropdown name="dominio_id" label="Dominio" selectedValue={formData.dominio_id} onSelect={handleChange} error={errors.dominio_id}
                     options={catalogos.dominios.map(d => ({ value: d.id, label: d.nombre }))} />
-                <SingleSelectDropdown
-                    name="sistema_operativo_id"
-                    label="Sistema Operativo"
-                    selectedValue={formData.sistema_operativo_id}
-                    onSelect={handleChange}
-                    error={errors.sistema_operativo_id}
-                    options={catalogos.sistemasOperativos.map(so => ({ value: so.id, label: `${so.nombre} - V${so.version}` }))}
-                />
+                <SingleSelectDropdown name="sistema_operativo_id" label="Sistema Operativo" selectedValue={formData.sistema_operativo_id} onSelect={handleChange} error={errors.sistema_operativo_id}
+                    options={catalogos.sistemasOperativos.map(so => ({ value: so.id, label: `${so.nombre} - V${so.version}` }))} />
             </div>
-            <div className="grid-form-row">
+            <div className="form__row">
                 <SingleSelectDropdown name="estatus_id" label="Estatus" selectedValue={formData.estatus_id} onSelect={handleChange} error={errors.estatus_id}
                     options={catalogos.estatus.map(e => ({ value: e.id, label: e.nombre }))} />
-                <CampoTexto name="link" label="Link" value={formData.link || ''} onChange={handleChange} error={errors.link} />
-                <div className="form-field field-full-width">
-                    <label>Descripción</label>
-                    <textarea name="descripcion" value={formData.descripcion || ''} onChange={handleChange}></textarea>
+                <CampoTexto name="link" label="Link" value={formData.link || ''} onChange={handleChange} error={errors.link} required={false} />
+                <div className="form__group field-full-width">
+                    <label className="form__label">Descripción</label>
+                    <textarea name="descripcion" value={formData.descripcion || ''} onChange={handleChange} className="form__input"></textarea>
                 </div>
             </div>
-            <div className="modal-buttons">
-                <button type="button" className="btn-secondary" onClick={() => setModalVisible(false)}>Cancelar</button>
-                <button type="submit" className="btn-primary">Guardar</button>
+            <div className="form__actions">
+                <button type="button" className="btn btn--secondary" onClick={() => setModalVisible(false)}>Cancelar</button>
+                <button type="submit" className="btn btn--primary">Guardar</button>
             </div>
         </form>
     );

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
 const SistemaOperativoFormulario = ({ onSave, onCancel, sistemaOperativo, sistemasOperativosExistentes }) => {
-    // CAMBIO: Se añade 'version' al estado del formulario
     const [formData, setFormData] = useState({ nombre: '', version: '', descripcion: '' });
     const [errors, setErrors] = useState({});
     const [titulo, setTitulo] = useState('Crear Nuevo Sistema Operativo');
@@ -9,7 +8,6 @@ const SistemaOperativoFormulario = ({ onSave, onCancel, sistemaOperativo, sistem
     useEffect(() => {
         if (sistemaOperativo) { // Modo Edición
             setTitulo('Editar Sistema Operativo');
-            // CAMBIO: Se rellena el campo 'version' al editar
             setFormData({ nombre: sistemaOperativo.nombre, version: sistemaOperativo.version, descripcion: sistemaOperativo.descripcion || '' });
         } else { // Modo Creación
             setTitulo('Crear Nuevo Sistema Operativo');
@@ -21,7 +19,6 @@ const SistemaOperativoFormulario = ({ onSave, onCancel, sistemaOperativo, sistem
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        // Limpia el error del campo que se está modificando
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));
         }
@@ -33,11 +30,9 @@ const SistemaOperativoFormulario = ({ onSave, onCancel, sistemaOperativo, sistem
         const versionNormalizada = formData.version.trim().toLowerCase();
         let newErrors = {};
 
-        // Validaciones
         if (!nombreNormalizado) newErrors.nombre = 'El campo "Nombre" es obligatorio.';
         if (!versionNormalizada) newErrors.version = 'El campo "Versión" es obligatorio.';
 
-        // CAMBIO: Se valida que la combinación de nombre y versión no esté duplicada
         const duplicado = sistemasOperativosExistentes.find(
             so => so.nombre.toLowerCase() === nombreNormalizado &&
                 so.version.toLowerCase() === versionNormalizada &&
@@ -57,29 +52,29 @@ const SistemaOperativoFormulario = ({ onSave, onCancel, sistemaOperativo, sistem
     };
 
     return (
-        <div className="form-container">
-            <div className="form-header">
-                <h2 className="form-title">{titulo}</h2>
-                <button onClick={onCancel} className="close-button-form">&times;</button>
+        <div className="modal__content">
+            <div className="modal__header">
+                <h2 className="modal__title">{titulo}</h2>
+                {/* Se elimina el texto de adentro del botón */}
+                <button onClick={onCancel} className="btn-close" />
             </div>
-            <form onSubmit={handleSubmit} className="servicio-form-fields">
-                <div className="form-field">
-                    <label htmlFor="nombre">Nombre del S.O. <span className="campo-obligatorio">*</span></label>
+            <form onSubmit={handleSubmit} className="form modal__body">
+                <div className="form__group">
+                    <label className="form__label" htmlFor="nombre">Nombre del S.O. <span style={{ color: 'var(--color-error)' }}>*</span></label>
                     <input
                         id="nombre"
                         name="nombre"
                         type="text"
-                        placeholder="Ingrese el nombre del sistema operativo.."
+                        placeholder="Ingrese el nombre del sistema operativo..."
                         value={formData.nombre}
                         onChange={handleChange}
-                        className={errors.nombre ? 'input-error' : ''}
+                        className={`form__input ${errors.nombre ? 'form__input--error' : ''}`}
                         autoComplete="off"
                     />
-                    {errors.nombre && <p className="error-mensaje">{errors.nombre}</p>}
+                    {errors.nombre && <p className="form__error-text">{errors.nombre}</p>}
                 </div>
-                {/* CAMBIO: Nuevo campo para la versión */}
-                <div className="form-field">
-                    <label htmlFor="version">Versión <span className="campo-obligatorio">*</span></label>
+                <div className="form__group">
+                    <label className="form__label" htmlFor="version">Versión <span style={{ color: 'var(--color-error)' }}>*</span></label>
                     <input
                         id="version"
                         name="version"
@@ -87,24 +82,25 @@ const SistemaOperativoFormulario = ({ onSave, onCancel, sistemaOperativo, sistem
                         placeholder="Ingrese la versión del sistema operativo..."
                         value={formData.version}
                         onChange={handleChange}
-                        className={errors.version ? 'input-error' : ''}
+                        className={`form__input ${errors.version ? 'form__input--error' : ''}`}
                         autoComplete="off"
                     />
-                    {errors.version && <p className="error-mensaje">{errors.version}</p>}
+                    {errors.version && <p className="form__error-text">{errors.version}</p>}
                 </div>
-                <div className="form-field">
-                    <label htmlFor="descripcion">Descripción (Opcional)</label>
+                <div className="form__group">
+                    <label className="form__label" htmlFor="descripcion">Descripción (Opcional)</label>
                     <textarea
                         id="descripcion"
                         name="descripcion"
                         placeholder="Describe brevemente el sistema operativo..."
                         value={formData.descripcion}
                         onChange={handleChange}
+                        className="form__input"
                     />
                 </div>
-                <div className="form-buttons">
-                    <button type="button" className="btn-secondary" onClick={onCancel}>Cancelar</button>
-                    <button type="submit" className="btn-primary">Guardar</button>
+                <div className="form__actions">
+                    <button type="button" className="btn btn--secondary" onClick={onCancel}>Cancelar</button>
+                    <button type="submit" className="btn btn--primary">Guardar</button>
                 </div>
             </form>
         </div>

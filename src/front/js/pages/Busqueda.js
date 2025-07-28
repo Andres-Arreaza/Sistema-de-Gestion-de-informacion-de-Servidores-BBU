@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
-import { BusquedaFiltro } from '../component/BusquedaFiltro'; // Asegúrate que la ruta es correcta
-import { BusquedaTabla } from '../component/BusquedaTabla';   // Asegúrate que la ruta es correcta
-import Loading from '../component/Loading';                     // Asegúrate de tener este componente
+import { BusquedaFiltro } from '../component/BusquedaFiltro';
+import { BusquedaTabla } from '../component/BusquedaTabla';
+import Loading from '../component/Loading';
 
 export const Busqueda = () => {
     const [filtro, setFiltro] = useState({
@@ -11,7 +11,7 @@ export const Busqueda = () => {
     });
     const [servidores, setServidores] = useState([]);
     const [cargando, setCargando] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false); // Estado para controlar el modal
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [catalogos, setCatalogos] = useState({
         servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
     });
@@ -69,7 +69,6 @@ export const Busqueda = () => {
             const data = await response.json();
             setServidores(data);
 
-            // Si no hay resultados, muestra una alerta. Si hay, abre el modal.
             if (data.length === 0) {
                 Swal.fire({
                     title: "Sin Resultados",
@@ -89,41 +88,36 @@ export const Busqueda = () => {
         }
     };
 
-    // --- Función para cerrar el modal ---
     const handleCloseModal = () => {
         setIsModalOpen(false);
     };
 
     return (
         <div className="page-container">
-            <div className="busqueda-page-container">
-                <BusquedaFiltro
-                    filtro={filtro}
-                    setFiltro={setFiltro}
-                    buscarServidores={buscarServidores}
-                    cargando={cargando}
-                    {...catalogos}
-                />
+            <BusquedaFiltro
+                filtro={filtro}
+                setFiltro={setFiltro}
+                buscarServidores={buscarServidores}
+                cargando={cargando}
+                {...catalogos}
+            />
 
-                {/* Renderizado condicional del modal */}
-                {isModalOpen && (
-                    <div className="modal-overlay" onClick={handleCloseModal}>
-                        <div className="modal-content-busqueda" onClick={(e) => e.stopPropagation()}>
-                            <div className="modal-header">
-                                <button onClick={handleCloseModal} className="close-button">&times;</button>
-                            </div>
-                            <div className="modal-body">
-                                {cargando ? <Loading /> :
-                                    <BusquedaTabla
-                                        servidores={servidores}
-                                        catalogos={catalogos}
-                                    />
-                                }
-                            </div>
+            {isModalOpen && (
+                <div className="modal__overlay" onClick={handleCloseModal}>
+                    <div className="modal__content modal-content-busqueda" onClick={(e) => e.stopPropagation()}>
+                        {/* Se elimina el modal__header de aquí */}
+                        <div className="modal__body">
+                            {cargando ? <Loading /> :
+                                <BusquedaTabla
+                                    servidores={servidores}
+                                    catalogos={catalogos}
+                                    onClose={handleCloseModal} // Se pasa la función de cierre como prop
+                                />
+                            }
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 };

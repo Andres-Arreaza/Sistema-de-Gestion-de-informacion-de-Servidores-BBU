@@ -1,38 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Swal from 'sweetalert2';
-import { BusquedaFiltro } from '../component/BusquedaFiltro'; // Asegúrate que la ruta es correcta
-import Loading from '../component/Loading'; // Componente de carga que ya debes tener
-
-// --- Iconos ---
-const SaveIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-        <polyline points="17 21 17 13 7 13 7 21"></polyline>
-        <polyline points="7 3 7 8 15 8"></polyline>
-    </svg>
-);
-
-const ColumnsIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-        <line x1="12" y1="3" x2="12" y2="21"></line>
-    </svg>
-);
-
-const ApplyIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="20 6 9 17 4 12"></polyline>
-    </svg>
-);
-
-const ChevronLeftIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-);
-
-const ChevronRightIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-);
-
+import { BusquedaFiltro } from '../component/BusquedaFiltro';
+import Loading from '../component/Loading';
+import Icon from '../component/Icon';
 
 // --- Componente para seleccionar columnas a editar ---
 const SelectorColumnasEditables = ({ opciones, seleccionadas, onChange }) => {
@@ -59,12 +29,12 @@ const SelectorColumnasEditables = ({ opciones, seleccionadas, onChange }) => {
 
     return (
         <div className="selector-columnas-container" ref={dropdownRef}>
-            <label className="selector-columnas-label">
-                <ColumnsIcon />
+            <label className="form__label">
+                <Icon name="columns" />
                 Columnas a editar:
             </label>
             <div className="custom-select">
-                <button type="button" className="custom-select__trigger" onClick={() => setIsOpen(!isOpen)}>
+                <button type="button" className="form__input custom-select__trigger" onClick={() => setIsOpen(!isOpen)}>
                     <span>{seleccionadas.length > 0 ? `${seleccionadas.length} seleccionada(s)` : "Ninguna"}</span>
                     <div className={`chevron ${isOpen ? "open" : ""}`}></div>
                 </button>
@@ -87,6 +57,93 @@ const SelectorColumnasEditables = ({ opciones, seleccionadas, onChange }) => {
     );
 };
 
+// --- Componente para el dropdown de paginación ---
+const ItemsPerPageDropdown = ({ value, onChange }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const options = [50, 100, 150, 200];
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleSelect = (option) => {
+        onChange(option);
+        setIsOpen(false);
+    };
+
+    return (
+        <div className="custom-select pagination-select" ref={dropdownRef}>
+            <button type="button" className="form__input custom-select__trigger" onClick={() => setIsOpen(!isOpen)}>
+                <span>{value}</span>
+                <div className={`chevron ${isOpen ? "open" : ""}`}></div>
+            </button>
+            <div className={`custom-select__panel ${isOpen ? "open" : ""}`}>
+                {options.map(opt => (
+                    <div
+                        key={opt}
+                        className={`custom-select__option ${value === opt ? 'selected' : ''}`}
+                        onClick={() => handleSelect(opt)}
+                    >
+                        {opt}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// --- Nuevo sub-componente para los dropdowns de edición en lote ---
+const BulkEditDropdown = ({ value, onChange, options, catalog, catalogos }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+    const displayOptions = options || catalogos[catalog] || [];
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleSelect = (optionValue) => {
+        onChange(optionValue);
+        setIsOpen(false);
+    };
+
+    const selectedOption = displayOptions.find(opt => String(opt.id) === String(value));
+    const displayLabel = selectedOption ? (catalog === 'sistemasOperativos' ? `${selectedOption.nombre} - V${selectedOption.version}` : selectedOption.nombre) : "Seleccionar un valor...";
+
+    return (
+        <div className="custom-select" ref={dropdownRef} style={{ flexGrow: 1 }}>
+            <button type="button" className="form__input custom-select__trigger" onClick={() => setIsOpen(!isOpen)}>
+                <span>{displayLabel}</span>
+                <div className={`chevron ${isOpen ? "open" : ""}`}></div>
+            </button>
+            <div className={`custom-select__panel ${isOpen ? "open" : ""}`}>
+                {displayOptions.map(opt => (
+                    <div
+                        key={opt.id}
+                        className={`custom-select__option ${String(value) === String(opt.id) ? 'selected' : ''}`}
+                        onClick={() => handleSelect(String(opt.id))}
+                    >
+                        {catalog === 'sistemasOperativos' ? `${opt.nombre} - V${opt.version}` : opt.nombre}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 
 const EditorMasivo = () => {
     // --- Estados del componente ---
@@ -102,8 +159,7 @@ const EditorMasivo = () => {
     const [bulkEditValues, setBulkEditValues] = useState({});
     const [validationErrors, setValidationErrors] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
-
+    const [itemsPerPage, setItemsPerPage] = useState(50);
     const [catalogos, setCatalogos] = useState({
         servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
     });
@@ -150,7 +206,6 @@ const EditorMasivo = () => {
             const queryParams = new URLSearchParams();
             for (const key in filtro) {
                 if (filtro[key] && filtro[key].length > 0) {
-                    // CORRECCIÓN: Mapear la clave del frontend a la del backend
                     const backendKey = key === 'sistemasOperativos' ? 'sistemas_operativos' : key;
                     if (Array.isArray(filtro[key])) {
                         filtro[key].forEach(val => queryParams.append(backendKey, val));
@@ -184,7 +239,7 @@ const EditorMasivo = () => {
         }
     };
 
-    // --- Opciones de columnas dinámicas basadas en el número de servidores ---
+    // --- Lógica de Edición y Guardado ---
     const opcionesColumnas = [
         { value: 'nombre', label: 'Nombre', type: 'input', disabled: servidores.length > 1 },
         { value: 'tipo', label: 'Tipo', type: 'select', options: [{ id: 'VIRTUAL', nombre: 'Virtual' }, { id: 'FISICO', nombre: 'Físico' }] },
@@ -201,7 +256,6 @@ const EditorMasivo = () => {
         { value: 'estatus_id', label: 'Estatus', type: 'select', catalog: 'estatus' },
     ];
 
-    // --- Manejadores para la edición en lote ---
     const handleBulkEditChange = (campo, valor) => {
         setBulkEditValues(prev => ({ ...prev, [campo]: valor }));
     };
@@ -220,8 +274,8 @@ const EditorMasivo = () => {
             text: `Se establecerá el campo "${campoLabel}" a un nuevo valor para los ${servidores.length} servidores encontrados.`,
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#007953',
-            cancelButtonColor: '#6c757d',
+            confirmButtonColor: 'var(--color-primario)',
+            cancelButtonColor: 'var(--color-texto-secundario)',
             confirmButtonText: 'Sí, aplicar',
             cancelButtonText: 'Cancelar'
         });
@@ -241,7 +295,6 @@ const EditorMasivo = () => {
         }
     };
 
-    // --- Guardar cambios en el backend ---
     const handleGuardarCambios = async () => {
         setValidationErrors({});
         const numCambios = Object.keys(cambios).length;
@@ -276,21 +329,15 @@ const EditorMasivo = () => {
                         icon: 'error',
                         title: 'Error de Validación',
                         text: 'Por favor, revise los campos marcados en rojo.',
-                        heightAuto: false,
                     });
-
                     const errorsMap = {};
                     errorData.detalles.forEach(detail => {
                         const valorEnConflictoMatch = detail.match(/'([^']+)'/);
                         if (!valorEnConflictoMatch) return;
                         const valorEnConflicto = valorEnConflictoMatch[1];
-
                         const servidorConError = servidores.find(srv =>
-                            srv.nombre === valorEnConflicto ||
-                            srv.ip === valorEnConflicto ||
-                            srv.link === valorEnConflicto
+                            srv.nombre === valorEnConflicto || srv.ip === valorEnConflicto || srv.link === valorEnConflicto
                         );
-
                         if (servidorConError) {
                             if (!errorsMap[servidorConError.id]) {
                                 errorsMap[servidorConError.id] = {};
@@ -314,7 +361,7 @@ const EditorMasivo = () => {
             text: `Se actualizarán ${numCambios} servidor(es) permanentemente.`,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#007953', cancelButtonColor: '#6c757d',
+            confirmButtonColor: 'var(--color-primario)', cancelButtonColor: 'var(--color-texto-secundario)',
             confirmButtonText: 'Sí, guardar', cancelButtonText: 'Cancelar'
         });
 
@@ -324,7 +371,6 @@ const EditorMasivo = () => {
                 const servidorOriginal = servidores.find(s => s.id === parseInt(id, 10));
                 const cambiosParaServidor = cambios[id];
                 const payload = { ...servidorOriginal, ...cambiosParaServidor };
-
                 delete payload.servicios;
                 delete payload.capas;
                 delete payload.ambientes;
@@ -332,7 +378,6 @@ const EditorMasivo = () => {
                 delete payload.sistemasOperativos;
                 delete payload.sistemas_operativos;
                 delete payload.estatus;
-
                 return fetch(`${process.env.BACKEND_URL}/api/servidores/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -353,82 +398,12 @@ const EditorMasivo = () => {
         }
     };
 
-    // --- Renderizado de los controles de edición en lote ---
-    const renderBulkEditControls = () => (
-        <div className="bulk-edit-controls">
-            {columnasEditables.map(colKey => {
-                const colDef = opcionesColumnas.find(c => c.value === colKey);
-                if (!colDef) return null;
-
-                return (
-                    <div key={colKey} className="bulk-edit-field">
-                        <label>{colDef.label}:</label>
-                        {colDef.type === 'input' ? (
-                            <input
-                                type="text"
-                                value={bulkEditValues[colKey] || ''}
-                                onChange={(e) => handleBulkEditChange(colKey, e.target.value)}
-                            />
-                        ) : (
-                            <select
-                                value={bulkEditValues[colKey] || ''}
-                                onChange={(e) => handleBulkEditChange(colKey, e.target.value)}
-                            >
-                                <option value="" disabled>Seleccionar un valor...</option>
-                                {(colDef.options || catalogos[colDef.catalog] || []).map(opt => (
-                                    <option key={opt.id} value={opt.id}>
-                                        {colDef.catalog === 'sistemasOperativos' ? `${opt.nombre} - V${opt.version}` : opt.nombre}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-                        <button className="apply-bulk-btn" onClick={() => handleApplyBulkEdit(colKey)} title={`Aplicar a todos`}>
-                            <ApplyIcon />
-                        </button>
-                    </div>
-                );
-            })}
-        </div>
-    );
-
-    // --- Lógica y renderizado de paginación ---
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentServidores = servidores.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(servidores.length / itemsPerPage);
-
-    const PaginacionControles = () => (
-        <div className="paginacion-controles">
-            <div className="items-por-pagina-selector">
-                <label htmlFor="items-per-page">Servidores por página:</label>
-                <select
-                    id="items-per-page"
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                        setItemsPerPage(Number(e.target.value));
-                        setCurrentPage(1);
-                    }}
-                >
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                </select>
-            </div>
-            <div className="navegacion-paginas">
-                <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
-                    <ChevronLeftIcon />
-                </button>
-                <span>Página {currentPage} de {totalPages}</span>
-                <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>
-                    <ChevronRightIcon />
-                </button>
-            </div>
-        </div>
-    );
-
-    // --- Renderizado de la tabla de resultados ---
+    // --- Renderizado de la Tabla y Controles ---
     const renderResultadosTabla = () => {
+        const indexOfLastItem = currentPage * itemsPerPage;
+        const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+        const currentServidores = servidores.slice(indexOfFirstItem, indexOfLastItem);
+
         const columnas = [
             { header: 'Nombre', key: 'nombre' }, { header: 'Tipo', key: 'tipo' }, { header: 'IP', key: 'ip' },
             { header: 'Servicio', key: 'servicio_id', catalog: 'servicios' },
@@ -442,63 +417,107 @@ const EditorMasivo = () => {
             { header: 'Descripción', key: 'descripcion' },
             { header: 'Link', key: 'link' }
         ];
-        return (
-            <div className="editor-tabla-container">
-                <table className="editor-tabla">
-                    <thead>
-                        <tr>
-                            <th className="columna-numero">#</th>
-                            {columnas.map(c => <th key={c.key}>{c.header}</th>)}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {currentServidores.map((servidor, index) => {
-                            const isModified = !!cambios[servidor.id];
-                            const errorsInRow = validationErrors[servidor.id] || {};
 
-                            return (
-                                <tr key={servidor.id} className={isModified ? 'fila-modificada' : ''}>
-                                    <td className="columna-numero">{indexOfFirstItem + index + 1}</td>
-                                    {columnas.map(col => {
-                                        let displayValue = servidor[col.key];
-                                        if (col.catalog) {
-                                            const found = catalogos[col.catalog]?.find(c => String(c.id) === String(displayValue));
-                                            if (found) {
-                                                if (col.catalog === 'sistemasOperativos') {
-                                                    displayValue = `${found.nombre} - V${found.version}`;
-                                                } else {
-                                                    displayValue = found.nombre;
-                                                }
-                                            } else {
-                                                displayValue = 'N/A';
-                                            }
+        return (
+            <table className="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        {columnas.map(c => <th key={c.key}>{c.header}</th>)}
+                    </tr>
+                </thead>
+                <tbody>
+                    {currentServidores.map((servidor, index) => {
+                        const isModified = !!cambios[servidor.id];
+                        const errorsInRow = validationErrors[servidor.id] || {};
+
+                        return (
+                            <tr key={servidor.id} className={isModified ? 'fila-modificada' : ''}>
+                                <td>{indexOfFirstItem + index + 1}</td>
+                                {columnas.map(col => {
+                                    let displayValue = servidor[col.key];
+                                    if (col.catalog) {
+                                        const found = catalogos[col.catalog]?.find(c => String(c.id) === String(displayValue));
+                                        if (found) {
+                                            displayValue = col.catalog === 'sistemasOperativos' ? `${found.nombre} - V${found.version}` : found.nombre;
+                                        } else {
+                                            displayValue = 'N/A';
                                         }
-                                        const hasError = !!errorsInRow[col.key];
-                                        return (
-                                            <td key={`${servidor.id}-${col.key}`} title={displayValue} className={hasError ? 'celda-con-error-validacion' : ''}>
-                                                {displayValue}
-                                            </td>
-                                        );
-                                    })}
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                                    }
+                                    const hasError = !!errorsInRow[col.key];
+                                    return (
+                                        <td key={`${servidor.id}-${col.key}`} title={displayValue} className={hasError ? 'celda-con-error-validacion' : ''}>
+                                            {displayValue}
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        );
+    };
+
+    const renderBulkEditControls = () => {
+        return (
+            <div className="bulk-edit-controls">
+                {columnasEditables.map(colKey => {
+                    const colDef = opcionesColumnas.find(c => c.value === colKey);
+                    if (!colDef) return null;
+
+                    return (
+                        <div key={colKey} className="bulk-edit-field">
+                            <label>{colDef.label}:</label>
+                            {colDef.type === 'input' ? (
+                                <input
+                                    type="text"
+                                    className="form__input"
+                                    value={bulkEditValues[colKey] || ''}
+                                    onChange={(e) => handleBulkEditChange(colKey, e.target.value)}
+                                />
+                            ) : (
+                                <BulkEditDropdown
+                                    value={bulkEditValues[colKey] || ''}
+                                    onChange={(value) => handleBulkEditChange(colKey, value)}
+                                    options={colDef.options}
+                                    catalog={colDef.catalog}
+                                    catalogos={catalogos}
+                                />
+                            )}
+                            <button className="btn btn--apply-bulk" onClick={() => handleApplyBulkEdit(colKey)}>
+                                Aplicar
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
+    const PaginacionControles = () => {
+        const totalPages = Math.ceil(servidores.length / itemsPerPage);
+        return (
+            <div className="pagination-controls">
+                <div className="pagination__items-per-page">
+                    <label>Mostrar:</label>
+                    <ItemsPerPageDropdown value={itemsPerPage} onChange={setItemsPerPage} />
+                </div>
+                <div className="pagination__navigation">
+                    <button className="btn-icon" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
+                        <Icon name="chevron-left" />
+                    </button>
+                    <span>Página {currentPage} de {totalPages}</span>
+                    <button className="btn-icon" onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>
+                        <Icon name="chevron-right" />
+                    </button>
+                </div>
             </div>
         );
     };
 
     return (
         <div className="page-container">
-            <div className="editor-hero-section">
-                <div className="title-section">
-                    <div className="decorative-line-top"></div>
-                    <h1 className="main-title">Editor Masivo de Servidores</h1>
-                    <p className="subtitle">"Filtra y modifica múltiples servidores a la vez"</p>
-                    <div className="decorative-line-bottom"></div>
-                </div>
-            </div>
 
             <div className="editor-masivo-container">
                 <BusquedaFiltro
@@ -510,37 +529,36 @@ const EditorMasivo = () => {
                     {cargando && <Loading />}
                     {!cargando && busquedaRealizada && (
                         <>
-                            <div className="resultados-header">
+                            <header className="resultados-header">
                                 <h2 className="resultados-titulo">Resultados de la Búsqueda</h2>
-                                <span className="servidores-contador">{servidores.length} {servidores.length === 1 ? 'servidor encontrado' : 'servidores encontrados'}</span>
-                            </div>
+                                <span className="badge">{servidores.length} servidores encontrados</span>
+                            </header>
 
                             {servidores.length > 0 ? (
                                 <>
                                     <div className="editor-controles-superiores">
                                         <SelectorColumnasEditables
-                                            opciones={opcionesColumnas} seleccionadas={columnasEditables}
+                                            opciones={opcionesColumnas}
+                                            seleccionadas={columnasEditables}
                                             onChange={setColumnasEditables}
                                         />
-                                        <div className="editor-acciones">
-                                            <button className="guardar-cambios-btn" onClick={handleGuardarCambios} disabled={Object.keys(cambios).length === 0}>
-                                                <SaveIcon /> Guardar Cambios
-                                            </button>
-                                        </div>
+                                        <button className="btn btn--primary" onClick={handleGuardarCambios} disabled={Object.keys(cambios).length === 0}>
+                                            <Icon name="save" /> Guardar Cambios
+                                        </button>
                                     </div>
-
                                     {columnasEditables.length > 0 && renderBulkEditControls()}
-
                                     <PaginacionControles />
-                                    {renderResultadosTabla()}
+                                    <div className="table-container">
+                                        {renderResultadosTabla()}
+                                    </div>
                                 </>
                             ) : (
-                                <div className="no-resultados"><p>No se encontraron servidores con los filtros seleccionados.</p></div>
+                                <div className="no-results-message"><p>No se encontraron servidores.</p></div>
                             )}
                         </>
                     )}
                     {!cargando && !busquedaRealizada && (
-                        <div className="no-resultados"><p>Realiza una búsqueda para empezar a editar.</p></div>
+                        <div className="no-results-message"><p>Realiza una búsqueda para empezar a editar.</p></div>
                     )}
                 </div>
             </div>

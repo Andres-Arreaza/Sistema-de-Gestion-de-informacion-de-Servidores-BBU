@@ -1,58 +1,36 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom'; // Se elimina useOutletContext
-import Loading from './Loading';
+import React, { useState, useEffect } from 'react';
 
-/**
- * Componente de formulario para crear o editar un Servicio.
- * Recibe toda la lógica y datos como props desde un componente padre.
- * @param {object} props - Propiedades del componente.
- * @param {function} props.onSave - Función para guardar el formulario, llamada al hacer submit.
- * @param {function} props.onCancel - Función para cancelar la operación y cerrar el formulario.
- * @param {object} props.servicio - El objeto de servicio actual (solo en modo edición).
- * @param {array} props.serviciosExistentes - Array de todos los servicios para validación de duplicados.
- */
 const ServicioFormulario = ({ onSave, onCancel, servicio, serviciosExistentes }) => {
-    // Hooks de React Router para navegación y obtener el ID de la URL
-    const navigate = useNavigate();
-    const { id } = useParams();
-
-    // Estados locales para manejar los datos del formulario, errores y el título
     const [formData, setFormData] = useState({ nombre: '', descripcion: '' });
     const [error, setError] = useState('');
     const [titulo, setTitulo] = useState('Crear Nuevo Servicio');
 
-    // Efecto que se ejecuta cuando el componente se monta o cuando cambia el servicio a editar.
-    // Rellena el formulario si estamos en modo "edición".
     useEffect(() => {
-        if (servicio) { // Modo Edición: si se pasó un servicio como prop
+        if (servicio) {
             setTitulo('Editar Servicio');
             setFormData({ nombre: servicio.nombre, descripcion: servicio.descripcion || '' });
-        } else { // Modo Creación
+        } else {
             setTitulo('Crear Nuevo Servicio');
             setFormData({ nombre: '', descripcion: '' });
         }
-        setError(''); // Limpia cualquier error previo al cambiar de modo.
-    }, [servicio]); // Depende del objeto 'servicio' que viene por props
+        setError('');
+    }, [servicio]);
 
-    // Maneja los cambios en los campos del formulario
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        setError(''); // Limpia el error al empezar a escribir.
+        setError('');
     };
 
-    // Maneja el envío del formulario
     const handleSubmit = (e) => {
         e.preventDefault();
         const nombreNormalizado = formData.nombre.trim().toLowerCase();
 
-        // Validación de campo obligatorio
         if (!nombreNormalizado) {
             setError('El campo "Nombre" es obligatorio.');
             return;
         }
 
-        // Validación de duplicados usando la lista de servicios pasada por props
         const servicioDuplicado = serviciosExistentes.find(
             s => s.nombre.toLowerCase() === nombreNormalizado && s.id !== (servicio ? servicio.id : null)
         );
@@ -62,20 +40,21 @@ const ServicioFormulario = ({ onSave, onCancel, servicio, serviciosExistentes })
             return;
         }
 
-        // Llama a la función onSave pasada por el componente padre
         onSave(formData);
     };
 
     return (
-        <div className="form-container">
-            <div className="form-header">
-                <h2 className="form-title">{titulo}</h2>
-                {/* Usa la función onCancel pasada por props para cerrar */}
-                <button onClick={onCancel} className="close-button-form">&times;</button>
+        <div className="modal__content">
+            <div className="modal__header">
+                <h2 className="modal__title">{titulo}</h2>
+                {/* =====> AQUÍ ESTÁ LA MODIFICACIÓN <===== */}
+                {/* Se elimina el texto de adentro del botón para que el CSS dibuje la 'x' */}
+                <button onClick={onCancel} className="btn-close" />
             </div>
-            <form onSubmit={handleSubmit} className="servicio-form-fields">
-                <div className="form-field">
-                    <label htmlFor="nombre">Nombre del servicio <span className="campo-obligatorio">*</span></label>
+
+            <form onSubmit={handleSubmit} className="form modal__body">
+                <div className="form__group">
+                    <label className="form__label" htmlFor="nombre">Nombre del servicio <span style={{ color: 'var(--color-error)' }}>*</span></label>
                     <input
                         id="nombre"
                         name="nombre"
@@ -83,25 +62,26 @@ const ServicioFormulario = ({ onSave, onCancel, servicio, serviciosExistentes })
                         placeholder="Ingresa el nombre del servicio..."
                         value={formData.nombre}
                         onChange={handleChange}
-                        className={error ? 'input-error' : ''}
+                        className={`form__input ${error ? 'form__input--error' : ''}`}
                         autoComplete="off"
                     />
-                    {error && <p className="error-mensaje">{error}</p>}
+                    {error && <p className="form__error-text">{error}</p>}
                 </div>
-                <div className="form-field">
-                    <label htmlFor="descripcion">Descripción (Opcional)</label>
+                <div className="form__group">
+                    <label className="form__label" htmlFor="descripcion">Descripción (Opcional)</label>
                     <textarea
                         id="descripcion"
                         name="descripcion"
                         placeholder="Describe brevemente el servicio..."
                         value={formData.descripcion}
                         onChange={handleChange}
+                        className="form__input"
                     />
                 </div>
-                <div className="form-buttons">
-                    {/* Usa la función onCancel pasada por props */}
-                    <button type="button" className="btn-secondary" onClick={onCancel}>Cancelar</button>
-                    <button type="submit" className="btn-primary">Guardar</button>
+
+                <div className="form__actions">
+                    <button type="button" className="btn btn--secondary" onClick={onCancel}>Cancelar</button>
+                    <button type="submit" className="btn btn--primary">Guardar</button>
                 </div>
             </form>
         </div>

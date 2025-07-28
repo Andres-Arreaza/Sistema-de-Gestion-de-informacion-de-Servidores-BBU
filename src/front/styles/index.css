@@ -1,53 +1,68 @@
+/* src/front/styles/index.css */
+
 @import url("https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Caveat&display=swap");
 
 :root {
-  --primary-color: #007953;
-  --primary-hover-color: #008f61;
-  --secondary-color: #004477;
-  --text-color-light: #fff;
-  --text-color-dark: #333;
-  --bg-color-header: rgb(255, 255, 255);
-  --bg-color-dropdown: #f7f9f7;
-  --border-color: rgba(0, 0, 0, 0.08);
-  --shadow-color: rgba(0, 0, 0, 0.1);
-  --transition-speed: 0.3s;
-  --font-main: "Lato", sans-serif;
+  /* 1. Paleta de Colores (Unificada de tus archivos) */
+  --color-primario: #007953;
+  --color-primario-hover: #006845;
+  --color-secundario: #004477;
+  --color-acento: #00aeef;
+  --color-fondo: #ffffff;
+  --color-superficie: #ffffff;
+  --color-borde: #e2e8f0;
+  --color-texto-principal: #1e293b;
+  --color-texto-secundario: #64748b;
+  --color-exito: #22c55e;
+  --color-error: #ef4444;
+  --color-advertencia-fondo: #fffbeb;
+  --color-advertencia-borde: #fbbf24;
+
+  /* 2. Tipografía */
+  --fuente-principal: "Lato", sans-serif;
+  --fuente-display: "Caveat", cursive;
+  --tamano-fuente-base: 16px;
+  --tamano-titulo-h1: 2.5rem;
+  --tamano-titulo-h2: 1.75rem;
+  --tamano-titulo-h3: 1.25rem;
+
+  /* 3. Espaciado */
+  --espaciado-xs: 0.25rem; /* 4px */
+  --espaciado-sm: 0.5rem; /* 8px */
+  --espaciado-md: 1rem; /* 16px */
+  --espaciado-lg: 1.5rem; /* 24px */
+  --espaciado-xl: 2rem; /* 32px */
+
+  /* 4. Bordes y Sombras */
+  --radio-borde: 12px;
+  --sombra-caja: 0 8px 25px rgba(0, 0, 0, 0.07);
+
+  /* 5. Transiciones */
+  --transicion-rapida: all 0.2s ease-in-out;
+  --transicion-media: all 0.3s ease;
+}
+
+/* --- Estilos Globales y Reseteo --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
-  font-family: var(--font-main);
   margin: 0;
-  min-height: 100vh;
-  overflow-x: hidden;
+  font-family: var(--fuente-principal);
+  font-size: var(--tamano-fuente-base);
+  background-color: var(--color-fondo);
+  color: var(--color-texto-principal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.layout-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  overflow: hidden;
-}
-
-.main-content-area {
-  flex-grow: 1;
-}
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes expandWidth {
-  from {
-    width: 0%;
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+h1,
+h2,
+h3 {
+  margin-top: 0;
+  font-weight: 700;
 }

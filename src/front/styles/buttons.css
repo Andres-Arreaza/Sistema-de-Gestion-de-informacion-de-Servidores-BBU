@@ -1,0 +1,90 @@
+/* src/front/styles/buttons.css */
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: var(--radio-borde);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: var(--transicion-media);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaciado-sm);
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.btn--primary,
+.btn-primary {
+  background-color: var(--color-primario);
+  color: white;
+}
+.btn--primary:hover:not(:disabled) {
+  background-color: var(--color-primario-hover);
+  color: var(--color-superficie); /* Asegura que el texto sea blanco */
+}
+
+.btn--secondary,
+.btn-secondary {
+  background-color: var(--color-texto-secundario);
+  color: white;
+}
+.btn--secondary:hover:not(:disabled) {
+  background-color: #5a6268;
+  color: var(--color-superficie); /* Asegura que el texto sea blanco */
+}
+
+.btn:disabled {
+  background-color: #ced4da;
+  cursor: not-allowed;
+}
+
+/* Botones solo con icono */
+.btn-icon,
+.accion-btn {
+  background: none;
+  border: none;
+  padding: var(--espaciado-sm);
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  transition: var(--transicion-rapida);
+  color: var(--color-texto-secundario); /* Color inicial del icono */
+}
+
+/* =====> MODIFICACIÓN <===== */
+.btn-icon:hover {
+  background-color: var(--color-primario); /* Fondo verde al pasar el ratón */
+  color: var(--color-superficie); /* Icono se vuelve blanco */
+}
+
+/* Estilo específico para el botón de acción en la página de inicio */
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  color: var(--color-primario);
+  border: 1.5px solid var(--color-primario);
+  border-radius: var(--radio-borde);
+  padding: 16px 32px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 250px;
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    background-color 0.3s ease, color 0.3s ease;
+}
+
+.action-button:hover {
+  background: var(--color-primario);
+  color: var(--color-superficie); /* Asegura que el texto sea blanco */
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 121, 83, 0.2);
+}
