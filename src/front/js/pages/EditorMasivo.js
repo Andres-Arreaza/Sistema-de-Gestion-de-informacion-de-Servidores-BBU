@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Swal from 'sweetalert2';
-import { BusquedaFiltro } from '../component/BusquedaFiltro';
+import { BusquedaFiltro } from '../component/BusquedaFiltro'; // Se reutiliza el mismo componente de filtros
 import Loading from '../component/Loading';
 import Icon from '../component/Icon';
 
@@ -57,6 +57,59 @@ const SelectorColumnasEditables = ({ opciones, seleccionadas, onChange }) => {
     );
 };
 
+// --- Sub-componente para los dropdowns de edición en lote ---
+const BulkEditDropdown = ({ value, onChange, options, catalog, catalogos }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+    const displayOptions = options || catalogos[catalog] || [];
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleSelect = (optionValue) => {
+        onChange(optionValue);
+        setIsOpen(false);
+    };
+
+    const selectedOption = displayOptions.find(opt => String(opt.id) === String(value));
+    const displayLabel = selectedOption ? (catalog === 'sistemasOperativos' ? `${selectedOption.nombre} - V${selectedOption.version}` : selectedOption.nombre) : "Seleccionar un valor...";
+
+    return (
+        <div className="custom-select" ref={dropdownRef} style={{ flexGrow: 1 }}>
+            <button type="button" className="form__input custom-select__trigger" onClick={() => setIsOpen(!isOpen)}>
+                <span>{displayLabel}</span>
+                <div className={`chevron ${isOpen ? "open" : ""}`}></div>
+            </button>
+            <div className={`custom-select__panel ${isOpen ? "open" : ""}`}>
+                {displayOptions.map(opt => (
+                    <label
+                        key={opt.id}
+                        className={`custom-select__option ${String(value) === String(opt.id) ? 'selected' : ''}`}
+                    >
+                        <input
+                            type="radio"
+                            name={`bulk-edit-${catalog}`}
+                            value={opt.id}
+                            checked={String(value) === String(opt.id)}
+                            onChange={() => handleSelect(String(opt.id))}
+                        />
+                        <span>
+                            {catalog === 'sistemasOperativos' ? `${opt.nombre} - V${opt.version}` : opt.nombre}
+                        </span>
+                    </label>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 // --- Componente para el dropdown de paginación ---
 const ItemsPerPageDropdown = ({ value, onChange }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -99,54 +152,8 @@ const ItemsPerPageDropdown = ({ value, onChange }) => {
     );
 };
 
-// --- Nuevo sub-componente para los dropdowns de edición en lote ---
-const BulkEditDropdown = ({ value, onChange, options, catalog, catalogos }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef(null);
-    const displayOptions = options || catalogos[catalog] || [];
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const handleSelect = (optionValue) => {
-        onChange(optionValue);
-        setIsOpen(false);
-    };
-
-    const selectedOption = displayOptions.find(opt => String(opt.id) === String(value));
-    const displayLabel = selectedOption ? (catalog === 'sistemasOperativos' ? `${selectedOption.nombre} - V${selectedOption.version}` : selectedOption.nombre) : "Seleccionar un valor...";
-
-    return (
-        <div className="custom-select" ref={dropdownRef} style={{ flexGrow: 1 }}>
-            <button type="button" className="form__input custom-select__trigger" onClick={() => setIsOpen(!isOpen)}>
-                <span>{displayLabel}</span>
-                <div className={`chevron ${isOpen ? "open" : ""}`}></div>
-            </button>
-            <div className={`custom-select__panel ${isOpen ? "open" : ""}`}>
-                {displayOptions.map(opt => (
-                    <div
-                        key={opt.id}
-                        className={`custom-select__option ${String(value) === String(opt.id) ? 'selected' : ''}`}
-                        onClick={() => handleSelect(String(opt.id))}
-                    >
-                        {catalog === 'sistemasOperativos' ? `${opt.nombre} - V${opt.version}` : opt.nombre}
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
-
 
 const EditorMasivo = () => {
-    // --- Estados del componente ---
     const [filtro, setFiltro] = useState({
         nombre: '', ip: '', balanceador: '', vlan: '', descripcion: '', link: '',
         tipo: [], servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [],
@@ -160,6 +167,7 @@ const EditorMasivo = () => {
     const [validationErrors, setValidationErrors] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(50);
+
     const [catalogos, setCatalogos] = useState({
         servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
     });
@@ -388,7 +396,28 @@ const EditorMasivo = () => {
                 const responses = await Promise.all(promesas);
                 const errores = responses.filter(res => !res.ok);
                 if (errores.length > 0) throw new Error(`${errores.length} servidor(es) no se pudieron actualizar.`);
-                Swal.fire('¡Guardado!', `${numCambios} servidor(es) han sido actualizados.`, 'success');
+
+                const updatedServerIds = Object.keys(cambios);
+                const updatedServerNames = updatedServerIds.map(id => {
+                    const server = servidores.find(s => s.id === parseInt(id, 10));
+                    return server ? server.nombre : `ID ${id}`;
+                });
+
+                const successMessageHtml = `
+                    <div style="text-align: left; max-height: 200px; overflow-y: auto;">
+                        <strong>Se actualizaron los siguientes servidores:</strong>
+                        <ul style="list-style-position: inside; padding-left: 0;">
+                            ${updatedServerNames.map(name => `<li>${name}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+
+                Swal.fire({
+                    icon: 'success',
+                    title: `¡${numCambios} servidor(es) actualizados!`,
+                    html: successMessageHtml,
+                });
+
                 setCambios({});
             } catch (error) {
                 Swal.fire('Error', `Ocurrió un problema: ${error.message}`, 'error');

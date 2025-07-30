@@ -165,7 +165,6 @@
   accent-color: var(--color-primario);
 }
 
-/* =====> INICIO DE LAS MODIFICACIONES <===== */
 .custom-select__option:hover input[type="radio"] {
   border-color: var(
     --color-superficie
@@ -175,7 +174,15 @@
 .custom-select__option input[type="radio"]:checked {
   border: 5px solid var(--color-superficie); /* El círculo seleccionado también se pone blanco */
 }
-/* =====> FIN DE LAS MODIFICACIONES <===== */
+
+/* =====> INICIO DE LA MODIFICACIÓN <===== */
+/* Anula el efecto hover para las opciones deshabilitadas */
+.custom-select__option:has(.disabled-option):hover {
+  background-color: transparent;
+  color: var(--color-texto-secundario);
+  cursor: not-allowed;
+}
+/* =====> FIN DE LA MODIFICACIÓN <===== */
 
 /* Estilos unificados para el contenedor de Filtros de Búsqueda */
 .filter-form {
