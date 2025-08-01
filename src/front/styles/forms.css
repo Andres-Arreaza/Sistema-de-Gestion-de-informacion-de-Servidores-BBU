@@ -145,6 +145,7 @@
   cursor: pointer;
   border-radius: 6px;
   transition: background-color 0.2s ease, color 0.2s ease;
+  margin: 3px;
 }
 
 .custom-select__option:hover {

@@ -24,6 +24,11 @@
   opacity: 0;
   animation: fadeUp 0.8s ease-out 0.3s forwards;
 }
+/*
+.config__title {
+ margin-left: -45%;
+}
+ */
 
 .hero__subtitle {
   font-size: 2.5rem;
@@ -33,6 +38,11 @@
   opacity: 0;
   animation: fadeUp 0.8s ease-out 0.5s forwards;
 }
+/*
+.config__subtitle {
+  margin-left: -45%;
+}
+  */
 
 .hero__content::before,
 .hero__content::after {
@@ -79,6 +89,10 @@
   flex-grow: 1;
 }
 
+.main-content-actions {
+  margin-top: 2% !important;
+  margin-bottom: 1% !important;
+}
 /* --- Estilos Específicos para la Página de Configuración --- */
 .config-page {
   display: flex;

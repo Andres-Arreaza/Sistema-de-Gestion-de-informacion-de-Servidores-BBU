@@ -88,3 +88,9 @@
   transform: translateY(-4px);
   box-shadow: 0 10px 20px rgba(0, 121, 83, 0.2);
 }
+
+.btn-close {
+  background-color: #5a6268;
+  color: #ced4da;
+  border-radius: 50%;
+}

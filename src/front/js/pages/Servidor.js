@@ -41,7 +41,7 @@ const Servidor = () => {
                 </div>
             </section>
 
-            <main className="main-content-area">
+            <main className="main-content-actions">
                 <div className="actions-section">
                     {/* Tarjeta de Acción: Crear Servidor */}
                     <article className="action-card" onClick={() => setModalCrearVisible(true)}>

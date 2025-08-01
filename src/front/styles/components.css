@@ -65,12 +65,7 @@
   bottom: 0;
   border-radius: var(--radio-borde);
   border: 2px solid transparent;
-  background: linear-gradient(
-      135deg,
-      var(--color-primario),
-      var(--color-acento)
-    )
-    border-box;
+  background: linear-gradient(135deg, var(--color-primario)) border-box;
   -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: destination-out;
   mask-composite: exclude;
@@ -241,11 +236,11 @@
 }
 
 .custom-select__option input[type="radio"]:checked {
-  border: 5px solid var(--color-primario);
+  border: 4px solid #fff;
 }
 
 .custom-select__option:hover input[type="radio"] {
-  border-color: var(--color-primario);
+  border: 4px solid #fff;
 }
 
 /* --- Componente de Carga (Loading) --- */

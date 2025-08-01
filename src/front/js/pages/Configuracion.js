@@ -156,8 +156,8 @@ const Configuracion = () => {
                     <div key="inicio" className="content-wrapper">
                         <section className="hero hero--config">
                             <div className="hero__content">
-                                <h1 className="hero__title">Configuración de Información</h1>
-                                <p className="hero__subtitle">"Administra los módulos de los Servidores"</p>
+                                <h1 className="hero__title config__title">Configuración de Información</h1>
+                                <p className="hero__subtitle config__subtitle">"Administra los módulos de los Servidores"</p>
                             </div>
                         </section>
                     </div>
