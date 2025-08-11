@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Swal from "sweetalert2";
-import Icon from './Icon'; // Asegúrate de tener el componente Icon.js
+import Icon from './Icon';
+
 
 // --- Funciones auxiliares del componente ---
 const abrirModalLink = (servidor) => {
@@ -41,6 +42,93 @@ const exportarCSV = (servidores) => {
     document.body.removeChild(link);
 };
 
+const exportarExcel = (servidores) => {
+    if (!servidores.length) return;
+
+    const estilos = `
+        <style>
+            body { font-family: Arial, sans-serif; }
+            .excel-table { border-collapse: collapse; width: 100%; font-size: 12px; }
+            .excel-table th, .excel-table td { border: 1px solid #cccccc; padding: 8px; text-align: center; vertical-align: middle; }
+            .excel-table th { background-color: #005A9C; color: #FFFFFF; font-weight: bold; }
+            .excel-table tr:nth-child(even) { background-color: #f2f2f2; }
+            
+            .header-table { border-collapse: collapse; width: 100%; margin-bottom: 25px; }
+            .header-table td { border: none; vertical-align: middle; text-align: left; }
+
+            .logo { width: 180px; height: auto; }
+            .main-title { color: #006845; font-size: 28px; font-weight: bold; margin: 0; padding: 0; }
+            .sub-title { color: #005A9C; font-size: 14px; font-style: italic; margin: 0; padding: 0; }
+        </style>
+    `;
+
+    const encabezados = `
+        <tr>
+            <th>Nombre</th><th>Tipo</th><th>IP</th><th>Servicio</th><th>Capa</th><th>Ambiente</th>
+            <th>Balanceador</th><th>VLAN</th><th>Dominio</th><th>S.O.</th><th>Estatus</th>
+            <th>Descripción</th><th>Link</th>
+        </tr>
+    `;
+
+    const filas = servidores.map(srv => `
+        <tr>
+            <td>${srv.nombre || ''}</td>
+            <td>${srv.tipo || ''}</td>
+            <td>${srv.ip || ''}</td>
+            <td>${srv.servicios?.[0]?.nombre || ''}</td>
+            <td>${srv.capas?.[0]?.nombre || ''}</td>
+            <td>${srv.ambientes?.[0]?.nombre || ''}</td>
+            <td>${srv.balanceador || ''}</td>
+            <td>${srv.vlan || ''}</td>
+            <td>${srv.dominios?.[0]?.nombre || ''}</td>
+            <td>${srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : ''}</td>
+            <td>${srv.estatus?.[0]?.nombre || ''}</td>
+            <td>${srv.descripcion || ''}</td>
+            <td>${srv.link || ''}</td>
+        </tr>
+    `).join("");
+
+    const plantillaHtml = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <meta charset="UTF-8">
+            ${estilos}
+        </head>
+        <body>
+            <table class="header-table">
+                <tr>
+                    <td colspan="13">
+                        <img src="https://banesco-prod-2020.s3.amazonaws.com/wp-content/themes/banescocontigo/assets/images/header/logotype.png" alt="Banesco Logo" class="logo">
+                    </td>
+                </tr>
+                <tr><td colspan="13" style="height: 20px;"></td></tr>
+                <tr>
+                    <td colspan="13"><h1 class="main-title">Reporte de Servidores</h1></td>
+                </tr>
+                 <tr>
+                    <td colspan="13"><p class="sub-title">(Gerencia de Operaciones de Canales Virtuales y Medios de Pagos)</p></td>
+                </tr>
+            </table>
+            
+            <table class="excel-table">
+                ${encabezados}
+                ${filas}
+            </table>
+        </body>
+        </html>
+    `;
+
+    const excelContent = `data:application/vnd.ms-excel;charset=utf-8,${encodeURIComponent(plantillaHtml)}`;
+    const link = document.createElement("a");
+    link.setAttribute("href", excelContent);
+    link.setAttribute("download", "Reporte_Servidores.xls");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+// =====> FIN DE LA MODIFICACIÓN <=====
+
+// Sub-componente para el dropdown personalizado
 const ItemsPerPageDropdown = ({ value, onChange }) => {
     const [isOpen, setIsOpen] = useState(false);
     const options = [50, 100, 150, 200];
@@ -87,6 +175,19 @@ const ItemsPerPageDropdown = ({ value, onChange }) => {
 export const BusquedaTabla = ({ servidores, onClose }) => {
     const [paginaActual, setPaginaActual] = useState(1);
     const [servidoresPorPagina, setServidoresPorPagina] = useState(50);
+    const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+    const exportMenuRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (exportMenuRef.current && !exportMenuRef.current.contains(event.target)) {
+                setIsExportMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
 
     const totalPaginas = Math.max(1, Math.ceil(servidores.length / servidoresPorPagina));
     const indiceInicial = (paginaActual - 1) * servidoresPorPagina;
@@ -121,9 +222,21 @@ export const BusquedaTabla = ({ servidores, onClose }) => {
 
                         <div className="table-controls">
                             <span className="badge">{servidores.length} servidores encontrados</span>
-                            <button className="btn btn--primary" onClick={() => exportarCSV(servidores)}>
-                                <Icon name="csv" /> Descargar
-                            </button>
+                            <div className="export-dropdown-container" ref={exportMenuRef}>
+                                <button className="btn btn--primary" onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}>
+                                    <Icon name="upload" /> Descargar
+                                </button>
+                                {isExportMenuOpen && (
+                                    <div className="export-menu">
+                                        <button className="export-menu-item" onClick={() => { exportarCSV(servidores); setIsExportMenuOpen(false); }}>
+                                            <Icon name="csv" size={16} /> Exportar como CSV
+                                        </button>
+                                        <button className="export-menu-item" onClick={() => { exportarExcel(servidores); setIsExportMenuOpen(false); }}>
+                                            <Icon name="file-excel" size={16} /> Exportar como Excel
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 

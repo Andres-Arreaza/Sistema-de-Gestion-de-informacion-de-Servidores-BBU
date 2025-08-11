@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import banescoLogo from '../../img/BanescoServers.png';
-import Icon from './Icon'; // Importa el componente de íconos centralizado
+import Icon from './Icon';
 
 export const Navbar = () => {
     const location = useLocation();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-    // Datos para los enlaces del dropdown
     const adminLinks = [
         { to: "/configuracion", label: "Configuración" },
         { type: 'divider' },
         { to: "/servidor", label: "Crear Servidor", isHighlight: true },
     ];
 
-    // Cierra el dropdown cuando cambia la ruta para evitar que se quede abierto
     useEffect(() => {
         setIsDropdownOpen(false);
     }, [location]);
@@ -26,7 +24,7 @@ export const Navbar = () => {
                     <img
                         className="navbar-logo-img"
                         src={banescoLogo}
-                        alt="Logo Banesco"
+                        alt="Logo Banesco Servers"
                     />
                 </Link>
 

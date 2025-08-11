@@ -24,11 +24,6 @@
   opacity: 0;
   animation: fadeUp 0.8s ease-out 0.3s forwards;
 }
-/*
-.config__title {
- margin-left: -45%;
-}
- */
 
 .hero__subtitle {
   font-size: 2.5rem;
@@ -38,11 +33,6 @@
   opacity: 0;
   animation: fadeUp 0.8s ease-out 0.5s forwards;
 }
-/*
-.config__subtitle {
-  margin-left: -45%;
-}
-  */
 
 .hero__content::before,
 .hero__content::after {
@@ -68,7 +58,7 @@
 .home-page {
   display: flex;
   flex-direction: column;
-  height: calc(92vh - 80px);
+  height: calc(91vh - 80px);
 }
 
 .home-page .main-content-area {
@@ -89,10 +79,6 @@
   flex-grow: 1;
 }
 
-.main-content-actions {
-  margin-top: 2% !important;
-  margin-bottom: 1% !important;
-}
 /* --- Estilos Específicos para la Página de Configuración --- */
 .config-page {
   display: flex;
@@ -104,7 +90,7 @@
   flex-shrink: 0;
   background-color: var(--color-superficie);
   border-right: 1px solid var(--color-borde);
-  min-height: calc(92vh - 80px);
+  min-height: calc(91vh - 80px);
 }
 
 .config-main-content {
@@ -207,7 +193,7 @@
 
 /* --- Estilos para el Editor Masivo --- */
 .editor-masivo-container {
-  padding: var(--espaciado-sm);
+  padding: var(--espaciado-xl);
 }
 
 .resultados-editor {
@@ -219,22 +205,36 @@
   border: 1px solid var(--color-borde);
 }
 
-.editor-controles-superiores {
+.editor-top-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--espaciado-lg);
+  justify-content: flex-start; /* Alinea los botones a la izquierda */
+  gap: var(--espaciado-md);
+  margin-bottom: var(--espaciado-xl);
+}
+
+.editor-panel {
+  background-color: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-borde);
+  padding: var(--espaciado-lg);
+  margin-bottom: var(--espaciado-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaciado-lg);
+}
+
+.editor-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--espaciado-md);
+  padding-top: var(--espaciado-lg);
+  border-top: 1px solid var(--color-borde);
 }
 
 .bulk-edit-controls {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: var(--espaciado-lg);
-  padding: var(--espaciado-lg);
-  background-color: var(--color-fondo);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio-borde);
-  margin-bottom: var(--espaciado-xl);
 }
 
 .bulk-edit-field {
@@ -248,17 +248,15 @@
   font-size: 0.9rem;
   background-color: var(--color-secundario);
   color: var(--color-superficie);
-  flex-shrink: 0; /* Evita que el botón se encoja */
+  flex-shrink: 0;
 }
 
 .bulk-edit-field .btn--apply-bulk:hover {
-  background-color: #003355; /* Un azul más oscuro */
+  background-color: #003355;
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* =====> INICIO DE LAS MODIFICACIONES <===== */
-/* Estilos para los dropdowns del Editor Masivo */
 .selector-columnas-container .custom-select {
   min-width: 220px;
 }
@@ -268,9 +266,7 @@
   cursor: not-allowed;
   background-color: #f8fafc;
 }
-/* =====> FIN DE LAS MODIFICACIONES <===== */
 
-/* =====> KEYFRAMES PARA LAS ANIMACIONES <===== */
 @keyframes fadeUp {
   from {
     opacity: 0;

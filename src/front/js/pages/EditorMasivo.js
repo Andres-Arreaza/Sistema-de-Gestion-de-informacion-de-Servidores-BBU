@@ -1,10 +1,81 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Swal from 'sweetalert2';
-import { BusquedaFiltro } from '../component/BusquedaFiltro'; // Se reutiliza el mismo componente de filtros
+import { BusquedaFiltro } from '../component/BusquedaFiltro';
 import Loading from '../component/Loading';
 import Icon from '../component/Icon';
 
-// --- Componente para seleccionar columnas a editar ---
+// --- Funciones de Exportación y Auxiliares ---
+const abrirModalLink = (servidor) => {
+    if (!servidor || !servidor.link) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Sin Enlace',
+            text: `El servidor "${servidor.nombre}" no tiene un enlace asociado.`,
+            confirmButtonColor: "var(--color-primario)",
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: "Información del Enlace",
+        html: `
+            <div style="text-align: left; padding: 0 1rem;">
+                <p><strong>Servidor:</strong> ${servidor.nombre || "No disponible"}</p>
+                <p><strong>Descripción:</strong> ${servidor.descripcion || "No disponible"}</p>
+                <p><strong>Enlace:</strong> <a href="${servidor.link}" target="_blank" rel="noopener noreferrer">${servidor.link}</a></p>
+            </div>
+        `,
+        confirmButtonText: "Cerrar",
+        confirmButtonColor: "var(--color-primario)",
+    });
+};
+
+const exportarCSV = (servidores) => {
+    if (!servidores.length) return;
+    const encabezados = `"Nombre";"Tipo";"IP";"Servicio";"Capa";"Ambiente";"Balanceador";"VLAN";"Dominio";"S.O.";"Estatus";"Descripción";"Link"\n`;
+    const filas = servidores.map(srv =>
+        `"${srv.nombre || 'N/A'}";"${srv.tipo || 'N/A'}";"${srv.ip || 'N/A'}";"${srv.servicios?.[0]?.nombre || 'N/A'}";` +
+        `"${srv.capas?.[0]?.nombre || 'N/A'}";"${srv.ambientes?.[0]?.nombre || 'N/A'}";"${srv.balanceador || 'N/A'}";"${srv.vlan || 'N/A'}";` +
+        `"${srv.dominios?.[0]?.nombre || 'N/A'}";"${srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : 'N/A'}";"${srv.estatus?.[0]?.nombre || 'N/A'}";"${srv.descripcion || 'N/A'}";` +
+        `"${srv.link || 'N/A'}"`
+    ).join("\n");
+    const csvContent = `data:text/csv;charset=utf-8,\uFEFF${encodeURI(encabezados + filas)}`;
+    const link = document.createElement("a");
+    link.setAttribute("href", csvContent);
+    link.setAttribute("download", "servidores.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+const exportarExcel = (servidores) => {
+    if (!servidores.length) return;
+    const estilos = `
+        <style>
+            body { font-family: Arial, sans-serif; }
+            .excel-table { border-collapse: collapse; width: 100%; font-size: 12px; }
+            .excel-table th, .excel-table td { border: 1px solid #cccccc; padding: 8px; text-align: center; vertical-align: middle; }
+            .excel-table th { background-color: #005A9C; color: #FFFFFF; font-weight: bold; }
+            .excel-table tr:nth-child(even) { background-color: #f2f2f2; }
+            .header-table { border-collapse: collapse; width: 100%; margin-bottom: 25px; }
+            .header-table td { border: none; vertical-align: middle; text-align: left; }
+            .main-title { color: #000000; font-size: 28px; font-weight: bold; margin: 0; padding: 0; }
+            .sub-title { color: #005A9C; font-size: 14px; font-style: italic; margin: 0; padding: 0; }
+        </style>
+    `;
+    const encabezados = `<tr><th>Nombre</th><th>Tipo</th><th>IP</th><th>Servicio</th><th>Capa</th><th>Ambiente</th><th>Balanceador</th><th>VLAN</th><th>Dominio</th><th>S.O.</th><th>Estatus</th><th>Descripción</th><th>Link</th></tr>`;
+    const filas = servidores.map(srv => `<tr><td>${srv.nombre || ''}</td><td>${srv.tipo || ''}</td><td>${srv.ip || ''}</td><td>${srv.servicios?.[0]?.nombre || ''}</td><td>${srv.capas?.[0]?.nombre || ''}</td><td>${srv.ambientes?.[0]?.nombre || ''}</td><td>${srv.balanceador || ''}</td><td>${srv.vlan || ''}</td><td>${srv.dominios?.[0]?.nombre || ''}</td><td>${srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : ''}</td><td>${srv.estatus?.[0]?.nombre || ''}</td><td>${srv.descripcion || ''}</td><td>${srv.link || ''}</td></tr>`).join("");
+    const plantillaHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8">${estilos}</head><body><table class="header-table"><tr><td colspan="13"><h1 class="main-title">Reporte de Servidores</h1></td></tr><tr><td colspan="13"><p class="sub-title">(Gerencia de Operaciones de Canales Virtuales y Medios de Pagos)</p></td></tr></table><table class="excel-table">${encabezados}${filas}</table></body></html>`;
+    const excelContent = `data:application/vnd.ms-excel;charset=utf-8,${encodeURIComponent(plantillaHtml)}`;
+    const link = document.createElement("a");
+    link.setAttribute("href", excelContent);
+    link.setAttribute("download", "Reporte_Servidores.xls");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+// --- Componentes Internos ---
 const SelectorColumnasEditables = ({ opciones, seleccionadas, onChange }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
@@ -57,7 +128,6 @@ const SelectorColumnasEditables = ({ opciones, seleccionadas, onChange }) => {
     );
 };
 
-// --- Sub-componente para los dropdowns de edición en lote ---
 const BulkEditDropdown = ({ value, onChange, options, catalog, catalogos }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
@@ -110,7 +180,6 @@ const BulkEditDropdown = ({ value, onChange, options, catalog, catalogos }) => {
     );
 };
 
-// --- Componente para el dropdown de paginación ---
 const ItemsPerPageDropdown = ({ value, onChange }) => {
     const [isOpen, setIsOpen] = useState(false);
     const options = [50, 100, 150, 200];
@@ -167,12 +236,24 @@ const EditorMasivo = () => {
     const [validationErrors, setValidationErrors] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(50);
-
     const [catalogos, setCatalogos] = useState({
         servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
     });
+    const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const exportMenuRef = useRef(null);
+    const resultadosRef = useRef(null);
 
-    // --- Carga inicial de catálogos ---
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (exportMenuRef.current && !exportMenuRef.current.contains(event.target)) {
+                setIsExportMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     useEffect(() => {
         const fetchCatalogos = async () => {
             try {
@@ -198,7 +279,6 @@ const EditorMasivo = () => {
         fetchCatalogos();
     }, []);
 
-    // --- Función para buscar servidores ---
     const buscarServidores = async (e) => {
         if (e) e.preventDefault();
         setCargando(true);
@@ -244,10 +324,12 @@ const EditorMasivo = () => {
             Swal.fire("Error de Búsqueda", `${error.message}`, "error");
         } finally {
             setCargando(false);
+            setTimeout(() => {
+                resultadosRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
         }
     };
 
-    // --- Lógica de Edición y Guardado ---
     const opcionesColumnas = [
         { value: 'nombre', label: 'Nombre', type: 'input', disabled: servidores.length > 1 },
         { value: 'tipo', label: 'Tipo', type: 'select', options: [{ id: 'VIRTUAL', nombre: 'Virtual' }, { id: 'FISICO', nombre: 'Físico' }] },
@@ -427,7 +509,6 @@ const EditorMasivo = () => {
         }
     };
 
-    // --- Renderizado de la Tabla y Controles ---
     const renderResultadosTabla = () => {
         const indexOfLastItem = currentPage * itemsPerPage;
         const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -464,6 +545,15 @@ const EditorMasivo = () => {
                             <tr key={servidor.id} className={isModified ? 'fila-modificada' : ''}>
                                 <td>{indexOfFirstItem + index + 1}</td>
                                 {columnas.map(col => {
+                                    if (col.key === 'link') {
+                                        return (
+                                            <td key={`${servidor.id}-link`}>
+                                                <button className="btn-icon" onClick={() => abrirModalLink(servidor)} title="Ver detalles y enlace" disabled={!servidor.link}>
+                                                    <Icon name="visibility" />
+                                                </button>
+                                            </td>
+                                        );
+                                    }
                                     let displayValue = servidor[col.key];
                                     if (col.catalog) {
                                         const found = catalogos[col.catalog]?.find(c => String(c.id) === String(displayValue));
@@ -548,13 +638,14 @@ const EditorMasivo = () => {
     return (
         <div className="page-container">
 
+
             <div className="editor-masivo-container">
                 <BusquedaFiltro
                     filtro={filtro} setFiltro={setFiltro}
                     buscarServidores={buscarServidores} cargando={cargando}
                     {...catalogos}
                 />
-                <div className="resultados-editor">
+                <div className="resultados-editor" ref={resultadosRef}>
                     {cargando && <Loading />}
                     {!cargando && busquedaRealizada && (
                         <>
@@ -565,17 +656,47 @@ const EditorMasivo = () => {
 
                             {servidores.length > 0 ? (
                                 <>
-                                    <div className="editor-controles-superiores">
-                                        <SelectorColumnasEditables
-                                            opciones={opcionesColumnas}
-                                            seleccionadas={columnasEditables}
-                                            onChange={setColumnasEditables}
-                                        />
-                                        <button className="btn btn--primary" onClick={handleGuardarCambios} disabled={Object.keys(cambios).length === 0}>
-                                            <Icon name="save" /> Guardar Cambios
+                                    <div className="editor-top-actions">
+                                        <div className="export-dropdown-container" ref={exportMenuRef}>
+                                            <button className="btn btn--primary" onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}>
+                                                <Icon name="upload" /> Descargar
+                                            </button>
+                                            {isExportMenuOpen && (
+                                                <div className="export-menu">
+                                                    <button className="export-menu-item" onClick={() => { exportarCSV(servidores); setIsExportMenuOpen(false); }}>
+                                                        <Icon name="csv" size={16} /> Exportar como CSV
+                                                    </button>
+                                                    <button className="export-menu-item" onClick={() => { exportarExcel(servidores); setIsExportMenuOpen(false); }}>
+                                                        <Icon name="file-excel" size={16} /> Exportar como Excel
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <button className="btn btn--primary" onClick={() => setIsEditMode(true)} disabled={isEditMode}>
+                                            <Icon name="edit" /> Editar
                                         </button>
                                     </div>
-                                    {columnasEditables.length > 0 && renderBulkEditControls()}
+
+                                    {isEditMode && (
+                                        <div className="editor-panel">
+                                            <SelectorColumnasEditables
+                                                opciones={opcionesColumnas}
+                                                seleccionadas={columnasEditables}
+                                                onChange={setColumnasEditables}
+                                            />
+                                            {columnasEditables.length > 0 && renderBulkEditControls()}
+                                            <div className="editor-panel__actions">
+                                                <button className="btn btn--secondary" onClick={() => setIsEditMode(false)}>
+                                                    Cancelar
+                                                </button>
+                                                <button className="btn btn--primary" onClick={handleGuardarCambios} disabled={Object.keys(cambios).length === 0}>
+                                                    <Icon name="save" /> Guardar Cambios
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <PaginacionControles />
                                     <div className="table-container">
                                         {renderResultadosTabla()}

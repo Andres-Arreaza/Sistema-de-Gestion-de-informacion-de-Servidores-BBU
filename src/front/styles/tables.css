@@ -1,17 +1,7 @@
 /* src/front/styles/tables.css */
 
-/* --- Contenedor principal de la vista de tabla --- */
-.table-view-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%; /* Ocupa toda la altura disponible en el modal */
-  overflow: hidden; /* Previene que este contenedor tenga scroll */
-}
-
 .table-container {
-  /* ESTE es el único contenedor que debe tener scroll */
-  overflow-y: auto;
-  flex-grow: 1; /* Permite que ocupe el espacio restante */
+  overflow-x: auto;
   border: 1px solid var(--color-borde);
   border-radius: var(--radio-borde);
   background-color: var(--color-superficie);
@@ -28,13 +18,12 @@
 .table th,
 .tabla-servidores th,
 .editor-tabla th {
-  background-color: var(--color-superficie); /* Un fondo sólido es crucial */
+  background-color: var(--color-fondo);
   padding: 14px 12px;
   text-align: left;
   font-weight: 600;
   color: var(--color-texto-secundario);
   border-bottom: 2px solid var(--color-borde);
-  /* Se asegura que el encabezado sea estático (sticky) */
   position: sticky;
   top: 0;
   z-index: 1;
@@ -60,12 +49,7 @@
   background-color: #f0f9ff;
 }
 
-/* Estilos para el encabezado y paginación (no se encogen) */
-.resultados-header,
-.pagination-controls {
-  flex-shrink: 0;
-}
-
+/* Estilos para el encabezado de la tabla de resultados */
 .resultados-header {
   display: flex;
   align-items: center;
@@ -84,6 +68,7 @@
   display: flex;
   align-items: center;
   gap: var(--espaciado-md);
+  flex-shrink: 0;
   margin-left: auto;
 }
 
@@ -97,7 +82,6 @@
   border-radius: 9999px;
 }
 
-/* Estilos para la paginación */
 .pagination-controls {
   display: flex;
   justify-content: space-between;
@@ -127,7 +111,10 @@
   font-weight: 600;
 }
 
-/* Estilos para la Validación en la Vista Previa */
+.pagination__navigation .page-number {
+  color: var(--color-primario);
+}
+
 .fila-con-error {
   background-color: #fff1f2 !important;
 }
@@ -139,4 +126,57 @@
 
 .fila-correcta {
   background-color: #f0fdf4;
+}
+
+.export-dropdown-container {
+  position: relative;
+}
+
+.export-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background-color: var(--color-superficie);
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra-caja);
+  border: 1px solid var(--color-borde);
+  padding: var(--espaciado-sm);
+  z-index: 10;
+  width: 200px;
+  opacity: 0;
+  transform: translateY(-10px);
+  animation: menu-fade-in 0.25s ease-in-out forwards;
+}
+
+.export-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-sm);
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--color-texto-principal);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  margin-top: 3px;
+}
+
+.export-menu-item:hover {
+  background-color: var(--color-secundario);
+  color: var(--color-superficie);
+}
+
+@keyframes menu-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

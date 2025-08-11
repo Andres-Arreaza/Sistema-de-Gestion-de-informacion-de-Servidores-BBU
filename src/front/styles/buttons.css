@@ -36,17 +36,34 @@
 }
 .btn--secondary:hover:not(:disabled) {
   background-color: #5a6268;
-  color: var(--color-superficie); /* Asegura que el texto sea blanco */
+  color: var(--color-superficie);
 }
 
+/* Estilo genérico para CUALQUIER botón deshabilitado */
 .btn:disabled {
   background-color: #ced4da;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
+/* =====> INICIO DE LA MODIFICACIÓN <===== */
+/* Estilo específico para el botón Editar cuando está en modo "activo" */
+.btn--primary.is-active {
+  background-color: var(--color-secundario); /* Color azul */
+  color: var(--color-superficie);
+  opacity: 1; /* Se asegura que no se vea transparente */
+  cursor: default;
+}
+
+/* Se asegura que no cambie de color al pasar el ratón por encima cuando está activo */
+.btn--primary.is-active:hover {
+  background-color: var(--color-secundario);
+}
+/* =====> FIN DE LA MODIFICACIÓN <===== */
+
 /* Botones solo con icono */
-.btn-icon,
-.accion-btn {
+.btn-icon {
   background: none;
   border: none;
   padding: var(--espaciado-sm);
@@ -54,13 +71,48 @@
   border-radius: 50%;
   display: flex;
   transition: var(--transicion-rapida);
-  color: var(--color-texto-secundario); /* Color inicial del icono */
+  color: var(--color-texto-secundario);
 }
 
-/* =====> MODIFICACIÓN <===== */
 .btn-icon:hover {
-  background-color: var(--color-primario); /* Fondo verde al pasar el ratón */
-  color: var(--color-superficie); /* Icono se vuelve blanco */
+  background-color: var(--color-primario);
+  color: var(--color-superficie);
+}
+
+/* Nueva clase reutilizable para todos los botones de cierre */
+.btn-close {
+  background-color: #f1f5f9; /* Gris claro */
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--transicion-rapida);
+  position: relative;
+}
+
+.btn-close::before,
+.btn-close::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 2px;
+  background-color: var(--color-texto-secundario);
+  border-radius: 2px;
+}
+
+.btn-close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.btn-close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.btn-close:hover {
+  background-color: #e2e8f0;
 }
 
 /* Estilo específico para el botón de acción en la página de inicio */
@@ -84,13 +136,7 @@
 
 .action-button:hover {
   background: var(--color-primario);
-  color: var(--color-superficie); /* Asegura que el texto sea blanco */
+  color: var(--color-superficie);
   transform: translateY(-4px);
   box-shadow: 0 10px 20px rgba(0, 121, 83, 0.2);
-}
-
-.btn-close {
-  background-color: #5a6268;
-  color: #ced4da;
-  border-radius: 50%;
 }

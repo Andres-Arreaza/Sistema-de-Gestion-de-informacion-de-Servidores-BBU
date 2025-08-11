@@ -61,19 +61,29 @@ const Home = () => {
 
                 <main className="main-content-area">
                     <div className="actions-section">
-                        <ActionButton
+                        {
+                            /*
+                            <ActionButton
                             text="Búsqueda"
                             icon={<Icon name="search" size={24} />}
                             onClick={() => handleNavigate('/busqueda')}
                         />
+                            */
+                        }
+
                         <ActionButton
                             text="Carga Masiva"
                             icon={<Icon name="upload-cloud" size={24} />}
                             onClick={() => setModalCargaVisible(true)}
                         />
                         <ActionButton
+                            text="Búsqueda"
+                            icon={<Icon name="search" size={24} />}
+                            /*
                             text="Editor Masivo"
                             icon={<Icon name="edit" size={24} />}
+                            */
+
                             onClick={() => handleNavigate('/editor-masivo')}
                         />
                     </div>

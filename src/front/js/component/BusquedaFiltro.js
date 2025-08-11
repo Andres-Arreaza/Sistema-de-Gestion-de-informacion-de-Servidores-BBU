@@ -58,20 +58,35 @@ export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios,
         });
     };
 
-    // =====> AQUÍ ESTÁ LA MODIFICACIÓN <=====
-    // Se reordena el array para que coincida con el formulario de creación de servidor
+    // Función para eliminar duplicados de los catálogos basándose en el nombre
+    const getUniqueItems = (array) => {
+        if (!array) return [];
+        return Array.from(new Map(array.map(item => [item.nombre, item])).values());
+    };
+
+    const uniqueServicios = getUniqueItems(servicios);
+    const uniqueCapas = getUniqueItems(capas);
+    const uniqueAmbientes = getUniqueItems(ambientes);
+    const uniqueDominios = getUniqueItems(dominios);
+    const uniqueEstatus = getUniqueItems(estatus);
+
+    const uniqueSistemasOperativos = sistemasOperativos
+        ? Array.from(new Map(sistemasOperativos.map(item => [`${item.nombre} - V${item.version}`, item])).values())
+        : [];
+
     const formFields = [
         { type: 'text', name: "nombre", label: "Nombre", icon: <Icon name="server" size={16} /> },
         { type: 'dropdown', key: "tipo", label: "Tipo", icon: <Icon name="type" size={16} />, data: [{ id: "VIRTUAL", nombre: "Virtual" }, { id: "FISICO", nombre: "Físico" }] },
+        // =====> AQUÍ ESTÁ LA MODIFICACIÓN <=====
         { type: 'text', name: "ip", label: "Dirección IP", icon: <Icon name="ip" size={16} /> },
         { type: 'text', name: "balanceador", label: "Balanceador", icon: <Icon name="balanceador" size={16} /> },
         { type: 'text', name: "vlan", label: "VLAN", icon: <Icon name="vlan" size={16} /> },
-        { type: 'dropdown', key: "servicios", label: "Servicios", data: servicios, icon: <Icon name="servicios" size={16} /> },
-        { type: 'dropdown', key: "capas", label: "Capas", data: capas, icon: <Icon name="layers" size={16} /> },
-        { type: 'dropdown', key: "ambientes", label: "Ambientes", data: ambientes, icon: <Icon name="globe" size={16} /> },
-        { type: 'dropdown', key: "dominios", label: "Dominios", data: dominios, icon: <Icon name="shield" size={16} /> },
-        { type: 'dropdown', key: "sistemasOperativos", label: "Sistemas Operativos", data: sistemasOperativos.map(so => ({ id: so.id, nombre: `${so.nombre} - V${so.version}` })), icon: <Icon name="os" size={16} /> },
-        { type: 'dropdown', key: "estatus", label: "Estatus", data: estatus, icon: <Icon name="status" size={16} /> },
+        { type: 'dropdown', key: "servicios", label: "Servicios", data: uniqueServicios, icon: <Icon name="servicios" size={16} /> },
+        { type: 'dropdown', key: "capas", label: "Capas", data: uniqueCapas, icon: <Icon name="layers" size={16} /> },
+        { type: 'dropdown', key: "ambientes", label: "Ambientes", data: uniqueAmbientes, icon: <Icon name="globe" size={16} /> },
+        { type: 'dropdown', key: "dominios", label: "Dominios", data: uniqueDominios, icon: <Icon name="shield" size={16} /> },
+        { type: 'dropdown', key: "sistemasOperativos", label: "Sistemas Operativos", data: uniqueSistemasOperativos.map(so => ({ id: so.id, nombre: `${so.nombre} - V${so.version}` })), icon: <Icon name="os" size={16} /> },
+        { type: 'dropdown', key: "estatus", label: "Estatus", data: uniqueEstatus, icon: <Icon name="status" size={16} /> },
         { type: 'text', name: "link", label: "Enlace", icon: <Icon name="link" size={16} /> },
         { type: 'text', name: "descripcion", label: "Descripción", icon: <Icon name="descripcion" size={16} /> },
     ];
