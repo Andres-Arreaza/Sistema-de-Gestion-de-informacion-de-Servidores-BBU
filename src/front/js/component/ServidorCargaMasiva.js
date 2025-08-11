@@ -63,7 +63,7 @@ const TablaPrevisualizacion = ({ datos, encabezado, onEdit, onDelete, startIndex
 // Sub-componente para el dropdown de paginación
 const ItemsPerPageDropdown = ({ value, onChange }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const options = [10, 25, 50, 100];
+    const options = [50, 100, 150, 200];
     const dropdownRef = useRef(null);
 
     useEffect(() => {
@@ -104,7 +104,7 @@ const ItemsPerPageDropdown = ({ value, onChange }) => {
 
 const PreviewModal = ({ datos, encabezado, onClose, onSave, onEdit, onDelete }) => {
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [itemsPerPage, setItemsPerPage] = useState(50);
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;

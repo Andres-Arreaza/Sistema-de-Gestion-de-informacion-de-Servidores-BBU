@@ -76,11 +76,11 @@ const Servidor = () => {
             {/* Modal para el formulario de creación de servidor */}
             {modalCrearVisible && (
                 <div className="modal__overlay" onClick={() => setModalCrearVisible(false)}>
-                    {/* Esta es la clase que modificamos en el CSS: .modal-content-servidor */}
                     <div className="modal__content modal-content-servidor" onClick={(e) => e.stopPropagation()}>
                         <div className="modal__header">
                             <h2 className="modal__title">Crear Nuevo Servidor</h2>
-                            <button onClick={() => setModalCrearVisible(false)} className="btn-icon">&times;</button>
+                            {/* =====> AQUÍ ESTÁ LA MODIFICACIÓN <===== */}
+                            <button onClick={() => setModalCrearVisible(false)} className="btn-close" />
                         </div>
                         <div className="modal__body">
                             <ServidorFormulario

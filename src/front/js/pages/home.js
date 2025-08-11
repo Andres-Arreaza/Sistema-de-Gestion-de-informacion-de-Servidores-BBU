@@ -72,11 +72,6 @@ const Home = () => {
                         }
 
                         <ActionButton
-                            text="Carga Masiva"
-                            icon={<Icon name="upload-cloud" size={24} />}
-                            onClick={() => setModalCargaVisible(true)}
-                        />
-                        <ActionButton
                             text="Búsqueda"
                             icon={<Icon name="search" size={24} />}
                             /*
@@ -86,6 +81,12 @@ const Home = () => {
 
                             onClick={() => handleNavigate('/editor-masivo')}
                         />
+                        <ActionButton
+                            text="Carga Masiva"
+                            icon={<Icon name="upload-cloud" size={24} />}
+                            onClick={() => setModalCargaVisible(true)}
+                        />
+
                     </div>
                 </main>
             </div>
