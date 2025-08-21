@@ -385,6 +385,45 @@ const EditorMasivo = () => {
         }
     };
 
+    const handleDesactivarServidor = async (servidorParaDesactivar) => {
+        const result = await Swal.fire({
+            title: '¿Estás seguro?',
+            text: `El servidor "${servidorParaDesactivar.nombre}" será Eliminado. Esta acción no se puede deshacer.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: 'var(--color-error)',
+            cancelButtonColor: 'var(--color-texto-secundario)',
+            confirmButtonText: 'Eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            const payload = { ...servidorParaDesactivar, activo: false };
+            delete payload.servicios;
+            delete payload.capas;
+            delete payload.ambientes;
+            delete payload.dominios;
+            delete payload.sistemasOperativos;
+            delete payload.sistemas_operativos;
+            delete payload.estatus;
+
+            try {
+                const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/${servidorParaDesactivar.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error((await response.json()).msg || 'Error al desactivar');
+
+                Swal.fire('¡Desactivado!', 'El servidor ha sido desactivado correctamente.', 'success');
+                setServidores(prev => prev.filter(s => s.id !== servidorParaDesactivar.id));
+                setCambios(prev => { const newCambios = { ...prev }; delete newCambios[servidorParaDesactivar.id]; return newCambios; });
+            } catch (error) {
+                Swal.fire('Error', `Ocurrió un problema: ${error.message}`, 'error');
+            }
+        }
+    };
+
     const handleGuardarCambios = async () => {
         setValidationErrors({});
         const numCambios = Object.keys(cambios).length;
@@ -525,7 +564,8 @@ const EditorMasivo = () => {
             { header: 'S.O.', key: 'sistema_operativo_id', catalog: 'sistemasOperativos' },
             { header: 'Estatus', key: 'estatus_id', catalog: 'estatus' },
             { header: 'Descripción', key: 'descripcion' },
-            { header: 'Link', key: 'link' }
+            { header: 'Link', key: 'link' },
+            { header: 'Acciones', key: 'acciones' }
         ];
 
         return (
@@ -550,6 +590,15 @@ const EditorMasivo = () => {
                                             <td key={`${servidor.id}-link`}>
                                                 <button className="btn-icon" onClick={() => abrirModalLink(servidor)} title="Ver detalles y enlace" disabled={!servidor.link}>
                                                     <Icon name="visibility" />
+                                                </button>
+                                            </td>
+                                        );
+                                    }
+                                    if (col.key === 'acciones') {
+                                        return (
+                                            <td key={`${servidor.id}-acciones`}>
+                                                <button className="btn-icon" onClick={() => handleDesactivarServidor(servidor)} title="Desactivar Servidor">
+                                                    <Icon name="trash" />
                                                 </button>
                                             </td>
                                         );
