@@ -499,26 +499,42 @@ const EditorMasivo = () => {
 
         if (result.isConfirmed) {
             setCargando(true);
-            const promesas = Object.keys(cambios).map(id => {
+            const promesas = Object.keys(cambios).map(async id => {
                 const servidorOriginal = servidores.find(s => s.id === parseInt(id, 10));
                 const cambiosParaServidor = cambios[id];
-                const payload = { ...servidorOriginal, ...cambiosParaServidor };
-                delete payload.servicios;
-                delete payload.capas;
-                delete payload.ambientes;
-                delete payload.dominios;
-                delete payload.sistemasOperativos;
-                delete payload.sistemas_operativos;
-                delete payload.estatus;
-                return fetch(`${process.env.BACKEND_URL}/api/servidores/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                // Solo enviar los campos editables y requeridos
+                const payload = {
+                    id: servidorOriginal.id,
+                    nombre: cambiosParaServidor.nombre ?? servidorOriginal.nombre,
+                    tipo: cambiosParaServidor.tipo ?? servidorOriginal.tipo,
+                    ip: cambiosParaServidor.ip ?? servidorOriginal.ip,
+                    balanceador: cambiosParaServidor.balanceador ?? servidorOriginal.balanceador,
+                    vlan: cambiosParaServidor.vlan ?? servidorOriginal.vlan,
+                    link: cambiosParaServidor.link ?? servidorOriginal.link,
+                    descripcion: cambiosParaServidor.descripcion ?? servidorOriginal.descripcion,
+                    servicio_id: cambiosParaServidor.servicio_id ?? servidorOriginal.servicio_id,
+                    ecosistema_id: cambiosParaServidor.ecosistema_id ?? servidorOriginal.ecosistema_id,
+                    capa_id: cambiosParaServidor.capa_id ?? servidorOriginal.capa_id,
+                    ambiente_id: cambiosParaServidor.ambiente_id ?? servidorOriginal.ambiente_id,
+                    dominio_id: cambiosParaServidor.dominio_id ?? servidorOriginal.dominio_id,
+                    sistema_operativo_id: cambiosParaServidor.sistema_operativo_id ?? servidorOriginal.sistema_operativo_id,
+                    estatus_id: cambiosParaServidor.estatus_id ?? servidorOriginal.estatus_id,
+                    activo: servidorOriginal.activo,
+                };
+                try {
+                    const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    return response.ok;
+                } catch (err) {
+                    return false;
+                }
             });
             try {
-                const responses = await Promise.all(promesas);
-                const errores = responses.filter(res => !res.ok);
+                const results = await Promise.all(promesas);
+                const errores = results.filter(ok => !ok);
                 if (errores.length > 0) throw new Error(`${errores.length} servidor(es) no se pudieron actualizar.`);
 
                 const updatedServerIds = Object.keys(cambios);

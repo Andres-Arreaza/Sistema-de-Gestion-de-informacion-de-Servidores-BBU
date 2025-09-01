@@ -420,7 +420,7 @@ def create_ecosistema():
 @api.route("/ecosistemas/<int:record_id>", methods=["PUT"])
 def update_ecosistema(record_id):
     ecosistema = Ecosistema.query.get(record_id)
-    if not ecosistema or not ecosistema.activo:
+    if not ecosistema:
         return jsonify({"error": "Ecosistema no encontrado"}), 404
     data = request.get_json()
     ecosistema.nombre = data.get("nombre", ecosistema.nombre)
@@ -432,7 +432,7 @@ def update_ecosistema(record_id):
 @api.route("/ecosistemas/<int:record_id>", methods=["DELETE"])
 def delete_ecosistema(record_id):
     ecosistema = Ecosistema.query.get(record_id)
-    if not ecosistema or not ecosistema.activo:
+    if not ecosistema:
         return jsonify({"error": "Ecosistema no encontrado"}), 404
     ecosistema.activo = False
     ecosistema.fecha_modificacion = datetime.utcnow()
