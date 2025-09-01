@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, Blueprint
-from api.models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor
+from api.models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, Ecosistema
 from flask_cors import CORS
 from flask_cors import cross_origin
 from datetime import datetime
@@ -391,4 +391,51 @@ def validar_actualizaciones():
         return jsonify({"detalles": errores_detalle}), 400
 
     return jsonify({"msg": "Validación exitosa"}), 200
+
+# Endpoints CRUD para Ecosistema
+@api.route("/ecosistemas", methods=["GET"])
+def get_ecosistemas():
+    ecosistemas = Ecosistema.query.filter_by(activo=True).all()
+    return jsonify([e.serialize() for e in ecosistemas]), 200
+
+@api.route("/ecosistemas/<int:record_id>", methods=["GET"])
+def get_ecosistema(record_id):
+    ecosistema = Ecosistema.query.get(record_id)
+    if not ecosistema or not ecosistema.activo:
+        return jsonify({"error": "Ecosistema no encontrado"}), 404
+    return jsonify(ecosistema.serialize()), 200
+
+@api.route("/ecosistemas", methods=["POST"])
+def create_ecosistema():
+    data = request.get_json()
+    nombre = data.get("nombre")
+    descripcion = data.get("descripcion")
+    if not nombre:
+        return jsonify({"error": "El nombre es obligatorio"}), 400
+    ecosistema = Ecosistema(nombre=nombre, descripcion=descripcion)
+    db.session.add(ecosistema)
+    db.session.commit()
+    return jsonify(ecosistema.serialize()), 201
+
+@api.route("/ecosistemas/<int:record_id>", methods=["PUT"])
+def update_ecosistema(record_id):
+    ecosistema = Ecosistema.query.get(record_id)
+    if not ecosistema or not ecosistema.activo:
+        return jsonify({"error": "Ecosistema no encontrado"}), 404
+    data = request.get_json()
+    ecosistema.nombre = data.get("nombre", ecosistema.nombre)
+    ecosistema.descripcion = data.get("descripcion", ecosistema.descripcion)
+    ecosistema.fecha_modificacion = datetime.utcnow()
+    db.session.commit()
+    return jsonify(ecosistema.serialize()), 200
+
+@api.route("/ecosistemas/<int:record_id>", methods=["DELETE"])
+def delete_ecosistema(record_id):
+    ecosistema = Ecosistema.query.get(record_id)
+    if not ecosistema or not ecosistema.activo:
+        return jsonify({"error": "Ecosistema no encontrado"}), 404
+    ecosistema.activo = False
+    ecosistema.fecha_modificacion = datetime.utcnow()
+    db.session.commit()
+    return jsonify({"msg": "Ecosistema eliminado"}), 200
 

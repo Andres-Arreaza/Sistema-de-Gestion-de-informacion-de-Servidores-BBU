@@ -44,7 +44,7 @@ const FiltroDropdown = ({ filtroKey, label, data, filtroState, handleCheckboxCha
 };
 
 // Componente principal del formulario de filtros
-export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios, capas, ambientes, dominios, sistemasOperativos, estatus, cargando }) => {
+export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios, capas, ambientes, dominios, sistemasOperativos, estatus, ecosistemas, cargando }) => {
     const handleInputChange = (e) => {
         setFiltro({ ...filtro, [e.target.name]: e.target.value });
     };
@@ -53,6 +53,11 @@ export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios,
         const { value, checked } = e.target;
         setFiltro((prev) => {
             const currentValues = prev[key] || [];
+            // Para ecosistemas, guardar como string (id) y usar la clave correcta para el backend
+            if (key === 'ecosistemas') {
+                const newValues = checked ? [...currentValues, String(value)] : currentValues.filter((v) => v !== String(value));
+                return { ...prev, ecosistemas: newValues };
+            }
             const newValues = checked ? [...currentValues, value] : currentValues.filter((v) => v !== value);
             return { ...prev, [key]: newValues };
         });
@@ -61,7 +66,8 @@ export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios,
     // Función para eliminar duplicados de los catálogos basándose en el nombre
     const getUniqueItems = (array) => {
         if (!array) return [];
-        return Array.from(new Map(array.map(item => [item.nombre, item])).values());
+        // Si el nombre es un número, mostrar el id como label
+        return Array.from(new Map(array.map(item => [item.id, { ...item, nombre: isNaN(item.nombre) ? item.nombre : String(item.id) }])).values());
     };
 
     const uniqueServicios = getUniqueItems(servicios);
@@ -69,6 +75,9 @@ export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios,
     const uniqueAmbientes = getUniqueItems(ambientes);
     const uniqueDominios = getUniqueItems(dominios);
     const uniqueEstatus = getUniqueItems(estatus);
+    const uniqueEcosistemas = (typeof ecosistemas !== 'undefined' && ecosistemas)
+        ? Array.from(new Map(ecosistemas.map(item => [item.nombre, item])).values())
+        : [];
 
     const uniqueSistemasOperativos = sistemasOperativos
         ? Array.from(new Map(sistemasOperativos.map(item => [`${item.nombre} - V${item.version}`, item])).values())
@@ -77,11 +86,11 @@ export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios,
     const formFields = [
         { type: 'text', name: "nombre", label: "Nombre", icon: <Icon name="server" size={16} /> },
         { type: 'dropdown', key: "tipo", label: "Tipo", icon: <Icon name="type" size={16} />, data: [{ id: "VIRTUAL", nombre: "Virtual" }, { id: "FISICO", nombre: "Físico" }] },
-        // =====> AQUÍ ESTÁ LA MODIFICACIÓN <=====
         { type: 'text', name: "ip", label: "Dirección IP", icon: <Icon name="ip" size={16} /> },
         { type: 'text', name: "balanceador", label: "Balanceador", icon: <Icon name="balanceador" size={16} /> },
         { type: 'text', name: "vlan", label: "VLAN", icon: <Icon name="vlan" size={16} /> },
         { type: 'dropdown', key: "servicios", label: "Servicios", data: uniqueServicios, icon: <Icon name="servicios" size={16} /> },
+        { type: 'dropdown', key: "ecosistemas", label: "Ecosistemas", data: uniqueEcosistemas.map(e => ({ id: e.id, nombre: e.nombre })), icon: <Icon name="ecosistema" size={16} /> },
         { type: 'dropdown', key: "capas", label: "Capas", data: uniqueCapas, icon: <Icon name="layers" size={16} /> },
         { type: 'dropdown', key: "ambientes", label: "Ambientes", data: uniqueAmbientes, icon: <Icon name="globe" size={16} /> },
         { type: 'dropdown', key: "dominios", label: "Dominios", data: uniqueDominios, icon: <Icon name="shield" size={16} /> },

@@ -1,5 +1,5 @@
 import click
-from api.models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor
+from api.models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, Ecosistema
 from datetime import datetime
 
 """
@@ -145,6 +145,11 @@ def setup_commands(app):
     @click.argument("count")
     def insert_test_servicios(count):
         insert_test_generic(Servicio, count, "Servicio")
+
+    @app.cli.command("insert-test-ecosistemas")
+    @click.argument("count")
+    def insert_test_ecosistemas(count):
+        insert_test_generic(Ecosistema, count, "Ecosistema")
 
     @app.cli.command("insert-test-capas")
     @click.argument("count")

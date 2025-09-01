@@ -78,11 +78,11 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
     const [formData, setFormData] = useState({
         nombre: "", tipo: "", ip: "", balanceador: "", vlan: "",
         servicio_id: "", capa_id: "", ambiente_id: "", link: "",
-        descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: ""
+        descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: "", ecosistema_id: ""
     });
     const [errors, setErrors] = useState({});
     const [catalogos, setCatalogos] = useState({
-        servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
+        servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [], ecosistemas: []
     });
     const [allServers, setAllServers] = useState([]);
 
@@ -97,14 +97,15 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                     { name: "dominios", url: `${backendUrl}/api/dominios` },
                     { name: "sistemasOperativos", url: `${backendUrl}/api/sistemas_operativos` },
                     { name: "estatus", url: `${backendUrl}/api/estatus` },
+                    { name: "ecosistemas", url: `${backendUrl}/api/ecosistemas` },
                     { name: "allServers", url: `${backendUrl}/api/servidores` }
                 ];
                 const responses = await Promise.all(urls.map(item => fetch(item.url).then(res => res.json())));
                 setCatalogos({
                     servicios: responses[0] || [], capas: responses[1] || [], ambientes: responses[2] || [],
-                    dominios: responses[3] || [], sistemasOperativos: responses[4] || [], estatus: responses[5] || []
+                    dominios: responses[3] || [], sistemasOperativos: responses[4] || [], estatus: responses[5] || [], ecosistemas: responses[6] || []
                 });
-                setAllServers(responses[6] || []);
+                setAllServers(responses[7] || []);
             } catch (error) {
                 console.error("Error al cargar datos:", error);
             }
@@ -122,7 +123,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             setFormData({
                 nombre: "", tipo: "", ip: "", balanceador: "", vlan: "",
                 servicio_id: "", capa_id: "", ambiente_id: "", link: "",
-                descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: "1"
+                descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: "1", ecosistema_id: ""
             });
             setErrors({});
         }
@@ -142,7 +143,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
 
     const validateForm = () => {
         const newErrors = {};
-        const requiredFields = ["nombre", "tipo", "ip", "balanceador", "vlan", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id"];
+    const requiredFields = ["nombre", "tipo", "ip", "balanceador", "vlan", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "ecosistema_id"];
 
         requiredFields.forEach(field => {
             if (!formData[field] || String(formData[field]).trim() === "") {
@@ -236,6 +237,8 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             <div className="form__row">
                 <SingleSelectDropdown name="servicio_id" label="Servicio" selectedValue={formData.servicio_id} onSelect={handleChange} error={errors.servicio_id}
                     options={catalogos.servicios.map(s => ({ value: s.id, label: s.nombre }))} />
+                <SingleSelectDropdown name="ecosistema_id" label="Ecosistema" selectedValue={formData.ecosistema_id} onSelect={handleChange} error={errors.ecosistema_id}
+                    options={catalogos.ecosistemas.map(e => ({ value: e.id, label: e.nombre }))} />
                 <SingleSelectDropdown name="capa_id" label="Capa" selectedValue={formData.capa_id} onSelect={handleChange} error={errors.capa_id}
                     options={catalogos.capas.map(c => ({ value: c.id, label: c.nombre }))} />
                 <SingleSelectDropdown name="ambiente_id" label="Ambiente" selectedValue={formData.ambiente_id} onSelect={handleChange} error={errors.ambiente_id}
@@ -244,12 +247,10 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                     options={catalogos.dominios.map(d => ({ value: d.id, label: d.nombre }))} />
                 <SingleSelectDropdown name="sistema_operativo_id" label="Sistema Operativo" selectedValue={formData.sistema_operativo_id} onSelect={handleChange} error={errors.sistema_operativo_id}
                     options={catalogos.sistemasOperativos.map(so => ({ value: so.id, label: `${so.nombre} - V${so.version}` }))} />
-            </div>
-            <div className="form__row">
                 <SingleSelectDropdown name="estatus_id" label="Estatus" selectedValue={formData.estatus_id} onSelect={handleChange} error={errors.estatus_id}
                     options={catalogos.estatus.map(e => ({ value: e.id, label: e.nombre }))} />
                 <CampoTexto name="link" label="Link" value={formData.link || ''} onChange={handleChange} error={errors.link} required={false} />
-                <div className="form__group field-full-width">
+                <div className="form__group">
                     <label className="form__label">Descripción</label>
                     <textarea name="descripcion" value={formData.descripcion || ''} onChange={handleChange} className="form__input"></textarea>
                 </div>

@@ -24,10 +24,11 @@ const abrirModalLink = (servidor) => {
 const exportarCSV = (servidores) => {
     if (!servidores.length) return;
 
-    const encabezados = `"Nombre";"Tipo";"IP";"Servicio";"Capa";"Ambiente";"Balanceador";"VLAN";"Dominio";"S.O.";"Estatus";"Descripción";"Link"\n`;
+    const encabezados = `"Nombre";"Tipo";"IP";"Servicio";"Ecosistema";"Capa";"Ambiente";"Balanceador";"VLAN";"Dominio";"S.O.";"Estatus";"Descripción";"Link"\n`;
 
     const filas = servidores.map(srv =>
         `"${srv.nombre || 'N/A'}";"${srv.tipo || 'N/A'}";"${srv.ip || 'N/A'}";"${srv.servicios?.[0]?.nombre || 'N/A'}";` +
+        `"${srv.ecosistemas?.[0]?.nombre || srv.ecosistema?.nombre || 'N/A'}";` +
         `"${srv.capas?.[0]?.nombre || 'N/A'}";"${srv.ambientes?.[0]?.nombre || 'N/A'}";"${srv.balanceador || 'N/A'}";"${srv.vlan || 'N/A'}";` +
         `"${srv.dominios?.[0]?.nombre || 'N/A'}";"${srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : 'N/A'}";"${srv.estatus?.[0]?.nombre || 'N/A'}";"${srv.descripcion || 'N/A'}";` +
         `"${srv.link || 'N/A'}"`
@@ -64,7 +65,7 @@ const exportarExcel = (servidores) => {
 
     const encabezados = `
         <tr>
-            <th>Nombre</th><th>Tipo</th><th>IP</th><th>Servicio</th><th>Capa</th><th>Ambiente</th>
+            <th>Nombre</th><th>Tipo</th><th>IP</th><th>Servicio</th><th>Ecosistema</th><th>Capa</th><th>Ambiente</th>
             <th>Balanceador</th><th>VLAN</th><th>Dominio</th><th>S.O.</th><th>Estatus</th>
             <th>Descripción</th><th>Link</th>
         </tr>
@@ -76,6 +77,7 @@ const exportarExcel = (servidores) => {
             <td>${srv.tipo || ''}</td>
             <td>${srv.ip || ''}</td>
             <td>${srv.servicios?.[0]?.nombre || ''}</td>
+            <td>${srv.ecosistemas?.[0]?.nombre || srv.ecosistema?.nombre || ''}</td>
             <td>${srv.capas?.[0]?.nombre || ''}</td>
             <td>${srv.ambientes?.[0]?.nombre || ''}</td>
             <td>${srv.balanceador || ''}</td>
@@ -97,16 +99,16 @@ const exportarExcel = (servidores) => {
         <body>
             <table class="header-table">
                 <tr>
-                    <td colspan="13">
+                    <td colspan="14">
                         <img src="https://banesco-prod-2020.s3.amazonaws.com/wp-content/themes/banescocontigo/assets/images/header/logotype.png" alt="Banesco Logo" class="logo">
                     </td>
                 </tr>
-                <tr><td colspan="13" style="height: 20px;"></td></tr>
+                <tr><td colspan="14" style="height: 20px;"></td></tr>
                 <tr>
-                    <td colspan="13"><h1 class="main-title">Reporte de Servidores</h1></td>
+                    <td colspan="14"><h1 class="main-title">Reporte de Servidores</h1></td>
                 </tr>
                  <tr>
-                    <td colspan="13"><p class="sub-title">(Gerencia de Operaciones de Canales Virtuales y Medios de Pagos)</p></td>
+                    <td colspan="14"><p class="sub-title">(Gerencia de Operaciones de Canales Virtuales y Medios de Pagos)</p></td>
                 </tr>
             </table>
             
@@ -172,7 +174,7 @@ const ItemsPerPageDropdown = ({ value, onChange }) => {
 
 
 // --- Componente Principal ---
-export const BusquedaTabla = ({ servidores, onClose }) => {
+export const BusquedaTabla = ({ servidores, onClose, catalogos }) => {
     const [paginaActual, setPaginaActual] = useState(1);
     const [servidoresPorPagina, setServidoresPorPagina] = useState(50);
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
@@ -249,6 +251,7 @@ export const BusquedaTabla = ({ servidores, onClose }) => {
                                     <th>Tipo</th>
                                     <th>IP</th>
                                     <th>Servicio</th>
+                                    <th>Ecosistema</th>
                                     <th>Capa</th>
                                     <th>Ambiente</th>
                                     <th>Balanceador</th>
@@ -267,14 +270,59 @@ export const BusquedaTabla = ({ servidores, onClose }) => {
                                         <td>{srv.nombre}</td>
                                         <td>{srv.tipo}</td>
                                         <td>{srv.ip}</td>
-                                        <td>{srv.servicios?.[0]?.nombre || ''}</td>
-                                        <td>{srv.capas?.[0]?.nombre || ''}</td>
-                                        <td>{srv.ambientes?.[0]?.nombre || ''}</td>
+                                        <td>
+                                            {srv.servicios?.[0]?.nombre ? (
+                                                <span title={`ID: ${srv.servicios[0].id}`}>{srv.servicios[0].nombre}</span>
+                                            ) : srv.servicio_id ? (
+                                                <span title={`ID: ${srv.servicio_id}`}>{srv.servicio_id}</span>
+                                            ) : 'N/A'}
+                                        </td>
+                                        <td>
+                                            {srv.ecosistemas?.[0]?.nombre ? (
+                                                <span title={`ID: ${srv.ecosistemas[0].id}`}>{srv.ecosistemas[0].nombre}</span>
+                                            ) : srv.ecosistema?.nombre ? (
+                                                <span title={`ID: ${srv.ecosistema.id}`}>{srv.ecosistema.nombre}</span>
+                                            ) : (catalogos?.ecosistemas && srv.ecosistema_id
+                                                ? <span title={`ID: ${srv.ecosistema_id}`}>{catalogos.ecosistemas.find(e => String(e.id) === String(srv.ecosistema_id))?.nombre || srv.ecosistema_id}</span>
+                                                : 'N/A')}
+                                        </td>
+                                        <td>
+                                            {srv.capas?.[0]?.nombre ? (
+                                                <span title={`ID: ${srv.capas[0].id}`}>{srv.capas[0].nombre}</span>
+                                            ) : srv.capa_id ? (
+                                                <span title={`ID: ${srv.capa_id}`}>{srv.capa_id}</span>
+                                            ) : 'N/A'}
+                                        </td>
+                                        <td>
+                                            {srv.ambientes?.[0]?.nombre ? (
+                                                <span title={`ID: ${srv.ambientes[0].id}`}>{srv.ambientes[0].nombre}</span>
+                                            ) : srv.ambiente_id ? (
+                                                <span title={`ID: ${srv.ambiente_id}`}>{srv.ambiente_id}</span>
+                                            ) : 'N/A'}
+                                        </td>
                                         <td>{srv.balanceador}</td>
                                         <td>{srv.vlan}</td>
-                                        <td>{srv.dominios?.[0]?.nombre || ''}</td>
-                                        <td>{srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : ''}</td>
-                                        <td>{srv.estatus?.[0]?.nombre || ''}</td>
+                                        <td>
+                                            {srv.dominios?.[0]?.nombre ? (
+                                                <span title={`ID: ${srv.dominios[0].id}`}>{srv.dominios[0].nombre}</span>
+                                            ) : srv.dominio_id ? (
+                                                <span title={`ID: ${srv.dominio_id}`}>{srv.dominio_id}</span>
+                                            ) : 'N/A'}
+                                        </td>
+                                        <td>
+                                            {srv.sistemasOperativos?.[0] ? (
+                                                <span title={`ID: ${srv.sistemasOperativos[0].id}`}>{srv.sistemasOperativos[0].nombre} - V{srv.sistemasOperativos[0].version}</span>
+                                            ) : srv.so_id ? (
+                                                <span title={`ID: ${srv.so_id}`}>{srv.so_id}</span>
+                                            ) : 'N/A'}
+                                        </td>
+                                        <td>
+                                            {srv.estatus?.[0]?.nombre ? (
+                                                <span title={`ID: ${srv.estatus[0].id}`}>{srv.estatus[0].nombre}</span>
+                                            ) : srv.estatus_id ? (
+                                                <span title={`ID: ${srv.estatus_id}`}>{srv.estatus_id}</span>
+                                            ) : 'N/A'}
+                                        </td>
                                         <td style={{ whiteSpace: 'normal' }}>{srv.descripcion}</td>
                                         <td>
                                             <button className="btn-icon" onClick={() => abrirModalLink(srv)} title="Ver detalles y enlace">

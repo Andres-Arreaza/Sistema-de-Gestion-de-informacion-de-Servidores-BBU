@@ -3,6 +3,8 @@ import Swal from 'sweetalert2';
 import Loading from '../component/Loading';
 import ServicioFormulario from '../component/ServicioFormulario';
 import ServicioLista from '../component/ServicioLista';
+import EcosistemaFormulario from '../component/EcosistemaFormulario';
+import EcosistemaLista from '../component/EcosistemaLista';
 import CapaFormulario from '../component/CapaFormulario';
 import CapaLista from '../component/CapaLista';
 import AmbienteFormulario from '../component/AmbienteFormulario';
@@ -17,6 +19,7 @@ import Icon from '../component/Icon';
 
 const configItems = [
     { label: "Servicio", createView: "crear-servicio", listView: "listar-servicios", apiResource: "servicios" },
+    { label: "Ecosistema", createView: "crear-ecosistema", listView: "listar-ecosistemas", apiResource: "ecosistemas" },
     { label: "Capa", createView: "crear-capa", listView: "listar-capas", apiResource: "capas" },
     { label: "Ambiente", createView: "crear-ambiente", listView: "listar-ambientes", apiResource: "ambientes" },
     { label: "Dominio", createView: "crear-dominio", listView: "listar-dominios", apiResource: "dominios" },
@@ -49,7 +52,7 @@ const Configuracion = () => {
     const [currentItem, setCurrentItem] = useState(null);
     const [cargando, setCargando] = useState(false);
     const [catalogos, setCatalogos] = useState({
-        servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
+        servicios: [], ecosistemas: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
     });
 
     const fetchAllCatalogos = async () => {
@@ -61,7 +64,8 @@ const Configuracion = () => {
             const results = await Promise.all(promises);
             const newCatalogos = {};
             configItems.forEach((item, index) => {
-                const key = item.apiResource.replace('sistemas_operativos', 'sistemasOperativos');
+                let key = item.apiResource.replace('sistemas_operativos', 'sistemasOperativos');
+                key = key.replace('ecosistemas', 'ecosistemas');
                 newCatalogos[key] = results[index] || [];
             });
             setCatalogos(newCatalogos);
@@ -78,7 +82,8 @@ const Configuracion = () => {
     }, []);
 
     const fetchRecurso = (apiResource) => {
-        const key = apiResource.replace('sistemas_operativos', 'sistemasOperativos');
+        let key = apiResource.replace('sistemas_operativos', 'sistemasOperativos');
+        key = key.replace('ecosistemas', 'ecosistemas');
         setCargando(true);
         fetch(`${process.env.BACKEND_URL}/api/${apiResource}`)
             .then(res => res.ok ? res.json() : [])
@@ -98,7 +103,7 @@ const Configuracion = () => {
         const esEdicion = !!currentItem;
         const metodo = esEdicion ? "PUT" : "POST";
         const url = esEdicion
-            ? `${process.env.BACKEND_URL}/api/${apiResource}/${currentItem.id}`
+            ? `${process.env.BACKEND_URL}/api/${apiResource}/${currentItem?.id}`
             : `${process.env.BACKEND_URL}/api/${apiResource}`;
 
         fetch(url, {
@@ -166,6 +171,11 @@ const Configuracion = () => {
                 return <div key="crear-servicio" className="content-wrapper content-wrapper--plain"><ServicioFormulario onSave={handleSave} onCancel={handleCancel} servicio={currentItem} serviciosExistentes={catalogos.servicios} /></div>;
             case 'listar-servicios':
                 return <div key="listar-servicios" className="content-wrapper"><ServicioLista servicios={catalogos.servicios} onEdit={(item) => handleEdit(item, 'servicio')} fetchServicios={() => fetchRecurso('servicios')} cargando={cargando} /></div>;
+
+            case 'crear-ecosistema':
+                return <div key="crear-ecosistema" className="content-wrapper content-wrapper--plain"><EcosistemaFormulario onSave={handleSave} onCancel={handleCancel} ecosistema={currentItem} ecosistemasExistentes={catalogos.ecosistemas} /></div>;
+            case 'listar-ecosistemas':
+                return <div key="listar-ecosistemas" className="content-wrapper"><EcosistemaLista ecosistemas={catalogos.ecosistemas} onEdit={(item) => handleEdit(item, 'ecosistema')} fetchEcosistemas={() => fetchRecurso('ecosistemas')} cargando={cargando} /></div>;
 
             case 'crear-capa':
                 return <div key="crear-capa" className="content-wrapper content-wrapper--plain"><CapaFormulario onSave={handleSave} onCancel={handleCancel} capa={currentItem} capasExistentes={catalogos.capas} /></div>;

@@ -1,12 +1,16 @@
 import os
 from flask_admin import Admin
-from .models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor
+from .models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, Ecosistema
 from flask_admin.contrib.sqla import ModelView
 from wtforms_sqlalchemy.fields import QuerySelectField
 
 # 🔹 Funciones para cargar los datos basados en nombre
+
 def servicio_query():
     return Servicio.query.order_by(Servicio.nombre).all()
+
+def ecosistema_query():
+    return Ecosistema.query.order_by(Ecosistema.nombre).all()
 
 def capa_query():
     return Capa.query.order_by(Capa.nombre).all()
@@ -50,6 +54,11 @@ class AmbienteView(BaseView):
     """ Vista personalizada para gestionar ambientes en Flask-Admin """
     pass
 
+
+class EcosistemaView(BaseView):
+    """ Vista personalizada para gestionar ecosistemas en Flask-Admin """
+    pass
+
 class DominioView(BaseView):
     """ Vista personalizada para gestionar dominios en Flask-Admin """
     pass
@@ -70,15 +79,16 @@ class ServidorView(BaseView):
     """ Vista personalizada para gestionar servidores en Flask-Admin """
     column_list = [
         "id", "nombre", "tipo", "ip", "balanceador", "vlan", "descripcion", "link",
-        "servicio", "capa", "ambiente", "dominio", "sistema_operativo", "estatus", "activo", "fecha_creacion", "fecha_modificacion"
+        "servicio", "capa", "ecosistema", "ambiente", "dominio", "sistema_operativo", "estatus", "activo", "fecha_creacion", "fecha_modificacion"
     ]
-    column_filters = ["activo", "tipo", "servicio", "capa", "ambiente", "dominio", "sistema_operativo", "estatus"]
+    column_filters = ["activo", "tipo", "servicio", "capa", "ecosistema", "ambiente", "dominio", "sistema_operativo", "estatus"]
     column_editable_list = ["activo"]
 
     # Mostrar los nombres en lugar de los IDs en la vista de administración
     column_formatters = {
         "servicio": lambda v, c, m, p: m.servicio.nombre if m.servicio else "",
         "capa": lambda v, c, m, p: m.capa.nombre if m.capa else "",
+        "ecosistema": lambda v, c, m, p: m.ecosistema.nombre if hasattr(m, 'ecosistema') and m.ecosistema else "",
         "ambiente": lambda v, c, m, p: m.ambiente.nombre if m.ambiente else "",
         "dominio": lambda v, c, m, p: m.dominio.nombre if m.dominio else "",
         "sistema_operativo": lambda v, c, m, p: m.sistema_operativo.nombre if m.sistema_operativo else "",
@@ -89,6 +99,7 @@ class ServidorView(BaseView):
     form_overrides = {
         "servicio": QuerySelectField,
         "capa": QuerySelectField,
+        "ecosistema": QuerySelectField,
         "ambiente": QuerySelectField,
         "dominio": QuerySelectField,
         "sistema_operativo": QuerySelectField,
@@ -98,6 +109,7 @@ class ServidorView(BaseView):
     form_args = {
         "servicio": {"query_factory": servicio_query, "allow_blank": False, "get_label": "nombre"},
         "capa": {"query_factory": capa_query, "allow_blank": False, "get_label": "nombre"},
+        "ecosistema": {"query_factory": ecosistema_query, "allow_blank": False, "get_label": "nombre"},
         "ambiente": {"query_factory": ambiente_query, "allow_blank": False, "get_label": "nombre"},
         "dominio": {"query_factory": dominio_query, "allow_blank": False, "get_label": "nombre"},
         "sistema_operativo": {"query_factory": sistema_operativo_query, "allow_blank": False, "get_label": "nombre"},
@@ -112,6 +124,7 @@ def setup_admin(app):
 
     # Agregar modelos al panel de administración
     admin.add_view(ServicioView(Servicio, db.session))
+    admin.add_view(EcosistemaView(Ecosistema, db.session))
     admin.add_view(CapaView(Capa, db.session))
     admin.add_view(AmbienteView(Ambiente, db.session))
     admin.add_view(DominioView(Dominio, db.session))

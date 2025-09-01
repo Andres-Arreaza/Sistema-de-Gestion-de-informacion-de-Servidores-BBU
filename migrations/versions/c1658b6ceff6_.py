@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 74799535a108
+Revision ID: c1658b6ceff6
 Revises: 
-Create Date: 2025-07-28 14:33:16.964770
+Create Date: 2025-09-01 13:05:58.086751
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '74799535a108'
+revision = 'c1658b6ceff6'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -45,6 +45,15 @@ def upgrade():
     sa.Column('activo', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('ecosistemas',
+    sa.Column('nombre', sa.String(length=120), nullable=False),
+    sa.Column('descripcion', sa.String(length=250), nullable=True),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('fecha_creacion', sa.DateTime(), nullable=False),
+    sa.Column('fecha_modificacion', sa.DateTime(), nullable=True),
+    sa.Column('activo', sa.Boolean(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('estatus',
     sa.Column('nombre', sa.String(length=120), nullable=False),
     sa.Column('descripcion', sa.String(length=250), nullable=True),
@@ -67,10 +76,12 @@ def upgrade():
     sa.Column('nombre', sa.String(length=120), nullable=False),
     sa.Column('version', sa.String(length=50), nullable=False),
     sa.Column('descripcion', sa.String(length=250), nullable=True),
+    sa.Column('ecosistema_id', sa.Integer(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('fecha_creacion', sa.DateTime(), nullable=False),
     sa.Column('fecha_modificacion', sa.DateTime(), nullable=True),
     sa.Column('activo', sa.Boolean(), nullable=False),
+    sa.ForeignKeyConstraint(['ecosistema_id'], ['ecosistemas.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('servidores',
@@ -81,6 +92,7 @@ def upgrade():
     sa.Column('vlan', sa.String(length=50), nullable=True),
     sa.Column('descripcion', sa.String(length=250), nullable=True),
     sa.Column('link', sa.String(length=250), nullable=True),
+    sa.Column('ecosistema_id', sa.Integer(), nullable=True),
     sa.Column('servicio_id', sa.Integer(), nullable=False),
     sa.Column('capa_id', sa.Integer(), nullable=False),
     sa.Column('ambiente_id', sa.Integer(), nullable=False),
@@ -94,6 +106,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['ambiente_id'], ['ambientes.id'], ),
     sa.ForeignKeyConstraint(['capa_id'], ['capas.id'], ),
     sa.ForeignKeyConstraint(['dominio_id'], ['dominios.id'], ),
+    sa.ForeignKeyConstraint(['ecosistema_id'], ['ecosistemas.id'], ),
     sa.ForeignKeyConstraint(['estatus_id'], ['estatus.id'], ),
     sa.ForeignKeyConstraint(['servicio_id'], ['servicios.id'], ),
     sa.ForeignKeyConstraint(['sistema_operativo_id'], ['sistemas_operativos.id'], ),
@@ -108,6 +121,7 @@ def downgrade():
     op.drop_table('sistemas_operativos')
     op.drop_table('servicios')
     op.drop_table('estatus')
+    op.drop_table('ecosistemas')
     op.drop_table('dominios')
     op.drop_table('capas')
     op.drop_table('ambientes')

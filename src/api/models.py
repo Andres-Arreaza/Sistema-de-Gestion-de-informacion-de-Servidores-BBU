@@ -37,6 +37,17 @@ class BaseModel(db.Model):
             "activo": self.activo
         }
 
+class Ecosistema(BaseModel):
+    __tablename__ = 'ecosistemas'
+
+    nombre = db.Column(db.String(120), nullable=False)
+    descripcion = db.Column(db.String(250), nullable=True)
+
+    def serialize(self):
+        data = super().serialize()
+        data.update({"nombre": self.nombre, "descripcion": self.descripcion})
+        return data
+
 class Servicio(BaseModel):
     __tablename__ = 'servicios'
     
@@ -97,6 +108,9 @@ class SistemaOperativo(BaseModel):
         })
         return data
 
+    ecosistema_id = db.Column(db.Integer, db.ForeignKey("ecosistemas.id"), nullable=True)
+    ecosistema = db.relationship("Ecosistema")
+
 class Estatus(BaseModel):
     __tablename__ = 'estatus'
 
@@ -119,6 +133,8 @@ class Servidor(BaseModel):
     descripcion = db.Column(db.String(250), nullable=True)
     link = db.Column(db.String(250), nullable=True)
 
+    ecosistema_id = db.Column(db.Integer, db.ForeignKey("ecosistemas.id"), nullable=True)
+    ecosistema = db.relationship("Ecosistema")
     servicio_id = db.Column(db.Integer, db.ForeignKey("servicios.id"), nullable=False)
     capa_id = db.Column(db.Integer, db.ForeignKey("capas.id"), nullable=False)
     ambiente_id = db.Column(db.Integer, db.ForeignKey("ambientes.id"), nullable=False)
@@ -181,5 +197,7 @@ class Servidor(BaseModel):
             "dominios": [self.dominio.serialize()] if self.dominio else None,
             "sistemasOperativos": [self.sistema_operativo.serialize()] if self.sistema_operativo else None,
             "estatus": [self.estatus.serialize()] if self.estatus else None,
+            "ecosistema": self.ecosistema.serialize() if self.ecosistema else None,
+            "ecosistema_id": self.ecosistema_id,
         })
         return data

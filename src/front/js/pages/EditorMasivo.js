@@ -32,9 +32,10 @@ const abrirModalLink = (servidor) => {
 
 const exportarCSV = (servidores) => {
     if (!servidores.length) return;
-    const encabezados = `"Nombre";"Tipo";"IP";"Servicio";"Capa";"Ambiente";"Balanceador";"VLAN";"Dominio";"S.O.";"Estatus";"Descripción";"Link"\n`;
+    const encabezados = `"Nombre";"Tipo";"IP";"Servicio";"Ecosistema";"Capa";"Ambiente";"Balanceador";"VLAN";"Dominio";"S.O.";"Estatus";"Descripción";"Link"\n`;
     const filas = servidores.map(srv =>
         `"${srv.nombre || 'N/A'}";"${srv.tipo || 'N/A'}";"${srv.ip || 'N/A'}";"${srv.servicios?.[0]?.nombre || 'N/A'}";` +
+        `"${srv.ecosistemas?.[0]?.nombre || srv.ecosistema?.nombre || 'N/A'}";` +
         `"${srv.capas?.[0]?.nombre || 'N/A'}";"${srv.ambientes?.[0]?.nombre || 'N/A'}";"${srv.balanceador || 'N/A'}";"${srv.vlan || 'N/A'}";` +
         `"${srv.dominios?.[0]?.nombre || 'N/A'}";"${srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : 'N/A'}";"${srv.estatus?.[0]?.nombre || 'N/A'}";"${srv.descripcion || 'N/A'}";` +
         `"${srv.link || 'N/A'}"`
@@ -63,9 +64,9 @@ const exportarExcel = (servidores) => {
             .sub-title { color: #005A9C; font-size: 14px; font-style: italic; margin: 0; padding: 0; }
         </style>
     `;
-    const encabezados = `<tr><th>Nombre</th><th>Tipo</th><th>IP</th><th>Servicio</th><th>Capa</th><th>Ambiente</th><th>Balanceador</th><th>VLAN</th><th>Dominio</th><th>S.O.</th><th>Estatus</th><th>Descripción</th><th>Link</th></tr>`;
-    const filas = servidores.map(srv => `<tr><td>${srv.nombre || ''}</td><td>${srv.tipo || ''}</td><td>${srv.ip || ''}</td><td>${srv.servicios?.[0]?.nombre || ''}</td><td>${srv.capas?.[0]?.nombre || ''}</td><td>${srv.ambientes?.[0]?.nombre || ''}</td><td>${srv.balanceador || ''}</td><td>${srv.vlan || ''}</td><td>${srv.dominios?.[0]?.nombre || ''}</td><td>${srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : ''}</td><td>${srv.estatus?.[0]?.nombre || ''}</td><td>${srv.descripcion || ''}</td><td>${srv.link || ''}</td></tr>`).join("");
-    const plantillaHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8">${estilos}</head><body><table class="header-table"><tr><td colspan="13"><h1 class="main-title">Reporte de Servidores</h1></td></tr><tr><td colspan="13"><p class="sub-title">(Gerencia de Operaciones de Canales Virtuales y Medios de Pagos)</p></td></tr></table><table class="excel-table">${encabezados}${filas}</table></body></html>`;
+    const encabezados = `<tr><th>Nombre</th><th>Tipo</th><th>IP</th><th>Servicio</th><th>Ecosistema</th><th>Capa</th><th>Ambiente</th><th>Balanceador</th><th>VLAN</th><th>Dominio</th><th>S.O.</th><th>Estatus</th><th>Descripción</th><th>Link</th></tr>`;
+    const filas = servidores.map(srv => `<tr><td>${srv.nombre || ''}</td><td>${srv.tipo || ''}</td><td>${srv.ip || ''}</td><td>${srv.servicios?.[0]?.nombre || ''}</td><td>${srv.ecosistemas?.[0]?.nombre || srv.ecosistema?.nombre || ''}</td><td>${srv.capas?.[0]?.nombre || ''}</td><td>${srv.ambientes?.[0]?.nombre || ''}</td><td>${srv.balanceador || ''}</td><td>${srv.vlan || ''}</td><td>${srv.dominios?.[0]?.nombre || ''}</td><td>${srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : ''}</td><td>${srv.estatus?.[0]?.nombre || ''}</td><td>${srv.descripcion || ''}</td><td>${srv.link || ''}</td></tr>`).join("");
+    const plantillaHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8">${estilos}</head><body><table class="header-table"><tr><td colspan="14"><h1 class="main-title">Reporte de Servidores</h1></td></tr><tr><td colspan="14"><p class="sub-title">(Gerencia de Operaciones de Canales Virtuales y Medios de Pagos)</p></td></tr></table><table class="excel-table">${encabezados}${filas}</table></body></html>`;
     const excelContent = `data:application/vnd.ms-excel;charset=utf-8,${encodeURIComponent(plantillaHtml)}`;
     const link = document.createElement("a");
     link.setAttribute("href", excelContent);
@@ -225,7 +226,7 @@ const ItemsPerPageDropdown = ({ value, onChange }) => {
 const EditorMasivo = () => {
     const [filtro, setFiltro] = useState({
         nombre: '', ip: '', balanceador: '', vlan: '', descripcion: '', link: '',
-        tipo: [], servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [],
+        tipo: [], servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [], ecosistemas: []
     });
     const [servidores, setServidores] = useState([]);
     const [cargando, setCargando] = useState(false);
@@ -237,7 +238,7 @@ const EditorMasivo = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(50);
     const [catalogos, setCatalogos] = useState({
-        servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
+        servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [], ecosistemas: []
     });
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -264,12 +265,13 @@ const EditorMasivo = () => {
                     { name: "ambientes", url: `${backendUrl}/api/ambientes` },
                     { name: "dominios", url: `${backendUrl}/api/dominios` },
                     { name: "sistemasOperativos", url: `${backendUrl}/api/sistemas_operativos` },
-                    { name: "estatus", url: `${backendUrl}/api/estatus` }
+                    { name: "estatus", url: `${backendUrl}/api/estatus` },
+                    { name: "ecosistemas", url: `${backendUrl}/api/ecosistemas` }
                 ];
                 const responses = await Promise.all(urls.map(item => fetch(item.url).then(res => res.json())));
                 setCatalogos({
                     servicios: responses[0] || [], capas: responses[1] || [], ambientes: responses[2] || [],
-                    dominios: responses[3] || [], sistemasOperativos: responses[4] || [], estatus: responses[5] || []
+                    dominios: responses[3] || [], sistemasOperativos: responses[4] || [], estatus: responses[5] || [], ecosistemas: responses[6] || []
                 });
             } catch (error) {
                 console.error("Error al cargar catálogos:", error);
@@ -339,6 +341,7 @@ const EditorMasivo = () => {
         { value: 'link', label: 'Link', type: 'input', disabled: servidores.length > 1 },
         { value: 'descripcion', label: 'Descripción', type: 'input' },
         { value: 'servicio_id', label: 'Servicio', type: 'select', catalog: 'servicios' },
+        { value: 'ecosistema_id', label: 'Ecosistema', type: 'select', catalog: 'ecosistemas' },
         { value: 'capa_id', label: 'Capa', type: 'select', catalog: 'capas' },
         { value: 'ambiente_id', label: 'Ambiente', type: 'select', catalog: 'ambientes' },
         { value: 'dominio_id', label: 'Dominio', type: 'select', catalog: 'dominios' },
@@ -556,6 +559,7 @@ const EditorMasivo = () => {
         const columnas = [
             { header: 'Nombre', key: 'nombre' }, { header: 'Tipo', key: 'tipo' }, { header: 'IP', key: 'ip' },
             { header: 'Servicio', key: 'servicio_id', catalog: 'servicios' },
+            { header: 'Ecosistema', key: 'ecosistema_id', catalog: 'ecosistemas' },
             { header: 'Capa', key: 'capa_id', catalog: 'capas' },
             { header: 'Ambiente', key: 'ambiente_id', catalog: 'ambientes' },
             { header: 'Balanceador', key: 'balanceador' },
