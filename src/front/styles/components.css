@@ -1,3 +1,43 @@
+/* Checkbox Coincidencia Exacta moderno y compacto */
+.checkbox-exacta {
+  background: #f5f5f5;
+  border-radius: 7px;
+  padding: 0.25em 1em;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: 1em;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  margin-bottom: 0.2em;
+  margin-top: 0.1em;
+}
+.checkbox-exacta input[type="checkbox"] {
+  accent-color: var(--color-primario);
+  width: 20px;
+  height: 20px;
+  margin-right: 0.7em;
+  cursor: pointer;
+}
+/* Checkbox Coincidencia Exacta personalizado */
+.checkbox-exacta {
+  background: #f3f3f3;
+  border-radius: 8px;
+  padding: 0.7em 1.2em;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s;
+  font-weight: 600;
+  font-size: 1.08em;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+/* El fondo no cambia, siempre gris claro */
+.checkbox-exacta input[type="checkbox"] {
+  accent-color: var(--color-primario);
+  width: 20px;
+  height: 20px;
+  margin-right: 0.8em;
+  cursor: pointer;
+}
 /* Texto en rojo para errores en componentes */
 .texto-error {
   color: var(--color-error, red);
