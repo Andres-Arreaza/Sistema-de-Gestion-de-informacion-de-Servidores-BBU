@@ -541,25 +541,9 @@ const EditorMasivo = () => {
                 const errores = results.filter(ok => !ok);
                 if (errores.length > 0) throw new Error(`${errores.length} servidor(es) no se pudieron actualizar.`);
 
-                const updatedServerIds = Object.keys(cambios);
-                const updatedServerNames = updatedServerIds.map(id => {
-                    const server = servidores.find(s => s.id === parseInt(id, 10));
-                    return server ? server.nombre : `ID ${id}`;
-                });
-
-                const successMessageHtml = `
-                    <div style="text-align: left; max-height: 200px; overflow-y: auto;">
-                        <strong>Se actualizaron los siguientes servidores:</strong>
-                        <ul style="list-style-position: inside; padding-left: 0;">
-                            ${updatedServerNames.map(name => `<li>${name}</li>`).join('')}
-                        </ul>
-                    </div>
-                `;
-
                 Swal.fire({
                     icon: 'success',
                     title: `¡${numCambios} servidor(es) actualizados!`,
-                    html: successMessageHtml,
                 });
 
                 setCambios({});
