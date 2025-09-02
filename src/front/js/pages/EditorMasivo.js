@@ -304,6 +304,10 @@ const EditorMasivo = () => {
                     }
                 }
             }
+            // Enviar busquedaExacta como parámetro
+            if (filtro.busquedaExacta) {
+                queryParams.append('busquedaExacta', 'true');
+            }
 
             const apiUrl = `${process.env.BACKEND_URL}/api/servidores/busqueda?${queryParams.toString()}`;
             const response = await fetch(apiUrl);

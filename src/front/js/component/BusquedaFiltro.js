@@ -140,6 +140,16 @@ export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios,
 
             <div className="form__grid">
                 {formFields.map(renderField)}
+                <div className="form__group">
+                    <label className="form__label">
+                        <input
+                            type="checkbox"
+                            checked={filtro.busquedaExacta || false}
+                            onChange={e => setFiltro({ ...filtro, busquedaExacta: e.target.checked })}
+                        />
+                        Coincidencia exacta
+                    </label>
+                </div>
             </div>
 
             <div className="form__actions">

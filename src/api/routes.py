@@ -331,19 +331,29 @@ from api.models import TipoServidorEnum
 def buscar_servidores():
     try:
         query = Servidor.query.filter_by(activo=True)
+        busqueda_exacta = request.args.get("busquedaExacta", "false").lower() == "true"
 
-        if request.args.get("nombre"): query = query.filter(Servidor.nombre.ilike(f"%{request.args['nombre']}%"))
+        # Si el checkbox está activado, buscar solo coincidencias exactas
+        if busqueda_exacta:
+            if request.args.get("nombre"): query = query.filter(Servidor.nombre == request.args["nombre"])
+            if request.args.get("ip"): query = query.filter(Servidor.ip == request.args["ip"])
+            if request.args.get("balanceador"): query = query.filter(Servidor.balanceador == request.args["balanceador"])
+            if request.args.get("vlan"): query = query.filter(Servidor.vlan == request.args["vlan"])
+            if request.args.get("link"): query = query.filter(Servidor.link == request.args["link"])
+            if request.args.get("descripcion"): query = query.filter(Servidor.descripcion == request.args["descripcion"])
+        else:
+            if request.args.get("nombre"): query = query.filter(Servidor.nombre.ilike(f"%{request.args['nombre']}%"))
+            if request.args.get("ip"): query = query.filter(Servidor.ip.ilike(f"%{request.args['ip']}%"))
+            if request.args.get("balanceador"): query = query.filter(Servidor.balanceador.ilike(f"%{request.args['balanceador']}%"))
+            if request.args.get("vlan"): query = query.filter(Servidor.vlan.ilike(f"%{request.args['vlan']}%"))
+            if request.args.get("link"): query = query.filter(Servidor.link.ilike(f"%{request.args['link']}%"))
+            if request.args.get("descripcion"): query = query.filter(Servidor.descripcion.ilike(f"%{request.args['descripcion']}%"))
+
         if request.args.get("tipo"):
             try:
                 tipo_val = TipoServidorEnum[request.args["tipo"]]
                 query = query.filter(Servidor.tipo == tipo_val)
             except KeyError: pass
-        if request.args.get("ip"): query = query.filter(Servidor.ip.ilike(f"%{request.args['ip']}%"))
-        if request.args.get("balanceador"): query = query.filter(Servidor.balanceador.ilike(f"%{request.args['balanceador']}%"))
-        if request.args.get("vlan"): query = query.filter(Servidor.vlan.ilike(f"%{request.args['vlan']}%"))
-        if request.args.get("link"): query = query.filter(Servidor.link.ilike(f"%{request.args['link']}%"))
-        if request.args.get("descripcion"): query = query.filter(Servidor.descripcion.ilike(f"%{request.args['descripcion']}%"))
-        
         if request.args.getlist("servicios"): query = query.filter(Servidor.servicio_id.in_(request.args.getlist("servicios")))
         if request.args.getlist("capas"): query = query.filter(Servidor.capa_id.in_(request.args.getlist("capas")))
         if request.args.getlist("ambientes"): query = query.filter(Servidor.ambiente_id.in_(request.args.getlist("ambientes")))
