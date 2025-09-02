@@ -96,7 +96,7 @@ export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios,
         { type: 'dropdown', key: "dominios", label: "Dominios", data: uniqueDominios, icon: <Icon name="shield" size={16} /> },
         { type: 'dropdown', key: "sistemasOperativos", label: "Sistemas Operativos", data: uniqueSistemasOperativos.map(so => ({ id: so.id, nombre: `${so.nombre} - V${so.version}` })), icon: <Icon name="os" size={16} /> },
         { type: 'dropdown', key: "estatus", label: "Estatus", data: uniqueEstatus, icon: <Icon name="status" size={16} /> },
-        { type: 'text', name: "link", label: "Enlace", icon: <Icon name="link" size={16} /> },
+        { type: 'text', name: "link", label: "Link", icon: <Icon name="link" size={16} /> },
         { type: 'text', name: "descripcion", label: "Descripción", icon: <Icon name="descripcion" size={16} /> },
     ];
 

@@ -258,13 +258,23 @@ def create_servidor():
         data["estatus_id"] = data.get("estatus_id", 1)
 
         nuevo_servidor = Servidor(
-            nombre=data["nombre"], tipo=data["tipo"], ip=data["ip"],
-            balanceador=data.get("balanceador", ""), vlan=data.get("vlan", ""),
-            link=data.get("link", ""), descripcion=data.get("descripcion", ""),
-            servicio_id=data["servicio_id"], capa_id=data["capa_id"],
-            ambiente_id=data["ambiente_id"], dominio_id=data["dominio_id"],
-            sistema_operativo_id=data["sistema_operativo_id"], estatus_id=data["estatus_id"],
-            activo=True, fecha_creacion=datetime.utcnow(), fecha_modificacion=datetime.utcnow()
+            nombre=data["nombre"],
+            tipo=data["tipo"],
+            ip=data["ip"],
+            balanceador=data.get("balanceador", ""),
+            vlan=data.get("vlan", ""),
+            link=data.get("link", ""),
+            descripcion=data.get("descripcion", ""),
+            servicio_id=data["servicio_id"],
+            capa_id=data["capa_id"],
+            ambiente_id=data["ambiente_id"],
+            dominio_id=data["dominio_id"],
+            sistema_operativo_id=data["sistema_operativo_id"],
+            estatus_id=data["estatus_id"],
+            ecosistema_id=data.get("ecosistema_id"),
+            activo=True,
+            fecha_creacion=datetime.utcnow(),
+            fecha_modificacion=datetime.utcnow()
         )
 
         db.session.add(nuevo_servidor)

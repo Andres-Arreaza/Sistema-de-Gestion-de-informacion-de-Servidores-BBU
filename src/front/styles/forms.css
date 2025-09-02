@@ -1,3 +1,8 @@
+/* Texto en rojo para errores en tabla de previsualización y formularios */
+.texto-error {
+  color: var(--color-error, red);
+  font-weight: bold;
+}
 /* src/front/styles/forms.css */
 
 /* --- Contenedor Principal del Formulario --- */
