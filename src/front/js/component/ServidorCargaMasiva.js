@@ -4,14 +4,21 @@ import Swal from "sweetalert2";
 import ServidorFormulario from "./ServidorFormulario";
 import Icon from './Icon';
 
-const getHeaderKey = function(header) {
+const getHeaderKey = function (header) {
     if (!header || typeof header !== 'string') return '';
-    return header.toLowerCase().normalize("NFD").replace(/[\u00c0-\u024f]/g, "").trim().replace(/ /g, '_').replace(/\./g, '');
+    // Además, reemplaza '/' por '' para evitar errores en keys
+    return header.toLowerCase().normalize("NFD").replace(/[\u00c0-\u024f]/g, "").trim().replace(/ /g, '_').replace(/\./g, '').replace(/\//g, '');
 };
 
-const TablaPrevisualizacion = function({ datos, encabezado, onEdit, onDelete, startIndex = 0 }) {
+const TablaPrevisualizacion = function ({ datos, encabezado, onEdit, onDelete, startIndex = 0 }) {
     if (!datos || datos.length === 0) {
         return <p className="no-data-preview">No hay datos para previsualizar.</p>;
+    }
+    // Generar encabezado modificado para mostrar las tres IPs
+    const customHeaders = encabezado.slice();
+    let ipIndex = customHeaders.findIndex(h => getHeaderKey(h) === 'ip');
+    if (ipIndex !== -1) {
+        customHeaders.splice(ipIndex, 1, 'IP MGMT', 'IP Real', 'IP Mask25');
     }
     return (
         <div className="table-container">
@@ -19,36 +26,63 @@ const TablaPrevisualizacion = function({ datos, encabezado, onEdit, onDelete, st
                 <thead>
                     <tr>
                         <th>#</th>
-                        {encabezado.map(function(col, index) { return <th key={index}>{col}</th>; })}
+                        {customHeaders.map(function (col, index) { return <th key={index}>{col}</th>; })}
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {datos.map(function({ fila, errores }, rowIndex) {
+                    {datos.map(function ({ fila, errores }, rowIndex) {
                         var tieneErrorFila = Object.keys(errores).length > 0;
                         return (
                             <tr key={rowIndex} className={tieneErrorFila ? 'fila-con-error' : 'fila-correcta'}>
                                 <td>{startIndex + rowIndex + 1}</td>
-                                {fila.map(function(celda, cellIndex) {
+                                {fila.map(function (celda, cellIndex) {
+                                    // Si es la columna IP, mostrar las tres IPs con validación de error
+                                    if (ipIndex !== -1 && cellIndex === ipIndex) {
+                                        // Validar errores para las 3 IPs
+                                        const ipKeys = ['ip_mgmt', 'ip_real', 'ip_mask25'];
+                                        return [
+                                            <td key={cellIndex + '-mgmt'} className={errores[ipKeys[0]] ? 'celda-con-error' : ''}>
+                                                <span className={errores[ipKeys[0]] ? 'texto-error' : ''}>{fila[ipIndex] || 'N/A'}</span>
+                                            </td>,
+                                            <td key={cellIndex + '-real'} className={errores[ipKeys[1]] ? 'celda-con-error' : ''}>
+                                                <span className={errores[ipKeys[1]] ? 'texto-error' : ''}>{fila[ipIndex + 1] || 'N/A'}</span>
+                                            </td>,
+                                            <td key={cellIndex + '-mask25'} className={errores[ipKeys[2]] ? 'celda-con-error' : ''}>
+                                                <span className={errores[ipKeys[2]] ? 'texto-error' : ''}>{fila[ipIndex + 2] || 'N/A'}</span>
+                                            </td>
+                                        ];
+                                    }
+                                    // Omitir las columnas IP Real y IP Mask/25 en el mapeo normal
+                                    if (ipIndex !== -1 && (cellIndex === ipIndex + 1 || cellIndex === ipIndex + 2)) {
+                                        return null;
+                                    }
                                     var headerKey = getHeaderKey(encabezado[cellIndex]);
                                     var tieneErrorCelda = !!errores[headerKey];
+                                    // Si es la columna descripcion y está vacía, mostrar 'N/A'
+                                    let valorMostrar = celda;
+                                    if (headerKey === 'descripcion' && (!celda || celda.trim() === '')) {
+                                        valorMostrar = '';
+                                    }
                                     return (
                                         <td
                                             key={cellIndex}
-                                            title={celda}
+                                            title={valorMostrar}
                                             className={tieneErrorCelda ? 'celda-con-error' : ''}
                                         >
-                                            <span className={tieneErrorCelda ? 'texto-error' : ''}>{celda}</span>
+                                            <span className={tieneErrorCelda ? 'texto-error' : ''}>{valorMostrar}</span>
                                         </td>
                                     );
                                 })}
                                 <td style={{ textAlign: 'center' }}>
-                                    <button onClick={function() { onEdit(startIndex + rowIndex); }} className="btn-icon" title="Editar Fila">
-                                        <Icon name="edit" />
-                                    </button>
-                                    <button onClick={function() { onDelete(startIndex + rowIndex); }} className="btn-icon" title="Eliminar Fila">
-                                        <Icon name="trash" />
-                                    </button>
+                                    <div style={{ display: 'inline-flex', gap: '0.5em', alignItems: 'center' }}>
+                                        <button onClick={function () { onEdit(startIndex + rowIndex); }} className="btn-icon" title="Editar Fila">
+                                            <Icon name="edit" />
+                                        </button>
+                                        <button onClick={function () { onDelete(startIndex + rowIndex); }} className="btn-icon" title="Eliminar Fila">
+                                            <Icon name="trash" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         );
@@ -59,19 +93,19 @@ const TablaPrevisualizacion = function({ datos, encabezado, onEdit, onDelete, st
     );
 };
 
-const ItemsPerPageDropdown = function({ value, onChange }) {
+const ItemsPerPageDropdown = function ({ value, onChange }) {
     var [isOpen, setIsOpen] = useState(false);
     var options = [50, 100, 150, 200];
     var dropdownRef = useRef(null);
 
-    useEffect(function() {
+    useEffect(function () {
         function handleClickOutside(event) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
             }
         }
         document.addEventListener("mousedown", handleClickOutside);
-        return function() { document.removeEventListener("mousedown", handleClickOutside); };
+        return function () { document.removeEventListener("mousedown", handleClickOutside); };
     }, []);
 
     function handleSelect(option) {
@@ -81,17 +115,17 @@ const ItemsPerPageDropdown = function({ value, onChange }) {
 
     return (
         <div className="custom-select pagination-select" ref={dropdownRef}>
-            <button type="button" className="form__input custom-select__trigger" onClick={function() { setIsOpen(!isOpen); }}>
+            <button type="button" className="form__input custom-select__trigger" onClick={function () { setIsOpen(!isOpen); }}>
                 <span>{value}</span>
                 <div className={"chevron" + (isOpen ? " open" : "")}></div>
             </button>
             <div className={"custom-select__panel" + (isOpen ? " open" : "")}>
-                {options.map(function(opt) {
+                {options.map(function (opt) {
                     return (
                         <div
                             key={opt}
                             className={"custom-select__option" + (value === opt ? ' selected' : '')}
-                            onClick={function() { handleSelect(opt); }}
+                            onClick={function () { handleSelect(opt); }}
                         >
                             {opt}
                         </div>
@@ -102,7 +136,7 @@ const ItemsPerPageDropdown = function({ value, onChange }) {
     );
 };
 
-const PreviewModal = function({ datos, encabezado, onClose, onSave, onEdit, onDelete }) {
+const PreviewModal = function ({ datos, encabezado, onClose, onSave, onEdit, onDelete }) {
     var [currentPage, setCurrentPage] = useState(1);
     var [itemsPerPage, setItemsPerPage] = useState(50);
 
@@ -110,6 +144,10 @@ const PreviewModal = function({ datos, encabezado, onClose, onSave, onEdit, onDe
     var indexOfFirstItem = indexOfLastItem - itemsPerPage;
     var currentItems = datos.slice(indexOfFirstItem, indexOfLastItem);
     var totalPages = Math.ceil(datos.length / itemsPerPage);
+
+    // Calcular cantidad de servidores buenos y malos
+    var cantidadBuenos = datos.filter(d => Object.keys(d.errores).length === 0).length;
+    var cantidadMalos = datos.filter(d => Object.keys(d.errores).length > 0).length;
 
     return ReactDOM.createPortal(
         <div className="modal__overlay">
@@ -119,16 +157,24 @@ const PreviewModal = function({ datos, encabezado, onClose, onSave, onEdit, onDe
                     <button onClick={onClose} className="btn-close" />
                 </div>
                 <div className="pagination-controls" style={{ padding: '0 var(--espaciado-lg)', borderBottom: '1px solid var(--color-borde)' }}>
-                    <div className="pagination__items-per-page">
+                    <div className="pagination__items-per-page" style={{ display: 'flex', alignItems: 'center', gap: '1.5em' }}>
                         <label>Mostrar:</label>
                         <ItemsPerPageDropdown value={itemsPerPage} onChange={setItemsPerPage} />
+                        <span className="badge badge--success" style={{ fontSize: '1em', padding: '0.4em 1em', display: 'flex', alignItems: 'center', gap: '0.5em' }}>
+                            <Icon name="check-circle" style={{ color: 'var(--color-primario)' }} />
+                            {cantidadBuenos} servidor{cantidadBuenos === 1 ? '' : 'es'} bueno{cantidadBuenos === 1 ? '' : 's'}
+                        </span>
+                        <span className="badge badge--error" style={{ fontSize: '1em', padding: '0.4em 1em', display: 'flex', alignItems: 'center', gap: '0.5em' }}>
+                            <Icon name="times-circle" style={{ color: 'var(--color-error)' }} />
+                            {cantidadMalos} servidor{cantidadMalos === 1 ? '' : 'es'} con error{cantidadMalos === 1 ? '' : 'es'}
+                        </span>
                     </div>
                     <div className="pagination__navigation">
-                        <button className="btn-icon" onClick={function() { setCurrentPage(currentPage - 1); }} disabled={currentPage === 1}>
+                        <button className="btn-icon" onClick={function () { setCurrentPage(currentPage - 1); }} disabled={currentPage === 1}>
                             <Icon name="chevron-left" />
                         </button>
                         <span>Página {currentPage} de {totalPages}</span>
-                        <button className="btn-icon" onClick={function() { setCurrentPage(currentPage + 1); }} disabled={currentPage === totalPages}>
+                        <button className="btn-icon" onClick={function () { setCurrentPage(currentPage + 1); }} disabled={currentPage === totalPages}>
                             <Icon name="chevron-right" />
                         </button>
                     </div>
@@ -152,7 +198,7 @@ const PreviewModal = function({ datos, encabezado, onClose, onSave, onEdit, onDe
     );
 };
 
-const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
+const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
     var [selectedFile, setSelectedFile] = useState(null);
     var [datosCSV, setDatosCSV] = useState([]);
     var [encabezadoCSV, setEncabezadoCSV] = useState([]);
@@ -163,7 +209,7 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
     var [catalogos, setCatalogos] = useState({});
     var [servidoresExistentes, setServidoresExistentes] = useState([]);
 
-    useEffect(function() {
+    useEffect(function () {
         async function fetchData() {
             try {
                 var backendUrl = process.env.BACKEND_URL;
@@ -177,7 +223,7 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
                     { name: "estatus", url: backendUrl + "/api/estatus" },
                     { name: "ecosistemas", url: backendUrl + "/api/ecosistemas" }
                 ];
-                var responses = await Promise.all(urls.map(function(item) { return fetch(item.url).then(function(res) { return res.json(); }); }));
+                var responses = await Promise.all(urls.map(function (item) { return fetch(item.url).then(function (res) { return res.json(); }); }));
                 var servidoresData = responses[0];
                 var catalogosData = responses.slice(1);
                 setServidoresExistentes(servidoresData || []);
@@ -218,7 +264,7 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
 
     function revalidarFila(fila, encabezado, todasLasFilas, rowIndex) {
         var errores = {};
-        function findIndex(keyword) { return encabezado.findIndex(function(h) { return getHeaderKey(h) === getHeaderKey(keyword); }); }
+        function findIndex(keyword) { return encabezado.findIndex(function (h) { return getHeaderKey(h) === getHeaderKey(keyword); }); }
         function getValue(index) { return (index !== -1 ? String(fila[index] || '').trim() : ''); }
 
         function checkCatalog(catalogName, header, value, formKey) {
@@ -245,7 +291,9 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
         var columnas = [
             { key: 'nombre', header: 'Nombre', required: true, formKey: 'nombre' },
             { key: 'tipo', header: 'Tipo', required: true, values: ['FISICO', 'VIRTUAL'], formKey: 'tipo' },
-            { key: 'ip', header: 'IP', required: true, formKey: 'ip' },
+            { key: 'ip_mgmt', header: 'IP MGMT', required: true, formKey: 'ip_mgmt' },
+            { key: 'ip_real', header: 'IP Real', required: false, formKey: 'ip_real' },
+            { key: 'ip_mask25', header: 'IP Mask25', required: false, formKey: 'ip_mask25' },
             { key: 'servicio', header: 'Servicio', required: true, catalog: 'servicios', formKey: 'servicio_id' },
             { key: 'capa', header: 'Capa', required: true, catalog: 'capas', formKey: 'capa_id' },
             { key: 'ambiente', header: 'Ambiente', required: true, catalog: 'ambientes', formKey: 'ambiente_id' },
@@ -256,25 +304,29 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
             { key: 'link', header: 'Link', required: false, formKey: 'link' }
         ];
 
-        columnas.forEach(function(col) {
+        columnas.forEach(function (col) {
             var index = findIndex(col.header);
             var value = getValue(index);
             var formKey = col.formKey;
             if (col.required && !value) errores[formKey] = true;
             else if (value) {
-                if (col.values && !col.values.some(function(v) { return v.toUpperCase() === value.toUpperCase(); })) errores[formKey] = true;
+                if (col.values && !col.values.some(function (v) { return v.toUpperCase() === value.toUpperCase(); })) errores[formKey] = true;
                 if (col.catalog) checkCatalog(col.catalog, col.header, value, formKey);
-                // Validación de repetidos y existentes para nombre, ip y link
-                if (['nombre', 'ip', 'link'].indexOf(col.key) !== -1) {
-                    // Verifica si ya existe en la base
-                    if (servidoresExistentes.some(function(s) {
-                        return s[col.key] && s[col.key].toLowerCase() === value.toLowerCase();
-                    })) errores[formKey] = true;
-                    // Verifica si se repite en la carga masiva
-                    var repiteEnCarga = todasLasFilas.filter(function(otraFila, idx) {
-                        return (otraFila[index] || '').toLowerCase() === value.toLowerCase();
-                    });
-                    if (repiteEnCarga.length > 1) errores[formKey] = true;
+                // Validación de repetidos y existentes para nombre, ip_mgmt, ip_real, ip_mask25 y link
+                // 'descripcion' puede repetirse, no se valida
+                if (['nombre', 'ip_mgmt', 'ip_real', 'ip_mask25', 'link'].indexOf(col.key) !== -1) {
+                    if (col.key !== 'descripcion') {
+                        // Permitir que 'N/A' se repita en las IPs
+                        if (value.toUpperCase() !== 'N/A') {
+                            if (servidoresExistentes.some(function (s) {
+                                return s[col.key] && s[col.key].toLowerCase() === value.toLowerCase();
+                            })) errores[formKey] = true;
+                            var repiteEnCarga = todasLasFilas.filter(function (otraFila, idx) {
+                                return (otraFila[index] || '').toLowerCase() === value.toLowerCase();
+                            });
+                            if (repiteEnCarga.length > 1) errores[formKey] = true;
+                        }
+                    }
                 }
             }
         });
@@ -289,7 +341,7 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
         var filasData = datos.slice(1);
         setEncabezadoCSV(encabezado);
 
-        var filasProcesadas = filasData.map(function(fila, index) {
+        var filasProcesadas = filasData.map(function (fila, index) {
             var resultado = revalidarFila(fila, encabezado, filasData, index);
             return { fila: fila, errores: resultado.errores };
         });
@@ -303,8 +355,8 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
         if (!window.Papa) { Swal.fire("Error de Librería", "La librería para leer archivos (PapaParse) no está cargada.", "error"); return; }
         window.Papa.parse(selectedFile, {
             header: false, skipEmptyLines: true,
-            complete: function(results) { procesarYValidarDatos(results.data); },
-            error: function(error) { Swal.fire('Error de lectura', 'No se pudo leer el archivo CSV. Error: ' + error.message, 'error'); }
+            complete: function (results) { procesarYValidarDatos(results.data); },
+            error: function (error) { Swal.fire('Error de lectura', 'No se pudo leer el archivo CSV. Error: ' + error.message, 'error'); }
         });
     }
 
@@ -328,18 +380,19 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
     }
 
     function handleGuardar() {
-        var filasConErrores = datosCSV.filter(function(dato) { return Object.keys(dato.errores).length > 0; });
+        console.log('handleGuardar - datosCSV:', datosCSV);
+        var filasConErrores = datosCSV.filter(function (dato) { return Object.keys(dato.errores).length > 0; });
         if (filasConErrores.length > 0) {
             Swal.fire('Registros con errores', 'No se puede guardar. Por favor, corrija todas las filas marcadas en rojo.', 'error');
             return;
         }
-        var filasValidas = datosCSV.filter(function(dato) { return Object.keys(dato.errores).length === 0; });
+        var filasValidas = datosCSV.filter(function (dato) { return Object.keys(dato.errores).length === 0; });
         if (filasValidas.length === 0) {
             Swal.fire('No hay registros válidos', 'No hay servidores para guardar.', 'info');
             return;
         }
 
-        var servidoresParaGuardar = filasValidas.map(function(obj) {
+        var servidoresParaGuardar = filasValidas.map(function (obj) {
             var fila = obj.fila;
             var servidor = {};
             for (var i = 0; i < encabezadoCSV.length; i++) {
@@ -349,13 +402,14 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
                 switch (key) {
                     case 'nombre': servidor.nombre = value; break;
                     case 'tipo': servidor.tipo = value; break;
-                    case 'ip': servidor.ip = value; break;
+                    case 'ip_mgmt': servidor.ip_mgmt = value; break;
+                    case 'ip_real': servidor.ip_real = value; break;
+                    case 'ip_mask25': servidor.ip_mask25 = value; break;
                     case 'balanceador': servidor.balanceador = value; break;
                     case 'vlan': servidor.vlan = value; break;
                     case 'link': servidor.link = value; break;
                     case 'descripcion':
-                        // Guardar el valor original del CSV
-                        servidor.descripcion = (value === 'N/A' || value === '') ? '' : value;
+                        servidor.descripcion = typeof value === 'string' ? value : '';
                         break;
                     case 'servicio': servidor.servicio_id = findIdByName('servicios', value); break;
                     case 'capa': servidor.capa_id = findIdByName('capas', value); break;
@@ -376,7 +430,15 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
                 }
             }
             if (!servidor.hasOwnProperty('ecosistema_id')) servidor.ecosistema_id = null;
+            // Siempre enviar descripcion como string
+            if (!servidor.hasOwnProperty('descripcion') || servidor.descripcion == null) servidor.descripcion = '';
             if (!servidor.hasOwnProperty('descripcion')) servidor.descripcion = '';
+            // Si solo una IP está presente, las otras van como N/A
+            var ipFields = ['ip_mgmt', 'ip_real', 'ip_mask25'];
+            var ipCount = ipFields.filter(f => servidor[f] && servidor[f] !== 'N/A' && servidor[f] !== '').length;
+            if (ipCount === 1) {
+                ipFields.forEach(f => { if (!servidor[f] || servidor[f] === '') servidor[f] = 'N/A'; });
+            }
             return Object.assign({}, servidor, { activo: true });
         });
 
@@ -384,23 +446,23 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
             title: 'Guardando ' + servidoresParaGuardar.length + ' servidores...',
             text: 'Por favor, espere.',
             allowOutsideClick: false,
-            didOpen: function() { Swal.showLoading(); }
+            didOpen: function () { Swal.showLoading(); }
         });
 
-        Promise.all(servidoresParaGuardar.map(function(servidor) {
+        Promise.all(servidoresParaGuardar.map(function (servidor) {
             return fetch(process.env.BACKEND_URL + '/api/servidores', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(servidor)
-            }).then(function(res) {
-                if (!res.ok) return res.json().then(function(err) { return Promise.reject(err); });
+            }).then(function (res) {
+                if (!res.ok) return res.json().then(function (err) { return Promise.reject(err); });
                 return res.json();
             });
-        })).then(function() {
+        })).then(function () {
             Swal.fire('¡Éxito!', servidoresParaGuardar.length + ' servidores han sido guardados.', 'success');
             onClose();
             actualizarServidores('Carga masiva completada');
-        }).catch(function(error) {
+        }).catch(function (error) {
             Swal.fire('Error al guardar', 'Ocurrió un error: ' + (error.msg || error.message), 'error');
         });
     }
@@ -410,38 +472,62 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
         var fila = obj.fila;
         var errores = obj.errores;
         var initialData = {};
+        // Detectar si el encabezado original es 'ip' y mapear las tres IPs y descripcion
+        let ipIndex = encabezadoCSV.findIndex(h => getHeaderKey(h) === 'ip');
         for (var i = 0; i < encabezadoCSV.length; i++) {
             var header = encabezadoCSV[i];
             if (header && typeof header === 'string') {
                 var key = getHeaderKey(header);
                 var value = fila[i] || '';
-                var formKeyMap = { servicio: 'servicio_id', capa: 'capa_id', ambiente: 'ambiente_id', dominio: 'dominio_id', ecosistema: 'ecosistema_id', so: 'sistema_operativo_id', estatus: 'estatus_id', nombre: 'nombre', tipo: 'tipo', ip: 'ip', balanceador: 'balanceador', vlan: 'vlan', link: 'link', descripcion: 'descripcion' };
-                var catalogMap = { servicio: 'servicios', capa: 'capas', ambiente: 'ambientes', dominio: 'dominios', ecosistema: 'ecosistemas', so: 'sistemasOperativos', estatus: 'estatus' };
-                var formKey = formKeyMap[key];
-                var catalogName = catalogMap[key];
-                if (formKey) {
-                    if (key === 'descripcion') {
-                        // Precargar el valor original del CSV, sin conversión ni id
-                        initialData[formKey] = value;
-                    } else if (key === 'dominio') {
-                        initialData[formKey] = value;
-                    } else if (catalogName) {
-                        if (key === 'ecosistema') {
+                // Si el encabezado original es 'ip', mapear las tres IPs
+                if (ipIndex !== -1 && i === ipIndex) {
+                    initialData.ip_mgmt = fila[ipIndex] || '';
+                    initialData.ip_real = fila[ipIndex + 1] || '';
+                    initialData.ip_mask25 = fila[ipIndex + 2] || '';
+                    i += 2;
+                    continue;
+                }
+                if (key === 'ip_mgmt') { initialData.ip_mgmt = value; }
+                else if (key === 'ip_real') { initialData.ip_real = value; }
+                else if (key === 'ip_mask25') { initialData.ip_mask25 = value; }
+                else if (key === 'descripcion') {
+                    // Si en la vista previa se muestra 'N/A', mostrar vacío en la edición para el input text
+                    initialData.descripcion = (!value || value.trim() === '' || value === 'N/A') ? '' : value;
+                }
+                else {
+                    var formKeyMap = { servicio: 'servicio_id', capa: 'capa_id', ambiente: 'ambiente_id', dominio: 'dominio_id', ecosistema: 'ecosistema_id', so: 'sistema_operativo_id', estatus: 'estatus_id', nombre: 'nombre', tipo: 'tipo', balanceador: 'balanceador', vlan: 'vlan', link: 'link' };
+                    var catalogMap = { servicio: 'servicios', capa: 'capas', ambiente: 'ambientes', dominio: 'dominios', ecosistema: 'ecosistemas', so: 'sistemasOperativos', estatus: 'estatus' };
+                    var formKey = formKeyMap[key];
+                    var catalogName = catalogMap[key];
+                    if (formKey) {
+                        if (key === 'dominio') {
                             initialData[formKey] = value;
-                        } else if (key === 'so') {
-                            initialData[formKey] = findIdByName('sistemasOperativos', value);
-                        } else {
-                            var idValue = value;
-                            if (isNaN(Number(value))) {
-                                idValue = findIdByName(catalogName, value);
+                        } else if (catalogName) {
+                            if (key === 'ecosistema') {
+                                initialData[formKey] = value;
+                            } else if (key === 'so') {
+                                initialData[formKey] = findIdByName('sistemasOperativos', value);
+                            } else {
+                                var idValue = value;
+                                if (isNaN(Number(value))) {
+                                    idValue = findIdByName(catalogName, value);
+                                }
+                                initialData[formKey] = idValue;
                             }
-                            initialData[formKey] = idValue;
+                        } else {
+                            initialData[formKey] = value;
                         }
-                    } else {
-                        initialData[formKey] = value;
                     }
                 }
             }
+        }
+        // IP Mask/25 igual a IP MGMT y IP Real si no se asignó antes
+        if (!initialData.ip_mask25) {
+            initialData.ip_mask25 = initialData.ip_mgmt || initialData.ip_real || '';
+        }
+        // Asegura que descripcion siempre esté presente como string para textarea
+        if (typeof initialData.descripcion !== 'string') {
+            initialData.descripcion = '';
         }
         initialData.errors = errores;
         setEditModal({ open: true, data: initialData, rowIndex: rowIndex });
@@ -462,18 +548,42 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
     }
 
     function handleUpdateRow(updatedData, rowIndex) {
+        // IP masiva: si solo hay una, las otras dos van como N/A
+        let ipFields = ['ip_mgmt', 'ip_real', 'ip_mask25'];
+        let ipValues = ipFields.map(f => updatedData[f] && updatedData[f].trim() !== '' && updatedData[f] !== 'N/A');
+        let ipCount = ipValues.filter(Boolean).length;
+        if (ipCount === 1) {
+            ipFields.forEach(f => {
+                if (!updatedData[f] || updatedData[f].trim() === '') {
+                    updatedData[f] = 'N/A';
+                }
+            });
+        }
+        // IP Mask25 se mantiene independiente, no igual a IP MGMT
         var filaActualizadaArray = [];
+        let ipIndex = encabezadoCSV.findIndex(h => getHeaderKey(h) === 'ip');
         for (var i = 0; i < encabezadoCSV.length; i++) {
             var header = encabezadoCSV[i];
             var headerNormalized = getHeaderKey(header);
+            // Si el encabezado original es 'ip', mapear las tres IPs de forma independiente
+            if (ipIndex !== -1 && i === ipIndex) {
+                filaActualizadaArray.push(updatedData.ip_mgmt); // IP MGMT
+                filaActualizadaArray.push(updatedData.ip_real); // IP Real
+                filaActualizadaArray.push(updatedData.ip_mask25); // IP Mask25 independiente
+                i += 2;
+                continue;
+            }
             switch (headerNormalized) {
                 case 'nombre': filaActualizadaArray.push(updatedData.nombre); break;
                 case 'tipo': filaActualizadaArray.push(updatedData.tipo); break;
-                case 'ip': filaActualizadaArray.push(updatedData.ip); break;
+                case 'ip_mgmt': filaActualizadaArray.push(updatedData.ip_mgmt); break;
+                case 'ip_real': filaActualizadaArray.push(updatedData.ip_real); break;
+                case 'ip_mask25': filaActualizadaArray.push(updatedData.ip_mask25); break; // IP Mask25 independiente
                 case 'balanceador': filaActualizadaArray.push(updatedData.balanceador); break;
                 case 'vlan': filaActualizadaArray.push(updatedData.vlan); break;
                 case 'link': filaActualizadaArray.push(updatedData.link); break;
-                case 'descripcion': filaActualizadaArray.push(updatedData.descripcion || ''); break;
+                case 'descripcion': filaActualizadaArray.push(updatedData.descripcion && updatedData.descripcion.trim() !== '' ? updatedData.descripcion : 'N/A'); break;
+                case 'descripcion': filaActualizadaArray.push(updatedData.descripcion && updatedData.descripcion.trim() !== '' ? updatedData.descripcion : ''); break;
                 case 'servicio': filaActualizadaArray.push(findNameById('servicios', updatedData.servicio_id)); break;
                 case 'capa': filaActualizadaArray.push(findNameById('capas', updatedData.capa_id)); break;
                 case 'ambiente': filaActualizadaArray.push(findNameById('ambientes', updatedData.ambiente_id)); break;
@@ -485,10 +595,10 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
             }
         }
 
-        var filasActuales = datosCSV.map(function(d) { return d.fila; });
+        var filasActuales = datosCSV.map(function (d) { return d.fila; });
         filasActuales[rowIndex] = filaActualizadaArray;
 
-        var nuevosDatosCSV = filasActuales.map(function(fila, index) {
+        var nuevosDatosCSV = filasActuales.map(function (fila, index) {
             var resultado = revalidarFila(fila, encabezadoCSV, filasActuales, index);
             return { fila: fila, errores: resultado.errores };
         });
@@ -507,7 +617,7 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
             cancelButtonColor: 'var(--color-texto-secundario)',
             confirmButtonText: 'Sí, eliminar',
             cancelButtonText: 'Cancelar'
-        }).then(function(result) {
+        }).then(function (result) {
             if (result.isConfirmed) {
                 var nuevosDatos = datosCSV.slice();
                 nuevosDatos.splice(rowIndex, 1);
@@ -517,11 +627,11 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
         });
     }
 
-    var EditarFilaModal = function({ open, onClose, initialData, onSave }) {
+    var EditarFilaModal = function ({ open, onClose, initialData, onSave }) {
         if (!open) return null;
         return ReactDOM.createPortal(
             <div className="modal__overlay">
-                <div className="modal__content modal-content-servidor" onClick={function(e) { e.stopPropagation(); }}>
+                <div className="modal__content modal-content-servidor" onClick={function (e) { e.stopPropagation(); }}>
                     <div className="modal__header">
                         <h2 className="modal__title">Editar Servidor de Carga Masiva</h2>
                         <button onClick={onClose} className="btn-close" />
@@ -531,7 +641,7 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
                             esEdicion={true}
                             servidorInicial={initialData}
                             setModalVisible={onClose}
-                            onSuccess={function() {}}
+                            onSuccess={function () { }}
                             onSaveRow={onSave}
                         />
                     </div>
@@ -543,14 +653,14 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
         <>
             {ReactDOM.createPortal(
                 <div className="modal__overlay" onClick={onClose}>
-                    <div className="modal__content" onClick={function(e) { e.stopPropagation(); }}>
+                    <div className="modal__content" onClick={function (e) { e.stopPropagation(); }}>
                         <div className="modal__header">
                             <h2 className="modal__title">Carga Masiva de Servidores</h2>
                             <button onClick={onClose} className="btn-close" />
                         </div>
                         <div className="modal__body" style={{ textAlign: 'center' }}>
                             <input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} />
-                            <button onClick={function() { fileInputRef.current && fileInputRef.current.click(); }} className="btn btn--primary">
+                            <button onClick={function () { fileInputRef.current && fileInputRef.current.click(); }} className="btn btn--primary">
                                 <Icon name="upload" />
                                 Seleccionar archivo
                             </button>
@@ -578,7 +688,7 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
                 <PreviewModal
                     datos={datosCSV}
                     encabezado={encabezadoCSV}
-                    onClose={function() { setPreviewVisible(false); }}
+                    onClose={function () { setPreviewVisible(false); }}
                     onSave={handleGuardar}
                     onEdit={handleEditRow}
                     onDelete={handleDeleteRow}
@@ -586,9 +696,9 @@ const ServidorCargaMasiva = function({ onClose, actualizarServidores }) {
             )}
             <EditarFilaModal
                 open={editModal.open}
-                onClose={function() { setEditModal({ open: false, data: null, rowIndex: null }); }}
+                onClose={function () { setEditModal({ open: false, data: null, rowIndex: null }); }}
                 initialData={editModal.data}
-                onSave={function(updatedData) { handleUpdateRow(updatedData, editModal.rowIndex); }}
+                onSave={function (updatedData) { handleUpdateRow(updatedData, editModal.rowIndex); }}
             />
         </>
     );

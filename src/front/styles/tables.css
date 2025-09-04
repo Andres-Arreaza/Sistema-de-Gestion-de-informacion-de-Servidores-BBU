@@ -1,3 +1,13 @@
+/* Letras rojas para celdas con error en la vista previa de carga masiva */
+.texto-error {
+  color: red !important;
+  font-weight: bold;
+}
+/* Reducir la altura de las celdas en la tabla de previsualización de servidores */
+.table td, .table th {
+  height: 28px;
+  font-size: 0.97em;
+}
 /* src/front/styles/tables.css */
 
 .table-container {
@@ -19,7 +29,6 @@
 .tabla-servidores th,
 .editor-tabla th {
   background-color: var(--color-fondo);
-  padding: 14px 12px;
   text-align: left;
   font-weight: 600;
   color: var(--color-texto-secundario);

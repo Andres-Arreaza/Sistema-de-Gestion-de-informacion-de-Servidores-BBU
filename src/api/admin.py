@@ -78,7 +78,7 @@ class EstatusView(BaseView):
 class ServidorView(BaseView):
     """ Vista personalizada para gestionar servidores en Flask-Admin """
     column_list = [
-        "id", "nombre", "tipo", "ip", "balanceador", "vlan", "descripcion", "link",
+        "id", "nombre", "tipo", "ip_mgmt", "ip_real", "ip_mask25", "balanceador", "vlan", "descripcion", "link",
         "servicio", "capa", "ecosistema", "ambiente", "dominio", "sistema_operativo", "estatus", "activo", "fecha_creacion", "fecha_modificacion"
     ]
     column_filters = ["activo", "tipo", "servicio", "capa", "ecosistema", "ambiente", "dominio", "sistema_operativo", "estatus"]

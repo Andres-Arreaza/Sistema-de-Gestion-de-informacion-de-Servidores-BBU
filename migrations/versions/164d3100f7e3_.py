@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: c1658b6ceff6
+Revision ID: 164d3100f7e3
 Revises: 
-Create Date: 2025-09-01 13:05:58.086751
+Create Date: 2025-09-02 16:23:47.982547
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'c1658b6ceff6'
+revision = '164d3100f7e3'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -87,7 +87,9 @@ def upgrade():
     op.create_table('servidores',
     sa.Column('nombre', sa.String(length=120), nullable=False),
     sa.Column('tipo', sa.Enum('FISICO', 'VIRTUAL', name='tiposervidorenum'), nullable=False),
-    sa.Column('ip', sa.String(length=50), nullable=True),
+    sa.Column('ip_mgmt', sa.String(length=50), nullable=True),
+    sa.Column('ip_real', sa.String(length=50), nullable=True),
+    sa.Column('ip_mask25', sa.String(length=50), nullable=True),
     sa.Column('balanceador', sa.String(length=120), nullable=True),
     sa.Column('vlan', sa.String(length=50), nullable=True),
     sa.Column('descripcion', sa.String(length=250), nullable=True),
@@ -110,7 +112,10 @@ def upgrade():
     sa.ForeignKeyConstraint(['estatus_id'], ['estatus.id'], ),
     sa.ForeignKeyConstraint(['servicio_id'], ['servicios.id'], ),
     sa.ForeignKeyConstraint(['sistema_operativo_id'], ['sistemas_operativos.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('ip_mask25'),
+    sa.UniqueConstraint('ip_mgmt'),
+    sa.UniqueConstraint('ip_real')
     )
     # ### end Alembic commands ###
 

@@ -44,9 +44,9 @@
   color: var(--color-primario);
 }
 
+
 .form__input,
 .form-field input,
-.form-field textarea,
 .custom-select__trigger {
   width: 100%;
   padding: 12px 14px;
@@ -56,6 +56,22 @@
   font-family: var(--fuente-principal);
   transition: var(--transicion-rapida);
   background-color: var(--color-superficie);
+}
+
+.form-field textarea,
+.form__group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-borde);
+  font-size: 1rem;
+  font-family: var(--fuente-principal);
+  transition: var(--transicion-rapida);
+  background-color: var(--color-superficie);
+  min-height: 44px;
+  max-height: 44px;
+  resize: none;
+  box-sizing: border-box;
 }
 
 .form__input:focus,
@@ -72,11 +88,31 @@
   border-color: var(--color-error) !important;
 }
 
+
+.form__group {
+  position: relative;
+}
+
+
 .form__error-text,
 .error-mensaje {
   color: var(--color-error);
   font-size: 0.875rem;
-  margin-top: var(--espaciado-xs);
+  position: absolute;
+  bottom: -18px;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 2;
+  margin: 0;
+  background: transparent;
+}
+
+.form__input,
+.form-field input,
+.form-field textarea,
+.custom-select__trigger {
+  margin-bottom: 8px; /* Espacio reservado para el error */
 }
 
 .form__actions,
@@ -84,8 +120,7 @@
   display: flex;
   justify-content: flex-end;
   gap: var(--espaciado-md);
-  margin-top: var(--espaciado-lg);
-  padding-top: var(--espaciado-lg);
+  padding-top: var(--espaciado-md);
   border-top: 1px solid var(--color-borde);
 }
 
@@ -203,7 +238,7 @@
   display: flex;
   align-items: center;
   gap: var(--espaciado-md);
-  margin-bottom: var(--espaciado-lg);
+  /*margin-bottom: var(--espaciado-lg);*/
   padding-bottom: var(--espaciado-lg);
   border-bottom: 1px solid var(--color-borde);
 }

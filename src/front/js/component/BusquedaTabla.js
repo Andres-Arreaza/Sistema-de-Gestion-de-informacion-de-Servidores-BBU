@@ -24,10 +24,15 @@ const abrirModalLink = (servidor) => {
 const exportarCSV = (servidores) => {
     if (!servidores.length) return;
 
-    const encabezados = `"Nombre";"Tipo";"IP";"Servicio";"Ecosistema";"Capa";"Ambiente";"Balanceador";"VLAN";"Dominio";"S.O.";"Estatus";"Descripción";"Link"\n`;
+
+    const encabezados = `"Nombre";"Tipo";"IP MGMT";"IP Real";"IP Mask/25";"Servicio";"Ecosistema";"Capa";"Ambiente";"Balanceador";"VLAN";"Dominio";"S.O.";"Estatus";"Descripción";"Link"\n`;
 
     const filas = servidores.map(srv =>
-        `"${srv.nombre || 'N/A'}";"${srv.tipo || 'N/A'}";"${srv.ip || 'N/A'}";"${srv.servicios?.[0]?.nombre || 'N/A'}";` +
+        `"${srv.nombre || 'N/A'}";"${srv.tipo || 'N/A'}";` +
+        `"${srv.ip_mgmt || srv.ip || 'N/A'}";` +
+        `"${srv.ip_real || 'N/A'}";` +
+        `"${srv.ip_mask25 || 'N/A'}";` +
+        `"${srv.servicios?.[0]?.nombre || 'N/A'}";` +
         `"${srv.ecosistemas?.[0]?.nombre || srv.ecosistema?.nombre || 'N/A'}";` +
         `"${srv.capas?.[0]?.nombre || 'N/A'}";"${srv.ambientes?.[0]?.nombre || 'N/A'}";"${srv.balanceador || 'N/A'}";"${srv.vlan || 'N/A'}";` +
         `"${srv.dominios?.[0]?.nombre || 'N/A'}";"${srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : 'N/A'}";"${srv.estatus?.[0]?.nombre || 'N/A'}";"${srv.descripcion || 'N/A'}";` +
@@ -65,7 +70,7 @@ const exportarExcel = (servidores) => {
 
     const encabezados = `
         <tr>
-            <th>Nombre</th><th>Tipo</th><th>IP</th><th>Servicio</th><th>Ecosistema</th><th>Capa</th><th>Ambiente</th>
+            <th>Nombre</th><th>Tipo</th><th>IP MGMT</th><th>IP Real</th><th>IP Mask/25</th><th>Servicio</th><th>Ecosistema</th><th>Capa</th><th>Ambiente</th>
             <th>Balanceador</th><th>VLAN</th><th>Dominio</th><th>S.O.</th><th>Estatus</th>
             <th>Descripción</th><th>Link</th>
         </tr>
@@ -75,7 +80,9 @@ const exportarExcel = (servidores) => {
         <tr>
             <td>${srv.nombre || ''}</td>
             <td>${srv.tipo || ''}</td>
-            <td>${srv.ip || ''}</td>
+            <td>${srv.ip_mgmt || ''}</td>
+            <td>${srv.ip_real || ''}</td>
+            <td>${srv.ip_mask25 || ''}</td>
             <td>${srv.servicios?.[0]?.nombre || ''}</td>
             <td>${srv.ecosistemas?.[0]?.nombre || srv.ecosistema?.nombre || ''}</td>
             <td>${srv.capas?.[0]?.nombre || ''}</td>
@@ -249,7 +256,9 @@ export const BusquedaTabla = ({ servidores, onClose, catalogos }) => {
                                     <th>#</th>
                                     <th>Nombre</th>
                                     <th>Tipo</th>
-                                    <th>IP</th>
+                                    <th>IP MGMT</th>
+                                    <th>IP Real</th>
+                                    <th>IP Mask/25</th>
                                     <th>Servicio</th>
                                     <th>Ecosistema</th>
                                     <th>Capa</th>
@@ -269,7 +278,9 @@ export const BusquedaTabla = ({ servidores, onClose, catalogos }) => {
                                         <td>{indiceInicial + index + 1}</td>
                                         <td>{srv.nombre}</td>
                                         <td>{srv.tipo}</td>
-                                        <td>{srv.ip}</td>
+                                        <td>{srv.ip_mgmt || 'N/A'}</td>
+                                        <td>{srv.ip_real || 'N/A'}</td>
+                                        <td>{srv.ip_mask25 || 'N/A'}</td>
                                         <td>
                                             {srv.servicios?.[0]?.nombre ? (
                                                 <span title={`ID: ${srv.servicios[0].id}`}>{srv.servicios[0].nombre}</span>

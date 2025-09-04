@@ -127,7 +127,9 @@ class Servidor(BaseModel):
 
     nombre = db.Column(db.String(120), nullable=False)
     tipo = db.Column(db.Enum(TipoServidorEnum), nullable=False)
-    ip = db.Column(db.String(50), nullable=True)
+    ip_mgmt = db.Column(db.String(50), unique=True, nullable=True)
+    ip_real = db.Column(db.String(50), unique=True, nullable=True)
+    ip_mask25 = db.Column(db.String(50), unique=True, nullable=True)
     balanceador = db.Column(db.String(120), nullable=True)
     vlan = db.Column(db.String(50), nullable=True)
     descripcion = db.Column(db.String(250), nullable=True)
@@ -186,7 +188,9 @@ class Servidor(BaseModel):
         data.update({
             "nombre": self.nombre,
             "tipo": self.tipo.value,
-            "ip": self.ip,
+            "ip_mgmt": self.ip_mgmt,
+            "ip_real": self.ip_real,
+            "ip_mask25": self.ip_mask25,
             "balanceador": self.balanceador,
             "vlan": self.vlan,
             "descripcion": self.descripcion,

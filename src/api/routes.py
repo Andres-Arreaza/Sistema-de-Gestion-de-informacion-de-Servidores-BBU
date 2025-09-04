@@ -241,10 +241,23 @@ def create_servidor():
         print("DATOS RECIBIDOS:", data)
 
         required_fields = [
-            "nombre", "tipo", "ip", "servicio_id", "capa_id", "ambiente_id", 
+            "nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", 
             "dominio_id", "sistema_operativo_id", "estatus_id"
         ]
+        ip_fields = ["ip_mgmt", "ip_real", "ip_mask25"]
         missing_fields = [field for field in required_fields if field not in data or not data[field]]
+
+        # Validar que al menos una IP no sea N/A ni vacía
+        ip_values = [data.get(f, "N/A") for f in ip_fields]
+        if all(ip == "N/A" or not ip for ip in ip_values):
+            return jsonify({"error": "Debe especificar al menos una IP (MGMT, Real o Mask/25) distinta de N/A"}), 400
+
+        # Validar unicidad de cada IP si no es N/A
+        for ip_field in ip_fields:
+            ip_val = data.get(ip_field, "N/A")
+            if ip_val and ip_val != "N/A":
+                if Servidor.query.filter(getattr(Servidor, ip_field) == ip_val).first():
+                    return jsonify({"msg": f"Ya existe un servidor con la IP {ip_val} en el campo {ip_field}"}), 400
 
         if missing_fields:
             return jsonify({"error": f"Faltan datos obligatorios: {', '.join(missing_fields)}"}), 400
@@ -252,15 +265,14 @@ def create_servidor():
         if Servidor.query.filter_by(nombre=data["nombre"]).first():
             return jsonify({"msg": "Ya existe un servidor con ese nombre"}), 400
 
-        if Servidor.query.filter_by(ip=data["ip"]).first():
-            return jsonify({"msg": "Ya existe un servidor con esa IP"}), 400
-
         data["estatus_id"] = data.get("estatus_id", 1)
 
         nuevo_servidor = Servidor(
             nombre=data["nombre"],
             tipo=data["tipo"],
-            ip=data["ip"],
+            ip_mgmt=data.get("ip_mgmt", "N/A"),
+            ip_real=data.get("ip_real", "N/A"),
+            ip_mask25=data.get("ip_mask25", "N/A"),
             balanceador=data.get("balanceador", ""),
             vlan=data.get("vlan", ""),
             link=data.get("link", ""),
@@ -297,7 +309,19 @@ def update_servidor(record_id):
             return jsonify({"error": "Servidor no encontrado"}), 404
 
         data = request.get_json()
-        
+        ip_fields = ["ip_mgmt", "ip_real", "ip_mask25"]
+        ip_values = [data.get(f, getattr(servidor, f, "N/A")) for f in ip_fields]
+        if all(ip == "N/A" or not ip for ip in ip_values):
+            return jsonify({"error": "Debe especificar al menos una IP (MGMT, Real o Mask/25) distinta de N/A"}), 400
+
+        # Validar unicidad de cada IP si no es N/A y si está cambiando
+        for ip_field in ip_fields:
+            ip_val = data.get(ip_field, getattr(servidor, ip_field, "N/A"))
+            if ip_val and ip_val != "N/A":
+                conflicto = Servidor.query.filter(getattr(Servidor, ip_field) == ip_val, Servidor.id != record_id).first()
+                if conflicto:
+                    return jsonify({"msg": f"Ya existe un servidor con la IP {ip_val} en el campo {ip_field}"}), 400
+
         for key, value in data.items():
             if hasattr(servidor, key):
                 setattr(servidor, key, value)
@@ -333,17 +357,25 @@ def buscar_servidores():
         query = Servidor.query.filter_by(activo=True)
         busqueda_exacta = request.args.get("busquedaExacta", "false").lower() == "true"
 
+        # Buscar por las tres IPs
+        ip_fields = ["ip_mgmt", "ip_real", "ip_mask25"]
+        for ip_field in ip_fields:
+            ip_val = request.args.get(ip_field)
+            if ip_val:
+                if busqueda_exacta:
+                    query = query.filter(getattr(Servidor, ip_field) == ip_val)
+                else:
+                    query = query.filter(getattr(Servidor, ip_field).ilike(f"%{ip_val}%"))
+
         # Si el checkbox está activado, buscar solo coincidencias exactas
         if busqueda_exacta:
             if request.args.get("nombre"): query = query.filter(Servidor.nombre == request.args["nombre"])
-            if request.args.get("ip"): query = query.filter(Servidor.ip == request.args["ip"])
             if request.args.get("balanceador"): query = query.filter(Servidor.balanceador == request.args["balanceador"])
             if request.args.get("vlan"): query = query.filter(Servidor.vlan == request.args["vlan"])
             if request.args.get("link"): query = query.filter(Servidor.link == request.args["link"])
             if request.args.get("descripcion"): query = query.filter(Servidor.descripcion == request.args["descripcion"])
         else:
             if request.args.get("nombre"): query = query.filter(Servidor.nombre.ilike(f"%{request.args['nombre']}%"))
-            if request.args.get("ip"): query = query.filter(Servidor.ip.ilike(f"%{request.args['ip']}%"))
             if request.args.get("balanceador"): query = query.filter(Servidor.balanceador.ilike(f"%{request.args['balanceador']}%"))
             if request.args.get("vlan"): query = query.filter(Servidor.vlan.ilike(f"%{request.args['vlan']}%"))
             if request.args.get("link"): query = query.filter(Servidor.link.ilike(f"%{request.args['link']}%"))

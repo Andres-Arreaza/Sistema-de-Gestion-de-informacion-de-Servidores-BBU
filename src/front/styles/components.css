@@ -1,3 +1,24 @@
+/* Badges para contadores de servidores buenos y con error en carga masiva */
+.badge {
+  display: inline-block;
+  border-radius: 16px;
+  font-weight: 600;
+  padding: 0.4em 1em;
+  font-size: 1em;
+  background: var(--color-superficie);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  margin-right: 0.5em;
+}
+.badge--success {
+  color: var(--color-primario);
+  background: #e6f7ee;
+  border: 1px solid var(--color-primario);
+}
+.badge--error {
+  color: var(--color-error);
+  background: #fdeaea;
+  border: 1px solid var(--color-error);
+}
 /* Animación bounce para el logo de loading */
 .loading-logo-img {
   animation: loading-bounce 1.2s infinite;

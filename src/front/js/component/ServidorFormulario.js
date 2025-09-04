@@ -76,7 +76,7 @@ const CampoTexto = ({ name, label, value, onChange, error, placeholder = '', req
 // --- Componente Principal del Formulario ---
 const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdicion, onSaveRow }) => {
     const [formData, setFormData] = useState({
-        nombre: "", tipo: "", ip: "", balanceador: "", vlan: "",
+        nombre: "", tipo: "", ip_mgmt: "", ip_real: "", ip_mask25: "", balanceador: "", vlan: "",
         servicio_id: "", capa_id: "", ambiente_id: "", link: "",
         descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: "", ecosistema_id: ""
     });
@@ -116,12 +116,30 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
     useEffect(() => {
         if (servidorInicial) {
             const dataToSet = { ...servidorInicial };
+            // Asegura que los campos IP existan
+            dataToSet.ip_mgmt = servidorInicial.ip_mgmt || "";
+            dataToSet.ip_real = servidorInicial.ip_real || "";
+            dataToSet.ip_mask25 = servidorInicial.ip_mask25 || "";
             delete dataToSet.errors;
             setFormData(dataToSet);
-            setErrors(servidorInicial.errors || {});
+            // Espera 1 segundo antes de mostrar las validaciones
+            setTimeout(() => {
+                const allErrors = validateForm(dataToSet);
+                // Solo muestra los errores que realmente correspondan (no elimina solo los de obligatorio, sino todos los que no aplican)
+                Object.keys(allErrors).forEach(key => {
+                    if (dataToSet[key] && String(dataToSet[key]).trim() !== "") {
+                        // Si el valor es válido, elimina el error
+                        if (allErrors[key] && allErrors[key].toLowerCase().includes('obligatorio')) {
+                            delete allErrors[key];
+                        }
+                        // Puedes agregar más condiciones aquí si tienes validaciones personalizadas
+                    }
+                });
+                setErrors(allErrors);
+            }, 1000);
         } else {
             setFormData({
-                nombre: "", tipo: "", ip: "", balanceador: "", vlan: "",
+                nombre: "", tipo: "", ip_mgmt: "", ip_real: "", ip_mask25: "", balanceador: "", vlan: "",
                 servicio_id: "", capa_id: "", ambiente_id: "", link: "",
                 descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: "1", ecosistema_id: ""
             });
@@ -143,7 +161,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
 
     const validateForm = () => {
         const newErrors = {};
-    const requiredFields = ["nombre", "tipo", "ip", "balanceador", "vlan", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "ecosistema_id"];
+        const requiredFields = ["nombre", "tipo", "balanceador", "vlan", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "ecosistema_id"];
 
         requiredFields.forEach(field => {
             if (!formData[field] || String(formData[field]).trim() === "") {
@@ -151,14 +169,42 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             }
         });
 
+        // Validación: al menos una IP debe estar presente y no ser vacía o N/A
         const idActual = servidorInicial?.id;
-        if (formData.nombre && allServers.some(s => s.nombre.toLowerCase() === formData.nombre.toLowerCase() && s.id !== idActual)) {
+        const ipFields = ["ip_mgmt", "ip_real", "ip_mask25"];
+        const servidoresArray = Array.isArray(allServers) ? allServers : [];
+        const ipValues = ipFields.map(f => formData[f] && formData[f].trim() !== "" && formData[f] !== "N/A");
+        if (!ipValues.some(Boolean)) {
+            newErrors.ip_mgmt = newErrors.ip_real = newErrors.ip_mask25 = "Debe ingresar al menos una IP.";
+        }
+        // Validar que las IPs no se repitan entre sí
+        const ipMgmt = formData.ip_mgmt && formData.ip_mgmt !== "N/A" ? formData.ip_mgmt.trim() : null;
+        const ipReal = formData.ip_real && formData.ip_real !== "N/A" ? formData.ip_real.trim() : null;
+        const ipMask25 = formData.ip_mask25 && formData.ip_mask25 !== "N/A" ? formData.ip_mask25.trim() : null;
+        const ipList = [ipMgmt, ipReal, ipMask25].filter(ip => ip);
+        if (new Set(ipList).size !== ipList.length) {
+            // Si hay IPs repetidas entre los campos
+            if (ipMgmt && (ipMgmt === ipReal || ipMgmt === ipMask25)) newErrors.ip_mgmt = "IP repetida en otro campo.";
+            if (ipReal && (ipReal === ipMgmt || ipReal === ipMask25)) newErrors.ip_real = "IP repetida en otro campo.";
+            if (ipMask25 && (ipMask25 === ipMgmt || ipMask25 === ipReal)) newErrors.ip_mask25 = "IP repetida en otro campo.";
+        }
+        // Validar que ninguna IP esté repetida en ningún campo de ningún servidor existente
+        ipFields.forEach(f => {
+            if (formData[f] && formData[f] !== "N/A") {
+                for (let s of servidoresArray) {
+                    if (s.id !== idActual) {
+                        if (s.ip_mgmt === formData[f] || s.ip_real === formData[f] || s.ip_mask25 === formData[f]) {
+                            newErrors[f] = `La IP ya está en uso en otro servidor.`;
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+        if (formData.nombre && servidoresArray.some(s => s.nombre && s.nombre.toLowerCase() === formData.nombre.toLowerCase() && s.id !== idActual)) {
             newErrors.nombre = 'Este nombre ya está en uso.';
         }
-        if (formData.ip && allServers.some(s => s.ip === formData.ip && s.id !== idActual)) {
-            newErrors.ip = 'Esta IP ya está en uso.';
-        }
-        if (formData.link && formData.link.trim() && allServers.some(s => s.link === formData.link && s.id !== idActual)) {
+        if (formData.link && formData.link.trim() && servidoresArray.some(s => s.link === formData.link && s.id !== idActual)) {
             newErrors.link = 'Este link ya está en uso.';
         }
 
@@ -174,12 +220,23 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
         }
 
         const guardarServidor = () => {
+            // Prepara los datos de IP: si solo se ingresa una, las otras dos se envían como 'N/A'
+            const ipFields = ["ip_mgmt", "ip_real", "ip_mask25"];
+            const ipData = { ...formData };
+            const ipCount = ipFields.filter(f => ipData[f] && ipData[f].trim() !== "" && ipData[f] !== "N/A").length;
+            if (ipCount === 1) {
+                ipFields.forEach(f => {
+                    if (!ipData[f] || ipData[f].trim() === "") {
+                        ipData[f] = "N/A";
+                    }
+                });
+            }
             const url = esEdicion ? `${process.env.BACKEND_URL}/api/servidores/${servidorInicial.id}` : `${process.env.BACKEND_URL}/api/servidores`;
             const method = esEdicion ? "PUT" : "POST";
             fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...formData, activo: true })
+                body: JSON.stringify({ ...ipData, activo: true })
             })
                 .then(response => {
                     if (!response.ok) throw new Error('Error al guardar el servidor');
@@ -225,16 +282,16 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
 
 
     return (
-        <form onSubmit={handleFormSubmit} className="form grid-form">
+        <form onSubmit={handleFormSubmit} className="form grid-form" style={{ boxSizing: 'border-box' }}>
             <div className="form__row">
                 <CampoTexto name="nombre" label="Nombre" value={formData.nombre || ''} onChange={handleChange} error={errors.nombre} />
                 <SingleSelectDropdown name="tipo" label="Tipo" selectedValue={formData.tipo} onSelect={handleChange} error={errors.tipo}
                     options={[{ value: "FISICO", label: "FISICO" }, { value: "VIRTUAL", label: "VIRTUAL" }]} />
-                <CampoTexto name="ip" label="IP" value={formData.ip || ''} onChange={handleChange} error={errors.ip} />
+                <CampoTexto name="ip_mgmt" label="IP MGMT" value={formData.ip_mgmt || ''} onChange={handleChange} error={errors.ip_mgmt} />
+                <CampoTexto name="ip_real" label="IP Real" value={formData.ip_real || ''} onChange={handleChange} error={errors.ip_real} />
+                <CampoTexto name="ip_mask25" label="IP Mask/25" value={formData.ip_mask25 || ''} onChange={handleChange} error={errors.ip_mask25} />
                 <CampoTexto name="balanceador" label="Balanceador" value={formData.balanceador || ''} onChange={handleChange} error={errors.balanceador} />
                 <CampoTexto name="vlan" label="VLAN" value={formData.vlan || ''} onChange={handleChange} error={errors.vlan} />
-            </div>
-            <div className="form__row">
                 <SingleSelectDropdown name="servicio_id" label="Servicio" selectedValue={formData.servicio_id} onSelect={handleChange} error={errors.servicio_id}
                     options={catalogos.servicios.map(s => ({ value: s.id, label: s.nombre }))} />
                 <SingleSelectDropdown name="ecosistema_id" label="Ecosistema" selectedValue={formData.ecosistema_id} onSelect={handleChange} error={errors.ecosistema_id}
@@ -250,10 +307,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                 <SingleSelectDropdown name="estatus_id" label="Estatus" selectedValue={formData.estatus_id} onSelect={handleChange} error={errors.estatus_id}
                     options={catalogos.estatus.map(e => ({ value: e.id, label: e.nombre }))} />
                 <CampoTexto name="link" label="Link" value={formData.link || ''} onChange={handleChange} error={errors.link} required={false} />
-                <div className="form__group">
-                    <label className="form__label">Descripción</label>
-                    <textarea name="descripcion" value={formData.descripcion || ''} onChange={handleChange} className="form__input"></textarea>
-                </div>
+                <CampoTexto name="descripcion" label="Descripción" value={formData.descripcion || ''} onChange={handleChange} error={errors.descripcion} required={false} />
             </div>
             <div className="form__actions">
                 <button type="button" className="btn btn--secondary" onClick={() => setModalVisible(false)}>Cancelar</button>

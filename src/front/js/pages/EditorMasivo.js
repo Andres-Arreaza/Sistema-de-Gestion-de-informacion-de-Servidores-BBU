@@ -32,9 +32,11 @@ const abrirModalLink = (servidor) => {
 
 const exportarCSV = (servidores) => {
     if (!servidores.length) return;
-    const encabezados = `"Nombre";"Tipo";"IP";"Servicio";"Ecosistema";"Capa";"Ambiente";"Balanceador";"VLAN";"Dominio";"S.O.";"Estatus";"Descripción";"Link"\n`;
+    const encabezados = `"Nombre";"Tipo";"IP MGMT";"IP Real";"IP Mask/25";"Servicio";"Ecosistema";"Capa";"Ambiente";"Balanceador";"VLAN";"Dominio";"S.O.";"Estatus";"Descripción";"Link"\n`;
     const filas = servidores.map(srv =>
-        `"${srv.nombre || 'N/A'}";"${srv.tipo || 'N/A'}";"${srv.ip || 'N/A'}";"${srv.servicios?.[0]?.nombre || 'N/A'}";` +
+        `"${srv.nombre || 'N/A'}";"${srv.tipo || 'N/A'}";` +
+        `"${srv.ip_mgmt || 'N/A'}";"${srv.ip_real || 'N/A'}";"${srv.ip_mask25 || 'N/A'}";` +
+        `"${srv.servicios?.[0]?.nombre || 'N/A'}";` +
         `"${srv.ecosistemas?.[0]?.nombre || srv.ecosistema?.nombre || 'N/A'}";` +
         `"${srv.capas?.[0]?.nombre || 'N/A'}";"${srv.ambientes?.[0]?.nombre || 'N/A'}";"${srv.balanceador || 'N/A'}";"${srv.vlan || 'N/A'}";` +
         `"${srv.dominios?.[0]?.nombre || 'N/A'}";"${srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : 'N/A'}";"${srv.estatus?.[0]?.nombre || 'N/A'}";"${srv.descripcion || 'N/A'}";` +
@@ -64,8 +66,8 @@ const exportarExcel = (servidores) => {
             .sub-title { color: #005A9C; font-size: 14px; font-style: italic; margin: 0; padding: 0; }
         </style>
     `;
-    const encabezados = `<tr><th>Nombre</th><th>Tipo</th><th>IP</th><th>Servicio</th><th>Ecosistema</th><th>Capa</th><th>Ambiente</th><th>Balanceador</th><th>VLAN</th><th>Dominio</th><th>S.O.</th><th>Estatus</th><th>Descripción</th><th>Link</th></tr>`;
-    const filas = servidores.map(srv => `<tr><td>${srv.nombre || ''}</td><td>${srv.tipo || ''}</td><td>${srv.ip || ''}</td><td>${srv.servicios?.[0]?.nombre || ''}</td><td>${srv.ecosistemas?.[0]?.nombre || srv.ecosistema?.nombre || ''}</td><td>${srv.capas?.[0]?.nombre || ''}</td><td>${srv.ambientes?.[0]?.nombre || ''}</td><td>${srv.balanceador || ''}</td><td>${srv.vlan || ''}</td><td>${srv.dominios?.[0]?.nombre || ''}</td><td>${srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : ''}</td><td>${srv.estatus?.[0]?.nombre || ''}</td><td>${srv.descripcion || ''}</td><td>${srv.link || ''}</td></tr>`).join("");
+    const encabezados = `<tr><th>Nombre</th><th>Tipo</th><th>IP MGMT</th><th>IP Real</th><th>IP Mask/25</th><th>Servicio</th><th>Ecosistema</th><th>Capa</th><th>Ambiente</th><th>Balanceador</th><th>VLAN</th><th>Dominio</th><th>S.O.</th><th>Estatus</th><th>Descripción</th><th>Link</th></tr>`;
+    const filas = servidores.map(srv => `<tr><td>${srv.nombre || ''}</td><td>${srv.tipo || ''}</td><td>${srv.ip_mgmt || ''}</td><td>${srv.ip_real || ''}</td><td>${srv.ip_mask25 || ''}</td><td>${srv.servicios?.[0]?.nombre || ''}</td><td>${srv.ecosistemas?.[0]?.nombre || srv.ecosistema?.nombre || ''}</td><td>${srv.capas?.[0]?.nombre || ''}</td><td>${srv.ambientes?.[0]?.nombre || ''}</td><td>${srv.balanceador || ''}</td><td>${srv.vlan || ''}</td><td>${srv.dominios?.[0]?.nombre || ''}</td><td>${srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : ''}</td><td>${srv.estatus?.[0]?.nombre || ''}</td><td>${srv.descripcion || ''}</td><td>${srv.link || ''}</td></tr>`).join("");
     const plantillaHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8">${estilos}</head><body><table class="header-table"><tr><td colspan="14"><h1 class="main-title">Reporte de Servidores</h1></td></tr><tr><td colspan="14"><p class="sub-title">(Gerencia de Operaciones de Canales Virtuales y Medios de Pagos)</p></td></tr></table><table class="excel-table">${encabezados}${filas}</table></body></html>`;
     const excelContent = `data:application/vnd.ms-excel;charset=utf-8,${encodeURIComponent(plantillaHtml)}`;
     const link = document.createElement("a");
@@ -339,7 +341,9 @@ const EditorMasivo = () => {
     const opcionesColumnas = [
         { value: 'nombre', label: 'Nombre', type: 'input', disabled: servidores.length > 1 },
         { value: 'tipo', label: 'Tipo', type: 'select', options: [{ id: 'VIRTUAL', nombre: 'Virtual' }, { id: 'FISICO', nombre: 'Físico' }] },
-        { value: 'ip', label: 'IP', type: 'input', disabled: servidores.length > 1 },
+        { value: 'ip_mgmt', label: 'IP MGMT', type: 'input' },
+        { value: 'ip_real', label: 'IP Real', type: 'input' },
+        { value: 'ip_mask25', label: 'IP Mask/25', type: 'input' },
         { value: 'balanceador', label: 'Balanceador', type: 'input' },
         { value: 'vlan', label: 'VLAN', type: 'input' },
         { value: 'link', label: 'Link', type: 'input', disabled: servidores.length > 1 },
@@ -561,7 +565,11 @@ const EditorMasivo = () => {
         const currentServidores = servidores.slice(indexOfFirstItem, indexOfLastItem);
 
         const columnas = [
-            { header: 'Nombre', key: 'nombre' }, { header: 'Tipo', key: 'tipo' }, { header: 'IP', key: 'ip' },
+            { header: 'Nombre', key: 'nombre' },
+            { header: 'Tipo', key: 'tipo' },
+            { header: 'IP MGMT', key: 'ip_mgmt' },
+            { header: 'IP Real', key: 'ip_real' },
+            { header: 'IP Mask/25', key: 'ip_mask25' },
             { header: 'Servicio', key: 'servicio_id', catalog: 'servicios' },
             { header: 'Ecosistema', key: 'ecosistema_id', catalog: 'ecosistemas' },
             { header: 'Capa', key: 'capa_id', catalog: 'capas' },
@@ -612,13 +620,13 @@ const EditorMasivo = () => {
                                         );
                                     }
                                     let displayValue = servidor[col.key];
+                                    // Para las IPs, mostrar N/A si no hay valor
+                                    if (["ip_mgmt", "ip_real", "ip_mask25"].includes(col.key)) {
+                                        displayValue = displayValue || 'N/A';
+                                    }
                                     if (col.catalog) {
                                         const found = catalogos[col.catalog]?.find(c => String(c.id) === String(displayValue));
-                                        if (found) {
-                                            displayValue = col.catalog === 'sistemasOperativos' ? `${found.nombre} - V${found.version}` : found.nombre;
-                                        } else {
-                                            displayValue = 'N/A';
-                                        }
+                                        displayValue = found ? (col.catalog === 'sistemasOperativos' ? `${found.nombre} - V${found.version}` : found.nombre) : 'N/A';
                                     }
                                     const hasError = !!errorsInRow[col.key];
                                     return (
