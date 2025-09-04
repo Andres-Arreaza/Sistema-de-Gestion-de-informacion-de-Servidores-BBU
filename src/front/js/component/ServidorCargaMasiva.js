@@ -162,7 +162,7 @@ const PreviewModal = function ({ datos, encabezado, onClose, onSave, onEdit, onD
                         <ItemsPerPageDropdown value={itemsPerPage} onChange={setItemsPerPage} />
                         <span className="badge badge--success" style={{ fontSize: '1em', padding: '0.4em 1em', display: 'flex', alignItems: 'center', gap: '0.5em' }}>
                             <Icon name="check-circle" style={{ color: 'var(--color-primario)' }} />
-                            {cantidadBuenos} servidor{cantidadBuenos === 1 ? '' : 'es'} bueno{cantidadBuenos === 1 ? '' : 's'}
+                            {cantidadBuenos} {cantidadBuenos === 1 ? 'servidor listo para guardar' : 'servidores listos para guardar'}
                         </span>
                         <span className="badge badge--error" style={{ fontSize: '1em', padding: '0.4em 1em', display: 'flex', alignItems: 'center', gap: '0.5em' }}>
                             <Icon name="times-circle" style={{ color: 'var(--color-error)' }} />
@@ -298,7 +298,7 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             { key: 'capa', header: 'Capa', required: true, catalog: 'capas', formKey: 'capa_id' },
             { key: 'ambiente', header: 'Ambiente', required: true, catalog: 'ambientes', formKey: 'ambiente_id' },
             { key: 'dominio', header: 'Dominio', required: true, catalog: 'dominios', formKey: 'dominio_id' },
-            { key: 'ecosistema', header: 'Ecosistema', required: true, catalog: 'ecosistemas', formKey: 'ecosistema_id' },
+            { key: 'ecosistema', header: 'Ecosistema', required: false, catalog: 'ecosistemas', formKey: 'ecosistema_id' },
             { key: 's.o.', header: 'S.O.', required: true, catalog: 'sistemasOperativos', formKey: 'sistema_operativo_id' },
             { key: 'estatus', header: 'Estatus', required: true, catalog: 'estatus', formKey: 'estatus_id' },
             { key: 'link', header: 'Link', required: false, formKey: 'link' }
@@ -312,12 +312,12 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             else if (value) {
                 if (col.values && !col.values.some(function (v) { return v.toUpperCase() === value.toUpperCase(); })) errores[formKey] = true;
                 if (col.catalog) checkCatalog(col.catalog, col.header, value, formKey);
-                // Validación de repetidos y existentes para nombre, ip_mgmt, ip_real, ip_mask25 y link
-                // 'descripcion' puede repetirse, no se valida
-                if (['nombre', 'ip_mgmt', 'ip_real', 'ip_mask25', 'link'].indexOf(col.key) !== -1) {
+                // Validación de repetidos y existentes para nombre, ip_mgmt, ip_real, ip_mask25
+                // 'descripcion' y 'link' pueden repetirse, no se valida
+                if (['nombre', 'ip_mgmt', 'ip_real', 'ip_mask25'].indexOf(col.key) !== -1) {
                     if (col.key !== 'descripcion') {
-                        // Permitir que 'N/A' se repita en las IPs
-                        if (value.toUpperCase() !== 'N/A') {
+                        // Permitir que 'N/A' y vacíos se repitan en las IPs
+                        if (value.toUpperCase() !== 'N/A' && value.trim() !== '') {
                             if (servidoresExistentes.some(function (s) {
                                 return s[col.key] && s[col.key].toLowerCase() === value.toLowerCase();
                             })) errores[formKey] = true;
@@ -381,17 +381,9 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
 
     function handleGuardar() {
         console.log('handleGuardar - datosCSV:', datosCSV);
+        // Mostrar el payload que se enviará al backend
         var filasConErrores = datosCSV.filter(function (dato) { return Object.keys(dato.errores).length > 0; });
-        if (filasConErrores.length > 0) {
-            Swal.fire('Registros con errores', 'No se puede guardar. Por favor, corrija todas las filas marcadas en rojo.', 'error');
-            return;
-        }
         var filasValidas = datosCSV.filter(function (dato) { return Object.keys(dato.errores).length === 0; });
-        if (filasValidas.length === 0) {
-            Swal.fire('No hay registros válidos', 'No hay servidores para guardar.', 'info');
-            return;
-        }
-
         var servidoresParaGuardar = filasValidas.map(function (obj) {
             var fila = obj.fila;
             var servidor = {};
@@ -402,9 +394,9 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 switch (key) {
                     case 'nombre': servidor.nombre = value; break;
                     case 'tipo': servidor.tipo = value; break;
-                    case 'ip_mgmt': servidor.ip_mgmt = value; break;
-                    case 'ip_real': servidor.ip_real = value; break;
-                    case 'ip_mask25': servidor.ip_mask25 = value; break;
+                    case 'ip_mgmt': servidor.ip_mgmt = value.trim() === '' ? 'N/A' : value; break;
+                    case 'ip_real': servidor.ip_real = value.trim() === '' ? 'N/A' : value; break;
+                    case 'ip_mask25': servidor.ip_mask25 = value.trim() === '' ? 'N/A' : value; break;
                     case 'balanceador': servidor.balanceador = value; break;
                     case 'vlan': servidor.vlan = value; break;
                     case 'link': servidor.link = value; break;
@@ -441,6 +433,17 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             }
             return Object.assign({}, servidor, { activo: true });
         });
+        console.log('Payload a enviar al backend:', servidoresParaGuardar);
+        var filasConErrores = datosCSV.filter(function (dato) { return Object.keys(dato.errores).length > 0; });
+        if (filasConErrores.length > 0) {
+            Swal.fire('Registros con errores', 'No se puede guardar. Por favor, corrija todas las filas marcadas en rojo.', 'error');
+            return;
+        }
+        var filasValidas = datosCSV.filter(function (dato) { return Object.keys(dato.errores).length === 0; });
+        if (filasValidas.length === 0) {
+            Swal.fire('No hay registros válidos', 'No hay servidores para guardar.', 'info');
+            return;
+        }
 
         Swal.fire({
             title: 'Guardando ' + servidoresParaGuardar.length + ' servidores...',
@@ -463,7 +466,9 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             onClose();
             actualizarServidores('Carga masiva completada');
         }).catch(function (error) {
-            Swal.fire('Error al guardar', 'Ocurrió un error: ' + (error.msg || error.message), 'error');
+            // Intenta obtener un mensaje claro, si no lo encuentra, muestra el error completo para depuración.
+            const detalleError = error ? (error.msg || error.message || JSON.stringify(error)) : 'No hay detalles del error.';
+            Swal.fire('Error al guardar', 'Ocurrió un error: ' + detalleError, 'error');
         });
     }
 
@@ -521,9 +526,9 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 }
             }
         }
-        // IP Mask/25 igual a IP MGMT y IP Real si no se asignó antes
+        // IP Mask/25 debe quedar vacío si no existe, no tomar de otros campos
         if (!initialData.ip_mask25) {
-            initialData.ip_mask25 = initialData.ip_mgmt || initialData.ip_real || '';
+            initialData.ip_mask25 = '';
         }
         // Asegura que descripcion siempre esté presente como string para textarea
         if (typeof initialData.descripcion !== 'string') {
@@ -582,7 +587,6 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 case 'balanceador': filaActualizadaArray.push(updatedData.balanceador); break;
                 case 'vlan': filaActualizadaArray.push(updatedData.vlan); break;
                 case 'link': filaActualizadaArray.push(updatedData.link); break;
-                case 'descripcion': filaActualizadaArray.push(updatedData.descripcion && updatedData.descripcion.trim() !== '' ? updatedData.descripcion : 'N/A'); break;
                 case 'descripcion': filaActualizadaArray.push(updatedData.descripcion && updatedData.descripcion.trim() !== '' ? updatedData.descripcion : ''); break;
                 case 'servicio': filaActualizadaArray.push(findNameById('servicios', updatedData.servicio_id)); break;
                 case 'capa': filaActualizadaArray.push(findNameById('capas', updatedData.capa_id)); break;
