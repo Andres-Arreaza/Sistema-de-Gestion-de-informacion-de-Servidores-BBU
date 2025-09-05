@@ -43,13 +43,13 @@ const TablaPrevisualizacion = function ({ datos, encabezado, onEdit, onDelete, s
                                         const ipKeys = ['ip_mgmt', 'ip_real', 'ip_mask25'];
                                         return [
                                             <td key={cellIndex + '-mgmt'} className={errores[ipKeys[0]] ? 'celda-con-error' : ''}>
-                                                <span className={errores[ipKeys[0]] ? 'texto-error' : ''}>{fila[ipIndex] || 'N/A'}</span>
+                                                <span className={errores[ipKeys[0]] ? 'texto-error' : ''}>{(fila[ipIndex] === null || fila[ipIndex] === '' || typeof fila[ipIndex] === 'undefined') ? '' : fila[ipIndex]}</span>
                                             </td>,
                                             <td key={cellIndex + '-real'} className={errores[ipKeys[1]] ? 'celda-con-error' : ''}>
-                                                <span className={errores[ipKeys[1]] ? 'texto-error' : ''}>{fila[ipIndex + 1] || 'N/A'}</span>
+                                                <span className={errores[ipKeys[1]] ? 'texto-error' : ''}>{(fila[ipIndex + 1] === null || fila[ipIndex + 1] === '' || typeof fila[ipIndex + 1] === 'undefined') ? '' : fila[ipIndex + 1]}</span>
                                             </td>,
                                             <td key={cellIndex + '-mask25'} className={errores[ipKeys[2]] ? 'celda-con-error' : ''}>
-                                                <span className={errores[ipKeys[2]] ? 'texto-error' : ''}>{fila[ipIndex + 2] || 'N/A'}</span>
+                                                <span className={errores[ipKeys[2]] ? 'texto-error' : ''}>{(fila[ipIndex + 2] === null || fila[ipIndex + 2] === '' || typeof fila[ipIndex + 2] === 'undefined') ? '' : fila[ipIndex + 2]}</span>
                                             </td>
                                         ];
                                     }
@@ -59,10 +59,16 @@ const TablaPrevisualizacion = function ({ datos, encabezado, onEdit, onDelete, s
                                     }
                                     var headerKey = getHeaderKey(encabezado[cellIndex]);
                                     var tieneErrorCelda = !!errores[headerKey];
-                                    // Si es la columna descripcion y está vacía, mostrar 'N/A'
+                                    // Si es la columna descripcion y está vacía o null, mostrar 'N/A'
                                     let valorMostrar = celda;
                                     if (headerKey === 'descripcion' && (!celda || celda.trim() === '')) {
+                                        valorMostrar = 'N/A';
+                                    }
+                                    if ((headerKey === 'ip_mgmt' || headerKey === 'ip_real' || headerKey === 'ip_mask25') && (celda === null || celda === '' || typeof celda === 'undefined')) {
                                         valorMostrar = '';
+                                    }
+                                    if (headerKey === 'link' && (celda === null || celda === '' || typeof celda === 'undefined')) {
+                                        valorMostrar = 'N/A';
                                     }
                                     return (
                                         <td
@@ -316,8 +322,8 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 // 'descripcion' y 'link' pueden repetirse, no se valida
                 if (['nombre', 'ip_mgmt', 'ip_real', 'ip_mask25'].indexOf(col.key) !== -1) {
                     if (col.key !== 'descripcion') {
-                        // Permitir que 'N/A' y vacíos se repitan en las IPs
-                        if (value.toUpperCase() !== 'N/A' && value.trim() !== '') {
+                        // Solo validar repetidos si el valor NO es null, vacío o 'N/A'
+                        if (value !== null && value !== undefined && value !== '' && value.toUpperCase() !== 'N/A') {
                             if (servidoresExistentes.some(function (s) {
                                 return s[col.key] && s[col.key].toLowerCase() === value.toLowerCase();
                             })) errores[formKey] = true;
@@ -387,50 +393,62 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
         var servidoresParaGuardar = filasValidas.map(function (obj) {
             var fila = obj.fila;
             var servidor = {};
+            var ipFields = ['ip_mgmt', 'ip_real', 'ip_mask25'];
+            // Construye el objeto servidor
             for (var i = 0; i < encabezadoCSV.length; i++) {
                 var header = encabezadoCSV[i];
                 var key = getHeaderKey(header);
-                var value = fila[i] || '';
-                switch (key) {
-                    case 'nombre': servidor.nombre = value; break;
-                    case 'tipo': servidor.tipo = value; break;
-                    case 'ip_mgmt': servidor.ip_mgmt = value.trim() === '' ? 'N/A' : value; break;
-                    case 'ip_real': servidor.ip_real = value.trim() === '' ? 'N/A' : value; break;
-                    case 'ip_mask25': servidor.ip_mask25 = value.trim() === '' ? 'N/A' : value; break;
-                    case 'balanceador': servidor.balanceador = value; break;
-                    case 'vlan': servidor.vlan = value; break;
-                    case 'link': servidor.link = value; break;
-                    case 'descripcion':
-                        servidor.descripcion = typeof value === 'string' ? value : '';
-                        break;
-                    case 'servicio': servidor.servicio_id = findIdByName('servicios', value); break;
-                    case 'capa': servidor.capa_id = findIdByName('capas', value); break;
-                    case 'ambiente': servidor.ambiente_id = findIdByName('ambientes', value); break;
-                    case 'dominio':
-                        servidor.dominio_id = findIdByName('dominios', value);
-                        break;
-                    case 'ecosistema':
-                        if (value === 'N/A' || value === '') {
-                            servidor.ecosistema_id = null;
-                        } else {
-                            servidor.ecosistema_id = findIdByName('ecosistemas', value);
-                        }
-                        break;
-                    case 'so': servidor.sistema_operativo_id = findIdByName('sistemasOperativos', value); break;
-                    case 'estatus': servidor.estatus_id = findIdByName('estatus', value); break;
-                    default: break;
+                var value = fila[i];
+                // Aplica null si la IP es 'N/A', vacía o null
+                if (key === 'ip_mgmt' || key === 'ip_real' || key === 'ip_mask25') {
+                    servidor[key] = (value === 'N/A' || value === '' || value == null) ? null : value;
+                } else {
+                    switch (key) {
+                        case 'nombre': servidor.nombre = value; break;
+                        case 'tipo': servidor.tipo = value; break;
+                        case 'balanceador': servidor.balanceador = value; break;
+                        case 'vlan': servidor.vlan = value; break;
+                        case 'link': servidor.link = (value === 'N/A' || value === '' || value == null) ? null : value; break;
+                        case 'descripcion':
+                            servidor.descripcion = typeof value === 'string' ? value : '';
+                            break;
+                        case 'servicio': servidor.servicio_id = findIdByName('servicios', value); break;
+                        case 'capa': servidor.capa_id = findIdByName('capas', value); break;
+                        case 'ambiente': servidor.ambiente_id = findIdByName('ambientes', value); break;
+                        case 'dominio':
+                            servidor.dominio_id = findIdByName('dominios', value);
+                            break;
+                        case 'ecosistema':
+                            if (value === 'N/A' || value === '') {
+                                servidor.ecosistema_id = null;
+                            } else {
+                                servidor.ecosistema_id = findIdByName('ecosistemas', value);
+                            }
+                            break;
+                        case 'so': servidor.sistema_operativo_id = findIdByName('sistemasOperativos', value); break;
+                        case 'estatus': servidor.estatus_id = findIdByName('estatus', value); break;
+                        default: break;
+                    }
                 }
             }
-            if (!servidor.hasOwnProperty('ecosistema_id')) servidor.ecosistema_id = null;
-            // Siempre enviar descripcion como string
-            if (!servidor.hasOwnProperty('descripcion') || servidor.descripcion == null) servidor.descripcion = '';
-            if (!servidor.hasOwnProperty('descripcion')) servidor.descripcion = '';
-            // Si solo una IP está presente, las otras van como N/A
-            var ipFields = ['ip_mgmt', 'ip_real', 'ip_mask25'];
-            var ipCount = ipFields.filter(f => servidor[f] && servidor[f] !== 'N/A' && servidor[f] !== '').length;
+            // IPs: si solo una tiene valor real, las otras van como null
+            let ipCount = ipFields.filter(f => servidor[f] && servidor[f].trim() !== '' && servidor[f] !== 'N/A').length;
             if (ipCount === 1) {
-                ipFields.forEach(f => { if (!servidor[f] || servidor[f] === '') servidor[f] = 'N/A'; });
+                ipFields.forEach(f => {
+                    if (!servidor[f] || servidor[f].trim() === '' || servidor[f] === 'N/A') {
+                        servidor[f] = null;
+                    }
+                });
+            } else {
+                // Si el usuario deja vacío o pone 'N/A', siempre se guarda como null
+                ipFields.forEach(f => {
+                    if (servidor[f] === 'N/A' || servidor[f] === '' || servidor[f] == null) {
+                        servidor[f] = null;
+                    }
+                });
             }
+            // Link: si vacío o 'N/A', va como null
+            if (servidor.link === 'N/A' || servidor.link === '' || servidor.link == null) servidor.link = null;
             return Object.assign({}, servidor, { activo: true });
         });
         console.log('Payload a enviar al backend:', servidoresParaGuardar);
@@ -555,12 +573,20 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
     function handleUpdateRow(updatedData, rowIndex) {
         // IP masiva: si solo hay una, las otras dos van como N/A
         let ipFields = ['ip_mgmt', 'ip_real', 'ip_mask25'];
+        // Si solo una IP tiene valor real, las otras van como null (para guardar en backend)
         let ipValues = ipFields.map(f => updatedData[f] && updatedData[f].trim() !== '' && updatedData[f] !== 'N/A');
         let ipCount = ipValues.filter(Boolean).length;
         if (ipCount === 1) {
             ipFields.forEach(f => {
-                if (!updatedData[f] || updatedData[f].trim() === '') {
-                    updatedData[f] = 'N/A';
+                if (!updatedData[f] || updatedData[f].trim() === '' || updatedData[f] === 'N/A') {
+                    updatedData[f] = null;
+                }
+            });
+        } else {
+            // Si el usuario deja vacío o pone 'N/A', siempre se guarda como null
+            ipFields.forEach(f => {
+                if (updatedData[f] === 'N/A' || updatedData[f] === '' || updatedData[f] == null) {
+                    updatedData[f] = null;
                 }
             });
         }

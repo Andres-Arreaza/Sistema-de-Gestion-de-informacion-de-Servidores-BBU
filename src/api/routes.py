@@ -247,15 +247,15 @@ def create_servidor():
         ip_fields = ["ip_mgmt", "ip_real", "ip_mask25"]
         missing_fields = [field for field in required_fields if field not in data or not data[field]]
 
-        # Validar que al menos una IP no sea N/A ni vacía
-        ip_values = [data.get(f, "N/A") for f in ip_fields]
-        if all(ip == "N/A" or not ip for ip in ip_values):
-            return jsonify({"error": "Debe especificar al menos una IP (MGMT, Real o Mask/25) distinta de N/A"}), 400
+        # Validar que al menos una IP no sea null ni vacía
+        ip_values = [data.get(f) for f in ip_fields]
+        if all(ip is None or ip == "" for ip in ip_values):
+            return jsonify({"error": "Debe especificar al menos una IP (MGMT, Real o Mask/25)"}), 400
 
-        # Validar unicidad de cada IP si no es N/A
+        # Validar unicidad de cada IP si no es null ni vacío
         for ip_field in ip_fields:
-            ip_val = data.get(ip_field, "N/A")
-            if ip_val and ip_val != "N/A":
+            ip_val = data.get(ip_field)
+            if ip_val not in [None, ""]:
                 if Servidor.query.filter(getattr(Servidor, ip_field) == ip_val).first():
                     return jsonify({"msg": f"Ya existe un servidor con la IP {ip_val} en el campo {ip_field}"}), 400
 
@@ -270,12 +270,12 @@ def create_servidor():
         nuevo_servidor = Servidor(
             nombre=data["nombre"],
             tipo=data["tipo"],
-            ip_mgmt=data.get("ip_mgmt", "N/A"),
-            ip_real=data.get("ip_real", "N/A"),
-            ip_mask25=data.get("ip_mask25", "N/A"),
+            ip_mgmt=data.get("ip_mgmt") if data.get("ip_mgmt") not in [None, ""] else None,
+            ip_real=data.get("ip_real") if data.get("ip_real") not in [None, ""] else None,
+            ip_mask25=data.get("ip_mask25") if data.get("ip_mask25") not in [None, ""] else None,
             balanceador=data.get("balanceador", ""),
             vlan=data.get("vlan", ""),
-            link=data.get("link", ""),
+            link=data.get("link") if data.get("link") not in [None, ""] else None,
             descripcion=data.get("descripcion", ""),
             servicio_id=data["servicio_id"],
             capa_id=data["capa_id"],
@@ -310,14 +310,21 @@ def update_servidor(record_id):
 
         data = request.get_json()
         ip_fields = ["ip_mgmt", "ip_real", "ip_mask25"]
-        ip_values = [data.get(f, getattr(servidor, f, "N/A")) for f in ip_fields]
-        if all(ip == "N/A" or not ip for ip in ip_values):
-            return jsonify({"error": "Debe especificar al menos una IP (MGMT, Real o Mask/25) distinta de N/A"}), 400
-
-        # Validar unicidad de cada IP si no es N/A y si está cambiando
+        # Normaliza los valores: si el campo está vacío o no existe, lo pone en None
         for ip_field in ip_fields:
-            ip_val = data.get(ip_field, getattr(servidor, ip_field, "N/A"))
-            if ip_val and ip_val != "N/A":
+            if ip_field in data and data[ip_field] in [None, ""]:
+                data[ip_field] = None
+        if "link" in data and data["link"] in [None, ""]:
+            data["link"] = None
+
+        ip_values = [data.get(f, getattr(servidor, f, None)) for f in ip_fields]
+        if all(ip is None or ip == "" for ip in ip_values):
+            return jsonify({"error": "Debe especificar al menos una IP (MGMT, Real o Mask/25)"}), 400
+
+        # Validar unicidad de cada IP si no es null y si está cambiando
+        for ip_field in ip_fields:
+            ip_val = data.get(ip_field, getattr(servidor, ip_field, None))
+            if ip_val not in [None, ""]:
                 conflicto = Servidor.query.filter(getattr(Servidor, ip_field) == ip_val, Servidor.id != record_id).first()
                 if conflicto:
                     return jsonify({"msg": f"Ya existe un servidor con la IP {ip_val} en el campo {ip_field}"}), 400
