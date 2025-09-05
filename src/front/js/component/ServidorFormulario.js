@@ -169,26 +169,22 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             }
         });
 
-        // Validación: al menos una IP debe estar presente y no ser vacía o N/A
+        // IPs: ahora todas pueden estar vacías, solo validar unicidad y repetidos si tienen valor
         const idActual = servidorInicial?.id;
         const ipFields = ["ip_mgmt", "ip_real", "ip_mask25"];
         const servidoresArray = Array.isArray(allServers) ? allServers : [];
-        const ipValues = ipFields.map(f => formData[f] && formData[f].trim() !== "" && formData[f] !== "N/A");
-        if (!ipValues.some(Boolean)) {
-            newErrors.ip_mgmt = newErrors.ip_real = newErrors.ip_mask25 = "Debe ingresar al menos una IP.";
-        }
-        // Validar que las IPs no se repitan entre sí
+        // Validar que las IPs no se repitan entre sí si tienen valor
         const ipMgmt = formData.ip_mgmt && formData.ip_mgmt !== "N/A" ? formData.ip_mgmt.trim() : null;
         const ipReal = formData.ip_real && formData.ip_real !== "N/A" ? formData.ip_real.trim() : null;
         const ipMask25 = formData.ip_mask25 && formData.ip_mask25 !== "N/A" ? formData.ip_mask25.trim() : null;
         const ipList = [ipMgmt, ipReal, ipMask25].filter(ip => ip);
-        if (new Set(ipList).size !== ipList.length) {
+        if (ipList.length > 1 && new Set(ipList).size !== ipList.length) {
             // Si hay IPs repetidas entre los campos
             if (ipMgmt && (ipMgmt === ipReal || ipMgmt === ipMask25)) newErrors.ip_mgmt = "IP repetida en otro campo.";
             if (ipReal && (ipReal === ipMgmt || ipReal === ipMask25)) newErrors.ip_real = "IP repetida en otro campo.";
             if (ipMask25 && (ipMask25 === ipMgmt || ipMask25 === ipReal)) newErrors.ip_mask25 = "IP repetida en otro campo.";
         }
-        // Validar que ninguna IP esté repetida en ningún campo de ningún servidor existente
+        // Validar que ninguna IP esté repetida en ningún campo de ningún servidor existente si tiene valor
         ipFields.forEach(f => {
             if (formData[f] && formData[f] !== "N/A") {
                 for (let s of servidoresArray) {
