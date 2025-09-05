@@ -169,24 +169,28 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             }
         });
 
-        // IPs: ahora todas pueden estar vacías, solo validar unicidad y repetidos si tienen valor
+        // Validar que al menos uno de los tres campos de IP esté lleno (no vacío, no solo espacios)
         const idActual = servidorInicial?.id;
         const ipFields = ["ip_mgmt", "ip_real", "ip_mask25"];
         const servidoresArray = Array.isArray(allServers) ? allServers : [];
-        // Validar que las IPs no se repitan entre sí si tienen valor
-        const ipMgmt = formData.ip_mgmt && formData.ip_mgmt !== "N/A" ? formData.ip_mgmt.trim() : null;
-        const ipReal = formData.ip_real && formData.ip_real !== "N/A" ? formData.ip_real.trim() : null;
-        const ipMask25 = formData.ip_mask25 && formData.ip_mask25 !== "N/A" ? formData.ip_mask25.trim() : null;
+        const ipMgmt = formData.ip_mgmt && formData.ip_mgmt.trim() !== "" ? formData.ip_mgmt.trim() : null;
+        const ipReal = formData.ip_real && formData.ip_real.trim() !== "" ? formData.ip_real.trim() : null;
+        const ipMask25 = formData.ip_mask25 && formData.ip_mask25.trim() !== "" ? formData.ip_mask25.trim() : null;
         const ipList = [ipMgmt, ipReal, ipMask25].filter(ip => ip);
+        if (ipList.length === 0) {
+            newErrors.ip_mgmt = "Debe ingresar lamenos una ip";
+            newErrors.ip_real = "Debe ingresar lamenos una ip";
+            newErrors.ip_mask25 = "Debe ingresar lamenos una ip";
+        }
         if (ipList.length > 1 && new Set(ipList).size !== ipList.length) {
             // Si hay IPs repetidas entre los campos
             if (ipMgmt && (ipMgmt === ipReal || ipMgmt === ipMask25)) newErrors.ip_mgmt = "IP repetida en otro campo.";
             if (ipReal && (ipReal === ipMgmt || ipReal === ipMask25)) newErrors.ip_real = "IP repetida en otro campo.";
             if (ipMask25 && (ipMask25 === ipMgmt || ipMask25 === ipReal)) newErrors.ip_mask25 = "IP repetida en otro campo.";
         }
-        // Validar que ninguna IP esté repetida en ningún campo de ningún servidor existente si tiene valor
+        // Validar que ninguna IP esté repetida en ningún campo de ningún servidor existente si tienen valor
         ipFields.forEach(f => {
-            if (formData[f] && formData[f] !== "N/A") {
+            if (formData[f] && formData[f].trim() !== "") {
                 for (let s of servidoresArray) {
                     if (s.id !== idActual) {
                         if (s.ip_mgmt === formData[f] || s.ip_real === formData[f] || s.ip_mask25 === formData[f]) {
@@ -216,17 +220,16 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
         }
 
         const guardarServidor = () => {
-            // Prepara los datos de IP: si solo se ingresa una, las otras dos se envían como 'N/A'
+            // Prepara los datos de IP: si están vacíos, se envían como string vacío
             const ipFields = ["ip_mgmt", "ip_real", "ip_mask25"];
             const ipData = { ...formData };
-            const ipCount = ipFields.filter(f => ipData[f] && ipData[f].trim() !== "" && ipData[f] !== "N/A").length;
-            if (ipCount === 1) {
-                ipFields.forEach(f => {
-                    if (!ipData[f] || ipData[f].trim() === "") {
-                        ipData[f] = "N/A";
-                    }
-                });
-            }
+            ipFields.forEach(f => {
+                if (!ipData[f] || ipData[f].trim() === "") {
+                    ipData[f] = "";
+                } else {
+                    ipData[f] = ipData[f].trim();
+                }
+            });
             const url = esEdicion ? `${process.env.BACKEND_URL}/api/servidores/${servidorInicial.id}` : `${process.env.BACKEND_URL}/api/servidores`;
             const method = esEdicion ? "PUT" : "POST";
             fetch(url, {

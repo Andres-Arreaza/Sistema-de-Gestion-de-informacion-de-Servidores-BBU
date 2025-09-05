@@ -65,7 +65,7 @@ const TablaPrevisualizacion = function ({ datos, encabezado, onEdit, onDelete, s
                                         valorMostrar = 'N/A';
                                     }
                                     if ((headerKey === 'ip_mgmt' || headerKey === 'ip_real' || headerKey === 'ip_mask25') && (celda === null || celda === '' || typeof celda === 'undefined')) {
-                                        valorMostrar = '';
+                                        valorMostrar = 'N/A';
                                     }
                                     if (headerKey === 'link' && (celda === null || celda === '' || typeof celda === 'undefined')) {
                                         valorMostrar = 'N/A';
@@ -337,6 +337,16 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 }
             }
         });
+        // Validación: al menos uno de los tres campos de IP debe estar lleno (no vacío, no solo espacios, no N/A)
+        const ipKeys = ['ip_mgmt', 'ip_real', 'ip_mask25'];
+        const ipValues = ipKeys.map(key => {
+            const idx = findIndex(key.replace('_', ' '));
+            const val = idx !== -1 ? String(fila[idx] || '').trim() : '';
+            return (val && val.toUpperCase() !== 'N/A') ? val : '';
+        });
+        if (ipValues.every(ip => ip === '')) {
+            ipKeys.forEach(key => { errores[key] = true; });
+        }
         return { errores: errores };
     }
 
