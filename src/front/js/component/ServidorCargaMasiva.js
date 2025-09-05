@@ -314,7 +314,8 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             var index = findIndex(col.header);
             var value = getValue(index);
             var formKey = col.formKey;
-            if (col.required && !value) errores[formKey] = true;
+            // Solo los campos realmente obligatorios deben marcar error si están vacíos
+            if (col.required && !value && ['ip_mgmt','ip_real','ip_mask25'].indexOf(col.key) === -1) errores[formKey] = true;
             else if (value) {
                 if (col.values && !col.values.some(function (v) { return v.toUpperCase() === value.toUpperCase(); })) errores[formKey] = true;
                 if (col.catalog) checkCatalog(col.catalog, col.header, value, formKey);
@@ -598,18 +599,19 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             var headerNormalized = getHeaderKey(header);
             // Si el encabezado original es 'ip', mapear las tres IPs de forma independiente
             if (ipIndex !== -1 && i === ipIndex) {
+                // Para cada IP, guardar su valor propio, igual que IP Mask25
                 filaActualizadaArray.push(updatedData.ip_mgmt); // IP MGMT
                 filaActualizadaArray.push(updatedData.ip_real); // IP Real
-                filaActualizadaArray.push(updatedData.ip_mask25); // IP Mask25 independiente
+                filaActualizadaArray.push(updatedData.ip_mask25); // IP Mask25
                 i += 2;
                 continue;
             }
             switch (headerNormalized) {
                 case 'nombre': filaActualizadaArray.push(updatedData.nombre); break;
                 case 'tipo': filaActualizadaArray.push(updatedData.tipo); break;
-                case 'ip_mgmt': filaActualizadaArray.push(updatedData.ip_mgmt); break;
-                case 'ip_real': filaActualizadaArray.push(updatedData.ip_real); break;
-                case 'ip_mask25': filaActualizadaArray.push(updatedData.ip_mask25); break; // IP Mask25 independiente
+                case 'ip_mgmt': filaActualizadaArray.push(updatedData.ip_mgmt); break; // Igual que IP Mask25 pero con su valor propio
+                case 'ip_real': filaActualizadaArray.push(updatedData.ip_real); break; // Igual que IP Mask25 pero con su valor propio
+                case 'ip_mask25': filaActualizadaArray.push(updatedData.ip_mask25); break; // IP Mask25
                 case 'balanceador': filaActualizadaArray.push(updatedData.balanceador); break;
                 case 'vlan': filaActualizadaArray.push(updatedData.vlan); break;
                 case 'link': filaActualizadaArray.push(updatedData.link); break;

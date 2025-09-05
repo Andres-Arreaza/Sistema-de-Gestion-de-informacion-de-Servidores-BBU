@@ -247,10 +247,6 @@ def create_servidor():
         ip_fields = ["ip_mgmt", "ip_real", "ip_mask25"]
         missing_fields = [field for field in required_fields if field not in data or not data[field]]
 
-        # Validar que al menos una IP no sea null ni vacía
-        ip_values = [data.get(f) for f in ip_fields]
-        if all(ip is None or ip == "" for ip in ip_values):
-            return jsonify({"error": "Debe especificar al menos una IP (MGMT, Real o Mask/25)"}), 400
 
         # Validar unicidad de cada IP si no es null ni vacío
         for ip_field in ip_fields:
@@ -317,9 +313,7 @@ def update_servidor(record_id):
         if "link" in data and data["link"] in [None, ""]:
             data["link"] = None
 
-        ip_values = [data.get(f, getattr(servidor, f, None)) for f in ip_fields]
-        if all(ip is None or ip == "" for ip in ip_values):
-            return jsonify({"error": "Debe especificar al menos una IP (MGMT, Real o Mask/25)"}), 400
+
 
         # Validar unicidad de cada IP si no es null y si está cambiando
         for ip_field in ip_fields:
