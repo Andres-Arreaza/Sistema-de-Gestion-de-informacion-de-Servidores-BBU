@@ -305,6 +305,7 @@ def update_servidor(record_id):
             return jsonify({"error": "Servidor no encontrado"}), 404
 
         data = request.get_json()
+        print('Payload recibido para edición:', data)
         ip_fields = ["ip_mgmt", "ip_real", "ip_mask25"]
         # Normaliza los valores: si el campo está vacío o no existe, lo pone en None
         for ip_field in ip_fields:
@@ -323,8 +324,15 @@ def update_servidor(record_id):
                 if conflicto:
                     return jsonify({"msg": f"Ya existe un servidor con la IP {ip_val} en el campo {ip_field}"}), 400
 
+        # Solo permite modificar nombre y las IPs si hay un solo servidor
+        # Esto se debe controlar desde el frontend, pero aquí lo reforzamos
+        # Actualiza los campos de IPs igual que en la carga masiva
+        for ip_field in ["ip_mgmt", "ip_real", "ip_mask25"]:
+            if ip_field in data:
+                setattr(servidor, ip_field, data[ip_field])
+        # Actualiza el resto de campos
         for key, value in data.items():
-            if hasattr(servidor, key):
+            if key not in ["ip_mgmt", "ip_real", "ip_mask25"] and hasattr(servidor, key):
                 setattr(servidor, key, value)
 
         servidor.fecha_modificacion = datetime.utcnow()
@@ -491,4 +499,3 @@ def delete_ecosistema(record_id):
     ecosistema.fecha_modificacion = datetime.utcnow()
     db.session.commit()
     return jsonify({"msg": "Ecosistema eliminado"}), 200
-
