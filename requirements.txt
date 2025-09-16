@@ -1,26 +1,74 @@
--i https://pypi.org/simple
-alembic==1.5.4; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'
-certifi==2020.12.5
-click==7.1.2; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
-cloudinary==1.24.0
-flask==1.1.2
-flask-admin==1.5.7
-flask-cors==3.0.10
-flask-migrate==2.6.0
-flask-sqlalchemy==2.4.4
-flask-swagger==0.2.14
-gunicorn==20.0.4
-itsdangerous==1.1.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-jinja2==2.11.3; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
-mako==1.1.4; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-markupsafe==1.1.1; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-psycopg2-binary==2.8.6
-python-dateutil==2.8.1; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-python-dotenv==0.15.0
-python-editor==1.0.4
-pyyaml==5.4.1; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'
-six==1.15.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-sqlalchemy==1.3.23
-urllib3==1.26.3; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4' and python_version < '4'
-werkzeug==1.0.1; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
-wtforms==2.3.3
+# 0. comando para instalar las dependencias: pip install -r requirements.txt
+
+# 1. alembic: Herramienta de migración de bases de datos para SQLAlchemy.
+alembic
+
+# 2. certifi: Proporciona el paquete de CA de Mozilla para conexiones seguras.
+certifi
+
+# 3. click: Para crear interfaces de línea de comandos.
+click
+
+# 4. cloudinary: Biblioteca para la API de Cloudinary (gestión de imágenes y videos).
+cloudinary
+
+# 5. flask: Micro-framework para construir la aplicación web.
+flask
+
+# 6. flask-admin: Añade interfaces de administración a las aplicaciones Flask.
+flask-admin
+
+# 7. flask-cors: Maneja las solicitudes de origen cruzado (CORS).
+flask-cors
+
+# 8. flask-migrate: Integración de Alembic con Flask para migraciones de bases de datos.
+flask-migrate
+
+# 9. flask-sqlalchemy: Integración de SQLAlchemy con Flask para el manejo de la base de datos.
+flask-sqlalchemy
+
+# 10. gunicorn: Servidor HTTP WSGI para producción.
+gunicorn
+
+# 11. itsdangerous: Serializa datos de forma segura.
+itsdangerous
+
+# 12. jinja2: Motor de plantillas para renderizar HTML.
+jinja2
+
+# 13. mako: Motor de plantillas utilizado por Alembic.
+mako
+
+# 14. markupsafe: Maneja de forma segura el marcado en las plantillas.
+markupsafe
+
+# 15. psycopg2-binary: Adaptador de base de datos para PostgreSQL.
+psycopg2-binary
+
+# 16. python-dateutil: Utilidades para el manejo de fechas y horas.
+python-dateutil
+
+# 17. python-dotenv: Carga variables de entorno desde un archivo .env.
+python-dotenv
+
+# 18. python-editor: Biblioteca para abrir un editor de texto mediante programación.
+python-editor
+
+# 19. pyyaml: Lector y escritor de archivos YAML.
+pyyaml
+
+# 20. six: Biblioteca de compatibilidad entre Python 2 y 3.
+six
+
+# 21. sqlalchemy: ORM para interactuar con la base de datos.
+sqlalchemy
+
+# 22. urllib3: Cliente HTTP para realizar solicitudes.
+urllib3
+
+# 23. werkzeug: Kit de herramientas para aplicaciones WSGI, usado por Flask.
+werkzeug
+
+# 24. wtforms: Biblioteca para la validación y renderizado de formularios.
+wtforms
+

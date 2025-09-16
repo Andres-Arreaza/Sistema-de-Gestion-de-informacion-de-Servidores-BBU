@@ -746,8 +746,8 @@ const EditorMasivo = () => {
             <table className="table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        {columnas.map(c => <th key={c.key}>{c.header}</th>)}
+                        <th style={{ textAlign: 'center' }}>#</th>
+                        {columnas.map(c => <th key={c.key} style={{ textAlign: 'center' }}>{c.header}</th>)}
                     </tr>
                 </thead>
                 <tbody>
