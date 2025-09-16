@@ -493,10 +493,10 @@ const EditorMasivo = () => {
         }
     };
 
-    const handleDesactivarServidor = async (servidorParaDesactivar) => {
+    const handleEliminarServidor = async (servidorParaEliminar) => {
         const result = await Swal.fire({
             title: '¿Estás seguro?',
-            text: `El servidor "${servidorParaDesactivar.nombre}" será Eliminado. Esta acción no se puede deshacer.`,
+            text: `El servidor "${servidorParaEliminar.nombre}" será eliminado permanentemente. Esta acción no se puede deshacer.`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: 'var(--color-error)',
@@ -506,41 +506,18 @@ const EditorMasivo = () => {
         });
 
         if (result.isConfirmed) {
-            // Construir payload limpio solo con los campos requeridos para desactivar
-            const payload = {
-                id: servidorParaDesactivar.id,
-                activo: false,
-                aplicacion_ids: Array.isArray(servidorParaDesactivar.aplicaciones)
-                    ? servidorParaDesactivar.aplicaciones.map(app => app.id)
-                    : [],
-                nombre: servidorParaDesactivar.nombre,
-                tipo: servidorParaDesactivar.tipo,
-                servicio_id: servidorParaDesactivar.servicio_id,
-                capa_id: servidorParaDesactivar.capa_id,
-                ambiente_id: servidorParaDesactivar.ambiente_id,
-                dominio_id: servidorParaDesactivar.dominio_id,
-                sistema_operativo_id: servidorParaDesactivar.sistema_operativo_id,
-                ecosistema_id: servidorParaDesactivar.ecosistema_id,
-                estatus_id: servidorParaDesactivar.estatus_id,
-                ip_mgmt: servidorParaDesactivar.ip_mgmt,
-                ip_real: servidorParaDesactivar.ip_real,
-                ip_mask25: servidorParaDesactivar.ip_mask25,
-                balanceador: servidorParaDesactivar.balanceador,
-                vlan: servidorParaDesactivar.vlan,
-                descripcion: servidorParaDesactivar.descripcion,
-                link: servidorParaDesactivar.link
-            };
             try {
-                const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/${servidorParaDesactivar.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/${servidorParaEliminar.id}`, {
+                    method: 'DELETE',
                 });
-                if (!response.ok) throw new Error((await response.json()).msg || 'Error al desactivar');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.msg || errorData.error || 'Error al eliminar');
+                }
 
-                Swal.fire('¡Desactivado!', 'El servidor ha sido desactivado correctamente.', 'success');
-                setServidores(prev => prev.filter(s => s.id !== servidorParaDesactivar.id));
-                setCambios(prev => { const newCambios = { ...prev }; delete newCambios[servidorParaDesactivar.id]; return newCambios; });
+                Swal.fire('¡Eliminado!', 'El servidor ha sido eliminado permanentemente.', 'success');
+                setServidores(prev => prev.filter(s => s.id !== servidorParaEliminar.id));
+                setCambios(prev => { const newCambios = { ...prev }; delete newCambios[servidorParaEliminar.id]; return newCambios; });
             } catch (error) {
                 Swal.fire('Error', `Ocurrió un problema: ${error.message}`, 'error');
             }
@@ -729,7 +706,7 @@ const EditorMasivo = () => {
                                     if (col.key === 'acciones') {
                                         return (
                                             <td key={`${servidor.id}-acciones`}>
-                                                <button className="btn-icon" onClick={() => handleDesactivarServidor(servidor)} title="Desactivar Servidor">
+                                                <button className="btn-icon" onClick={() => handleEliminarServidor(servidor)} title="Eliminar servidor">
                                                     <Icon name="trash" />
                                                 </button>
                                             </td>
