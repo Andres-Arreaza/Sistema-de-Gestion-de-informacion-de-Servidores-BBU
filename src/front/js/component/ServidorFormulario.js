@@ -56,6 +56,59 @@ const SingleSelectDropdown = ({ name, label, options, selectedValue, onSelect, e
     );
 };
 
+// --- Componente Reutilizable para Dropdowns de Selección Múltiple ---
+const MultiSelectDropdown = ({ name, label, options, selectedValues, onSelect, error }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleCheckboxChange = (value) => {
+        const newSelectedValues = selectedValues.includes(value)
+            ? selectedValues.filter(v => v !== value)
+            : [...selectedValues, value];
+        onSelect({ target: { name, value: newSelectedValues } });
+    };
+
+    let displayLabel = "Seleccionar...";
+    if (selectedValues.length === 1) {
+        const selectedOption = options.find(opt => String(opt.value) === String(selectedValues[0]));
+        displayLabel = selectedOption ? selectedOption.label : "Seleccionar...";
+    } else if (selectedValues.length > 1) {
+        const selectedLabels = options.filter(opt => selectedValues.includes(String(opt.value))).map(opt => opt.label);
+        displayLabel = selectedLabels.join(', ');
+    }
+
+    return (
+        <div className={`form__group ${isOpen ? 'is-open' : ''}`} ref={dropdownRef}>
+            <label className="form__label">{label}</label>
+            <div className="custom-select">
+                <button type="button" className={`form__input custom-select__trigger ${error ? 'form__input--error' : ''}`} onClick={() => setIsOpen(!isOpen)}>
+                    <span>{displayLabel}</span>
+                    <div className={`chevron ${isOpen ? "open" : ""}`}></div>
+                </button>
+                <div className={`custom-select__panel ${isOpen ? "open" : ""}`}>
+                    {options.map((option) => (
+                        <label key={option.value} className="custom-select__option">
+                            <input type="checkbox" checked={selectedValues.includes(String(option.value))} onChange={() => handleCheckboxChange(String(option.value))} />
+                            <span>{option.label}</span>
+                        </label>
+                    ))}
+                </div>
+            </div>
+            {error && <p className="form__error-text">{error}</p>}
+        </div>
+    );
+};
+
 // --- Componente de Campo de Texto Reutilizable ---
 const CampoTexto = ({ name, label, value, onChange, error, placeholder = '', required = true }) => (
     <div className="form__group">
@@ -77,12 +130,12 @@ const CampoTexto = ({ name, label, value, onChange, error, placeholder = '', req
 const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdicion, onSaveRow }) => {
     const [formData, setFormData] = useState({
         nombre: "", tipo: "", ip_mgmt: "", ip_real: "", ip_mask25: "", balanceador: "", vlan: "",
-        servicio_id: "", capa_id: "", ambiente_id: "", link: "",
+        servicio_id: "", capa_id: "", ambiente_id: "", link: "", aplicacion_ids: [],
         descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: "", ecosistema_id: ""
     });
     const [errors, setErrors] = useState({});
     const [catalogos, setCatalogos] = useState({
-        servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [], ecosistemas: []
+        servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [], ecosistemas: [], aplicaciones: []
     });
     const [allServers, setAllServers] = useState([]);
 
@@ -98,14 +151,40 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                     { name: "sistemasOperativos", url: `${backendUrl}/api/sistemas_operativos` },
                     { name: "estatus", url: `${backendUrl}/api/estatus` },
                     { name: "ecosistemas", url: `${backendUrl}/api/ecosistemas` },
+                    { name: "aplicaciones", url: `${backendUrl}/api/aplicaciones` },
                     { name: "allServers", url: `${backendUrl}/api/servidores` }
                 ];
-                const responses = await Promise.all(urls.map(item => fetch(item.url).then(res => res.json())));
+                const responses = await Promise.all(urls.map(async item => {
+                    try {
+                        const res = await fetch(item.url);
+                        if (!res.ok) {
+                            const contentType = res.headers.get('content-type');
+                            let errorMsg = `Error HTTP ${res.status} al cargar ${item.name}`;
+                            if (contentType && contentType.includes('application/json')) {
+                                const errJson = await res.json();
+                                errorMsg = errJson.error || errorMsg;
+                            } else {
+                                errorMsg = await res.text();
+                            }
+                            throw new Error(errorMsg);
+                        }
+                        const contentType = res.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            return await res.json();
+                        } else {
+                            return [];
+                        }
+                    } catch (err) {
+                        console.error(`Error al cargar ${item.name}:`, err);
+                        return [];
+                    }
+                }));
                 setCatalogos({
                     servicios: responses[0] || [], capas: responses[1] || [], ambientes: responses[2] || [],
-                    dominios: responses[3] || [], sistemasOperativos: responses[4] || [], estatus: responses[5] || [], ecosistemas: responses[6] || []
+                    dominios: responses[3] || [], sistemasOperativos: responses[4] || [], estatus: responses[5] || [],
+                    ecosistemas: responses[6] || [], aplicaciones: responses[7] || []
                 });
-                setAllServers(responses[7] || []);
+                setAllServers(responses[8] || []);
             } catch (error) {
                 console.error("Error al cargar datos:", error);
             }
@@ -115,32 +194,42 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
 
     useEffect(() => {
         if (servidorInicial) {
-            const dataToSet = { ...servidorInicial };
-            // Asegura que los campos IP existan
+            let aplicacionesArray = [];
+            if (Array.isArray(servidorInicial.aplicaciones)) {
+                aplicacionesArray = servidorInicial.aplicaciones.map(app => String(app.id));
+            } else if (Array.isArray(servidorInicial.aplicacion_ids)) {
+                aplicacionesArray = servidorInicial.aplicacion_ids.map(id => String(id));
+            } else {
+                aplicacionesArray = [];
+            }
+            const dataToSet = { ...servidorInicial, aplicacion_ids: aplicacionesArray };
+
+            // Asegura que los campos IP y otros existan
             dataToSet.ip_mgmt = servidorInicial.ip_mgmt || "";
             dataToSet.ip_real = servidorInicial.ip_real || "";
             dataToSet.ip_mask25 = servidorInicial.ip_mask25 || "";
+            if (!Array.isArray(dataToSet.aplicacion_ids)) dataToSet.aplicacion_ids = [];
             delete dataToSet.errors;
             setFormData(dataToSet);
-            // Espera 1 segundo antes de mostrar las validaciones
-            setTimeout(() => {
-                const allErrors = validateForm(dataToSet);
-                // Solo muestra los errores que realmente correspondan (no elimina solo los de obligatorio, sino todos los que no aplican)
-                Object.keys(allErrors).forEach(key => {
-                    if (dataToSet[key] && String(dataToSet[key]).trim() !== "") {
-                        // Si el valor es válido, elimina el error
-                        if (allErrors[key] && allErrors[key].toLowerCase().includes('obligatorio')) {
-                            delete allErrors[key];
-                        }
-                        // Puedes agregar más condiciones aquí si tienes validaciones personalizadas
+            // Manejo de errores
+            if (servidorInicial.errors) {
+                const camposInvalidos = [
+                    'tipo', 'servicio_id', 'ecosistema_id', 'aplicacion_ids', 'capa_id', 'ambiente_id', 'dominio_id', 'sistema_operativo_id', 'estatus_id'
+                ];
+                const errorObj = {};
+                camposInvalidos.forEach(key => {
+                    if (servidorInicial.errors[key]) {
+                        errorObj[key] = 'Valor inválido';
                     }
                 });
-                setErrors(allErrors);
-            }, 1000);
+                setErrors(errorObj);
+            } else {
+                setErrors({});
+            }
         } else {
             setFormData({
                 nombre: "", tipo: "", ip_mgmt: "", ip_real: "", ip_mask25: "", balanceador: "", vlan: "",
-                servicio_id: "", capa_id: "", ambiente_id: "", link: "",
+                servicio_id: "", capa_id: "", ambiente_id: "", link: "", aplicacion_ids: [],
                 descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: "1", ecosistema_id: ""
             });
             setErrors({});
@@ -150,6 +239,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+
         if (errors[name]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
@@ -160,12 +250,25 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
     };
 
     const validateForm = () => {
-        const newErrors = {};
-        const requiredFields = ["nombre", "tipo", "balanceador", "vlan", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "ecosistema_id"];
+        const newErrors = { ...errors };
+        const requiredFields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "balanceador", "vlan", "ecosistema_id", "aplicacion_ids"];
 
         requiredFields.forEach(field => {
-            if (!formData[field] || String(formData[field]).trim() === "") {
-                newErrors[field] = "Este campo es obligatorio.";
+            let isEmpty = !formData[field] || (Array.isArray(formData[field]) ? formData[field].length === 0 : String(formData[field]).trim() === "");
+            if (isEmpty) {
+                if (["tipo", "dominio_id", "capa_id", "balanceador", "vlan", "ecosistema_id", "aplicacion_ids"].includes(field)) {
+                    if (newErrors[field] === 'Valor inválido' || newErrors[field] === 'Valor inválido. Este campo es obligatorio.') {
+                        newErrors[field] = 'Este campo es obligatorio.';
+                    } else if (!newErrors[field]) {
+                        newErrors[field] = "Este campo es obligatorio.";
+                    }
+                } else {
+                    if (newErrors[field] === 'Valor inválido' || newErrors[field] === 'Valor inválido. Este campo es obligatorio.') {
+                        newErrors[field] = 'Este campo es obligatorio.';
+                    } else if (!newErrors[field]) {
+                        newErrors[field] = "Este campo es obligatorio.";
+                    }
+                }
             }
         });
 
@@ -178,15 +281,17 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
         const ipMask25 = formData.ip_mask25 && formData.ip_mask25.trim() !== "" ? formData.ip_mask25.trim() : null;
         const ipList = [ipMgmt, ipReal, ipMask25].filter(ip => ip);
         if (ipList.length === 0) {
-            newErrors.ip_mgmt = "Debe ingresar lamenos una ip";
-            newErrors.ip_real = "Debe ingresar lamenos una ip";
-            newErrors.ip_mask25 = "Debe ingresar lamenos una ip";
-        }
-        if (ipList.length > 1 && new Set(ipList).size !== ipList.length) {
+            // Solo mostrar el error en el primer campo vacío
+            if (!ipMgmt) newErrors.ip_mgmt = "Debe ingresar al menos una IP.";
+            else if (!ipReal) newErrors.ip_real = "Debe ingresar al menos una IP.";
+            else if (!ipMask25) newErrors.ip_mask25 = "Debe ingresar al menos una IP.";
+        } else {
             // Si hay IPs repetidas entre los campos
-            if (ipMgmt && (ipMgmt === ipReal || ipMgmt === ipMask25)) newErrors.ip_mgmt = "IP repetida en otro campo.";
-            if (ipReal && (ipReal === ipMgmt || ipReal === ipMask25)) newErrors.ip_real = "IP repetida en otro campo.";
-            if (ipMask25 && (ipMask25 === ipMgmt || ipMask25 === ipReal)) newErrors.ip_mask25 = "IP repetida en otro campo.";
+            if (ipList.length > 1 && new Set(ipList).size !== ipList.length) {
+                if (ipMgmt && (ipMgmt === ipReal || ipMgmt === ipMask25)) newErrors.ip_mgmt = "IP repetida en otro campo.";
+                if (ipReal && (ipReal === ipMgmt || ipReal === ipMask25)) newErrors.ip_real = "IP repetida en otro campo.";
+                if (ipMask25 && (ipMask25 === ipMgmt || ipMask25 === ipReal)) newErrors.ip_mask25 = "IP repetida en otro campo.";
+            }
         }
         // Validar que ninguna IP esté repetida en ningún campo de ningún servidor existente si tienen valor
         ipFields.forEach(f => {
@@ -220,16 +325,26 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
         }
 
         const guardarServidor = () => {
-            // Prepara los datos de IP: si están vacíos, se envían como string vacío
+            // Prepara los datos de IP: si están vacíos, se envían como null
             const ipFields = ["ip_mgmt", "ip_real", "ip_mask25"];
             const ipData = { ...formData };
             ipFields.forEach(f => {
-                if (!ipData[f] || ipData[f].trim() === "") {
-                    ipData[f] = "";
+                ipData[f] = ipData[f] && ipData[f].trim() ? ipData[f].trim() : null;
+            });
+
+            // Los demás campos de catálogo
+            ["sistema_operativo_id", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "estatus_id", "ecosistema_id"].forEach(field => {
+                if (ipData[field]) {
+                    ipData[field] = Number(ipData[field]);
                 } else {
-                    ipData[f] = ipData[f].trim();
+                    ipData[field] = null;
                 }
             });
+
+            // Asegurarse de que aplicacion_ids sea un array de números
+            ipData.aplicacion_ids = (ipData.aplicacion_ids || []).map(id => Number(id));
+
+
             const url = esEdicion ? `${process.env.BACKEND_URL}/api/servidores/${servidorInicial.id}` : `${process.env.BACKEND_URL}/api/servidores`;
             const method = esEdicion ? "PUT" : "POST";
             fetch(url, {
@@ -237,9 +352,18 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ...ipData, activo: true })
             })
-                .then(response => {
-                    if (!response.ok) throw new Error('Error al guardar el servidor');
-                    return response.json();
+                .then(async response => {
+                    const contentType = response.headers.get('content-type');
+                    let data;
+                    if (contentType && contentType.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        data = await response.text();
+                    }
+                    if (!response.ok) {
+                        throw new Error(data && data.error ? data.error : (typeof data === 'string' ? data : 'Error al guardar el servidor'));
+                    }
+                    return data;
                 })
                 .then(() => {
                     onSuccess(esEdicion ? "Servidor actualizado" : "Servidor creado");
@@ -295,6 +419,14 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                     options={catalogos.servicios.map(s => ({ value: s.id, label: s.nombre }))} />
                 <SingleSelectDropdown name="ecosistema_id" label="Ecosistema" selectedValue={formData.ecosistema_id} onSelect={handleChange} error={errors.ecosistema_id}
                     options={catalogos.ecosistemas.map(e => ({ value: e.id, label: e.nombre }))} />
+                <MultiSelectDropdown
+                    name="aplicacion_ids"
+                    label={<span>Aplicaciones <span style={{ color: 'var(--color-error)' }}> *</span></span>}
+                    selectedValues={formData.aplicacion_ids}
+                    onSelect={handleChange}
+                    error={errors.aplicacion_ids}
+                    options={catalogos.aplicaciones.map(app => ({ value: app.id, label: `${app.nombre} - V${app.version}` }))}
+                />
                 <SingleSelectDropdown name="capa_id" label="Capa" selectedValue={formData.capa_id} onSelect={handleChange} error={errors.capa_id}
                     options={catalogos.capas.map(c => ({ value: c.id, label: c.nombre }))} />
                 <SingleSelectDropdown name="ambiente_id" label="Ambiente" selectedValue={formData.ambiente_id} onSelect={handleChange} error={errors.ambiente_id}

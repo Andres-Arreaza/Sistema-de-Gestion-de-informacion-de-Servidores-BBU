@@ -1,9 +1,11 @@
 import os
 from flask_admin import Admin
-from .models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, Ecosistema
+from .models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, Ecosistema, Aplicacion
 from flask_admin.contrib.sqla import ModelView
 from wtforms_sqlalchemy.fields import QuerySelectField
 
+def aplicacion_query():
+    return Aplicacion.query.order_by(Aplicacion.nombre).all()
 # 🔹 Funciones para cargar los datos basados en nombre
 
 def servicio_query():
@@ -40,6 +42,14 @@ class BaseView(ModelView):
 
     column_formatters = {
         "fecha_modificacion": _format_fecha_modificacion
+    }
+
+class AplicacionView(BaseView):
+    """ Vista personalizada para gestionar aplicaciones en Flask-Admin """
+    column_list = ["id", "nombre", "version", "descripcion", "activo", "fecha_creacion", "fecha_modificacion"]
+    form_args = {
+        "nombre": {"validators": [lambda form, field: field.data or field.errors.append("El nombre es obligatorio")]},
+        "version": {"validators": [lambda form, field: field.data or field.errors.append("La versión es obligatoria")]}
     }
 
 class ServicioView(BaseView):
@@ -79,9 +89,9 @@ class ServidorView(BaseView):
     """ Vista personalizada para gestionar servidores en Flask-Admin """
     column_list = [
         "id", "nombre", "tipo", "ip_mgmt", "ip_real", "ip_mask25", "balanceador", "vlan", "descripcion", "link",
-        "servicio", "capa", "ecosistema", "ambiente", "dominio", "sistema_operativo", "estatus", "activo", "fecha_creacion", "fecha_modificacion"
+        "servicio", "capa", "ecosistema", "ambiente", "dominio", "sistema_operativo", "estatus", "aplicaciones", "activo", "fecha_creacion", "fecha_modificacion"
     ]
-    column_filters = ["activo", "tipo", "servicio", "capa", "ecosistema", "ambiente", "dominio", "sistema_operativo", "estatus"]
+    column_filters = ["activo", "tipo", "servicio", "capa", "ecosistema", "ambiente", "dominio", "sistema_operativo", "aplicaciones"]
     column_editable_list = ["activo"]
 
     # Mostrar los nombres en lugar de los IDs en la vista de administración
@@ -92,7 +102,8 @@ class ServidorView(BaseView):
         "ambiente": lambda v, c, m, p: m.ambiente.nombre if m.ambiente else "",
         "dominio": lambda v, c, m, p: m.dominio.nombre if m.dominio else "",
         "sistema_operativo": lambda v, c, m, p: m.sistema_operativo.nombre if m.sistema_operativo else "",
-        "estatus": lambda v, c, m, p: m.estatus.nombre if m.estatus else ""
+        "estatus": lambda v, c, m, p: m.estatus.nombre if m.estatus else "",
+        "aplicaciones": lambda v, c, m, p: ", ".join([a.nombre for a in m.aplicaciones]) if m.aplicaciones else ""
     }
 
     # Hacer que los campos sean seleccionables por nombre al agregar registros
@@ -103,7 +114,7 @@ class ServidorView(BaseView):
         "ambiente": QuerySelectField,
         "dominio": QuerySelectField,
         "sistema_operativo": QuerySelectField,
-        "estatus": QuerySelectField
+        "aplicaciones": QuerySelectField
     }
 
     form_args = {
@@ -113,7 +124,7 @@ class ServidorView(BaseView):
         "ambiente": {"query_factory": ambiente_query, "allow_blank": False, "get_label": "nombre"},
         "dominio": {"query_factory": dominio_query, "allow_blank": False, "get_label": "nombre"},
         "sistema_operativo": {"query_factory": sistema_operativo_query, "allow_blank": False, "get_label": "nombre"},
-        "estatus": {"query_factory": estatus_query, "allow_blank": False, "get_label": "nombre"}
+        "aplicaciones": {"query_factory": aplicacion_query, "allow_blank": False, "get_label": "nombre"}
     }
 
 def setup_admin(app):
@@ -129,5 +140,6 @@ def setup_admin(app):
     admin.add_view(AmbienteView(Ambiente, db.session))
     admin.add_view(DominioView(Dominio, db.session))
     admin.add_view(SistemaOperativoView(SistemaOperativo, db.session))
+    admin.add_view(AplicacionView(Aplicacion, db.session))
     admin.add_view(EstatusView(Estatus, db.session))
     admin.add_view(ServidorView(Servidor, db.session))

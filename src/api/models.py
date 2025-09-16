@@ -10,7 +10,6 @@ class TipoServidorEnum(Enum):
 
     @classmethod
     def from_str(cls, value):
-        # Permite aceptar tanto "FISICO" como "FÍSICO" (con o sin tilde)
         if isinstance(value, cls):
             return value
         if isinstance(value, str):
@@ -36,10 +35,8 @@ class BaseModel(db.Model):
             "fecha_modificacion": self.fecha_modificacion.isoformat() if self.fecha_modificacion else None,
             "activo": self.activo
         }
-
-class Ecosistema(BaseModel):
-    __tablename__ = 'ecosistemas'
-
+class Servicio(BaseModel):
+    __tablename__ = 'servicios'
     nombre = db.Column(db.String(120), nullable=False)
     descripcion = db.Column(db.String(250), nullable=True)
 
@@ -48,9 +45,8 @@ class Ecosistema(BaseModel):
         data.update({"nombre": self.nombre, "descripcion": self.descripcion})
         return data
 
-class Servicio(BaseModel):
-    __tablename__ = 'servicios'
-    
+class Ecosistema(BaseModel):
+    __tablename__ = 'ecosistemas'
     nombre = db.Column(db.String(120), nullable=False)
     descripcion = db.Column(db.String(250), nullable=True)
 
@@ -61,7 +57,6 @@ class Servicio(BaseModel):
 
 class Capa(BaseModel):
     __tablename__ = 'capas'
-
     nombre = db.Column(db.String(120), nullable=False)
     descripcion = db.Column(db.String(250), nullable=True)
 
@@ -72,7 +67,6 @@ class Capa(BaseModel):
 
 class Ambiente(BaseModel):
     __tablename__ = 'ambientes'
-
     nombre = db.Column(db.String(120), nullable=False)
     descripcion = db.Column(db.String(250), nullable=True)
 
@@ -83,7 +77,16 @@ class Ambiente(BaseModel):
 
 class Dominio(BaseModel):
     __tablename__ = 'dominios'
+    nombre = db.Column(db.String(120), nullable=False)
+    descripcion = db.Column(db.String(250), nullable=True)
 
+    def serialize(self):
+        data = super().serialize()
+        data.update({"nombre": self.nombre, "descripcion": self.descripcion})
+        return data
+
+class Estatus(BaseModel):
+    __tablename__ = 'estatus'
     nombre = db.Column(db.String(120), nullable=False)
     descripcion = db.Column(db.String(250), nullable=True)
 
@@ -94,7 +97,30 @@ class Dominio(BaseModel):
 
 class SistemaOperativo(BaseModel):
     __tablename__ = 'sistemas_operativos'
+    nombre = db.Column(db.String(120), nullable=False)
+    version = db.Column(db.String(50), nullable=False)
+    descripcion = db.Column(db.String(250), nullable=True)
+    
+    def serialize(self):
+        data = super().serialize()
+        data.update({
+            "nombre": self.nombre,
+            "version": self.version,
+            "descripcion": self.descripcion
+        })
+        return data
 
+# Tabla de asociación para la relación muchos a muchos entre Servidor y Aplicacion
+servidor_aplicacion = db.Table('servidor_aplicacion',
+    db.Column('servidor_id', db.Integer, db.ForeignKey('servidores.id'), primary_key=True),
+    db.Column('aplicacion_id', db.Integer, db.ForeignKey('aplicaciones.id'), primary_key=True)
+)
+
+
+
+
+class Aplicacion(BaseModel):
+    __tablename__ = 'aplicaciones'
     nombre = db.Column(db.String(120), nullable=False)
     version = db.Column(db.String(50), nullable=False)
     descripcion = db.Column(db.String(250), nullable=True)
@@ -108,42 +134,30 @@ class SistemaOperativo(BaseModel):
         })
         return data
 
-    ecosistema_id = db.Column(db.Integer, db.ForeignKey("ecosistemas.id"), nullable=True)
-    ecosistema = db.relationship("Ecosistema")
-
-class Estatus(BaseModel):
-    __tablename__ = 'estatus'
-
-    nombre = db.Column(db.String(120), nullable=False)
-    descripcion = db.Column(db.String(250), nullable=True)
-
-    def serialize(self):
-        data = super().serialize()
-        data.update({"nombre": self.nombre, "descripcion": self.descripcion})
-        return data
 
 class Servidor(BaseModel): 
     __tablename__ = 'servidores'
 
     nombre = db.Column(db.String(120), nullable=False)
     tipo = db.Column(db.Enum(TipoServidorEnum), nullable=False)
-    ip_mgmt = db.Column(db.String(50), unique=True, nullable=True)
-    ip_real = db.Column(db.String(50), unique=True, nullable=True)
-    ip_mask25 = db.Column(db.String(50), unique=True, nullable=True)
+    ip_mgmt = db.Column(db.String(50), nullable=True)
+    ip_real = db.Column(db.String(50), nullable=True)
+    ip_mask25 = db.Column(db.String(50), nullable=True)
     balanceador = db.Column(db.String(120), nullable=True)
     vlan = db.Column(db.String(50), nullable=True)
     descripcion = db.Column(db.String(250), nullable=True)
     link = db.Column(db.String(250), nullable=True)
 
     ecosistema_id = db.Column(db.Integer, db.ForeignKey("ecosistemas.id"), nullable=True)
-    ecosistema = db.relationship("Ecosistema")
     servicio_id = db.Column(db.Integer, db.ForeignKey("servicios.id"), nullable=False)
     capa_id = db.Column(db.Integer, db.ForeignKey("capas.id"), nullable=False)
     ambiente_id = db.Column(db.Integer, db.ForeignKey("ambientes.id"), nullable=False)
     dominio_id = db.Column(db.Integer, db.ForeignKey("dominios.id"), nullable=False)
     sistema_operativo_id = db.Column(db.Integer, db.ForeignKey("sistemas_operativos.id"), nullable=False)
-    estatus_id = db.Column(db.Integer, db.ForeignKey("estatus.id"), nullable=False)
+    estatus_id = db.Column(db.Integer, db.ForeignKey("estatus.id"), nullable=True)
 
+    # Relaciones de uno a muchos
+    ecosistema = db.relationship(Ecosistema)
     servicio = db.relationship(Servicio)
     capa = db.relationship(Capa)
     ambiente = db.relationship(Ambiente)
@@ -151,37 +165,22 @@ class Servidor(BaseModel):
     sistema_operativo = db.relationship(SistemaOperativo)
     estatus = db.relationship(Estatus)
 
+    # Relación muchos a muchos con Aplicacion
+    aplicaciones = db.relationship('Aplicacion', secondary=servidor_aplicacion, lazy='subquery', backref=db.backref('servidores', lazy=True))
+
+    __table_args__ = (
+        db.UniqueConstraint('nombre', name='uq_servidor_nombre'),
+        db.UniqueConstraint('ip_mgmt', name='uq_servidor_ip_mgmt'),
+        db.UniqueConstraint('ip_real', name='uq_servidor_ip_real'),
+        db.UniqueConstraint('ip_mask25', name='uq_servidor_ip_mask25'),
+    )
+
     def __init__(self, *args, **kwargs):
-        # Permite aceptar "FISICO", "FÍSICO", Enum o ya el valor correcto
         if "tipo" in kwargs:
             tipo_val = kwargs["tipo"]
-            if isinstance(tipo_val, TipoServidorEnum):
-                kwargs["tipo"] = tipo_val
-            elif isinstance(tipo_val, str):
+            if isinstance(tipo_val, str):
                 kwargs["tipo"] = TipoServidorEnum.from_str(tipo_val)
-            else:
-                raise ValueError("Tipo de servidor inválido")
         super().__init__(*args, **kwargs)
-
-    # def serialize(self):
-    #     data = super().serialize()
-    #     data.update({
-    #         "nombre": self.nombre,
-    #         "tipo": self.tipo.value,
-    #         "ip": self.ip,
-    #         "balanceador": self.balanceador,
-    #         "vlan": self.vlan,
-    #         "descripcion": self.descripcion,
-    #         "link": self.link,
-    #         "servicios": [self.servicio.serialize()] if self.servicio else [],
-    #         "capas": [self.capa.serialize()] if self.capa else [],
-    #         "ambientes": [self.ambiente.serialize()] if self.ambiente else [],
-    #         "dominios": [self.dominio.serialize()] if self.dominio else [],
-    #         "sistemasOperativos": [self.sistema_operativo.serialize()] if self.sistema_operativo else [],
-    #         "estatus": [self.estatus.serialize()] if self.estatus else [],
-    #     })
-    #     return data
-    
     
     def serialize(self):
         data = super().serialize()
@@ -195,13 +194,20 @@ class Servidor(BaseModel):
             "vlan": self.vlan,
             "descripcion": self.descripcion,
             "link": self.link,
-            "servicios": [self.servicio.serialize()] if self.servicio else None,
-            "capas": [self.capa.serialize()] if self.capa else None,
-            "ambientes": [self.ambiente.serialize()] if self.ambiente else None,
-            "dominios": [self.dominio.serialize()] if self.dominio else None,
-            "sistemasOperativos": [self.sistema_operativo.serialize()] if self.sistema_operativo else None,
-            "estatus": [self.estatus.serialize()] if self.estatus else None,
-            "ecosistema": self.ecosistema.serialize() if self.ecosistema else None,
+            "servicio_id": self.servicio_id,
+            "capa_id": self.capa_id,
+            "ambiente_id": self.ambiente_id,
+            "dominio_id": self.dominio_id,
+            "sistema_operativo_id": self.sistema_operativo_id,
+            "estatus_id": self.estatus_id,
             "ecosistema_id": self.ecosistema_id,
+            "servicio": self.servicio.serialize() if self.servicio else None,
+            "capa": self.capa.serialize() if self.capa else None,
+            "ambiente": self.ambiente.serialize() if self.ambiente else None,
+            "dominio": self.dominio.serialize() if self.dominio else None,
+            "sistema_operativo": self.sistema_operativo.serialize() if self.sistema_operativo else None,
+            "estatus": self.estatus.serialize() if self.estatus else None,
+            "ecosistema": self.ecosistema.serialize() if self.ecosistema else None,
+            "aplicaciones": [app.serialize() for app in self.aplicaciones],
         })
         return data

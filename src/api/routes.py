@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify, Blueprint
-from api.models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, Ecosistema
+from api.models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, Ecosistema, TipoServidorEnum, Aplicacion
 from flask_cors import CORS
-from flask_cors import cross_origin
 from datetime import datetime
 
 api = Blueprint('api', __name__)
@@ -76,6 +75,7 @@ def delete_generic(model, record_id):
     """ Borrado lógico de un registro """
     record = model.query.get(record_id)
     return delete_record(record)
+
 # --- Rutas CRUD genéricas para cada modelo ---
 @api.route("/servicios", methods=["GET"])
 def get_servicios():
@@ -198,6 +198,39 @@ def update_sistema_operativo(record_id):
 def delete_sistema_operativo(record_id):
     return delete_generic(SistemaOperativo, record_id)
 
+# Endpoints CRUD para Aplicacion (debajo de sistemas_operativos)
+@api.route("/aplicaciones", methods=["GET"])
+def get_aplicaciones():
+    return get_generic(Aplicacion)
+
+@api.route("/aplicaciones/<int:record_id>", methods=["GET"])
+def get_aplicacion_by_id(record_id):
+    return get_generic_by_id(Aplicacion, record_id)
+
+@api.route("/aplicaciones", methods=["POST"])
+def create_aplicacion():
+    data = request.get_json()
+    if not data or "nombre" not in data or "version" not in data:
+        return jsonify({"error": "Faltan datos obligatorios"}), 400
+    nueva_aplicacion = Aplicacion(
+        nombre=data["nombre"],
+        version=data["version"].strip(),
+        descripcion=data.get("descripcion", "")
+    )
+    db.session.add(nueva_aplicacion)
+    db.session.commit()
+    return jsonify(nueva_aplicacion.serialize()), 201
+
+@api.route("/aplicaciones/<int:record_id>", methods=["PUT"])
+def update_aplicacion(record_id):
+    return update_generic(Aplicacion, record_id)
+
+@api.route("/aplicaciones/<int:record_id>", methods=["DELETE"])
+def delete_aplicacion(record_id):
+    return delete_generic(Aplicacion, record_id)
+
+
+# <<< CORRECCIÓN: Se reestructura toda la sección de Estatus para eliminar la indentación incorrecta
 # Ejemplo para Estatus:
 @api.route("/estatus", methods=["GET"])
 def get_estatus():
@@ -236,129 +269,86 @@ def get_servidor_by_id(record_id):
 
 @api.route("/servidores", methods=["POST"])
 def create_servidor():
-    try:
-        data = request.get_json()
-        print("DATOS RECIBIDOS:", data)
+    data = request.get_json()
+    # 'aplicacion_ids' es ahora opcional pero se manejará si existe
+    required_fields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id"]
+    for field in required_fields:
+        if field not in data or data[field] is None:
+            return jsonify({"error": f"Falta el campo obligatorio: {field}"}), 400
 
-        required_fields = [
-            "nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", 
-            "dominio_id", "sistema_operativo_id", "estatus_id"
-        ]
-        ip_fields = ["ip_mgmt", "ip_real", "ip_mask25"]
-        missing_fields = [field for field in required_fields if field not in data or not data[field]]
+    # Validar que al menos una IP esté presente
+    if not any(data.get(ip_field) for ip_field in ["ip_mgmt", "ip_real", "ip_mask25"]):
+        return jsonify({"error": "Debe proporcionar al menos una IP (ip_mgmt, ip_real, o ip_mask25)."}), 400
 
+    nuevo_servidor = Servidor(
+        nombre=data["nombre"],
+        tipo=data["tipo"],
+        servicio_id=data["servicio_id"],
+        capa_id=data["capa_id"],
+        ambiente_id=data["ambiente_id"],
+        dominio_id=data["dominio_id"],
+        sistema_operativo_id=data["sistema_operativo_id"],
+        ecosistema_id=data.get("ecosistema_id"),
+        estatus_id=data.get("estatus_id"),
+        ip_mgmt=data.get("ip_mgmt"),
+        ip_real=data.get("ip_real"),
+        ip_mask25=data.get("ip_mask25"),
+        balanceador=data.get("balanceador"),
+        vlan=data.get("vlan"),
+        descripcion=data.get("descripcion"),
+        link=data.get("link"),
+        activo=True,
+        fecha_creacion=datetime.utcnow()
+    )
 
-        # Validar unicidad de cada IP si no es null ni vacío
-        for ip_field in ip_fields:
-            ip_val = data.get(ip_field)
-            if ip_val not in [None, ""]:
-                if Servidor.query.filter(getattr(Servidor, ip_field) == ip_val).first():
-                    return jsonify({"msg": f"Ya existe un servidor con la IP {ip_val} en el campo {ip_field}"}), 400
+    # Asignar aplicaciones si se proporcionan los IDs
+    aplicacion_ids = data.get("aplicacion_ids", [])
+    if aplicacion_ids:
+        aplicaciones = Aplicacion.query.filter(Aplicacion.id.in_(aplicacion_ids)).all()
+        nuevo_servidor.aplicaciones = aplicaciones
 
-        if missing_fields:
-            return jsonify({"error": f"Faltan datos obligatorios: {', '.join(missing_fields)}"}), 400
-
-        if Servidor.query.filter_by(nombre=data["nombre"]).first():
-            return jsonify({"msg": "Ya existe un servidor con ese nombre"}), 400
-
-        data["estatus_id"] = data.get("estatus_id", 1)
-
-        nuevo_servidor = Servidor(
-            nombre=data["nombre"],
-            tipo=data["tipo"],
-            ip_mgmt=data.get("ip_mgmt") if data.get("ip_mgmt") not in [None, ""] else None,
-            ip_real=data.get("ip_real") if data.get("ip_real") not in [None, ""] else None,
-            ip_mask25=data.get("ip_mask25") if data.get("ip_mask25") not in [None, ""] else None,
-            balanceador=data.get("balanceador", ""),
-            vlan=data.get("vlan", ""),
-            link=data.get("link") if data.get("link") not in [None, ""] else None,
-            descripcion=data.get("descripcion", ""),
-            servicio_id=data["servicio_id"],
-            capa_id=data["capa_id"],
-            ambiente_id=data["ambiente_id"],
-            dominio_id=data["dominio_id"],
-            sistema_operativo_id=data["sistema_operativo_id"],
-            estatus_id=data["estatus_id"],
-            ecosistema_id=data.get("ecosistema_id"),
-            activo=True,
-            fecha_creacion=datetime.utcnow(),
-            fecha_modificacion=datetime.utcnow()
-        )
-
-        db.session.add(nuevo_servidor)
-        db.session.commit()
-
-        response = jsonify(nuevo_servidor.serialize())
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response, 201
-
-    except Exception as e:
-        db.session.rollback()
-        print("ERROR AL GUARDAR SERVIDOR:", e)
-        return jsonify({"error": f"Error interno: {str(e)}"}), 500
+    db.session.add(nuevo_servidor)
+    db.session.commit()
+    return jsonify(nuevo_servidor.serialize()), 201
 
 @api.route("/servidores/<int:record_id>", methods=["PUT"])
 def update_servidor(record_id):
-    try:
-        servidor = Servidor.query.get(record_id)
-        if not servidor:
-            return jsonify({"error": "Servidor no encontrado"}), 404
+    servidor = Servidor.query.get(record_id)
+    if not servidor:
+        return jsonify({"error": "Servidor no encontrado"}), 404
+    
+    data = request.get_json()
 
-        data = request.get_json()
-        print('Payload recibido para edición:', data)
-        ip_fields = ["ip_mgmt", "ip_real", "ip_mask25"]
-        # Normaliza los valores: si el campo está vacío o no existe, lo pone en None
-        for ip_field in ip_fields:
-            if ip_field in data and data[ip_field] in [None, ""]:
-                data[ip_field] = None
-        if "link" in data and data["link"] in [None, ""]:
-            data["link"] = None
-
-
-
-        # Validar unicidad de cada IP si no es null y si está cambiando
-        for ip_field in ip_fields:
-            ip_val = data.get(ip_field, getattr(servidor, ip_field, None))
-            if ip_val not in [None, ""]:
-                conflicto = Servidor.query.filter(getattr(Servidor, ip_field) == ip_val, Servidor.id != record_id).first()
-                if conflicto:
-                    return jsonify({"msg": f"Ya existe un servidor con la IP {ip_val} en el campo {ip_field}"}), 400
-
-        # Solo permite modificar nombre y las IPs si hay un solo servidor
-        # Esto se debe controlar desde el frontend, pero aquí lo reforzamos
-        # Actualiza los campos de IPs igual que en la carga masiva
-        for ip_field in ["ip_mgmt", "ip_real", "ip_mask25"]:
-            if ip_field in data:
-                setattr(servidor, ip_field, data[ip_field])
-        # Actualiza el resto de campos
-        for key, value in data.items():
-            if key not in ["ip_mgmt", "ip_real", "ip_mask25"] and hasattr(servidor, key):
+    # Actualizar campos simples
+    for key, value in data.items():
+        if key not in ["id", "aplicacion_ids", "activo", "fecha_creacion", "fecha_modificacion"] and hasattr(servidor, key):
+            # Convertir strings vacíos a None para campos que lo permiten
+            if isinstance(getattr(servidor, key), (str, type(None))) and value == "":
+                setattr(servidor, key, None)
+            else:
                 setattr(servidor, key, value)
+    # Actualizar estatus_id si viene en el payload
+    if "estatus_id" in data:
+        servidor.estatus_id = data["estatus_id"]
 
-        servidor.fecha_modificacion = datetime.utcnow()
-        db.session.commit()
+    # Actualizar relación de aplicaciones
+    if "aplicacion_ids" in data:
+        aplicacion_ids = data.get("aplicacion_ids", [])
+        if aplicacion_ids:
+            aplicaciones = Aplicacion.query.filter(Aplicacion.id.in_(aplicacion_ids)).all()
+            servidor.aplicaciones = aplicaciones
+        else:
+            servidor.aplicaciones = [] # Limpiar si se envía un array vacío
 
-        return jsonify(servidor.serialize()), 200
-    except Exception as e:
-        print("ERROR EN ACTUALIZACIÓN:", e)
-        return jsonify({"error": str(e)}), 500
+    servidor.fecha_modificacion = datetime.utcnow()
+    db.session.commit()
+    return jsonify(servidor.serialize()), 200
+
 
 @api.route("/servidores/<int:record_id>", methods=["DELETE"])
 def delete_servidor(record_id):
-    try:
-        servidor = Servidor.query.get(record_id)
-        if not servidor:
-            return jsonify({"error": "Servidor no encontrado"}), 404
+    return delete_generic(Servidor, record_id)
 
-        servidor.activo = False
-        db.session.commit()
-
-        return jsonify({"message": "Servidor marcado como eliminado"}), 200
-    except Exception as e:
-        print("ERROR EN ELIMINACIÓN:", e)
-        return jsonify({"error": str(e)}), 500
-
-from api.models import TipoServidorEnum
 
 @api.route("/servidores/busqueda", methods=["GET"])
 def buscar_servidores():
@@ -392,14 +382,19 @@ def buscar_servidores():
 
         if request.args.get("tipo"):
             try:
-                tipo_val = TipoServidorEnum[request.args["tipo"]]
+                tipo_val = TipoServidorEnum[request.args["tipo"].upper()]
                 query = query.filter(Servidor.tipo == tipo_val)
-            except KeyError: pass
+            except KeyError:
+                pass
+
         if request.args.getlist("servicios"): query = query.filter(Servidor.servicio_id.in_(request.args.getlist("servicios")))
         if request.args.getlist("capas"): query = query.filter(Servidor.capa_id.in_(request.args.getlist("capas")))
         if request.args.getlist("ambientes"): query = query.filter(Servidor.ambiente_id.in_(request.args.getlist("ambientes")))
         if request.args.getlist("dominios"): query = query.filter(Servidor.dominio_id.in_(request.args.getlist("dominios")))
+        # CORRECCIÓN: Filtrar por la relación 'aplicaciones'
         if request.args.getlist("sistemas_operativos"): query = query.filter(Servidor.sistema_operativo_id.in_(request.args.getlist("sistemas_operativos")))
+        if request.args.getlist("aplicacion_ids"):
+            query = query.join(Servidor.aplicaciones).filter(Aplicacion.id.in_(request.args.getlist("aplicacion_ids")))
         if request.args.getlist("estatus"): query = query.filter(Servidor.estatus_id.in_(request.args.getlist("estatus")))
 
         servidores = query.all()
@@ -408,7 +403,7 @@ def buscar_servidores():
         print("ERROR EN BUSQUEDA:", e)
         return jsonify({"error": str(e)}), 500
 
-# --- NUEVA RUTA DE VALIDACIÓN ---
+# --- RUTA DE VALIDACIÓN CORREGIDA ---
 @api.route("/servidores/validar-actualizaciones", methods=["POST"])
 def validar_actualizaciones():
     data = request.get_json()
@@ -417,6 +412,7 @@ def validar_actualizaciones():
 
     validaciones = data["validaciones"]
     errores_detalle = []
+    ip_fields = ["ip_mgmt", "ip_real", "ip_mask25"]
 
     for v in validaciones:
         servidor_id = v.get("id")
@@ -430,14 +426,15 @@ def validar_actualizaciones():
             if conflicto_nombre:
                 errores_detalle.append(f"El nombre '{v['nombre']}' ya está en uso.")
 
-        # Validar IP si se está cambiando
-        if v.get("ip"):
-            conflicto_ip = Servidor.query.filter(
-                Servidor.ip == v["ip"],
-                Servidor.id != servidor_id
-            ).first()
-            if conflicto_ip:
-                errores_detalle.append(f"La IP '{v['ip']}' ya está en uso.")
+        # <<< CORRECCIÓN: Iterar y validar los tres campos de IP
+        for ip_field in ip_fields:
+            if v.get(ip_field):
+                conflicto_ip = Servidor.query.filter(
+                    getattr(Servidor, ip_field) == v[ip_field],
+                    Servidor.id != servidor_id
+                ).first()
+                if conflicto_ip:
+                    errores_detalle.append(f"La IP '{v[ip_field]}' en el campo '{ip_field}' ya está en uso.")
 
         # Validar Link si se está cambiando
         if v.get("link"):
@@ -492,10 +489,4 @@ def update_ecosistema(record_id):
 
 @api.route("/ecosistemas/<int:record_id>", methods=["DELETE"])
 def delete_ecosistema(record_id):
-    ecosistema = Ecosistema.query.get(record_id)
-    if not ecosistema:
-        return jsonify({"error": "Ecosistema no encontrado"}), 404
-    ecosistema.activo = False
-    ecosistema.fecha_modificacion = datetime.utcnow()
-    db.session.commit()
-    return jsonify({"msg": "Ecosistema eliminado"}), 200
+    return delete_generic(Ecosistema, record_id)

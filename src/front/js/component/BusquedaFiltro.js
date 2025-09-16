@@ -1,3 +1,6 @@
+// Unifica aplicaciones únicas por nombre y versión
+// 'aplicaciones' debe venir como prop
+
 import React, { useState, useRef, useEffect } from "react";
 import Icon from './Icon'; // Asegúrate de tener un componente Icon.js
 
@@ -26,17 +29,23 @@ const FiltroDropdown = ({ filtroKey, label, data, filtroState, handleCheckboxCha
                     <div className={`chevron ${isOpen ? "open" : ""}`}></div>
                 </button>
                 <div className={`custom-select__panel ${isOpen ? "open" : ""}`}>
-                    {data.map((item) => (
-                        <label key={item.id} className="custom-select__option">
-                            <input
-                                type="checkbox"
-                                value={item.id}
-                                checked={filtroState[filtroKey]?.includes(String(item.id))}
-                                onChange={(e) => handleCheckboxChange(e, filtroKey)}
-                            />
-                            <span>{item.nombre}</span>
-                        </label>
-                    ))}
+                    {Array.isArray(data) && data.length > 0 ? (
+                        data.map((item) => (
+                            <label key={item.id} className="custom-select__option">
+                                <input
+                                    type="checkbox"
+                                    value={item.id}
+                                    checked={filtroState[filtroKey]?.includes(String(item.id))}
+                                    onChange={(e) => handleCheckboxChange(e, filtroKey)}
+                                />
+                                <span>{item.nombre}</span>
+                            </label>
+                        ))
+                    ) : (
+                        <div className="custom-select__option" style={{ color: 'var(--color-error)', padding: '0.5em 1em', cursor: 'default', pointerEvents: 'none', background: 'transparent' }}>
+                            No hay opciones disponibles
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -44,7 +53,12 @@ const FiltroDropdown = ({ filtroKey, label, data, filtroState, handleCheckboxCha
 };
 
 // Componente principal del formulario de filtros
-export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios, capas, ambientes, dominios, sistemasOperativos, estatus, ecosistemas, cargando }) => {
+export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios, capas, ambientes, dominios, sistemasOperativos, estatus, ecosistemas, aplicaciones, cargando }) => {
+    console.log('BusquedaFiltro props:', { filtro, servicios, capas, ambientes, dominios, sistemasOperativos, estatus, ecosistemas, aplicaciones });
+    // Unificar aplicaciones únicas por nombre y versión (igual que sistemas operativos)
+    const uniqueAplicaciones = aplicaciones
+        ? Array.from(new Map(aplicaciones.map(app => [`${app.nombre} - V${app.version}`, { id: app.id, nombre: `${app.nombre} - V${app.version}` }])).values())
+        : [];
     const handleInputChange = (e) => {
         setFiltro({ ...filtro, [e.target.name]: e.target.value });
     };
@@ -93,6 +107,7 @@ export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios,
         { type: 'text', name: "vlan", label: "VLAN", icon: <Icon name="vlan" size={16} /> },
         { type: 'dropdown', key: "servicios", label: "Servicios", data: uniqueServicios, icon: <Icon name="servicios" size={16} /> },
         { type: 'dropdown', key: "ecosistemas", label: "Ecosistemas", data: uniqueEcosistemas.map(e => ({ id: e.id, nombre: e.nombre })), icon: <Icon name="ecosistema" size={16} /> },
+        { type: 'dropdown', key: "aplicaciones", label: "Aplicaciones", data: uniqueAplicaciones, icon: <Icon name="app" size={16} /> },
         { type: 'dropdown', key: "capas", label: "Capas", data: uniqueCapas, icon: <Icon name="layers" size={16} /> },
         { type: 'dropdown', key: "ambientes", label: "Ambientes", data: uniqueAmbientes, icon: <Icon name="globe" size={16} /> },
         { type: 'dropdown', key: "dominios", label: "Dominios", data: uniqueDominios, icon: <Icon name="shield" size={16} /> },

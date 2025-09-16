@@ -32,6 +32,7 @@ const icons = {
     descripcion: <><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6" /><path d="M16 13H8" /><path d="M16 17H8" /><path d="M10 9H8" /></>,
     ecosistema: <><path d="M12 21v-4" /><circle cx="12" cy="7" r="4" /><path d="M8 17c-2-2-2-6 0-8" /><path d="M16 17c2-2 2-6 0-8" /></>,
     filter: <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>,
+    app: <><rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect><line x1="8" y1="7" x2="16" y2="7"></line><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="17" x2="12" y2="17"></line></>
 };
 
 const Icon = ({ name, size = 20, className = '' }) => {

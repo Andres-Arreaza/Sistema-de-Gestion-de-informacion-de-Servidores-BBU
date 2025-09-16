@@ -13,7 +13,7 @@ export const Busqueda = () => {
     const [cargando, setCargando] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [catalogos, setCatalogos] = useState({
-        servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
+        servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [], aplicaciones: []
     });
 
     // --- Carga inicial de catálogos ---
@@ -27,12 +27,14 @@ export const Busqueda = () => {
                     { name: "ambientes", url: `${backendUrl}/api/ambientes` },
                     { name: "dominios", url: `${backendUrl}/api/dominios` },
                     { name: "sistemasOperativos", url: `${backendUrl}/api/sistemas_operativos` },
-                    { name: "estatus", url: `${backendUrl}/api/estatus` }
+                    { name: "estatus", url: `${backendUrl}/api/estatus` },
+                    { name: "aplicaciones", url: `${backendUrl}/api/aplicaciones` }
                 ];
                 const responses = await Promise.all(urls.map(item => fetch(item.url).then(res => res.json())));
                 setCatalogos({
                     servicios: responses[0] || [], capas: responses[1] || [], ambientes: responses[2] || [],
-                    dominios: responses[3] || [], sistemasOperativos: responses[4] || [], estatus: responses[5] || []
+                    dominios: responses[3] || [], sistemasOperativos: responses[4] || [], estatus: responses[5] || [],
+                    aplicaciones: responses[6] || []
                 });
             } catch (error) {
                 console.error("Error al cargar catálogos:", error);
@@ -99,7 +101,13 @@ export const Busqueda = () => {
                 setFiltro={setFiltro}
                 buscarServidores={buscarServidores}
                 cargando={cargando}
-                {...catalogos}
+                servicios={catalogos.servicios}
+                capas={catalogos.capas}
+                ambientes={catalogos.ambientes}
+                dominios={catalogos.dominios}
+                sistemasOperativos={catalogos.sistemasOperativos}
+                estatus={catalogos.estatus}
+                aplicaciones={catalogos.aplicaciones}
             />
 
             {isModalOpen && (

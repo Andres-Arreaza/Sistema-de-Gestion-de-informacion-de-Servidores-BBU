@@ -6,7 +6,11 @@ import Icon from './Icon';
 
 const getHeaderKey = function (header) {
     if (!header || typeof header !== 'string') return '';
-    // Además, reemplaza '/' por '' para evitar errores en keys
+    // Si el header es 'descripción' (con acento) o 'descripcion', mapea ambos a 'descripcion' para el key
+    let normalized = header.trim().toLowerCase().replace(/ /g, '_').replace(/\./g, '').replace(/\//g, '');
+    if (normalized === 'descripción' || normalized === 'descripcion') {
+        return 'descripcion';
+    }
     return header.toLowerCase().normalize("NFD").replace(/[\u00c0-\u024f]/g, "").trim().replace(/ /g, '_').replace(/\./g, '').replace(/\//g, '');
 };
 
@@ -58,8 +62,26 @@ const TablaPrevisualizacion = function ({ datos, encabezado, onEdit, onDelete, s
                                         return null;
                                     }
                                     var headerKey = getHeaderKey(encabezado[cellIndex]);
-                                    var tieneErrorCelda = !!errores[headerKey];
-                                    // Si es la columna descripcion y está vacía o null, mostrar 'N/A'
+                                    // Mapeo de encabezado a formKey para los campos de catálogo y repetidos
+                                    const catalogFormKeys = {
+                                        servicio: 'servicio_id',
+                                        ecosistema: 'ecosistema_id',
+                                        aplicaciones: 'aplicaciones',
+                                        capa: 'capa_id',
+                                        ambiente: 'ambiente_id',
+                                        dominio: 'dominio_id',
+                                        's.o.': 'sistema_operativo_id',
+                                        estatus: 'estatus_id',
+                                        tipo: 'tipo',
+                                        nombre: 'nombre',
+                                        ip_mgmt: 'ip_mgmt',
+                                        ip_real: 'ip_real',
+                                        ip_mask25: 'ip_mask25',
+                                        link: 'link'
+                                    };
+                                    // Buscar el formKey correspondiente
+                                    const formKey = catalogFormKeys[encabezado[cellIndex]?.trim().toLowerCase()];
+                                    var tieneErrorCelda = !!errores[formKey || headerKey];
                                     let valorMostrar = celda;
                                     if (headerKey === 'descripcion' && (!celda || celda.trim() === '')) {
                                         valorMostrar = 'N/A';
@@ -70,13 +92,15 @@ const TablaPrevisualizacion = function ({ datos, encabezado, onEdit, onDelete, s
                                     if (headerKey === 'link' && (celda === null || celda === '' || typeof celda === 'undefined')) {
                                         valorMostrar = 'N/A';
                                     }
+                                    // Si el campo es de catálogo o es nombre, ip, link y tiene error, mostrar en rojo
+                                    const esCampoCatalogoORepetido = !!formKey || ['nombre', 'ip_mgmt', 'ip_real', 'ip_mask25', 'link'].includes(headerKey);
                                     return (
                                         <td
                                             key={cellIndex}
                                             title={valorMostrar}
-                                            className={tieneErrorCelda ? 'celda-con-error' : ''}
+                                            className={tieneErrorCelda && esCampoCatalogoORepetido ? 'celda-con-error' : ''}
                                         >
-                                            <span className={tieneErrorCelda ? 'texto-error' : ''}>{valorMostrar}</span>
+                                            <span className={tieneErrorCelda && esCampoCatalogoORepetido ? 'texto-error' : ''}>{valorMostrar}</span>
                                         </td>
                                     );
                                 })}
@@ -214,6 +238,85 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
     var [editModal, setEditModal] = useState({ open: false, data: null, rowIndex: null });
     var [catalogos, setCatalogos] = useState({});
     var [servidoresExistentes, setServidoresExistentes] = useState([]);
+    // --- Función para exportar CSV ---
+    function exportarCSV() {
+        if (!datosCSV.length) return;
+        // Encabezados completos igual que Excel
+        const encabezados = [
+            "Nombre", "Tipo", "IP MGMT", "IP Real", "IP Mask/25", "Servicio", "Ecosistema", "Aplicaciones", "Capa", "Ambiente", "Balanceador", "VLAN", "Dominio", "S.O.", "Estatus", "Descripción", "Link"
+        ];
+        // Usar los datos procesados para exportar lo que se ve en la tabla
+        const filas = datosCSV.map(obj => {
+            const fila = obj.fila;
+            let ipIndex = encabezadoCSV.findIndex(h => getHeaderKey(h) === 'ip');
+            let valores = [];
+            let i = 0;
+            while (i < encabezadoCSV.length) {
+                let header = encabezadoCSV[i];
+                let key = getHeaderKey(header);
+                let val = fila[i];
+                if (ipIndex !== -1 && i === ipIndex) {
+                    valores.push(fila[ipIndex] || '');
+                    valores.push(fila[ipIndex + 1] || '');
+                    valores.push(fila[ipIndex + 2] || '');
+                    i += 3;
+                    continue;
+                }
+                switch (key) {
+                    case 'servicio':
+                        val = findNameById('servicios', val) || val;
+                        break;
+                    case 'capa':
+                        val = findNameById('capas', val) || val;
+                        break;
+                    case 'ambiente':
+                        val = findNameById('ambientes', val) || val;
+                        break;
+                    case 'dominio':
+                        val = findNameById('dominios', val) || val;
+                        break;
+                    case 'estatus':
+                        val = findNameById('estatus', val) || val;
+                        break;
+                    case 'so':
+                    case 's.o.':
+                        val = findNameById('sistemasOperativos', val) || val;
+                        break;
+                    default:
+                        break;
+                }
+                valores.push(val || '');
+                i++;
+            }
+            let resultado = [
+                valores[encabezados.indexOf("Nombre")],
+                valores[encabezados.indexOf("Tipo")],
+                valores[encabezados.indexOf("IP MGMT")],
+                valores[encabezados.indexOf("IP Real")],
+                valores[encabezados.indexOf("IP Mask/25")],
+                valores[encabezados.indexOf("Servicio")],
+                valores[encabezados.indexOf("Ecosistema")],
+                valores[encabezados.indexOf("Aplicaciones")],
+                valores[encabezados.indexOf("Capa")],
+                valores[encabezados.indexOf("Ambiente")],
+                valores[encabezados.indexOf("Balanceador")],
+                valores[encabezados.indexOf("VLAN")],
+                valores[encabezados.indexOf("Dominio")],
+                valores[encabezados.indexOf("S.O.")],
+                valores[encabezados.indexOf("Estatus")],
+                valores[encabezados.indexOf("Descripción")],
+                valores[encabezados.indexOf("Link")]
+            ];
+            return resultado.map(val => `"${val || ''}"`).join(';');
+        });
+        const csvContent = `data:text/csv;charset=utf-8,\uFEFF${encabezados.join(';') + '\n' + filas.join('\n')}`;
+        const link = document.createElement("a");
+        link.setAttribute("href", csvContent);
+        link.setAttribute("download", "servidores.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
     useEffect(function () {
         async function fetchData() {
@@ -227,9 +330,10 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                     { name: "dominios", url: backendUrl + "/api/dominios" },
                     { name: "sistemasOperativos", url: backendUrl + "/api/sistemas_operativos" },
                     { name: "estatus", url: backendUrl + "/api/estatus" },
-                    { name: "ecosistemas", url: backendUrl + "/api/ecosistemas" }
+                    { name: "ecosistemas", url: backendUrl + "/api/ecosistemas" },
+                    { name: "aplicaciones", url: backendUrl + "/api/aplicaciones" }
                 ];
-                var responses = await Promise.all(urls.map(function (item) { return fetch(item.url).then(function (res) { return res.json(); }); }));
+                var responses = await Promise.all(urls.map(function (item) { return fetch(item.url).then(function (res) { return res.ok ? res.json() : []; }); }));
                 var servidoresData = responses[0];
                 var catalogosData = responses.slice(1);
                 setServidoresExistentes(servidoresData || []);
@@ -240,7 +344,8 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                     dominios: catalogosData[3] || [],
                     sistemasOperativos: catalogosData[4] || [],
                     estatus: catalogosData[5] || [],
-                    ecosistemas: catalogosData[6] || []
+                    ecosistemas: catalogosData[6] || [],
+                    aplicaciones: catalogosData[7] || []
                 });
             } catch (e) {
                 console.error("Error cargando datos iniciales:", e);
@@ -304,7 +409,8 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             { key: 'capa', header: 'Capa', required: true, catalog: 'capas', formKey: 'capa_id' },
             { key: 'ambiente', header: 'Ambiente', required: true, catalog: 'ambientes', formKey: 'ambiente_id' },
             { key: 'dominio', header: 'Dominio', required: true, catalog: 'dominios', formKey: 'dominio_id' },
-            { key: 'ecosistema', header: 'Ecosistema', required: false, catalog: 'ecosistemas', formKey: 'ecosistema_id' },
+            { key: 'ecosistema', header: 'Ecosistema', required: true, catalog: 'ecosistemas', formKey: 'ecosistema_id' },
+            { key: 'aplicaciones', header: 'Aplicaciones', required: true, catalog: 'aplicaciones', formKey: 'aplicaciones' },
             { key: 's.o.', header: 'S.O.', required: true, catalog: 'sistemasOperativos', formKey: 'sistema_operativo_id' },
             { key: 'estatus', header: 'Estatus', required: true, catalog: 'estatus', formKey: 'estatus_id' },
             { key: 'link', header: 'Link', required: false, formKey: 'link' }
@@ -315,15 +421,43 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             var value = getValue(index);
             var formKey = col.formKey;
             // Solo los campos realmente obligatorios deben marcar error si están vacíos
-            if (col.required && !value && ['ip_mgmt','ip_real','ip_mask25'].indexOf(col.key) === -1) errores[formKey] = true;
+            if (col.required && !value && ['ip_mgmt', 'ip_real', 'ip_mask25'].indexOf(col.key) === -1) {
+                if (col.key === 'aplicaciones') {
+                    errores[formKey] = true;
+                } else if (col.key === 'ecosistema') {
+                    errores[formKey] = true;
+                } else {
+                    errores[formKey] = true;
+                }
+            }
             else if (value) {
                 if (col.values && !col.values.some(function (v) { return v.toUpperCase() === value.toUpperCase(); })) errores[formKey] = true;
-                if (col.catalog) checkCatalog(col.catalog, col.header, value, formKey);
-                // Validación de repetidos y existentes para nombre, ip_mgmt, ip_real, ip_mask25
-                // 'descripcion' y 'link' pueden repetirse, no se valida
-                if (['nombre', 'ip_mgmt', 'ip_real', 'ip_mask25'].indexOf(col.key) !== -1) {
+                if (col.catalog) {
+                    if (col.key === 'aplicaciones') {
+                        // Validar cada aplicación por nombre y versión
+                        var nombresApps = value.split(',').map(v => v.trim()).filter(Boolean);
+                        var catalog = catalogos['aplicaciones'];
+                        nombresApps.forEach(function (nombreApp) {
+                            // Extraer nombre y versión igual que en el mapeo
+                            const match = nombreApp.match(/^(.*?)-\s*[vV](\d+(?:\.\d+)*)$/);
+                            let existe = false;
+                            if (match) {
+                                const nombre = match[1].trim();
+                                const version = match[2].trim();
+                                existe = catalog.some(a => a.nombre.toLowerCase() === nombre.toLowerCase() && a.version.toLowerCase() === version.toLowerCase());
+                            } else {
+                                let normalizado = nombreApp.replace(/\s*-\s*/g, ' - ').replace(/\s*V\s*/i, ' V');
+                                existe = catalog.some(a => (a.nombre + ' - V' + a.version).toLowerCase() === normalizado.toLowerCase());
+                            }
+                            if (!existe) errores[formKey] = true;
+                        });
+                    } else {
+                        checkCatalog(col.catalog, col.header, value, formKey);
+                    }
+                }
+                // Validación de repetidos y existentes para nombre, ip_mgmt, ip_real, ip_mask25, link
+                if (['nombre', 'ip_mgmt', 'ip_real', 'ip_mask25', 'link'].indexOf(col.key) !== -1) {
                     if (col.key !== 'descripcion') {
-                        // Solo validar repetidos si el valor NO es null, vacío o 'N/A'
                         if (value !== null && value !== undefined && value !== '' && value.toUpperCase() !== 'N/A') {
                             if (servidoresExistentes.some(function (s) {
                                 return s[col.key] && s[col.key].toLowerCase() === value.toLowerCase();
@@ -405,14 +539,24 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             var fila = obj.fila;
             var servidor = {};
             var ipFields = ['ip_mgmt', 'ip_real', 'ip_mask25'];
-            // Construye el objeto servidor
+            var aplicacion_ids = [];
             for (var i = 0; i < encabezadoCSV.length; i++) {
                 var header = encabezadoCSV[i];
                 var key = getHeaderKey(header);
                 var value = fila[i];
-                // Aplica null si la IP es 'N/A', vacía o null
                 if (key === 'ip_mgmt' || key === 'ip_real' || key === 'ip_mask25') {
                     servidor[key] = (value === 'N/A' || value === '' || value == null) ? null : value;
+                } else if (key === 'aplicaciones' || key === 'aplicacion') {
+                    // Permite múltiples aplicaciones separadas por coma
+                    if (value && typeof value === 'string') {
+                        // Unificar validación: buscar por 'Nombre - VVersion' igual que sistema operativo
+                        var nombresApps = value.split(',').map(v => v.trim()).filter(Boolean);
+                        aplicacion_ids = nombresApps.map(nombreApp => {
+                            // Buscar por formato 'Payara - V6'
+                            var app = catalogos.aplicaciones.find(a => (a.nombre + ' - V' + a.version).toLowerCase() === nombreApp.toLowerCase());
+                            return app ? app.id : null;
+                        }).filter(Boolean);
+                    }
                 } else {
                     switch (key) {
                         case 'nombre': servidor.nombre = value; break;
@@ -442,7 +586,6 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                     }
                 }
             }
-            // IPs: si solo una tiene valor real, las otras van como null
             let ipCount = ipFields.filter(f => servidor[f] && servidor[f].trim() !== '' && servidor[f] !== 'N/A').length;
             if (ipCount === 1) {
                 ipFields.forEach(f => {
@@ -451,15 +594,14 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                     }
                 });
             } else {
-                // Si el usuario deja vacío o pone 'N/A', siempre se guarda como null
                 ipFields.forEach(f => {
                     if (servidor[f] === 'N/A' || servidor[f] === '' || servidor[f] == null) {
                         servidor[f] = null;
                     }
                 });
             }
-            // Link: si vacío o 'N/A', va como null
             if (servidor.link === 'N/A' || servidor.link === '' || servidor.link == null) servidor.link = null;
+            servidor.aplicacion_ids = aplicacion_ids;
             return Object.assign({}, servidor, { activo: true });
         });
         console.log('Payload a enviar al backend:', servidoresParaGuardar);
@@ -506,14 +648,19 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
         var fila = obj.fila;
         var errores = obj.errores;
         var initialData = {};
-        // Detectar si el encabezado original es 'ip' y mapear las tres IPs y descripcion
         let ipIndex = encabezadoCSV.findIndex(h => getHeaderKey(h) === 'ip');
         for (var i = 0; i < encabezadoCSV.length; i++) {
             var header = encabezadoCSV[i];
             if (header && typeof header === 'string') {
                 var key = getHeaderKey(header);
                 var value = fila[i] || '';
-                // Si el encabezado original es 'ip', mapear las tres IPs
+                if (key === 'dominio') {
+                    initialData.dominio_id = value && typeof value === 'string' ? findIdByName('dominios', value) : value;
+                }
+                if (key === 'descripcion') {
+                    // Precargar descripcion exactamente como viene del CSV, permitiendo acentos y caracteres especiales
+                    initialData.descripcion = (typeof value === 'string') ? value : '';
+                }
                 if (ipIndex !== -1 && i === ipIndex) {
                     initialData.ip_mgmt = fila[ipIndex] || '';
                     initialData.ip_real = fila[ipIndex + 1] || '';
@@ -524,9 +671,38 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 if (key === 'ip_mgmt') { initialData.ip_mgmt = value; }
                 else if (key === 'ip_real') { initialData.ip_real = value; }
                 else if (key === 'ip_mask25') { initialData.ip_mask25 = value; }
-                else if (key === 'descripcion') {
-                    // Si en la vista previa se muestra 'N/A', mostrar vacío en la edición para el input text
-                    initialData.descripcion = (!value || value.trim() === '' || value === 'N/A') ? '' : value;
+                else if (key === 'aplicaciones' || key === 'aplicacion') {
+                    // Precargar aplicaciones igual que S.O.: buscar por 'Nombre - VVersion', pero también guardar el valor original para mostrarlo en el formulario
+                    if (value && typeof value === 'string') {
+                        var nombresApps = value.split(',').map(v => v.trim()).filter(Boolean);
+                        initialData.aplicacion_ids = nombresApps.map(nombreApp => {
+                            // Extraer nombre y versión usando regex igual que S.O.
+                            const match = nombreApp.match(/^(.*?)-\s*[vV](\d+(?:\.\d+)*)$/);
+                            if (match) {
+                                const nombre = match[1].trim();
+                                const version = match[2].trim();
+                                var app = catalogos.aplicaciones.find(a => a.nombre.toLowerCase() === nombre.toLowerCase() && a.version.toLowerCase() === version.toLowerCase());
+                                return app ? app.id : null;
+                            } else {
+                                // Fallback: buscar por formato 'Nombre - VVersion' normalizado
+                                let normalizado = nombreApp.replace(/\s*-\s*/g, ' - ').replace(/\s*V\s*/i, ' V');
+                                var app = catalogos.aplicaciones.find(a => (a.nombre + ' - V' + a.version).toLowerCase() === normalizado.toLowerCase());
+                                return app ? app.id : null;
+                            }
+                        }).filter(Boolean);
+                        // Guardar el valor original para mostrarlo en el formulario si no hay match
+                        initialData.aplicaciones = value;
+                    } else {
+                        initialData.aplicacion_ids = [];
+                        initialData.aplicaciones = '';
+                    }
+                }
+                else if (key === 'servicio') {
+                    if (value && typeof value === 'string') {
+                        initialData.servicio_id = findIdByName('servicios', value);
+                    } else {
+                        initialData.servicio_id = value;
+                    }
                 }
                 else {
                     var formKeyMap = { servicio: 'servicio_id', capa: 'capa_id', ambiente: 'ambiente_id', dominio: 'dominio_id', ecosistema: 'ecosistema_id', so: 'sistema_operativo_id', estatus: 'estatus_id', nombre: 'nombre', tipo: 'tipo', balanceador: 'balanceador', vlan: 'vlan', link: 'link' };
@@ -534,32 +710,25 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                     var formKey = formKeyMap[key];
                     var catalogName = catalogMap[key];
                     if (formKey) {
-                        if (key === 'dominio') {
-                            initialData[formKey] = value;
-                        } else if (catalogName) {
-                            if (key === 'ecosistema') {
-                                initialData[formKey] = value;
-                            } else if (key === 'so') {
-                                initialData[formKey] = findIdByName('sistemasOperativos', value);
-                            } else {
-                                var idValue = value;
-                                if (isNaN(Number(value))) {
-                                    idValue = findIdByName(catalogName, value);
-                                }
-                                initialData[formKey] = idValue;
-                            }
+                        if (key === 'ecosistema') {
+                            initialData[formKey] = findIdByName('ecosistemas', value);
+                        } else if (key === 'so') {
+                            initialData[formKey] = findIdByName('sistemasOperativos', value);
                         } else {
-                            initialData[formKey] = value;
+                            var idValue = value;
+                            if (catalogName && isNaN(Number(value))) {
+                                idValue = findIdByName(catalogName, value);
+                            }
+                            initialData[formKey] = idValue;
                         }
                     }
                 }
             }
         }
-        // IP Mask/25 debe quedar vacío si no existe, no tomar de otros campos
         if (!initialData.ip_mask25) {
             initialData.ip_mask25 = '';
         }
-        // Asegura que descripcion siempre esté presente como string para textarea
+        // Siempre asegurar que descripcion esté presente como string
         if (typeof initialData.descripcion !== 'string') {
             initialData.descripcion = '';
         }
@@ -609,7 +778,6 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             var headerNormalized = getHeaderKey(header);
             // Si el encabezado original es 'ip', mapear las tres IPs de forma independiente
             if (ipIndex !== -1 && i === ipIndex) {
-                // Para cada IP, guardar su valor propio, igual que IP Mask25
                 filaActualizadaArray.push(updatedData.ip_mgmt); // IP MGMT
                 filaActualizadaArray.push(updatedData.ip_real); // IP Real
                 filaActualizadaArray.push(updatedData.ip_mask25); // IP Mask25
@@ -619,9 +787,9 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             switch (headerNormalized) {
                 case 'nombre': filaActualizadaArray.push(updatedData.nombre); break;
                 case 'tipo': filaActualizadaArray.push(updatedData.tipo); break;
-                case 'ip_mgmt': filaActualizadaArray.push(updatedData.ip_mgmt); break; // Igual que IP Mask25 pero con su valor propio
-                case 'ip_real': filaActualizadaArray.push(updatedData.ip_real); break; // Igual que IP Mask25 pero con su valor propio
-                case 'ip_mask25': filaActualizadaArray.push(updatedData.ip_mask25); break; // IP Mask25
+                case 'ip_mgmt': filaActualizadaArray.push(updatedData.ip_mgmt); break;
+                case 'ip_real': filaActualizadaArray.push(updatedData.ip_real); break;
+                case 'ip_mask25': filaActualizadaArray.push(updatedData.ip_mask25); break;
                 case 'balanceador': filaActualizadaArray.push(updatedData.balanceador); break;
                 case 'vlan': filaActualizadaArray.push(updatedData.vlan); break;
                 case 'link': filaActualizadaArray.push(updatedData.link); break;
@@ -631,6 +799,18 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 case 'ambiente': filaActualizadaArray.push(findNameById('ambientes', updatedData.ambiente_id)); break;
                 case 'dominio': filaActualizadaArray.push(findNameById('dominios', updatedData.dominio_id)); break;
                 case 'ecosistema': filaActualizadaArray.push(findNameById('ecosistemas', updatedData.ecosistema_id)); break;
+                case 'aplicaciones':
+                    // Mostrar nombre y versión de cada aplicación seleccionada en la vista previa igual que S.O.
+                    if (Array.isArray(updatedData.aplicacion_ids) && updatedData.aplicacion_ids.length > 0) {
+                        var nombresApps = updatedData.aplicacion_ids.map(function (appId) {
+                            var app = catalogos.aplicaciones && catalogos.aplicaciones.find(a => String(a.id) === String(appId));
+                            return app ? `${app.nombre} - V${app.version}` : '';
+                        }).filter(Boolean);
+                        filaActualizadaArray.push(nombresApps.join(', '));
+                    } else {
+                        filaActualizadaArray.push('');
+                    }
+                    break;
                 case 'so': filaActualizadaArray.push(findNameById('sistemasOperativos', updatedData.sistema_operativo_id)); break;
                 case 'estatus': filaActualizadaArray.push(findNameById('estatus', updatedData.estatus_id)); break;
                 default: filaActualizadaArray.push('');
@@ -693,6 +873,11 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
 
     return (
         <>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1em' }}>
+                <button className="btn btn--primary" onClick={exportarCSV} disabled={datosCSV.length === 0}>
+                    <Icon name="csv" /> Descargar CSV
+                </button>
+            </div>
             {ReactDOM.createPortal(
                 <div className="modal__overlay" onClick={onClose}>
                     <div className="modal__content" onClick={function (e) { e.stopPropagation(); }}>

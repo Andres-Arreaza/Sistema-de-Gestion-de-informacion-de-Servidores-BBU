@@ -13,6 +13,8 @@ import DominioFormulario from '../component/DominioFormulario';
 import DominioLista from '../component/DominioLista';
 import SistemaOperativoFormulario from '../component/SistemaOperativoFormulario';
 import SistemaOperativoLista from '../component/SistemaOperativoLista';
+import AplicacionFormulario from '../component/AplicacionFormulario';
+import AplicacionLista from '../component/AplicacionLista.js';
 import EstatusFormulario from '../component/EstatusFormulario';
 import EstatusLista from '../component/EstatusLista';
 import Icon from '../component/Icon';
@@ -24,7 +26,8 @@ const configItems = [
     { label: "Ambiente", createView: "crear-ambiente", listView: "listar-ambientes", apiResource: "ambientes" },
     { label: "Dominio", createView: "crear-dominio", listView: "listar-dominios", apiResource: "dominios" },
     { label: "Sistema Operativo", createView: "crear-sistema-operativo", listView: "listar-sistemas-operativos", apiResource: "sistemas_operativos" },
-    { label: "Estatus", createView: "crear-estatus", listView: "listar-estatus", apiResource: "estatus" }
+    { label: "Estatus", createView: "crear-estatus", listView: "listar-estatus", apiResource: "estatus" },
+    { label: "Aplicación", createView: "crear-aplicacion", listView: "listar-aplicaciones", apiResource: "aplicaciones" }
 ];
 
 const AccordionItem = ({ item, isOpen, onClick, onShowCreate, onShowList, isModuleActive, activeView }) => (
@@ -40,7 +43,7 @@ const AccordionItem = ({ item, isOpen, onClick, onShowCreate, onShowList, isModu
                 Crear {item.label}
             </a>
             <a href="#" className={`config-submenu-link ${activeView === item.listView ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); onShowList(item.listView); }}>
-                Listar {item.label}s
+                Listar {item.label}
             </a>
         </div>
     </div>
@@ -52,20 +55,22 @@ const Configuracion = () => {
     const [currentItem, setCurrentItem] = useState(null);
     const [cargando, setCargando] = useState(false);
     const [catalogos, setCatalogos] = useState({
-        servicios: [], ecosistemas: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: []
+        servicios: [], ecosistemas: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [], aplicaciones: []
     });
 
     const fetchAllCatalogos = async () => {
         setCargando(true);
         try {
             const promises = configItems.map(item =>
-                fetch(`${process.env.BACKEND_URL}/api/${item.apiResource}`).then(res => res.json())
+                fetch(`${process.env.BACKEND_URL}/api/${item.apiResource}`)
+                    .then(res => res.ok ? res.json() : [])
             );
             const results = await Promise.all(promises);
             const newCatalogos = {};
             configItems.forEach((item, index) => {
                 let key = item.apiResource.replace('sistemas_operativos', 'sistemasOperativos');
                 key = key.replace('ecosistemas', 'ecosistemas');
+                key = key.replace('aplicaciones', 'aplicaciones'); // Mantenemos 'aplicaciones' en el estado para consistencia
                 newCatalogos[key] = results[index] || [];
             });
             setCatalogos(newCatalogos);
@@ -84,12 +89,12 @@ const Configuracion = () => {
     const fetchRecurso = (apiResource) => {
         let key = apiResource.replace('sistemas_operativos', 'sistemasOperativos');
         key = key.replace('ecosistemas', 'ecosistemas');
+        key = key.replace('aplicaciones', 'aplicaciones'); // Mantenemos 'aplicaciones' en el estado
         setCargando(true);
         fetch(`${process.env.BACKEND_URL}/api/${apiResource}`)
             .then(res => res.ok ? res.json() : [])
             .then(data => {
                 setCatalogos(prev => ({ ...prev, [key]: data }));
-                fetchAllCatalogos();
             })
             .catch(console.error)
             .finally(() => setCargando(false));
@@ -201,6 +206,11 @@ const Configuracion = () => {
                 return <div key="crear-estatus" className="content-wrapper content-wrapper--plain"><EstatusFormulario onSave={handleSave} onCancel={handleCancel} estatus={currentItem} estatusExistentes={catalogos.estatus} /></div>;
             case 'listar-estatus':
                 return <div key="listar-estatus" className="content-wrapper"><EstatusLista estatus={catalogos.estatus} onEdit={(item) => handleEdit(item, 'estatus')} fetchEstatus={() => fetchRecurso('estatus')} cargando={cargando} /></div>;
+
+            case 'crear-aplicacion':
+                return <div key="crear-aplicacion" className="content-wrapper content-wrapper--plain"><AplicacionFormulario onSave={handleSave} onCancel={handleCancel} aplicacion={currentItem} aplicacionesExistentes={catalogos.aplicaciones} /></div>;
+            case 'listar-aplicaciones':
+                return <div key="listar-aplicaciones" className="content-wrapper"><AplicacionLista aplicaciones={catalogos.aplicaciones} onEdit={(item) => handleEdit(item, 'aplicacion')} fetchAplicaciones={() => fetchRecurso('aplicacion')} cargando={cargando} /></div>;
 
             default: return null;
         }

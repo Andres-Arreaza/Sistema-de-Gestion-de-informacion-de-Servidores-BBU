@@ -32,16 +32,45 @@ const abrirModalLink = (servidor) => {
 
 const exportarCSV = (servidores) => {
     if (!servidores.length) return;
-    const encabezados = `"Nombre";"Tipo";"IP MGMT";"IP Real";"IP Mask/25";"Servicio";"Ecosistema";"Capa";"Ambiente";"Balanceador";"VLAN";"Dominio";"S.O.";"Estatus";"Descripción";"Link"\n`;
-    const filas = servidores.map(srv =>
-        `"${srv.nombre || 'N/A'}";"${srv.tipo || 'N/A'}";` +
-        `"${srv.ip_mgmt || 'N/A'}";"${srv.ip_real || 'N/A'}";"${srv.ip_mask25 || 'N/A'}";` +
-        `"${srv.servicios?.[0]?.nombre || 'N/A'}";` +
-        `"${srv.ecosistemas?.[0]?.nombre || srv.ecosistema?.nombre || 'N/A'}";` +
-        `"${srv.capas?.[0]?.nombre || 'N/A'}";"${srv.ambientes?.[0]?.nombre || 'N/A'}";"${srv.balanceador || 'N/A'}";"${srv.vlan || 'N/A'}";` +
-        `"${srv.dominios?.[0]?.nombre || 'N/A'}";"${srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : 'N/A'}";"${srv.estatus?.[0]?.nombre || 'N/A'}";"${srv.descripcion || 'N/A'}";` +
-        `"${srv.link || 'N/A'}"`
-    ).join("\n");
+    const encabezados = `"Nombre";"Tipo";"IP MGMT";"IP Real";"IP Mask/25";"Servicio";"Ecosistema";"Aplicaciones";"Capa";"Ambiente";"Balanceador";"VLAN";"Dominio";"S.O.";"Estatus";"Descripción";"Link"\n`;
+    const filas = servidores.map(srv => {
+        // Aplicaciones
+        let aplicaciones = '';
+        if (Array.isArray(srv.aplicaciones) && srv.aplicaciones.length > 0) {
+            aplicaciones = srv.aplicaciones.map(app => `${app.nombre} V${app.version}`).join(', ');
+        }
+        // Capa
+        let capa = srv.capa?.nombre || srv.capas?.[0]?.nombre || '';
+        // Dominio
+        let dominio = srv.dominio?.nombre || srv.dominios?.[0]?.nombre || '';
+        // S.O.
+        let so = '';
+        if (srv.sistema_operativo) {
+            so = `${srv.sistema_operativo.nombre} - V${srv.sistema_operativo.version}`;
+        } else if (srv.sistemasOperativos?.[0]) {
+            so = `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}`;
+        }
+        // Estatus
+        let estatus = srv.estatus?.nombre || srv.estatus?.[0]?.nombre || '';
+        // Descripción
+        let descripcion = srv.descripcion || '';
+        // Link
+        let link = srv.link || '';
+        // Ecosistema
+        let ecosistema = srv.ecosistema?.nombre || srv.ecosistemas?.[0]?.nombre || '';
+        // Servicio
+        let servicio = srv.servicio?.nombre || srv.servicios?.[0]?.nombre || '';
+        // Ambiente
+        let ambiente = srv.ambiente?.nombre || srv.ambientes?.[0]?.nombre || '';
+        return `"${srv.nombre || ''}";"${srv.tipo || ''}";` +
+            `"${srv.ip_mgmt || ''}";"${srv.ip_real || ''}";"${srv.ip_mask25 || ''}";` +
+            `"${servicio}";` +
+            `"${ecosistema}";` +
+            `"${aplicaciones}";` +
+            `"${capa}";"${ambiente}";"${srv.balanceador || ''}";"${srv.vlan || ''}";` +
+            `"${dominio}";"${so}";"${estatus}";"${descripcion}";` +
+            `"${link}"`;
+    }).join("\n");
     const csvContent = `data:text/csv;charset=utf-8,\uFEFF${encodeURI(encabezados + filas)}`;
     const link = document.createElement("a");
     link.setAttribute("href", csvContent);
@@ -66,8 +95,56 @@ const exportarExcel = (servidores) => {
             .sub-title { color: #005A9C; font-size: 14px; font-style: italic; margin: 0; padding: 0; }
         </style>
     `;
-    const encabezados = `<tr><th>Nombre</th><th>Tipo</th><th>IP MGMT</th><th>IP Real</th><th>IP Mask/25</th><th>Servicio</th><th>Ecosistema</th><th>Capa</th><th>Ambiente</th><th>Balanceador</th><th>VLAN</th><th>Dominio</th><th>S.O.</th><th>Estatus</th><th>Descripción</th><th>Link</th></tr>`;
-    const filas = servidores.map(srv => `<tr><td>${srv.nombre || ''}</td><td>${srv.tipo || ''}</td><td>${srv.ip_mgmt || ''}</td><td>${srv.ip_real || ''}</td><td>${srv.ip_mask25 || ''}</td><td>${srv.servicios?.[0]?.nombre || ''}</td><td>${srv.ecosistemas?.[0]?.nombre || srv.ecosistema?.nombre || ''}</td><td>${srv.capas?.[0]?.nombre || ''}</td><td>${srv.ambientes?.[0]?.nombre || ''}</td><td>${srv.balanceador || ''}</td><td>${srv.vlan || ''}</td><td>${srv.dominios?.[0]?.nombre || ''}</td><td>${srv.sistemasOperativos?.[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : ''}</td><td>${srv.estatus?.[0]?.nombre || ''}</td><td>${srv.descripcion || ''}</td><td>${srv.link || ''}</td></tr>`).join("");
+    const encabezados = `<tr><th>Nombre</th><th>Tipo</th><th>IP MGMT</th><th>IP Real</th><th>IP Mask/25</th><th>Servicio</th><th>Ecosistema</th><th>Aplicaciones</th><th>Capa</th><th>Ambiente</th><th>Balanceador</th><th>VLAN</th><th>Dominio</th><th>S.O.</th><th>Estatus</th><th>Descripción</th><th>Link</th></tr>`;
+    const filas = servidores.map(srv => {
+        // Servicio
+        let servicio = srv.servicio?.nombre || (srv.servicios && Array.isArray(srv.servicios) && srv.servicios.length > 0 ? srv.servicios[0].nombre : 'N/A');
+        // Capa
+        let capa = srv.capa?.nombre || (srv.capas && Array.isArray(srv.capas) && srv.capas.length > 0 ? srv.capas[0].nombre : 'N/A');
+        // Ambiente
+        let ambiente = srv.ambiente?.nombre || (srv.ambientes && Array.isArray(srv.ambientes) && srv.ambientes.length > 0 ? srv.ambientes[0].nombre : 'N/A');
+        // Dominio
+        let dominio = srv.dominio?.nombre || (srv.dominios && Array.isArray(srv.dominios) && srv.dominios.length > 0 ? srv.dominios[0].nombre : 'N/A');
+        // Estatus
+        let estatus = srv.estatus?.nombre || (srv.estatus && Array.isArray(srv.estatus) && srv.estatus.length > 0 ? srv.estatus[0].nombre : 'N/A');
+        // S.O.
+        let so = '';
+        if (srv.sistema_operativo) {
+            so = `${srv.sistema_operativo.nombre} - V${srv.sistema_operativo.version}`;
+        } else if (srv.sistemasOperativos && Array.isArray(srv.sistemasOperativos) && srv.sistemasOperativos.length > 0) {
+            so = `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}`;
+        } else {
+            so = 'N/A';
+        }
+        // Aplicaciones
+        let aplicaciones = '';
+        if (Array.isArray(srv.aplicaciones) && srv.aplicaciones.length > 0) {
+            aplicaciones = srv.aplicaciones.map(app => `${app.nombre} V${app.version}`).join(', ');
+        } else {
+            aplicaciones = 'N/A';
+        }
+        // Ecosistema
+        let ecosistema = srv.ecosistema?.nombre || (srv.ecosistemas && Array.isArray(srv.ecosistemas) && srv.ecosistemas.length > 0 ? srv.ecosistemas[0].nombre : 'N/A');
+        return `<tr>
+            <td>${srv.nombre || 'N/A'}</td>
+            <td>${srv.tipo || 'N/A'}</td>
+            <td>${srv.ip_mgmt || 'N/A'}</td>
+            <td>${srv.ip_real || 'N/A'}</td>
+            <td>${srv.ip_mask25 || 'N/A'}</td>
+            <td>${servicio}</td>
+            <td>${ecosistema}</td>
+            <td>${aplicaciones}</td>
+            <td>${capa}</td>
+            <td>${ambiente}</td>
+            <td>${srv.balanceador || 'N/A'}</td>
+            <td>${srv.vlan || 'N/A'}</td>
+            <td>${dominio}</td>
+            <td>${so}</td>
+            <td>${estatus}</td>
+            <td>${srv.descripcion || 'N/A'}</td>
+            <td>${srv.link || 'N/A'}</td>
+        </tr>`;
+    }).join("");
     const plantillaHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8">${estilos}</head><body><table class="header-table"><tr><td colspan="14"><h1 class="main-title">Reporte de Servidores</h1></td></tr><tr><td colspan="14"><p class="sub-title">(Gerencia de Operaciones de Canales Virtuales y Medios de Pagos)</p></td></tr></table><table class="excel-table">${encabezados}${filas}</table></body></html>`;
     const excelContent = `data:application/vnd.ms-excel;charset=utf-8,${encodeURIComponent(plantillaHtml)}`;
     const link = document.createElement("a");
@@ -240,7 +317,7 @@ const EditorMasivo = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(50);
     const [catalogos, setCatalogos] = useState({
-        servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [], ecosistemas: []
+        servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [], ecosistemas: [], aplicaciones: []
     });
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -268,12 +345,30 @@ const EditorMasivo = () => {
                     { name: "dominios", url: `${backendUrl}/api/dominios` },
                     { name: "sistemasOperativos", url: `${backendUrl}/api/sistemas_operativos` },
                     { name: "estatus", url: `${backendUrl}/api/estatus` },
-                    { name: "ecosistemas", url: `${backendUrl}/api/ecosistemas` }
+                    { name: "ecosistemas", url: `${backendUrl}/api/ecosistemas` },
+                    { name: "aplicaciones", url: `${backendUrl}/api/aplicacion` }
                 ];
-                const responses = await Promise.all(urls.map(item => fetch(item.url).then(res => res.json())));
+                const responses = await Promise.all(urls.map(async item => {
+                    try {
+                        const res = await fetch(item.url);
+                        if (!res.ok) {
+                            throw new Error(`HTTP ${res.status} al cargar ${item.name}`);
+                        }
+                        const contentType = res.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            return await res.json();
+                        } else {
+                            throw new Error(`Respuesta no es JSON para ${item.name}`);
+                        }
+                    } catch (err) {
+                        console.error(`Error al cargar catálogo ${item.name}:`, err);
+                        return [];
+                    }
+                }));
                 setCatalogos({
                     servicios: responses[0] || [], capas: responses[1] || [], ambientes: responses[2] || [],
-                    dominios: responses[3] || [], sistemasOperativos: responses[4] || [], estatus: responses[5] || [], ecosistemas: responses[6] || []
+                    dominios: responses[3] || [], sistemasOperativos: responses[4] || [], estatus: responses[5] || [],
+                    ecosistemas: responses[6] || [], aplicaciones: responses[7] || []
                 });
             } catch (error) {
                 console.error("Error al cargar catálogos:", error);
@@ -350,6 +445,7 @@ const EditorMasivo = () => {
         { value: 'descripcion', label: 'Descripción', type: 'input' },
         { value: 'servicio_id', label: 'Servicio', type: 'select', catalog: 'servicios' },
         { value: 'ecosistema_id', label: 'Ecosistema', type: 'select', catalog: 'ecosistemas' },
+        { value: 'aplicacion_ids', label: 'Aplicaciones', type: 'multiselect', catalog: 'aplicaciones' },
         { value: 'capa_id', label: 'Capa', type: 'select', catalog: 'capas' },
         { value: 'ambiente_id', label: 'Ambiente', type: 'select', catalog: 'ambientes' },
         { value: 'dominio_id', label: 'Dominio', type: 'select', catalog: 'dominios' },
@@ -528,6 +624,7 @@ const EditorMasivo = () => {
                     ambiente_id: cambiosParaServidor.ambiente_id ?? servidorOriginal.ambiente_id,
                     dominio_id: cambiosParaServidor.dominio_id ?? servidorOriginal.dominio_id,
                     sistema_operativo_id: cambiosParaServidor.sistema_operativo_id ?? servidorOriginal.sistema_operativo_id,
+                    aplicacion_ids: cambiosParaServidor.aplicacion_ids ?? servidorOriginal.aplicaciones?.map(a => a.id),
                     estatus_id: cambiosParaServidor.estatus_id ?? servidorOriginal.estatus_id,
                     activo: servidorOriginal.activo,
                 };
@@ -574,6 +671,7 @@ const EditorMasivo = () => {
             { header: 'IP Mask/25', key: 'ip_mask25' },
             { header: 'Servicio', key: 'servicio_id', catalog: 'servicios' },
             { header: 'Ecosistema', key: 'ecosistema_id', catalog: 'ecosistemas' },
+            { header: 'Aplicaciones', key: 'aplicaciones' },
             { header: 'Capa', key: 'capa_id', catalog: 'capas' },
             { header: 'Ambiente', key: 'ambiente_id', catalog: 'ambientes' },
             { header: 'Balanceador', key: 'balanceador' },
@@ -630,6 +728,11 @@ const EditorMasivo = () => {
                                         const found = catalogos[col.catalog]?.find(c => String(c.id) === String(displayValue));
                                         displayValue = found ? (col.catalog === 'sistemasOperativos' ? `${found.nombre} - V${found.version}` : found.nombre) : 'N/A';
                                     }
+                                    if (col.key === 'aplicaciones') {
+                                        const apps = servidor.aplicaciones || [];
+                                        displayValue = apps.length > 0 ? apps.map(a => a.nombre).join(', ') : 'N/A';
+                                    }
+
                                     const hasError = !!errorsInRow[col.key];
                                     return (
                                         <td key={`${servidor.id}-${col.key}`} title={displayValue} className={hasError ? 'celda-con-error-validacion' : ''}>
@@ -708,9 +811,18 @@ const EditorMasivo = () => {
 
             <div className="editor-masivo-container">
                 <BusquedaFiltro
-                    filtro={filtro} setFiltro={setFiltro}
-                    buscarServidores={buscarServidores} cargando={cargando}
-                    {...catalogos}
+                    filtro={filtro}
+                    setFiltro={setFiltro}
+                    buscarServidores={buscarServidores}
+                    cargando={cargando}
+                    servicios={catalogos.servicios}
+                    capas={catalogos.capas}
+                    ambientes={catalogos.ambientes}
+                    dominios={catalogos.dominios}
+                    sistemasOperativos={catalogos.sistemasOperativos}
+                    estatus={catalogos.estatus}
+                    ecosistemas={catalogos.ecosistemas}
+                    aplicaciones={catalogos.aplicaciones}
                 />
                 <div className="resultados-editor" ref={resultadosRef}>
                     {cargando && <Loading />}
