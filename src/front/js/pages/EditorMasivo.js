@@ -229,7 +229,7 @@ const BulkEditDropdown = ({ value, onChange, options, catalog, catalogos }) => {
     };
 
     const selectedOption = displayOptions.find(opt => String(opt.id) === String(value));
-    const displayLabel = selectedOption ? (catalog === 'sistemasOperativos' ? `${selectedOption.nombre} - V${selectedOption.version}` : selectedOption.nombre) : "Seleccionar un valor...";
+    const displayLabel = selectedOption ? ((catalog === 'sistemasOperativos' || catalog === 'aplicaciones') ? `${selectedOption.nombre} - V${selectedOption.version}` : selectedOption.nombre) : "Seleccionar un valor...";
 
     return (
         <div className="custom-select" ref={dropdownRef} style={{ flexGrow: 1 }}>
@@ -251,7 +251,7 @@ const BulkEditDropdown = ({ value, onChange, options, catalog, catalogos }) => {
                             onChange={() => handleSelect(String(opt.id))}
                         />
                         <span>
-                            {catalog === 'sistemasOperativos' ? `${opt.nombre} - V${opt.version}` : opt.nombre}
+                            {(catalog === 'sistemasOperativos' || catalog === 'aplicaciones') ? `${opt.nombre} - V${opt.version}` : opt.nombre}
                         </span>
                     </label>
                 ))}
@@ -446,7 +446,7 @@ const EditorMasivo = () => {
         { value: 'descripcion', label: 'Descripción', type: 'input' },
         { value: 'servicio_id', label: 'Servicio', type: 'select', catalog: 'servicios' },
         { value: 'ecosistema_id', label: 'Ecosistema', type: 'select', catalog: 'ecosistemas' },
-        { value: 'aplicacion_ids', label: 'Aplicaciones', type: 'multiselect', catalog: 'aplicaciones' },
+        { value: 'aplicacion_id', label: 'Aplicaciones', type: 'select', catalog: 'aplicaciones' },
         { value: 'capa_id', label: 'Capa', type: 'select', catalog: 'capas' },
         { value: 'ambiente_id', label: 'Ambiente', type: 'select', catalog: 'ambientes' },
         { value: 'dominio_id', label: 'Dominio', type: 'select', catalog: 'dominios' },
@@ -460,9 +460,28 @@ const EditorMasivo = () => {
 
     const handleApplyBulkEdit = async (campo) => {
         const valor = bulkEditValues[campo];
-        if (valor === undefined || valor === '') {
+        const isIpField = ['ip_mgmt', 'ip_real', 'ip_mask25'].includes(campo);
+
+        if (!isIpField && (valor === undefined || valor === '')) {
             Swal.fire("Valor no válido", "Por favor, selecciona un valor para aplicar.", "warning");
             return;
+        }
+
+        if (isIpField && valor === '') {
+            const servidoresSinIp = servidores.filter(servidor => {
+                const otrasIps = ['ip_mgmt', 'ip_real', 'ip_mask25'].filter(key => key !== campo);
+                const tieneOtrasIps = otrasIps.some(key => {
+                    const cambioActual = cambios[servidor.id] && cambios[servidor.id][key] !== undefined ? cambios[servidor.id][key] : servidor[key];
+                    return cambioActual && cambioActual.trim() !== '';
+                });
+                return !tieneOtrasIps;
+            });
+
+            if (servidoresSinIp.length > 0) {
+                const nombresServidores = servidoresSinIp.map(s => s.nombre).join(', ');
+                Swal.fire("Acción no permitida", `No se puede dejar el servidor sin ninguna IP. Los siguientes servidores quedarían sin IP: ${nombresServidores}`, "error");
+                return;
+            }
         }
 
         const campoLabel = opcionesColumnas.find(c => c.value === campo)?.label || campo;
@@ -481,8 +500,18 @@ const EditorMasivo = () => {
         if (result.isConfirmed) {
             let nuevosCambios = { ...cambios };
             const servidoresActualizados = servidores.map(servidor => {
-                nuevosCambios[servidor.id] = { ...nuevosCambios[servidor.id], [campo]: valor };
-                return { ...servidor, [campo]: valor };
+                const cambiosPrevios = nuevosCambios[servidor.id] || {};
+                nuevosCambios[servidor.id] = { ...cambiosPrevios, [campo]: valor };
+
+                // Actualizar el estado local del servidor para reflejar en la tabla
+                let servidorActualizado = { ...servidor, [campo]: valor };
+
+                if (campo === 'aplicacion_id') {
+                    const aplicacionSeleccionada = catalogos.aplicaciones.find(a => String(a.id) === String(valor));
+                    servidorActualizado.aplicaciones = aplicacionSeleccionada ? [aplicacionSeleccionada] : [];
+                }
+
+                return servidorActualizado;
             });
 
             setServidores(servidoresActualizados);
@@ -532,14 +561,41 @@ const EditorMasivo = () => {
             return;
         }
 
+        // 1. Validar que al menos una IP esté presente por servidor modificado
+        const servidoresSinIp = [];
+        for (const id in cambios) {
+            const servidorOriginal = servidores.find(s => s.id === parseInt(id, 10));
+            const cambiosParaServidor = cambios[id] || {};
+
+            const ip_mgmt = cambiosParaServidor.ip_mgmt ?? servidorOriginal.ip_mgmt;
+            const ip_real = cambiosParaServidor.ip_real ?? servidorOriginal.ip_real;
+            const ip_mask25 = cambiosParaServidor.ip_mask25 ?? servidorOriginal.ip_mask25;
+
+            if (!ip_mgmt && !ip_real && !ip_mask25) {
+                servidoresSinIp.push(servidorOriginal.nombre);
+            }
+        }
+
+        if (servidoresSinIp.length > 0) {
+            Swal.fire(
+                "Validación fallida",
+                `Los siguientes servidores deben tener al menos una IP: ${servidoresSinIp.join(", ")}`,
+                "error"
+            );
+            return;
+        }
+
+        // 2. Validar unicidad de campos en el backend
         const validaciones = [];
         for (const id in cambios) {
             const cambio = cambios[id];
-            if (cambio.nombre || cambio.ip || cambio.link) {
+            if (cambio.nombre || cambio.ip_mgmt || cambio.ip_real || cambio.ip_mask25 || cambio.link) {
                 validaciones.push({
                     id: parseInt(id, 10),
                     nombre: cambio.nombre,
-                    ip: cambio.ip,
+                    ip_mgmt: cambio.ip_mgmt,
+                    ip_real: cambio.ip_real,
+                    ip_mask25: cambio.ip_mask25,
                     link: cambio.link,
                 });
             }
@@ -557,22 +613,31 @@ const EditorMasivo = () => {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error de Validación',
-                        text: 'Por favor, revise los campos marcados en rojo.',
+                        text: 'Por favor, revise los campos marcados en rojo. Hay datos duplicados.',
                     });
                     const errorsMap = {};
                     errorData.detalles.forEach(detail => {
                         const valorEnConflictoMatch = detail.match(/'([^']+)'/);
                         if (!valorEnConflictoMatch) return;
                         const valorEnConflicto = valorEnConflictoMatch[1];
-                        const servidorConError = servidores.find(srv =>
-                            srv.nombre === valorEnConflicto || srv.ip === valorEnConflicto || srv.link === valorEnConflicto
-                        );
+
+                        const servidorConError = servidores.find(srv => {
+                            const srvCambios = cambios[srv.id] || {};
+                            return (srvCambios.nombre ?? srv.nombre) === valorEnConflicto ||
+                                (srvCambios.ip_mgmt ?? srv.ip_mgmt) === valorEnConflicto ||
+                                (srvCambios.ip_real ?? srv.ip_real) === valorEnConflicto ||
+                                (srvCambios.ip_mask25 ?? srv.ip_mask25) === valorEnConflicto ||
+                                (srvCambios.link ?? srv.link) === valorEnConflicto;
+                        });
+
                         if (servidorConError) {
                             if (!errorsMap[servidorConError.id]) {
                                 errorsMap[servidorConError.id] = {};
                             }
                             if (detail.includes('nombre')) errorsMap[servidorConError.id].nombre = true;
-                            if (detail.includes('IP')) errorsMap[servidorConError.id].ip = true;
+                            if (detail.includes('IP MGMT')) errorsMap[servidorConError.id].ip_mgmt = true;
+                            if (detail.includes('IP Real')) errorsMap[servidorConError.id].ip_real = true;
+                            if (detail.includes('IP Mask/25')) errorsMap[servidorConError.id].ip_mask25 = true;
                             if (detail.includes('Link')) errorsMap[servidorConError.id].link = true;
                         }
                     });
@@ -604,9 +669,9 @@ const EditorMasivo = () => {
                     id: servidorOriginal.id,
                     nombre: cambiosParaServidor.nombre ?? servidorOriginal.nombre,
                     tipo: cambiosParaServidor.tipo ?? servidorOriginal.tipo,
-                    ip_mgmt: cambiosParaServidor.ip_mgmt ?? servidorOriginal.ip_mgmt,
-                    ip_real: cambiosParaServidor.ip_real ?? servidorOriginal.ip_real,
-                    ip_mask25: cambiosParaServidor.ip_mask25 ?? servidorOriginal.ip_mask25,
+                    ip_mgmt: cambiosParaServidor.hasOwnProperty('ip_mgmt') ? cambiosParaServidor.ip_mgmt : servidorOriginal.ip_mgmt,
+                    ip_real: cambiosParaServidor.hasOwnProperty('ip_real') ? cambiosParaServidor.ip_real : servidorOriginal.ip_real,
+                    ip_mask25: cambiosParaServidor.hasOwnProperty('ip_mask25') ? cambiosParaServidor.ip_mask25 : servidorOriginal.ip_mask25,
                     balanceador: cambiosParaServidor.balanceador ?? servidorOriginal.balanceador,
                     vlan: cambiosParaServidor.vlan ?? servidorOriginal.vlan,
                     link: cambiosParaServidor.link ?? servidorOriginal.link,
@@ -617,7 +682,7 @@ const EditorMasivo = () => {
                     ambiente_id: cambiosParaServidor.ambiente_id ?? servidorOriginal.ambiente_id,
                     dominio_id: cambiosParaServidor.dominio_id ?? servidorOriginal.dominio_id,
                     sistema_operativo_id: cambiosParaServidor.sistema_operativo_id ?? servidorOriginal.sistema_operativo_id,
-                    aplicacion_ids: cambiosParaServidor.aplicacion_ids ?? servidorOriginal.aplicaciones?.map(a => a.id),
+                    aplicacion_ids: cambiosParaServidor.aplicacion_id ? [cambiosParaServidor.aplicacion_id] : (servidorOriginal.aplicaciones?.map(a => a.id) || []),
                     estatus_id: cambiosParaServidor.estatus_id ?? servidorOriginal.estatus_id,
                     activo: servidorOriginal.activo,
                 };
@@ -723,6 +788,12 @@ const EditorMasivo = () => {
                                     }
                                     if (col.key === 'aplicaciones') {
                                         const apps = servidor.aplicaciones || [];
+                                        if (servidor.aplicacion_id && apps.length === 0) {
+                                            const appFromCatalog = catalogos.aplicaciones.find(a => String(a.id) === String(servidor.aplicacion_id));
+                                            if (appFromCatalog) {
+                                                apps.push(appFromCatalog);
+                                            }
+                                        }
                                         displayValue = apps.length > 0 ? apps.map(a => `${a.nombre} - V${a.version}`).join(', ') : 'N/A';
                                     }
 

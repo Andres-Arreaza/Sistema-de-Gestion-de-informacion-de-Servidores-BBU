@@ -32,7 +32,7 @@ const FiltroDropdown = ({ filtroKey, label, data, filtroState, handleCheckboxCha
                                 <input
                                     type="checkbox"
                                     value={item.id}
-                                    checked={filtroState[filtroKey]?.includes(String(item.id))}
+                                    checked={filtroState[filtroKey]?.includes(String(item.id)) || false}
                                     onChange={(e) => handleCheckboxChange(e, filtroKey)}
                                 />
                                 <span>{item.nombre}</span>
@@ -53,7 +53,7 @@ const FiltroDropdown = ({ filtroKey, label, data, filtroState, handleCheckboxCha
 export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios, capas, ambientes, dominios, sistemasOperativos, estatus, ecosistemas, aplicaciones, cargando }) => {
     console.log('BusquedaFiltro props:', { filtro, servicios, capas, ambientes, dominios, sistemasOperativos, estatus, ecosistemas, aplicaciones });
     const uniqueAplicaciones = aplicaciones
-        ? Array.from(new Map(aplicaciones.map(app => [`${app.nombre} - V${app.version}`, { id: app.id, nombre: `${app.nombre} - V${app.version}` }])).values())
+        ? Array.from(new Map(aplicaciones.map(app => [`${app.nombre} - V${app.version}`, app])).values())
         : [];
     const handleInputChange = (e) => {
         setFiltro({ ...filtro, [e.target.name]: e.target.value });
@@ -102,7 +102,7 @@ export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios,
         { type: 'text', name: "vlan", label: "VLAN", icon: <Icon name="vlan" size={16} /> },
         { type: 'dropdown', key: "servicios", label: "Servicios", data: uniqueServicios, icon: <Icon name="servicios" size={16} /> },
         { type: 'dropdown', key: "ecosistemas", label: "Ecosistemas", data: uniqueEcosistemas.map(e => ({ id: e.id, nombre: e.nombre })), icon: <Icon name="ecosistema" size={16} /> },
-        { type: 'dropdown', key: "aplicaciones", label: "Aplicaciones", data: uniqueAplicaciones, icon: <Icon name="app" size={16} /> },
+        { type: 'dropdown', key: "aplicacion_ids", label: "Aplicaciones", data: uniqueAplicaciones.map(app => ({ id: app.id, nombre: `${app.nombre} - V${app.version}` })), icon: <Icon name="app" size={16} /> },
         { type: 'dropdown', key: "capas", label: "Capas", data: uniqueCapas, icon: <Icon name="layers" size={16} /> },
         { type: 'dropdown', key: "ambientes", label: "Ambientes", data: uniqueAmbientes, icon: <Icon name="globe" size={16} /> },
         { type: 'dropdown', key: "dominios", label: "Dominios", data: uniqueDominios, icon: <Icon name="shield" size={16} /> },

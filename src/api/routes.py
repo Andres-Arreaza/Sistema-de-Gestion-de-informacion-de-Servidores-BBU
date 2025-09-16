@@ -319,11 +319,19 @@ def update_servidor(record_id):
         if not servidor:
             return jsonify({"error": "Servidor no encontrado"}), 404
         data = request.get_json()
+
+        # Validar que al menos una IP esté presente después de la actualización
+        ip_mgmt = data['ip_mgmt'] if 'ip_mgmt' in data else servidor.ip_mgmt
+        ip_real = data['ip_real'] if 'ip_real' in data else servidor.ip_real
+        ip_mask25 = data['ip_mask25'] if 'ip_mask25' in data else servidor.ip_mask25
+        if not any([ip_mgmt, ip_real, ip_mask25]):
+            return jsonify({"error": "El servidor debe tener al menos una dirección IP (ip_mgmt, ip_real, o ip_mask25)."}), 400
+
         # Actualizar campos simples
         for key, value in data.items():
             if key not in ["id", "aplicacion_ids", "activo", "fecha_creacion", "fecha_modificacion"] and hasattr(servidor, key):
                 # Convertir strings vacíos a None para campos que lo permiten
-                if isinstance(getattr(servidor, key), (str, type(None))) and value == "":
+                if value == "" and key in ["ip_mgmt", "ip_real", "ip_mask25", "balanceador", "vlan", "descripcion", "link"]:
                     setattr(servidor, key, None)
                 elif key == "tipo":
                     # Asegurar que el tipo sea un Enum válido
@@ -440,32 +448,42 @@ def validar_actualizaciones():
         if v.get("nombre"):
             conflicto_nombre = Servidor.query.filter(
                 Servidor.nombre == v["nombre"],
-                Servidor.id != servidor_id
+                Servidor.id != servidor_id,
+                Servidor.activo == True
             ).first()
             if conflicto_nombre:
-                errores_detalle.append(f"El nombre '{v['nombre']}' ya está en uso.")
+                errores_detalle.append(f"El nombre '{v['nombre']}' ya está en uso por otro servidor.")
 
-        # <<< CORRECCIÓN: Iterar y validar los tres campos de IP
+        # Validar cada campo de IP si se está cambiando
         for ip_field in ip_fields:
-            if v.get(ip_field):
-                conflicto_ip = Servidor.query.filter(
-                    getattr(Servidor, ip_field) == v[ip_field],
-                    Servidor.id != servidor_id
+            ip_value = v.get(ip_field)
+            if ip_value: # Solo validar si hay un valor
+                # Verificar si esta IP ya existe en cualquiera de los 3 campos de IP de otro servidor
+                conflicto_ip = db.session.query(Servidor).filter(
+                    Servidor.id != servidor_id,
+                    Servidor.activo == True,
+                    db.or_(
+                        Servidor.ip_mgmt == ip_value,
+                        Servidor.ip_real == ip_value,
+                        Servidor.ip_mask25 == ip_value
+                    )
                 ).first()
                 if conflicto_ip:
-                    errores_detalle.append(f"La IP '{v[ip_field]}' en el campo '{ip_field}' ya está en uso.")
+                    errores_detalle.append(f"La IP '{ip_value}' ya está asignada a otro servidor.")
 
         # Validar Link si se está cambiando
         if v.get("link"):
             conflicto_link = Servidor.query.filter(
                 Servidor.link == v["link"],
-                Servidor.id != servidor_id
+                Servidor.id != servidor_id,
+                Servidor.activo == True
             ).first()
             if conflicto_link:
-                errores_detalle.append(f"El Link '{v['link']}' ya está en uso.")
+                errores_detalle.append(f"El Link '{v['link']}' ya está en uso por otro servidor.")
 
     if errores_detalle:
-        return jsonify({"detalles": errores_detalle}), 400
+        # Eliminar duplicados
+        return jsonify({"detalles": list(set(errores_detalle))}), 400
 
     return jsonify({"msg": "Validación exitosa"}), 200
 
