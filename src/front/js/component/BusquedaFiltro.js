@@ -1,8 +1,5 @@
-// Unifica aplicaciones únicas por nombre y versión
-// 'aplicaciones' debe venir como prop
-
 import React, { useState, useRef, useEffect } from "react";
-import Icon from './Icon'; // Asegúrate de tener un componente Icon.js
+import Icon from './Icon';
 
 // Componente para los dropdowns de selección múltiple
 const FiltroDropdown = ({ filtroKey, label, data, filtroState, handleCheckboxChange, icon }) => {
@@ -55,7 +52,6 @@ const FiltroDropdown = ({ filtroKey, label, data, filtroState, handleCheckboxCha
 // Componente principal del formulario de filtros
 export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios, capas, ambientes, dominios, sistemasOperativos, estatus, ecosistemas, aplicaciones, cargando }) => {
     console.log('BusquedaFiltro props:', { filtro, servicios, capas, ambientes, dominios, sistemasOperativos, estatus, ecosistemas, aplicaciones });
-    // Unificar aplicaciones únicas por nombre y versión (igual que sistemas operativos)
     const uniqueAplicaciones = aplicaciones
         ? Array.from(new Map(aplicaciones.map(app => [`${app.nombre} - V${app.version}`, { id: app.id, nombre: `${app.nombre} - V${app.version}` }])).values())
         : [];
@@ -80,7 +76,6 @@ export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios,
     // Función para eliminar duplicados de los catálogos basándose en el nombre
     const getUniqueItems = (array) => {
         if (!array) return [];
-        // Si el nombre es un número, mostrar el id como label
         return Array.from(new Map(array.map(item => [item.id, { ...item, nombre: isNaN(item.nombre) ? item.nombre : String(item.id) }])).values());
     };
 

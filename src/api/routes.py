@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, Blueprint
 from api.models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, Ecosistema, TipoServidorEnum, Aplicacion
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from datetime import datetime
 
 api = Blueprint('api', __name__)
@@ -312,40 +312,59 @@ def create_servidor():
     return jsonify(nuevo_servidor.serialize()), 201
 
 @api.route("/servidores/<int:record_id>", methods=["PUT"])
+@cross_origin()
 def update_servidor(record_id):
-    servidor = Servidor.query.get(record_id)
-    if not servidor:
-        return jsonify({"error": "Servidor no encontrado"}), 404
-    
-    data = request.get_json()
+    try:
+        servidor = Servidor.query.get(record_id)
+        if not servidor:
+            return jsonify({"error": "Servidor no encontrado"}), 404
+        data = request.get_json()
+        # Actualizar campos simples
+        for key, value in data.items():
+            if key not in ["id", "aplicacion_ids", "activo", "fecha_creacion", "fecha_modificacion"] and hasattr(servidor, key):
+                # Convertir strings vacíos a None para campos que lo permiten
+                if isinstance(getattr(servidor, key), (str, type(None))) and value == "":
+                    setattr(servidor, key, None)
+                elif key == "tipo":
+                    # Asegurar que el tipo sea un Enum válido
+                    try:
+                        setattr(servidor, key, TipoServidorEnum.from_str(value))
+                    except Exception as e:
+                        print("ERROR EN TIPO SERVIDOR:", e)
+                        return jsonify({"error": f"Tipo de servidor inválido: {value}"}), 400
+                else:
+                    setattr(servidor, key, value)
 
-    # Actualizar campos simples
-    for key, value in data.items():
-        if key not in ["id", "aplicacion_ids", "activo", "fecha_creacion", "fecha_modificacion"] and hasattr(servidor, key):
-            # Convertir strings vacíos a None para campos que lo permiten
-            if isinstance(getattr(servidor, key), (str, type(None))) and value == "":
-                setattr(servidor, key, None)
+        # Actualizar estatus_id si viene en el payload
+        if "estatus_id" in data:
+            servidor.estatus_id = data["estatus_id"]
+
+        # Actualizar relación de aplicaciones
+        if "aplicacion_ids" in data:
+            aplicacion_ids = data.get("aplicacion_ids", [])
+            if aplicacion_ids:
+                aplicaciones = Aplicacion.query.filter(Aplicacion.id.in_(aplicacion_ids)).all()
+                # Filtrar solo instancias válidas (no dicts)
+                aplicaciones = [app for app in aplicaciones if hasattr(app, '_sa_instance_state')]
+                servidor.aplicaciones = aplicaciones
             else:
-                setattr(servidor, key, value)
-    # Actualizar estatus_id si viene en el payload
-    if "estatus_id" in data:
-        servidor.estatus_id = data["estatus_id"]
+                servidor.aplicaciones = [] # Limpiar si se envía un array vacío
 
-    # Actualizar relación de aplicaciones
-    if "aplicacion_ids" in data:
-        aplicacion_ids = data.get("aplicacion_ids", [])
-        if aplicacion_ids:
-            aplicaciones = Aplicacion.query.filter(Aplicacion.id.in_(aplicacion_ids)).all()
-            servidor.aplicaciones = aplicaciones
-        else:
-            servidor.aplicaciones = [] # Limpiar si se envía un array vacío
+        # Validar que nunca se asigne un dict a la relación aplicaciones
+        if any(isinstance(app, dict) for app in servidor.aplicaciones):
+            print("ERROR: Se intentó asignar un dict a la relación aplicaciones")
+            servidor.aplicaciones = []
 
-    servidor.fecha_modificacion = datetime.utcnow()
-    db.session.commit()
-    return jsonify(servidor.serialize()), 200
+        servidor.fecha_modificacion = datetime.utcnow()
+        db.session.commit()
+        return jsonify(servidor.serialize()), 200
+    except Exception as e:
+        print("ERROR EN UPDATE SERVIDOR:", e)
+        return jsonify({"error": str(e)}), 500
 
 
 @api.route("/servidores/<int:record_id>", methods=["DELETE"])
+@cross_origin()
 def delete_servidor(record_id):
     return delete_generic(Servidor, record_id)
 
@@ -476,6 +495,7 @@ def create_ecosistema():
     return jsonify(ecosistema.serialize()), 201
 
 @api.route("/ecosistemas/<int:record_id>", methods=["PUT"])
+@cross_origin()
 def update_ecosistema(record_id):
     ecosistema = Ecosistema.query.get(record_id)
     if not ecosistema:

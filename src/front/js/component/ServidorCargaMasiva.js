@@ -531,7 +531,7 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
     }
 
     function handleGuardar() {
-        console.log('handleGuardar - datosCSV:', datosCSV);
+        // console.log('handleGuardar - datosCSV:', datosCSV);
         // Mostrar el payload que se enviará al backend
         var filasConErrores = datosCSV.filter(function (dato) { return Object.keys(dato.errores).length > 0; });
         var filasValidas = datosCSV.filter(function (dato) { return Object.keys(dato.errores).length === 0; });
@@ -604,7 +604,7 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             servidor.aplicacion_ids = aplicacion_ids;
             return Object.assign({}, servidor, { activo: true });
         });
-        console.log('Payload a enviar al backend:', servidoresParaGuardar);
+        //console.log('Payload a enviar al backend:', servidoresParaGuardar);
         var filasConErrores = datosCSV.filter(function (dato) { return Object.keys(dato.errores).length > 0; });
         if (filasConErrores.length > 0) {
             Swal.fire('Registros con errores', 'No se puede guardar. Por favor, corrija todas las filas marcadas en rojo.', 'error');

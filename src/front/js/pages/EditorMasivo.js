@@ -346,7 +346,7 @@ const EditorMasivo = () => {
                     { name: "sistemasOperativos", url: `${backendUrl}/api/sistemas_operativos` },
                     { name: "estatus", url: `${backendUrl}/api/estatus` },
                     { name: "ecosistemas", url: `${backendUrl}/api/ecosistemas` },
-                    { name: "aplicaciones", url: `${backendUrl}/api/aplicacion` }
+                    { name: "aplicaciones", url: `${backendUrl}/api/aplicaciones` }
                 ];
                 const responses = await Promise.all(urls.map(async item => {
                     try {
@@ -393,7 +393,9 @@ const EditorMasivo = () => {
             const queryParams = new URLSearchParams();
             for (const key in filtro) {
                 if (filtro[key] && filtro[key].length > 0) {
-                    const backendKey = key === 'sistemasOperativos' ? 'sistemas_operativos' : key;
+                    let backendKey = key;
+                    if (key === 'sistemasOperativos') backendKey = 'sistemas_operativos';
+                    if (key === 'aplicaciones') backendKey = 'aplicaciones';
                     if (Array.isArray(filtro[key])) {
                         filtro[key].forEach(val => queryParams.append(backendKey, val));
                     } else {
@@ -401,7 +403,6 @@ const EditorMasivo = () => {
                     }
                 }
             }
-            // Enviar busquedaExacta como parámetro
             if (filtro.busquedaExacta) {
                 queryParams.append('busquedaExacta', 'true');
             }
@@ -505,15 +506,30 @@ const EditorMasivo = () => {
         });
 
         if (result.isConfirmed) {
-            const payload = { ...servidorParaDesactivar, activo: false };
-            delete payload.servicios;
-            delete payload.capas;
-            delete payload.ambientes;
-            delete payload.dominios;
-            delete payload.sistemasOperativos;
-            delete payload.sistemas_operativos;
-            delete payload.estatus;
-
+            // Construir payload limpio solo con los campos requeridos para desactivar
+            const payload = {
+                id: servidorParaDesactivar.id,
+                activo: false,
+                aplicacion_ids: Array.isArray(servidorParaDesactivar.aplicaciones)
+                    ? servidorParaDesactivar.aplicaciones.map(app => app.id)
+                    : [],
+                nombre: servidorParaDesactivar.nombre,
+                tipo: servidorParaDesactivar.tipo,
+                servicio_id: servidorParaDesactivar.servicio_id,
+                capa_id: servidorParaDesactivar.capa_id,
+                ambiente_id: servidorParaDesactivar.ambiente_id,
+                dominio_id: servidorParaDesactivar.dominio_id,
+                sistema_operativo_id: servidorParaDesactivar.sistema_operativo_id,
+                ecosistema_id: servidorParaDesactivar.ecosistema_id,
+                estatus_id: servidorParaDesactivar.estatus_id,
+                ip_mgmt: servidorParaDesactivar.ip_mgmt,
+                ip_real: servidorParaDesactivar.ip_real,
+                ip_mask25: servidorParaDesactivar.ip_mask25,
+                balanceador: servidorParaDesactivar.balanceador,
+                vlan: servidorParaDesactivar.vlan,
+                descripcion: servidorParaDesactivar.descripcion,
+                link: servidorParaDesactivar.link
+            };
             try {
                 const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/${servidorParaDesactivar.id}`, {
                     method: 'PUT',
@@ -730,7 +746,7 @@ const EditorMasivo = () => {
                                     }
                                     if (col.key === 'aplicaciones') {
                                         const apps = servidor.aplicaciones || [];
-                                        displayValue = apps.length > 0 ? apps.map(a => a.nombre).join(', ') : 'N/A';
+                                        displayValue = apps.length > 0 ? apps.map(a => `${a.nombre} - V${a.version}`).join(', ') : 'N/A';
                                     }
 
                                     const hasError = !!errorsInRow[col.key];
