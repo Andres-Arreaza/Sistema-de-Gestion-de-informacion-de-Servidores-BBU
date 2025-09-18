@@ -323,6 +323,8 @@ const EditorMasivo = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const exportMenuRef = useRef(null);
     const resultadosRef = useRef(null);
+    // Estado para ordenamiento
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -716,38 +718,105 @@ const EditorMasivo = () => {
         }
     };
 
+    // --- Ordenamiento de la tabla ---
+    const columnas = [
+        { header: 'Nombre', key: 'nombre', sortable: true },
+        { header: 'Tipo', key: 'tipo' },
+        { header: 'IP MGMT', key: 'ip_mgmt' },
+        { header: 'IP Real', key: 'ip_real' },
+        { header: 'IP Mask/25', key: 'ip_mask25' },
+        { header: 'Servicio', key: 'servicio_id', catalog: 'servicios' },
+        { header: 'Ecosistema', key: 'ecosistema_id', catalog: 'ecosistemas' },
+        { header: 'Aplicaciones', key: 'aplicaciones' },
+        { header: 'Capa', key: 'capa_id', catalog: 'capas' },
+        { header: 'Ambiente', key: 'ambiente_id', catalog: 'ambientes' },
+        { header: 'Balanceador', key: 'balanceador' },
+        { header: 'VLAN', key: 'vlan' },
+        { header: 'Dominio', key: 'dominio_id', catalog: 'dominios' },
+        { header: 'S.O.', key: 'sistema_operativo_id', catalog: 'sistemasOperativos' },
+        { header: 'Estatus', key: 'estatus_id', catalog: 'estatus' },
+        { header: 'Descripción', key: 'descripcion' },
+        { header: 'Link', key: 'link' },
+        { header: 'Acciones', key: 'acciones' }
+    ];
+
+    // Función para ordenar los servidores según sortConfig
+    const getSortedServidores = () => {
+        if (!sortConfig.key) return servidores;
+        const sorted = [...servidores];
+        sorted.sort((a, b) => {
+            let aValue = a[sortConfig.key];
+            let bValue = b[sortConfig.key];
+            // Si es columna con catálogo, comparar por nombre
+            const colDef = columnas.find(c => c.key === sortConfig.key);
+            if (colDef && colDef.catalog) {
+                const aObj = catalogos[colDef.catalog]?.find(c => String(c.id) === String(aValue));
+                const bObj = catalogos[colDef.catalog]?.find(c => String(c.id) === String(bValue));
+                aValue = aObj ? aObj.nombre : '';
+                bValue = bObj ? bObj.nombre : '';
+            }
+            // Si es aplicaciones, comparar por primer nombre
+            if (sortConfig.key === 'aplicaciones') {
+                aValue = (a.aplicaciones && a.aplicaciones[0]) ? a.aplicaciones[0].nombre : '';
+                bValue = (b.aplicaciones && b.aplicaciones[0]) ? b.aplicaciones[0].nombre : '';
+            }
+            // Normalizar a string para comparar
+            aValue = aValue ? aValue.toString().toLowerCase() : '';
+            bValue = bValue ? bValue.toString().toLowerCase() : '';
+            if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+        return sorted;
+    };
+
+    // Handler para ordenar por columna
+    const handleSort = (key) => {
+        setSortConfig(prev => {
+            if (prev.key === key) {
+                // Alternar dirección
+                return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+            } else {
+                return { key, direction: 'asc' };
+            }
+        });
+    };
+
     const renderResultadosTabla = () => {
+        const sortedServidores = getSortedServidores();
         const indexOfLastItem = currentPage * itemsPerPage;
         const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-        const currentServidores = servidores.slice(indexOfFirstItem, indexOfLastItem);
-
-        const columnas = [
-            { header: 'Nombre', key: 'nombre' },
-            { header: 'Tipo', key: 'tipo' },
-            { header: 'IP MGMT', key: 'ip_mgmt' },
-            { header: 'IP Real', key: 'ip_real' },
-            { header: 'IP Mask/25', key: 'ip_mask25' },
-            { header: 'Servicio', key: 'servicio_id', catalog: 'servicios' },
-            { header: 'Ecosistema', key: 'ecosistema_id', catalog: 'ecosistemas' },
-            { header: 'Aplicaciones', key: 'aplicaciones' },
-            { header: 'Capa', key: 'capa_id', catalog: 'capas' },
-            { header: 'Ambiente', key: 'ambiente_id', catalog: 'ambientes' },
-            { header: 'Balanceador', key: 'balanceador' },
-            { header: 'VLAN', key: 'vlan' },
-            { header: 'Dominio', key: 'dominio_id', catalog: 'dominios' },
-            { header: 'S.O.', key: 'sistema_operativo_id', catalog: 'sistemasOperativos' },
-            { header: 'Estatus', key: 'estatus_id', catalog: 'estatus' },
-            { header: 'Descripción', key: 'descripcion' },
-            { header: 'Link', key: 'link' },
-            { header: 'Acciones', key: 'acciones' }
-        ];
+        const currentServidores = sortedServidores.slice(indexOfFirstItem, indexOfLastItem);
 
         return (
             <table className="table">
                 <thead>
                     <tr>
                         <th style={{ textAlign: 'center' }}>#</th>
-                        {columnas.map(c => <th key={c.key} style={{ textAlign: 'center' }}>{c.header}</th>)}
+                        {columnas.map(c => (
+                            <th key={c.key} style={{ textAlign: 'center', cursor: c.sortable ? 'pointer' : 'default', userSelect: 'none' }}>
+                                <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                    {c.header}
+                                    {c.sortable && (
+                                        <span
+                                            onClick={() => handleSort(c.key)}
+                                            style={{ marginLeft: 4, display: 'inline-flex', alignItems: 'center' }}
+                                            title={sortConfig.key === c.key ? (sortConfig.direction === 'asc' ? 'Orden ascendente' : 'Orden descendente') : 'Ordenar'}
+                                        >
+                                            {sortConfig.key === c.key ? (
+                                                sortConfig.direction === 'asc' ? (
+                                                    <Icon name="arrow-upward" size={16} style={{ color: '#005A9C' }} />
+                                                ) : (
+                                                    <Icon name="arrow-downward" size={16} style={{ color: '#005A9C' }} />
+                                                )
+                                            ) : (
+                                                <Icon name="unfold-more" size={16} style={{ color: '#888' }} />
+                                            )}
+                                        </span>
+                                    )}
+                                </span>
+                            </th>
+                        ))}
                     </tr>
                 </thead>
                 <tbody>
