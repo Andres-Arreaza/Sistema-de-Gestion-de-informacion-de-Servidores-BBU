@@ -270,15 +270,14 @@ def get_servidor_by_id(record_id):
 @api.route("/servidores", methods=["POST"])
 def create_servidor():
     data = request.get_json()
-    # 'aplicacion_ids' es ahora opcional pero se manejará si existe
-    required_fields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id"]
+    required_fields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "aplicacion_id"]
     for field in required_fields:
-        if field not in data or data[field] is None:
-            return jsonify({"error": f"Falta el campo obligatorio: {field}"}), 400
+        if field not in data or not data[field]:
+            return jsonify({"error": f"El campo '{field}' es obligatorio"}), 400
 
     # Validar que al menos una IP esté presente
     if not any(data.get(ip_field) for ip_field in ["ip_mgmt", "ip_real", "ip_mask25"]):
-        return jsonify({"error": "Debe proporcionar al menos una IP (ip_mgmt, ip_real, o ip_mask25)."}), 400
+        return jsonify({"error": "Debe proporcionar al menos una dirección IP (ip_mgmt, ip_real, o ip_mask25)"}), 400
 
     nuevo_servidor = Servidor(
         nombre=data["nombre"],
@@ -288,6 +287,7 @@ def create_servidor():
         ambiente_id=data["ambiente_id"],
         dominio_id=data["dominio_id"],
         sistema_operativo_id=data["sistema_operativo_id"],
+        aplicacion_id=data["aplicacion_id"],
         ecosistema_id=data.get("ecosistema_id"),
         estatus_id=data.get("estatus_id"),
         ip_mgmt=data.get("ip_mgmt"),
@@ -301,12 +301,6 @@ def create_servidor():
         fecha_creacion=datetime.utcnow()
     )
 
-    # Asignar aplicaciones si se proporcionan los IDs
-    aplicacion_ids = data.get("aplicacion_ids", [])
-    if aplicacion_ids:
-        aplicaciones = Aplicacion.query.filter(Aplicacion.id.in_(aplicacion_ids)).all()
-        nuevo_servidor.aplicaciones = aplicaciones
-
     db.session.add(nuevo_servidor)
     db.session.commit()
     return jsonify(nuevo_servidor.serialize()), 201
@@ -318,56 +312,19 @@ def update_servidor(record_id):
         servidor = Servidor.query.get(record_id)
         if not servidor:
             return jsonify({"error": "Servidor no encontrado"}), 404
+
         data = request.get_json()
 
-        # Validar que al menos una IP esté presente después de la actualización
-        ip_mgmt = data['ip_mgmt'] if 'ip_mgmt' in data else servidor.ip_mgmt
-        ip_real = data['ip_real'] if 'ip_real' in data else servidor.ip_real
-        ip_mask25 = data['ip_mask25'] if 'ip_mask25' in data else servidor.ip_mask25
-        if not any([ip_mgmt, ip_real, ip_mask25]):
-            return jsonify({"error": "El servidor debe tener al menos una dirección IP (ip_mgmt, ip_real, o ip_mask25)."}), 400
-
         # Actualizar campos simples
-        for key, value in data.items():
-            if key not in ["id", "aplicacion_ids", "activo", "fecha_creacion", "fecha_modificacion"] and hasattr(servidor, key):
-                # Convertir strings vacíos a None para campos que lo permiten
-                if value == "" and key in ["ip_mgmt", "ip_real", "ip_mask25", "balanceador", "vlan", "descripcion", "link"]:
-                    setattr(servidor, key, None)
-                elif key == "tipo":
-                    # Asegurar que el tipo sea un Enum válido
-                    try:
-                        setattr(servidor, key, TipoServidorEnum.from_str(value))
-                    except Exception as e:
-                        print("ERROR EN TIPO SERVIDOR:", e)
-                        return jsonify({"error": f"Tipo de servidor inválido: {value}"}), 400
-                else:
-                    setattr(servidor, key, value)
-
-        # Actualizar estatus_id si viene en el payload
-        if "estatus_id" in data:
-            servidor.estatus_id = data["estatus_id"]
-
-        # Actualizar relación de aplicaciones
-        if "aplicacion_ids" in data:
-            aplicacion_ids = data.get("aplicacion_ids", [])
-            if aplicacion_ids:
-                aplicaciones = Aplicacion.query.filter(Aplicacion.id.in_(aplicacion_ids)).all()
-                # Filtrar solo instancias válidas (no dicts)
-                aplicaciones = [app for app in aplicaciones if hasattr(app, '_sa_instance_state')]
-                servidor.aplicaciones = aplicaciones
-            else:
-                servidor.aplicaciones = [] # Limpiar si se envía un array vacío
-
-        # Validar que nunca se asigne un dict a la relación aplicaciones
-        if any(isinstance(app, dict) for app in servidor.aplicaciones):
-            print("ERROR: Se intentó asignar un dict a la relación aplicaciones")
-            servidor.aplicaciones = []
+        for field in ["nombre", "tipo", "ip_mgmt", "ip_real", "ip_mask25", "balanceador", "vlan", "descripcion", "link", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "aplicacion_id", "estatus_id", "ecosistema_id"]:
+            if field in data:
+                setattr(servidor, field, data[field])
 
         servidor.fecha_modificacion = datetime.utcnow()
         db.session.commit()
         return jsonify(servidor.serialize()), 200
     except Exception as e:
-        print("ERROR EN UPDATE SERVIDOR:", e)
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
 

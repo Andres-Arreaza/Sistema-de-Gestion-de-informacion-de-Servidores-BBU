@@ -110,11 +110,7 @@ class SistemaOperativo(BaseModel):
         })
         return data
 
-# Tabla de asociación para la relación muchos a muchos entre Servidor y Aplicacion
-servidor_aplicacion = db.Table('servidor_aplicacion',
-    db.Column('servidor_id', db.Integer, db.ForeignKey('servidores.id'), primary_key=True),
-    db.Column('aplicacion_id', db.Integer, db.ForeignKey('aplicaciones.id'), primary_key=True)
-)
+
 
 
 
@@ -133,6 +129,7 @@ class Aplicacion(BaseModel):
             "descripcion": self.descripcion
         })
         return data
+
 
 
 class Servidor(BaseModel): 
@@ -154,6 +151,7 @@ class Servidor(BaseModel):
     ambiente_id = db.Column(db.Integer, db.ForeignKey("ambientes.id"), nullable=False)
     dominio_id = db.Column(db.Integer, db.ForeignKey("dominios.id"), nullable=False)
     sistema_operativo_id = db.Column(db.Integer, db.ForeignKey("sistemas_operativos.id"), nullable=False)
+    aplicacion_id = db.Column(db.Integer, db.ForeignKey("aplicaciones.id"), nullable=False)
     estatus_id = db.Column(db.Integer, db.ForeignKey("estatus.id"), nullable=True)
 
     # Relaciones de uno a muchos
@@ -163,10 +161,8 @@ class Servidor(BaseModel):
     ambiente = db.relationship(Ambiente)
     dominio = db.relationship(Dominio)
     sistema_operativo = db.relationship(SistemaOperativo)
+    aplicacion = db.relationship(Aplicacion)
     estatus = db.relationship(Estatus)
-
-    # Relación muchos a muchos con Aplicacion
-    aplicaciones = db.relationship('Aplicacion', secondary=servidor_aplicacion, lazy='subquery', backref=db.backref('servidores', lazy=True))
 
     __table_args__ = (
         db.UniqueConstraint('nombre', name='uq_servidor_nombre'),
@@ -199,6 +195,7 @@ class Servidor(BaseModel):
             "ambiente_id": self.ambiente_id,
             "dominio_id": self.dominio_id,
             "sistema_operativo_id": self.sistema_operativo_id,
+            "aplicacion_id": self.aplicacion_id,
             "estatus_id": self.estatus_id,
             "ecosistema_id": self.ecosistema_id,
             "servicio": self.servicio.serialize() if self.servicio else None,
@@ -206,8 +203,8 @@ class Servidor(BaseModel):
             "ambiente": self.ambiente.serialize() if self.ambiente else None,
             "dominio": self.dominio.serialize() if self.dominio else None,
             "sistema_operativo": self.sistema_operativo.serialize() if self.sistema_operativo else None,
+            "aplicacion": self.aplicacion.serialize() if self.aplicacion else None,
             "estatus": self.estatus.serialize() if self.estatus else None,
             "ecosistema": self.ecosistema.serialize() if self.ecosistema else None,
-            "aplicaciones": [app.serialize() for app in self.aplicaciones],
         })
         return data

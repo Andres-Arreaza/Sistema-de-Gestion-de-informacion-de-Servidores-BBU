@@ -89,9 +89,9 @@ class ServidorView(BaseView):
     """ Vista personalizada para gestionar servidores en Flask-Admin """
     column_list = [
         "id", "nombre", "tipo", "ip_mgmt", "ip_real", "ip_mask25", "balanceador", "vlan", "descripcion", "link",
-        "servicio", "capa", "ecosistema", "ambiente", "dominio", "sistema_operativo", "estatus", "aplicaciones", "activo", "fecha_creacion", "fecha_modificacion"
+        "servicio", "capa", "ecosistema", "ambiente", "dominio", "sistema_operativo", "estatus", "aplicacion", "activo", "fecha_creacion", "fecha_modificacion"
     ]
-    column_filters = ["activo", "tipo", "servicio", "capa", "ecosistema", "ambiente", "dominio", "sistema_operativo", "aplicaciones"]
+    column_filters = ["activo", "tipo", "servicio", "capa", "ecosistema", "ambiente", "dominio", "sistema_operativo", "aplicacion"]
     column_editable_list = ["activo"]
 
     # Mostrar los nombres en lugar de los IDs en la vista de administración
@@ -103,7 +103,7 @@ class ServidorView(BaseView):
         "dominio": lambda v, c, m, p: m.dominio.nombre if m.dominio else "",
         "sistema_operativo": lambda v, c, m, p: m.sistema_operativo.nombre if m.sistema_operativo else "",
         "estatus": lambda v, c, m, p: m.estatus.nombre if m.estatus else "",
-        "aplicaciones": lambda v, c, m, p: ", ".join([a.nombre for a in m.aplicaciones]) if m.aplicaciones else ""
+        "aplicacion": lambda v, c, m, p: m.aplicacion.nombre if m.aplicacion else ""
     }
 
     # Hacer que los campos sean seleccionables por nombre al agregar registros
@@ -114,7 +114,7 @@ class ServidorView(BaseView):
         "ambiente": QuerySelectField,
         "dominio": QuerySelectField,
         "sistema_operativo": QuerySelectField,
-        "aplicaciones": QuerySelectField
+        "aplicacion": QuerySelectField
     }
 
     form_args = {
@@ -124,7 +124,7 @@ class ServidorView(BaseView):
         "ambiente": {"query_factory": ambiente_query, "allow_blank": False, "get_label": "nombre"},
         "dominio": {"query_factory": dominio_query, "allow_blank": False, "get_label": "nombre"},
         "sistema_operativo": {"query_factory": sistema_operativo_query, "allow_blank": False, "get_label": "nombre"},
-        "aplicaciones": {"query_factory": aplicacion_query, "allow_blank": False, "get_label": "nombre"}
+        "aplicacion": {"query_factory": aplicacion_query, "allow_blank": False, "get_label": "nombre"}
     }
 
 def setup_admin(app):

@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: a1874d832354
+Revision ID: 0af2489f5cc6
 Revises: 
-Create Date: 2025-09-10 15:42:17.965650
+Create Date: 2025-09-19 11:03:25.639661
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'a1874d832354'
+revision = '0af2489f5cc6'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -109,6 +109,7 @@ def upgrade():
     sa.Column('dominio_id', sa.Integer(), nullable=False),
     sa.Column('sistema_operativo_id', sa.Integer(), nullable=False),
     sa.Column('aplicacion_id', sa.Integer(), nullable=False),
+    sa.Column('estatus_id', sa.Integer(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('fecha_creacion', sa.DateTime(), nullable=False),
     sa.Column('fecha_modificacion', sa.DateTime(), nullable=True),
@@ -118,6 +119,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['capa_id'], ['capas.id'], ),
     sa.ForeignKeyConstraint(['dominio_id'], ['dominios.id'], ),
     sa.ForeignKeyConstraint(['ecosistema_id'], ['ecosistemas.id'], ),
+    sa.ForeignKeyConstraint(['estatus_id'], ['estatus.id'], ),
     sa.ForeignKeyConstraint(['servicio_id'], ['servicios.id'], ),
     sa.ForeignKeyConstraint(['sistema_operativo_id'], ['sistemas_operativos.id'], ),
     sa.PrimaryKeyConstraint('id'),

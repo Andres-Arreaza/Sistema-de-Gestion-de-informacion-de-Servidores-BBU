@@ -130,7 +130,7 @@ const CampoTexto = ({ name, label, value, onChange, error, placeholder = '', req
 const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdicion, onSaveRow }) => {
     const [formData, setFormData] = useState({
         nombre: "", tipo: "", ip_mgmt: "", ip_real: "", ip_mask25: "", balanceador: "", vlan: "",
-        servicio_id: "", capa_id: "", ambiente_id: "", link: "", aplicacion_ids: [],
+        servicio_id: "", capa_id: "", ambiente_id: "", link: "", aplicacion_id: "",
         descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: "", ecosistema_id: ""
     });
     const [errors, setErrors] = useState({});
@@ -194,27 +194,19 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
 
     useEffect(() => {
         if (servidorInicial) {
-            let aplicacionesArray = [];
-            if (Array.isArray(servidorInicial.aplicaciones)) {
-                aplicacionesArray = servidorInicial.aplicaciones.map(app => String(app.id));
-            } else if (Array.isArray(servidorInicial.aplicacion_ids)) {
-                aplicacionesArray = servidorInicial.aplicacion_ids.map(id => String(id));
-            } else {
-                aplicacionesArray = [];
-            }
-            const dataToSet = { ...servidorInicial, aplicacion_ids: aplicacionesArray };
+            const dataToSet = { ...servidorInicial };
 
             // Asegura que los campos IP y otros existan
             dataToSet.ip_mgmt = servidorInicial.ip_mgmt || "";
             dataToSet.ip_real = servidorInicial.ip_real || "";
             dataToSet.ip_mask25 = servidorInicial.ip_mask25 || "";
-            if (!Array.isArray(dataToSet.aplicacion_ids)) dataToSet.aplicacion_ids = [];
+            dataToSet.aplicacion_id = servidorInicial.aplicacion_id ? String(servidorInicial.aplicacion_id) : "";
             delete dataToSet.errors;
             setFormData(dataToSet);
             // Manejo de errores
             if (servidorInicial.errors) {
                 const camposInvalidos = [
-                    'tipo', 'servicio_id', 'ecosistema_id', 'aplicacion_ids', 'capa_id', 'ambiente_id', 'dominio_id', 'sistema_operativo_id', 'estatus_id'
+                    'tipo', 'servicio_id', 'ecosistema_id', 'aplicacion_id', 'capa_id', 'ambiente_id', 'dominio_id', 'sistema_operativo_id', 'estatus_id'
                 ];
                 const errorObj = {};
                 camposInvalidos.forEach(key => {
@@ -229,7 +221,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
         } else {
             setFormData({
                 nombre: "", tipo: "", ip_mgmt: "", ip_real: "", ip_mask25: "", balanceador: "", vlan: "",
-                servicio_id: "", capa_id: "", ambiente_id: "", link: "", aplicacion_ids: [],
+                servicio_id: "", capa_id: "", ambiente_id: "", link: "", aplicacion_id: "",
                 descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: "1", ecosistema_id: ""
             });
             setErrors({});
@@ -251,12 +243,12 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
 
     const validateForm = () => {
         const newErrors = { ...errors };
-        const requiredFields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "balanceador", "vlan", "ecosistema_id", "aplicacion_ids"];
+        const requiredFields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "balanceador", "vlan", "ecosistema_id", "aplicacion_id"];
 
         requiredFields.forEach(field => {
             let isEmpty = !formData[field] || (Array.isArray(formData[field]) ? formData[field].length === 0 : String(formData[field]).trim() === "");
             if (isEmpty) {
-                if (["tipo", "dominio_id", "capa_id", "balanceador", "vlan", "ecosistema_id", "aplicacion_ids"].includes(field)) {
+                if (["tipo", "dominio_id", "capa_id", "balanceador", "vlan", "ecosistema_id", "aplicacion_id"].includes(field)) {
                     if (newErrors[field] === 'Valor inválido' || newErrors[field] === 'Valor inválido. Este campo es obligatorio.') {
                         newErrors[field] = 'Este campo es obligatorio.';
                     } else if (!newErrors[field]) {
@@ -333,17 +325,13 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             });
 
             // Los demás campos de catálogo
-            ["sistema_operativo_id", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "estatus_id", "ecosistema_id"].forEach(field => {
+            ["sistema_operativo_id", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "estatus_id", "ecosistema_id", "aplicacion_id"].forEach(field => {
                 if (ipData[field]) {
                     ipData[field] = Number(ipData[field]);
                 } else {
                     ipData[field] = null;
                 }
             });
-
-            // Asegurarse de que aplicacion_ids sea un array de números
-            ipData.aplicacion_ids = (ipData.aplicacion_ids || []).map(id => Number(id));
-
 
             const url = esEdicion ? `${process.env.BACKEND_URL}/api/servidores/${servidorInicial.id}` : `${process.env.BACKEND_URL}/api/servidores`;
             const method = esEdicion ? "PUT" : "POST";
@@ -419,12 +407,12 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                     options={catalogos.servicios.map(s => ({ value: s.id, label: s.nombre }))} />
                 <SingleSelectDropdown name="ecosistema_id" label="Ecosistema" selectedValue={formData.ecosistema_id} onSelect={handleChange} error={errors.ecosistema_id}
                     options={catalogos.ecosistemas.map(e => ({ value: e.id, label: e.nombre }))} />
-                <MultiSelectDropdown
-                    name="aplicacion_ids"
-                    label={<span>Aplicaciones <span style={{ color: 'var(--color-error)' }}> *</span></span>}
-                    selectedValues={formData.aplicacion_ids}
+                <SingleSelectDropdown
+                    name="aplicacion_id"
+                    label={<span>Aplicación <span style={{ color: 'var(--color-error)' }}>*</span></span>}
+                    selectedValue={formData.aplicacion_id}
                     onSelect={handleChange}
-                    error={errors.aplicacion_ids}
+                    error={errors.aplicacion_id}
                     options={catalogos.aplicaciones.map(app => ({ value: app.id, label: `${app.nombre} - V${app.version}` }))}
                 />
                 <SingleSelectDropdown name="capa_id" label="Capa" selectedValue={formData.capa_id} onSelect={handleChange} error={errors.capa_id}
