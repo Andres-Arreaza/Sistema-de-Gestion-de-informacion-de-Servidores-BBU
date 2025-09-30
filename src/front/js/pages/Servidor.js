@@ -18,13 +18,9 @@ const Servidor = () => {
         };
     }, [modalCrearVisible, modalCargaVisible]);
 
-    const handleSuccess = (mensaje) => {
-        Swal.fire({
-            icon: "success",
-            title: mensaje,
-            showConfirmButton: false,
-            timer: 2000,
-        });
+    const handleSuccess = () => {
+        // La notificación de éxito se maneja dentro de ServidorFormulario.
+        // Esta función ahora solo sirve para refrescar el estado si fuera necesario en el futuro.
     };
 
     const handleUploadSuccess = (mensaje) => {

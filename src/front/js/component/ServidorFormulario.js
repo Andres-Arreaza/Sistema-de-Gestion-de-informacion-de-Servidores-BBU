@@ -266,7 +266,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
 
         // Validar que al menos uno de los tres campos de IP esté lleno (no vacío, no solo espacios)
         const idActual = servidorInicial?.id;
-        const ipFields = ["ip_mgmt", "ip_real", "ip_mask25"];
+        const ipFields = ["ip_mgmt", "ip_real"];
         const servidoresArray = Array.isArray(allServers) ? allServers : [];
         const ipMgmt = formData.ip_mgmt && formData.ip_mgmt.trim() !== "" ? formData.ip_mgmt.trim() : null;
         const ipReal = formData.ip_real && formData.ip_real.trim() !== "" ? formData.ip_real.trim() : null;
@@ -279,10 +279,11 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             else if (!ipMask25) newErrors.ip_mask25 = "Debe ingresar al menos una IP.";
         } else {
             // Si hay IPs repetidas entre los campos
-            if (ipList.length > 1 && new Set(ipList).size !== ipList.length) {
-                if (ipMgmt && (ipMgmt === ipReal || ipMgmt === ipMask25)) newErrors.ip_mgmt = "IP repetida en otro campo.";
-                if (ipReal && (ipReal === ipMgmt || ipReal === ipMask25)) newErrors.ip_real = "IP repetida en otro campo.";
-                if (ipMask25 && (ipMask25 === ipMgmt || ipMask25 === ipReal)) newErrors.ip_mask25 = "IP repetida en otro campo.";
+            const uniqueIps = new Set(ipList);
+            if (uniqueIps.size < ipList.length) {
+                if (ipMgmt && ipList.filter(ip => ip === ipMgmt).length > 1) newErrors.ip_mgmt = "IP repetida en otro campo.";
+                if (ipReal && ipList.filter(ip => ip === ipReal).length > 1) newErrors.ip_real = "IP repetida en otro campo.";
+                if (ipMask25 && ipList.filter(ip => ip === ipMask25).length > 1) newErrors.ip_mask25 = "IP repetida en otro campo.";
             }
         }
         // Validar que ninguna IP esté repetida en ningún campo de ningún servidor existente si tienen valor
@@ -290,7 +291,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             if (formData[f] && formData[f].trim() !== "") {
                 for (let s of servidoresArray) {
                     if (s.id !== idActual) {
-                        if (s.ip_mgmt === formData[f] || s.ip_real === formData[f] || s.ip_mask25 === formData[f]) {
+                        if (s.ip_mgmt === formData[f] || s.ip_real === formData[f]) {
                             newErrors[f] = `La IP ya está en uso en otro servidor.`;
                             break;
                         }
@@ -339,6 +340,18 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                 if (!response.ok) {
                     throw new Error(data && data.error ? data.error : (typeof data === 'string' ? data : 'Error al guardar el servidor'));
                 }
+
+                Swal.fire({
+                    title: "¡Guardado!",
+                    text: `El servidor ha sido ${esEdicion ? 'actualizado' : 'creado'} exitosamente.`,
+                    icon: "success",
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                if (onSuccess) onSuccess();
+                if (setModalVisible) setModalVisible(false);
+
                 return data;
             } catch (error) {
                 Swal.fire("Error", error.message, "error");

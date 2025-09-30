@@ -168,7 +168,6 @@ class Servidor(BaseModel):
         db.UniqueConstraint('nombre', name='uq_servidor_nombre'),
         db.UniqueConstraint('ip_mgmt', name='uq_servidor_ip_mgmt'),
         db.UniqueConstraint('ip_real', name='uq_servidor_ip_real'),
-        db.UniqueConstraint('ip_mask25', name='uq_servidor_ip_mask25'),
     )
 
     def __init__(self, *args, **kwargs):

@@ -322,8 +322,6 @@ def create_servidor():
                 return jsonify({"error": f"La IP MGMT '{data['ip_mgmt']}' ya está en uso."}), 409
             if "servidores.ip_real" in str(e) and data.get("ip_real"):
                 return jsonify({"error": f"La IP Real '{data['ip_real']}' ya está en uso."}), 409
-            if "servidores.ip_mask25" in str(e) and data.get("ip_mask25"):
-                return jsonify({"error": f"La IP Mask/25 '{data['ip_mask25']}' ya está en uso."}), 409
         return jsonify({"error": "Error interno del servidor al crear el servidor."}), 500
 
 @api.route("/servidores/<int:record_id>", methods=["PUT"])
@@ -417,7 +415,7 @@ def validar_actualizaciones():
 
     validaciones = data["validaciones"]
     errores_detalle = []
-    ip_fields = ["ip_mgmt", "ip_real", "ip_mask25"]
+    ip_fields = ["ip_mgmt", "ip_real"]
 
     for v in validaciones:
         servidor_id = v.get("id")
@@ -442,8 +440,7 @@ def validar_actualizaciones():
                     Servidor.activo == True,
                     db.or_(
                         Servidor.ip_mgmt == ip_value,
-                        Servidor.ip_real == ip_value,
-                        Servidor.ip_mask25 == ip_value
+                        Servidor.ip_real == ip_value
                     )
                 ).first()
                 if conflicto_ip:
