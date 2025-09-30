@@ -66,7 +66,7 @@ const TablaPrevisualizacion = function ({ datos, encabezado, onEdit, onDelete, s
                                     const catalogFormKeys = {
                                         servicio: 'servicio_id',
                                         ecosistema: 'ecosistema_id',
-                                        aplicaciones: 'aplicaciones',
+                                        aplicacion: 'aplicacion_id',
                                         capa: 'capa_id',
                                         ambiente: 'ambiente_id',
                                         dominio: 'dominio_id',
@@ -243,7 +243,7 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
         if (!datosCSV.length) return;
         // Encabezados completos igual que Excel
         const encabezados = [
-            "Nombre", "Tipo", "IP MGMT", "IP Real", "IP Mask/25", "Servicio", "Ecosistema", "Aplicaciones", "Capa", "Ambiente", "Balanceador", "VLAN", "Dominio", "S.O.", "Estatus", "Descripción", "Link"
+            "Nombre", "Tipo", "IP MGMT", "IP Real", "IP Mask/25", "Servicio", "Ecosistema", "Aplicacion", "Capa", "Ambiente", "Balanceador", "VLAN", "Dominio", "S.O.", "Estatus", "Descripción", "Link"
         ];
         // Usar los datos procesados para exportar lo que se ve en la tabla
         const filas = datosCSV.map(obj => {
@@ -296,7 +296,7 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 valores[encabezados.indexOf("IP Mask/25")],
                 valores[encabezados.indexOf("Servicio")],
                 valores[encabezados.indexOf("Ecosistema")],
-                valores[encabezados.indexOf("Aplicaciones")],
+                valores[encabezados.indexOf("Aplicacion")],
                 valores[encabezados.indexOf("Capa")],
                 valores[encabezados.indexOf("Ambiente")],
                 valores[encabezados.indexOf("Balanceador")],
@@ -388,7 +388,7 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                     break;
                 }
             }
-            if (catalogName === 'sistemasOperativos') {
+            if (catalogName === 'sistemasOperativos' || catalogName === 'aplicaciones') {
                 for (var j = 0; j < catalog.length; j++) {
                     if ((catalog[j].nombre + ' - V' + catalog[j].version).toLowerCase() === value.toLowerCase()) {
                         matchFound = true;
@@ -410,7 +410,7 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             { key: 'ambiente', header: 'Ambiente', required: true, catalog: 'ambientes', formKey: 'ambiente_id' },
             { key: 'dominio', header: 'Dominio', required: true, catalog: 'dominios', formKey: 'dominio_id' },
             { key: 'ecosistema', header: 'Ecosistema', required: true, catalog: 'ecosistemas', formKey: 'ecosistema_id' },
-            { key: 'aplicaciones', header: 'Aplicaciones', required: true, catalog: 'aplicaciones', formKey: 'aplicaciones' },
+            { key: 'aplicacion', header: 'Aplicacion', required: true, catalog: 'aplicaciones', formKey: 'aplicacion_id' },
             { key: 's.o.', header: 'S.O.', required: true, catalog: 'sistemasOperativos', formKey: 'sistema_operativo_id' },
             { key: 'estatus', header: 'Estatus', required: true, catalog: 'estatus', formKey: 'estatus_id' },
             { key: 'link', header: 'Link', required: false, formKey: 'link' }
@@ -422,38 +422,12 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             var formKey = col.formKey;
             // Solo los campos realmente obligatorios deben marcar error si están vacíos
             if (col.required && !value && ['ip_mgmt', 'ip_real', 'ip_mask25'].indexOf(col.key) === -1) {
-                if (col.key === 'aplicaciones') {
-                    errores[formKey] = true;
-                } else if (col.key === 'ecosistema') {
-                    errores[formKey] = true;
-                } else {
-                    errores[formKey] = true;
-                }
+                errores[formKey] = true;
             }
             else if (value) {
                 if (col.values && !col.values.some(function (v) { return v.toUpperCase() === value.toUpperCase(); })) errores[formKey] = true;
                 if (col.catalog) {
-                    if (col.key === 'aplicaciones') {
-                        // Validar cada aplicación por nombre y versión
-                        var nombresApps = value.split(',').map(v => v.trim()).filter(Boolean);
-                        var catalog = catalogos['aplicaciones'];
-                        nombresApps.forEach(function (nombreApp) {
-                            // Extraer nombre y versión igual que en el mapeo
-                            const match = nombreApp.match(/^(.*?)-\s*[vV](\d+(?:\.\d+)*)$/);
-                            let existe = false;
-                            if (match) {
-                                const nombre = match[1].trim();
-                                const version = match[2].trim();
-                                existe = catalog.some(a => a.nombre.toLowerCase() === nombre.toLowerCase() && a.version.toLowerCase() === version.toLowerCase());
-                            } else {
-                                let normalizado = nombreApp.replace(/\s*-\s*/g, ' - ').replace(/\s*V\s*/i, ' V');
-                                existe = catalog.some(a => (a.nombre + ' - V' + a.version).toLowerCase() === normalizado.toLowerCase());
-                            }
-                            if (!existe) errores[formKey] = true;
-                        });
-                    } else {
-                        checkCatalog(col.catalog, col.header, value, formKey);
-                    }
+                    checkCatalog(col.catalog, col.header, value, formKey);
                 }
                 // Validación de repetidos y existentes para nombre, ip_mgmt, ip_real, ip_mask25, link
                 if (['nombre', 'ip_mgmt', 'ip_real', 'ip_mask25', 'link'].indexOf(col.key) !== -1) {
@@ -514,7 +488,7 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
     function findIdByName(catalogName, name) {
         var catalog = catalogos[catalogName];
         if (!catalog || !name) return null;
-        if (catalogName === 'sistemasOperativos') {
+        if (catalogName === 'sistemasOperativos' || catalogName === 'aplicaciones') {
             for (var i = 0; i < catalog.length; i++) {
                 if ((catalog[i].nombre + ' - V' + catalog[i].version).toLowerCase() === name.trim().toLowerCase()) {
                     return catalog[i].id;
@@ -539,24 +513,12 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             var fila = obj.fila;
             var servidor = {};
             var ipFields = ['ip_mgmt', 'ip_real', 'ip_mask25'];
-            var aplicacion_ids = [];
             for (var i = 0; i < encabezadoCSV.length; i++) {
                 var header = encabezadoCSV[i];
                 var key = getHeaderKey(header);
                 var value = fila[i];
                 if (key === 'ip_mgmt' || key === 'ip_real' || key === 'ip_mask25') {
                     servidor[key] = (value === 'N/A' || value === '' || value == null) ? null : value;
-                } else if (key === 'aplicaciones' || key === 'aplicacion') {
-                    // Permite múltiples aplicaciones separadas por coma
-                    if (value && typeof value === 'string') {
-                        // Unificar validación: buscar por 'Nombre - VVersion' igual que sistema operativo
-                        var nombresApps = value.split(',').map(v => v.trim()).filter(Boolean);
-                        aplicacion_ids = nombresApps.map(nombreApp => {
-                            // Buscar por formato 'Payara - V6'
-                            var app = catalogos.aplicaciones.find(a => (a.nombre + ' - V' + a.version).toLowerCase() === nombreApp.toLowerCase());
-                            return app ? app.id : null;
-                        }).filter(Boolean);
-                    }
                 } else {
                     switch (key) {
                         case 'nombre': servidor.nombre = value; break;
@@ -580,6 +542,7 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                                 servidor.ecosistema_id = findIdByName('ecosistemas', value);
                             }
                             break;
+                        case 'aplicacion': servidor.aplicacion_id = findIdByName('aplicaciones', value); break;
                         case 'so': servidor.sistema_operativo_id = findIdByName('sistemasOperativos', value); break;
                         case 'estatus': servidor.estatus_id = findIdByName('estatus', value); break;
                         default: break;
@@ -601,7 +564,6 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 });
             }
             if (servidor.link === 'N/A' || servidor.link === '' || servidor.link == null) servidor.link = null;
-            servidor.aplicacion_ids = aplicacion_ids;
             return Object.assign({}, servidor, { activo: true });
         });
         //console.log('Payload a enviar al backend:', servidoresParaGuardar);
@@ -671,49 +633,16 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 if (key === 'ip_mgmt') { initialData.ip_mgmt = value; }
                 else if (key === 'ip_real') { initialData.ip_real = value; }
                 else if (key === 'ip_mask25') { initialData.ip_mask25 = value; }
-                else if (key === 'aplicaciones' || key === 'aplicacion') {
-                    // Precargar aplicaciones igual que S.O.: buscar por 'Nombre - VVersion', pero también guardar el valor original para mostrarlo en el formulario
-                    if (value && typeof value === 'string') {
-                        var nombresApps = value.split(',').map(v => v.trim()).filter(Boolean);
-                        initialData.aplicacion_ids = nombresApps.map(nombreApp => {
-                            // Extraer nombre y versión usando regex igual que S.O.
-                            const match = nombreApp.match(/^(.*?)-\s*[vV](\d+(?:\.\d+)*)$/);
-                            if (match) {
-                                const nombre = match[1].trim();
-                                const version = match[2].trim();
-                                var app = catalogos.aplicaciones.find(a => a.nombre.toLowerCase() === nombre.toLowerCase() && a.version.toLowerCase() === version.toLowerCase());
-                                return app ? app.id : null;
-                            } else {
-                                // Fallback: buscar por formato 'Nombre - VVersion' normalizado
-                                let normalizado = nombreApp.replace(/\s*-\s*/g, ' - ').replace(/\s*V\s*/i, ' V');
-                                var app = catalogos.aplicaciones.find(a => (a.nombre + ' - V' + a.version).toLowerCase() === normalizado.toLowerCase());
-                                return app ? app.id : null;
-                            }
-                        }).filter(Boolean);
-                        // Guardar el valor original para mostrarlo en el formulario si no hay match
-                        initialData.aplicaciones = value;
-                    } else {
-                        initialData.aplicacion_ids = [];
-                        initialData.aplicaciones = '';
-                    }
-                }
-                else if (key === 'servicio') {
-                    if (value && typeof value === 'string') {
-                        initialData.servicio_id = findIdByName('servicios', value);
-                    } else {
-                        initialData.servicio_id = value;
-                    }
-                }
                 else {
-                    var formKeyMap = { servicio: 'servicio_id', capa: 'capa_id', ambiente: 'ambiente_id', dominio: 'dominio_id', ecosistema: 'ecosistema_id', so: 'sistema_operativo_id', estatus: 'estatus_id', nombre: 'nombre', tipo: 'tipo', balanceador: 'balanceador', vlan: 'vlan', link: 'link' };
-                    var catalogMap = { servicio: 'servicios', capa: 'capas', ambiente: 'ambientes', dominio: 'dominios', ecosistema: 'ecosistemas', so: 'sistemasOperativos', estatus: 'estatus' };
+                    var formKeyMap = { servicio: 'servicio_id', capa: 'capa_id', ambiente: 'ambiente_id', dominio: 'dominio_id', ecosistema: 'ecosistema_id', aplicacion: 'aplicacion_id', so: 'sistema_operativo_id', estatus: 'estatus_id', nombre: 'nombre', tipo: 'tipo', balanceador: 'balanceador', vlan: 'vlan', link: 'link' };
+                    var catalogMap = { servicio: 'servicios', capa: 'capas', ambiente: 'ambientes', dominio: 'dominios', ecosistema: 'ecosistemas', aplicacion: 'aplicaciones', so: 'sistemasOperativos', estatus: 'estatus' };
                     var formKey = formKeyMap[key];
                     var catalogName = catalogMap[key];
                     if (formKey) {
                         if (key === 'ecosistema') {
                             initialData[formKey] = findIdByName('ecosistemas', value);
-                        } else if (key === 'so') {
-                            initialData[formKey] = findIdByName('sistemasOperativos', value);
+                        } else if (key === 'so' || key === 'aplicacion') {
+                            initialData[formKey] = findIdByName(catalogName, value);
                         } else {
                             var idValue = value;
                             if (catalogName && isNaN(Number(value))) {
@@ -741,7 +670,7 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
         if (!catalog || !id) return '';
         for (var i = 0; i < catalog.length; i++) {
             if (String(catalog[i].id) === String(id)) {
-                if (catalogName === 'sistemasOperativos') {
+                if (catalogName === 'sistemasOperativos' || catalogName === 'aplicaciones') {
                     return catalog[i].nombre + ' - V' + catalog[i].version;
                 }
                 return catalog[i].nombre;
@@ -799,21 +728,27 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 case 'ambiente': filaActualizadaArray.push(findNameById('ambientes', updatedData.ambiente_id)); break;
                 case 'dominio': filaActualizadaArray.push(findNameById('dominios', updatedData.dominio_id)); break;
                 case 'ecosistema': filaActualizadaArray.push(findNameById('ecosistemas', updatedData.ecosistema_id)); break;
+                case 'aplicacion':
                 case 'aplicaciones':
-                    // Mostrar nombre y versión de cada aplicación seleccionada en la vista previa igual que S.O.
-                    if (Array.isArray(updatedData.aplicacion_ids) && updatedData.aplicacion_ids.length > 0) {
-                        var nombresApps = updatedData.aplicacion_ids.map(function (appId) {
-                            var app = catalogos.aplicaciones && catalogos.aplicaciones.find(a => String(a.id) === String(appId));
-                            return app ? `${app.nombre} - V${app.version}` : '';
-                        }).filter(Boolean);
-                        filaActualizadaArray.push(nombresApps.join(', '));
-                    } else {
-                        filaActualizadaArray.push('');
-                    }
-                    break;
-                case 'so': filaActualizadaArray.push(findNameById('sistemasOperativos', updatedData.sistema_operativo_id)); break;
+                    filaActualizadaArray.push(findNameById('aplicaciones', updatedData.aplicacion_id)); break;
+                case 'so':
+                case 's.o.':
+                    filaActualizadaArray.push(findNameById('sistemasOperativos', updatedData.sistema_operativo_id)); break;
                 case 'estatus': filaActualizadaArray.push(findNameById('estatus', updatedData.estatus_id)); break;
-                default: filaActualizadaArray.push('');
+                default:
+                    // Si no es una columna conocida, buscar si hay un valor directo en updatedData
+                    const directValue = updatedData[headerNormalized];
+                    if (typeof directValue !== 'undefined') {
+                        filaActualizadaArray.push(directValue);
+                    } else {
+                        // Intentar encontrar el valor original para no dejar la celda vacía
+                        const originalIndex = encabezadoCSV.findIndex(h => getHeaderKey(h) === headerNormalized);
+                        if (originalIndex !== -1) {
+                            filaActualizadaArray.push(datosCSV[rowIndex].fila[originalIndex] || '');
+                        } else {
+                            filaActualizadaArray.push('');
+                        }
+                    }
             }
         }
 

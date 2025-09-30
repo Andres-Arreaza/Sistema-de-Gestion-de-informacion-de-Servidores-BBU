@@ -86,6 +86,7 @@ def get_servicio_by_id(record_id):
     return get_generic_by_id(Servicio, record_id)
 
 @api.route("/servicios", methods=["POST"])
+@cross_origin()
 def create_servicio():
     return create_generic(Servicio)
 
@@ -268,8 +269,12 @@ def get_servidor_by_id(record_id):
     return get_generic_by_id(Servidor, record_id)
 
 @api.route("/servidores", methods=["POST"])
+@cross_origin()
 def create_servidor():
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "No se recibieron datos"}), 400
+
     required_fields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "aplicacion_id"]
     for field in required_fields:
         if field not in data or not data[field]:
@@ -279,31 +284,47 @@ def create_servidor():
     if not any(data.get(ip_field) for ip_field in ["ip_mgmt", "ip_real", "ip_mask25"]):
         return jsonify({"error": "Debe proporcionar al menos una dirección IP (ip_mgmt, ip_real, o ip_mask25)"}), 400
 
-    nuevo_servidor = Servidor(
-        nombre=data["nombre"],
-        tipo=data["tipo"],
-        servicio_id=data["servicio_id"],
-        capa_id=data["capa_id"],
-        ambiente_id=data["ambiente_id"],
-        dominio_id=data["dominio_id"],
-        sistema_operativo_id=data["sistema_operativo_id"],
-        aplicacion_id=data["aplicacion_id"],
-        ecosistema_id=data.get("ecosistema_id"),
-        estatus_id=data.get("estatus_id"),
-        ip_mgmt=data.get("ip_mgmt"),
-        ip_real=data.get("ip_real"),
-        ip_mask25=data.get("ip_mask25"),
-        balanceador=data.get("balanceador"),
-        vlan=data.get("vlan"),
-        descripcion=data.get("descripcion"),
-        link=data.get("link"),
-        activo=True,
-        fecha_creacion=datetime.utcnow()
-    )
+    try:
+        nuevo_servidor = Servidor(
+            nombre=data["nombre"],
+            tipo=data["tipo"],
+            servicio_id=data["servicio_id"],
+            capa_id=data["capa_id"],
+            ambiente_id=data["ambiente_id"],
+            dominio_id=data["dominio_id"],
+            sistema_operativo_id=data["sistema_operativo_id"],
+            aplicacion_id=data["aplicacion_id"],
+            ecosistema_id=data.get("ecosistema_id"),
+            estatus_id=data.get("estatus_id"),
+            ip_mgmt=data.get("ip_mgmt") or None,
+            ip_real=data.get("ip_real") or None,
+            ip_mask25=data.get("ip_mask25") or None,
+            balanceador=data.get("balanceador"),
+            vlan=data.get("vlan"),
+            descripcion=data.get("descripcion"),
+            link=data.get("link"),
+            activo=True,
+            fecha_creacion=datetime.utcnow()
+        )
 
-    db.session.add(nuevo_servidor)
-    db.session.commit()
-    return jsonify(nuevo_servidor.serialize()), 201
+        db.session.add(nuevo_servidor)
+        db.session.commit()
+        return jsonify(nuevo_servidor.serialize()), 201
+    except Exception as e:
+        db.session.rollback()
+        # Log the full error for debugging
+        print(f"Error al crear servidor: {e}")
+        # Check for unique constraint violations
+        if "UNIQUE constraint failed" in str(e):
+            if "servidores.nombre" in str(e):
+                return jsonify({"error": f"El nombre de servidor '{data['nombre']}' ya existe."}), 409
+            if "servidores.ip_mgmt" in str(e) and data.get("ip_mgmt"):
+                return jsonify({"error": f"La IP MGMT '{data['ip_mgmt']}' ya está en uso."}), 409
+            if "servidores.ip_real" in str(e) and data.get("ip_real"):
+                return jsonify({"error": f"La IP Real '{data['ip_real']}' ya está en uso."}), 409
+            if "servidores.ip_mask25" in str(e) and data.get("ip_mask25"):
+                return jsonify({"error": f"La IP Mask/25 '{data['ip_mask25']}' ya está en uso."}), 409
+        return jsonify({"error": "Error interno del servidor al crear el servidor."}), 500
 
 @api.route("/servidores/<int:record_id>", methods=["PUT"])
 @cross_origin()
@@ -378,7 +399,7 @@ def buscar_servidores():
         # CORRECCIÓN: Filtrar por la relación 'aplicaciones'
         if request.args.getlist("sistemas_operativos"): query = query.filter(Servidor.sistema_operativo_id.in_(request.args.getlist("sistemas_operativos")))
         if request.args.getlist("aplicacion_ids"):
-            query = query.join(Servidor.aplicaciones).filter(Aplicacion.id.in_(request.args.getlist("aplicacion_ids")))
+            query = query.join(Servidor.aplicacion).filter(Aplicacion.id.in_(request.args.getlist("aplicacion_ids")))
         if request.args.getlist("estatus"): query = query.filter(Servidor.estatus_id.in_(request.args.getlist("estatus")))
 
         servidores = query.all()

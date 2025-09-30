@@ -316,50 +316,33 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             return;
         }
 
-        const guardarServidor = () => {
-            // Prepara los datos de IP: si están vacíos, se envían como null
-            const ipFields = ["ip_mgmt", "ip_real", "ip_mask25"];
-            const ipData = { ...formData };
-            ipFields.forEach(f => {
-                ipData[f] = ipData[f] && ipData[f].trim() ? ipData[f].trim() : null;
-            });
-
-            // Los demás campos de catálogo
-            ["sistema_operativo_id", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "estatus_id", "ecosistema_id", "aplicacion_id"].forEach(field => {
-                if (ipData[field]) {
-                    ipData[field] = Number(ipData[field]);
-                } else {
-                    ipData[field] = null;
-                }
-            });
-
-            const url = esEdicion ? `${process.env.BACKEND_URL}/api/servidores/${servidorInicial.id}` : `${process.env.BACKEND_URL}/api/servidores`;
+        const guardarServidor = async (datosParaEnviar) => {
+            const backendUrl = process.env.BACKEND_URL;
+            const url = esEdicion ? `${backendUrl}/api/servidores/${servidorInicial.id}` : `${backendUrl}/api/servidores`;
             const method = esEdicion ? "PUT" : "POST";
-            fetch(url, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...ipData, activo: true })
-            })
-                .then(async response => {
-                    const contentType = response.headers.get('content-type');
-                    let data;
-                    if (contentType && contentType.includes('application/json')) {
-                        data = await response.json();
-                    } else {
-                        data = await response.text();
-                    }
-                    if (!response.ok) {
-                        throw new Error(data && data.error ? data.error : (typeof data === 'string' ? data : 'Error al guardar el servidor'));
-                    }
-                    return data;
-                })
-                .then(() => {
-                    onSuccess(esEdicion ? "Servidor actualizado" : "Servidor creado");
-                    setModalVisible(false);
-                })
-                .catch(error => {
-                    Swal.fire("Error", error.message, "error");
+
+            console.log("Enviando datos al backend:", datosParaEnviar); // Log para ver los datos
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ...datosParaEnviar, activo: true })
                 });
+                const contentType = response.headers.get('content-type');
+                let data;
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    data = await response.text();
+                }
+                if (!response.ok) {
+                    throw new Error(data && data.error ? data.error : (typeof data === 'string' ? data : 'Error al guardar el servidor'));
+                }
+                return data;
+            } catch (error) {
+                Swal.fire("Error", error.message, "error");
+            }
         };
 
         if (onSaveRow) {
@@ -382,11 +365,11 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                     cancelButtonText: "Volver"
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        guardarServidor();
+                        guardarServidor(formData);
                     }
                 });
             } else {
-                guardarServidor();
+                guardarServidor(formData);
             }
         }
     };
@@ -409,7 +392,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                     options={catalogos.ecosistemas.map(e => ({ value: e.id, label: e.nombre }))} />
                 <SingleSelectDropdown
                     name="aplicacion_id"
-                    label={<span>Aplicación <span style={{ color: 'var(--color-error)' }}>*</span></span>}
+                    label="Aplicación"
                     selectedValue={formData.aplicacion_id}
                     onSelect={handleChange}
                     error={errors.aplicacion_id}
