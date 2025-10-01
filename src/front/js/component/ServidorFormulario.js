@@ -245,6 +245,11 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
         const newErrors = { ...errors };
         const requiredFields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "balanceador", "vlan", "ecosistema_id", "aplicacion_id"];
 
+        // Limpiar errores específicos de "Debe ingresar al menos una IP." de la validación anterior
+        if (newErrors.ip_mgmt === "Debe ingresar al menos una IP.") delete newErrors.ip_mgmt;
+        if (newErrors.ip_real === "Debe ingresar al menos una IP.") delete newErrors.ip_real;
+        if (newErrors.ip_mask25 === "Debe ingresar al menos una IP.") delete newErrors.ip_mask25;
+
         requiredFields.forEach(field => {
             let isEmpty = !formData[field] || (Array.isArray(formData[field]) ? formData[field].length === 0 : String(formData[field]).trim() === "");
             if (isEmpty) {
@@ -261,6 +266,11 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                         newErrors[field] = "Este campo es obligatorio.";
                     }
                 }
+            } else {
+                // Si un campo requerido ahora tiene valor, limpiar su error de "obligatorio"
+                if (newErrors[field] === "Este campo es obligatorio." || newErrors[field] === 'Valor inválido. Este campo es obligatorio.') {
+                    delete newErrors[field];
+                }
             }
         });
 
@@ -273,36 +283,56 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
         const ipMask25 = formData.ip_mask25 && formData.ip_mask25.trim() !== "" ? formData.ip_mask25.trim() : null;
         const ipList = [ipMgmt, ipReal].filter(ip => ip); // ip_mask25 se excluye de la validación de duplicados internos
         if (!ipMgmt && !ipReal && !ipMask25) {
-            // Solo mostrar el error en el primer campo vacío
-            if (!ipMgmt) newErrors.ip_mgmt = "Debe ingresar al menos una IP.";
-            else if (!ipReal) newErrors.ip_real = "Debe ingresar al menos una IP.";
-            else if (!ipMask25) newErrors.ip_mask25 = "Debe ingresar al menos una IP.";
+            // Si todos están vacíos, mostrar el error en los tres campos de IP
+            newErrors.ip_mgmt = "Debe ingresar al menos una IP.";
+            newErrors.ip_real = "Debe ingresar al menos una IP.";
+            newErrors.ip_mask25 = "Debe ingresar al menos una IP.";
         } else {
             // Si hay IPs repetidas entre los campos MGMT y Real
-            const uniqueIps = new Set(ipList);
-            if (uniqueIps.size < ipList.length) {
+            if (ipMgmt && ipReal && ipMgmt === ipReal) {
                 if (ipMgmt && ipList.filter(ip => ip === ipMgmt).length > 1) newErrors.ip_mgmt = "IP repetida en otro campo.";
                 if (ipReal && ipList.filter(ip => ip === ipReal).length > 1) newErrors.ip_real = "IP repetida en otro campo.";
+            } else {
+                // Si ya no son duplicados, limpiar errores previos de duplicidad interna
+                if (newErrors.ip_mgmt === "IP repetida en otro campo.") delete newErrors.ip_mgmt;
+                if (newErrors.ip_real === "IP repetida en otro campo.") delete newErrors.ip_real;
             }
         }
         // Validar que ninguna IP esté repetida en ningún campo de ningún servidor existente si tienen valor
         ipFields.forEach(f => {
             if (formData[f] && formData[f].trim() !== "") {
+                let conflictFound = false;
                 for (const s of servidoresArray) {
                     if (s.id !== idActual) {
                         if (s.ip_mgmt === formData[f] || s.ip_real === formData[f]) {
                             newErrors[f] = `La IP ya está en uso en otro servidor.`;
-                            break;
+                            conflictFound = true;
+                            break; // Se encontró un conflicto para este campo IP, no es necesario seguir buscando
                         }
                     }
+                }
+                // Si no se encontró conflicto, limpiar cualquier error de unicidad previo para este campo
+                if (!conflictFound && newErrors[f] === `La IP ya está en uso en otro servidor.`) {
+                    delete newErrors[f];
+                }
+            } else {
+                // Si el campo ahora está vacío, limpiar cualquier error de unicidad previo
+                if (newErrors[f] === `La IP ya está en uso en otro servidor.`) {
+                    delete newErrors[f];
                 }
             }
         });
         if (formData.nombre && servidoresArray.some(s => s.nombre && s.nombre.toLowerCase() === formData.nombre.toLowerCase() && s.id !== idActual)) {
             newErrors.nombre = 'Este nombre ya está en uso.';
+        } else {
+            // Limpiar error de nombre duplicado si ya no hay conflicto
+            if (newErrors.nombre === 'Este nombre ya está en uso.') delete newErrors.nombre;
         }
         if (formData.link && formData.link.trim() && servidoresArray.some(s => s.link === formData.link && s.id !== idActual)) {
             newErrors.link = 'Este link ya está en uso.';
+        } else {
+            // Limpiar error de link duplicado si ya no hay conflicto
+            if (newErrors.link === 'Este link ya está en uso.') delete newErrors.link;
         }
 
         return newErrors;
