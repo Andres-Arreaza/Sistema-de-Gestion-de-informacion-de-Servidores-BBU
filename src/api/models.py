@@ -168,6 +168,7 @@ class Servidor(BaseModel):
         db.UniqueConstraint('nombre', name='uq_servidor_nombre'),
         db.UniqueConstraint('ip_mgmt', name='uq_servidor_ip_mgmt'),
         db.UniqueConstraint('ip_real', name='uq_servidor_ip_real'),
+        # Se elimina la restricción de unicidad para ip_mask25 para permitir valores duplicados.
     )
 
     def __init__(self, *args, **kwargs):

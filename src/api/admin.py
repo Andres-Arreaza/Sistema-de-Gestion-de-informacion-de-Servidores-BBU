@@ -114,17 +114,19 @@ class ServidorView(BaseView):
         "ambiente": QuerySelectField,
         "dominio": QuerySelectField,
         "sistema_operativo": QuerySelectField,
-        "aplicacion": QuerySelectField
+        "aplicacion": QuerySelectField,
+        "estatus": QuerySelectField
     }
 
     form_args = {
         "servicio": {"query_factory": servicio_query, "allow_blank": False, "get_label": "nombre"},
         "capa": {"query_factory": capa_query, "allow_blank": False, "get_label": "nombre"},
-        "ecosistema": {"query_factory": ecosistema_query, "allow_blank": False, "get_label": "nombre"},
+        "ecosistema": {"query_factory": ecosistema_query, "allow_blank": True, "get_label": "nombre"},
         "ambiente": {"query_factory": ambiente_query, "allow_blank": False, "get_label": "nombre"},
         "dominio": {"query_factory": dominio_query, "allow_blank": False, "get_label": "nombre"},
         "sistema_operativo": {"query_factory": sistema_operativo_query, "allow_blank": False, "get_label": "nombre"},
-        "aplicacion": {"query_factory": aplicacion_query, "allow_blank": False, "get_label": "nombre"}
+        "aplicacion": {"query_factory": aplicacion_query, "allow_blank": False, "get_label": "nombre"},
+        "estatus": {"query_factory": estatus_query, "allow_blank": True, "get_label": "nombre"}
     }
 
 def setup_admin(app):

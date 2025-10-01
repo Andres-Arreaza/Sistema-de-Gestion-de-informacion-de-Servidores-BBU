@@ -430,7 +430,7 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                     checkCatalog(col.catalog, col.header, value, formKey);
                 }
                 // Validación de repetidos y existentes para nombre, ip_mgmt, ip_real, ip_mask25, link
-                if (['nombre', 'ip_mgmt', 'ip_real', 'ip_mask25', 'link'].indexOf(col.key) !== -1) {
+                if (['nombre', 'ip_mgmt', 'ip_real', 'link'].indexOf(col.key) !== -1) { // ip_mask25 se quita de la validación de duplicados
                     if (col.key !== 'descripcion') {
                         if (value !== null && value !== undefined && value !== '' && value.toUpperCase() !== 'N/A') {
                             if (servidoresExistentes.some(function (s) {

@@ -322,6 +322,8 @@ def create_servidor():
                 return jsonify({"error": f"La IP MGMT '{data['ip_mgmt']}' ya está en uso."}), 409
             if "servidores.ip_real" in str(e) and data.get("ip_real"):
                 return jsonify({"error": f"La IP Real '{data['ip_real']}' ya está en uso."}), 409
+            # No se maneja un error específico para ip_mask25, ya que se permite su repetición.
+            # Si hay otro error de unicidad, se mostrará el mensaje genérico.
         return jsonify({"error": "Error interno del servidor al crear el servidor."}), 500
 
 @api.route("/servidores/<int:record_id>", methods=["PUT"])
@@ -415,7 +417,7 @@ def validar_actualizaciones():
 
     validaciones = data["validaciones"]
     errores_detalle = []
-    ip_fields = ["ip_mgmt", "ip_real"]
+    ip_fields = ["ip_mgmt", "ip_real"] # ip_mask25 se excluye de la validación de unicidad
 
     for v in validaciones:
         servidor_id = v.get("id")
