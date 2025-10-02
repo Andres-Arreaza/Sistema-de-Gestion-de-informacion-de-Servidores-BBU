@@ -433,16 +433,43 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                     checkCatalog(col.catalog, col.header, value, formKey);
                 }
                 // Validación de repetidos y existentes para nombre, ip_mgmt, ip_real, ip_mask25, link
-                if (['nombre', 'ip_mgmt', 'ip_real', 'link'].indexOf(col.key) !== -1) { // ip_mask25 se quita de la validación de duplicados
+                if (['nombre', 'ip_mgmt', 'ip_real', 'ip_mask25', 'link'].indexOf(col.key) !== -1) { // ip_mask25 se incluye en la validación
                     if (col.key !== 'descripcion') {
                         if (value !== null && value !== undefined && value !== '' && value.toUpperCase() !== 'N/A') {
+                            // Validación contra servidores existentes
                             if (servidoresExistentes.some(function (s) {
+                                if (col.key === 'ip_mask25') {
+                                    // ip_mask25 no puede existir en ip_mgmt o ip_real
+                                    return s.ip_mgmt === value || s.ip_real === value;
+                                } else if (['ip_mgmt', 'ip_real'].includes(col.key)) {
+                                    // ip_mgmt y ip_real no pueden existir en ningún campo de ip
+                                    return s.ip_mgmt === value || s.ip_real === value || s.ip_mask25 === value;
+                                }
+                                // Para nombre y link
                                 return s[col.key] && s[col.key].toLowerCase() === value.toLowerCase();
                             })) errores[formKey] = true;
-                            var repiteEnCarga = todasLasFilas.filter(function (otraFila, idx) {
-                                return (otraFila[index] || '').toLowerCase() === value.toLowerCase();
+
+                            // Validación contra otras filas en la carga masiva
+                            var repiteEnCarga = todasLasFilas.some(function (otraFila, idx) {
+                                if (rowIndex === idx) return false; // No comparar consigo misma
+                                const ipMgmtIndex = findIndex('ip_mgmt');
+                                const ipRealIndex = findIndex('ip_real');
+                                const ipMask25Index = findIndex('ip_mask25');
+
+                                const otraIpMgmt = (otraFila[ipMgmtIndex] || '').toLowerCase();
+                                const otraIpReal = (otraFila[ipRealIndex] || '').toLowerCase();
+                                const otraIpMask25 = (otraFila[ipMask25Index] || '').toLowerCase();
+                                const valorActual = value.toLowerCase();
+
+                                if (col.key === 'ip_mask25') {
+                                    return otraIpMgmt === valorActual || otraIpReal === valorActual;
+                                } else if (['ip_mgmt', 'ip_real'].includes(col.key)) {
+                                    return otraIpMgmt === valorActual || otraIpReal === valorActual || otraIpMask25 === valorActual;
+                                }
+                                // Para nombre y link
+                                return (otraFila[index] || '').toLowerCase() === valorActual;
                             });
-                            if (repiteEnCarga.length > 1) errores[formKey] = true;
+                            if (repiteEnCarga) errores[formKey] = true;
                         }
                     }
                 }

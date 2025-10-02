@@ -284,6 +284,33 @@ def create_servidor():
     if not any(data.get(ip_field) for ip_field in ["ip_mgmt", "ip_real", "ip_mask25"]):
         return jsonify({"error": "Debe proporcionar al menos una dirección IP (ip_mgmt, ip_real, o ip_mask25)"}), 400
 
+    # --- Nueva Validación Cruzada de IPs ---
+    ip_fields_to_check = {
+        "ip_mgmt": data.get("ip_mgmt"),
+        "ip_real": data.get("ip_real"),
+        "ip_mask25": data.get("ip_mask25")
+    }
+    for field, ip in ip_fields_to_check.items():
+        if ip:
+            # Verificar que la IP no exista en los otros dos campos
+            other_fields = [f for f in ["ip_mgmt", "ip_real", "ip_mask25"] if f != field]
+            
+            # Para ip_mgmt y ip_real, deben ser únicos en todas partes
+            if field in ["ip_mgmt", "ip_real"]:
+                conflict = Servidor.query.filter(
+                    db.or_(Servidor.ip_mgmt == ip, Servidor.ip_real == ip, Servidor.ip_mask25 == ip)
+                ).first()
+                if conflict:
+                    return jsonify({"error": f"La IP '{ip}' en el campo {field} ya está en uso en otro servidor."}), 409
+            
+            # Para ip_mask25, solo debe ser única contra ip_mgmt y ip_real
+            elif field == "ip_mask25":
+                conflict = Servidor.query.filter(
+                    db.or_(Servidor.ip_mgmt == ip, Servidor.ip_real == ip)
+                ).first()
+                if conflict:
+                    return jsonify({"error": f"La IP '{ip}' en el campo {field} ya está en uso en ip_mgmt o ip_real de otro servidor."}), 409
+
     try:
         nuevo_servidor = Servidor(
             nombre=data["nombre"],
@@ -335,6 +362,30 @@ def update_servidor(record_id):
             return jsonify({"error": "Servidor no encontrado"}), 404
 
         data = request.get_json()
+
+        # --- Nueva Validación Cruzada de IPs para Actualización ---
+        ip_fields_to_check = {
+            "ip_mgmt": data.get("ip_mgmt"),
+            "ip_real": data.get("ip_real"),
+            "ip_mask25": data.get("ip_mask25")
+        }
+        for field, ip in ip_fields_to_check.items():
+            if ip and ip != getattr(servidor, field): # Solo validar si la IP cambió
+                # Para ip_mgmt y ip_real, deben ser únicos en todas partes
+                if field in ["ip_mgmt", "ip_real"]:
+                    conflict = Servidor.query.filter(Servidor.id != record_id).filter(
+                        db.or_(Servidor.ip_mgmt == ip, Servidor.ip_real == ip, Servidor.ip_mask25 == ip)
+                    ).first()
+                    if conflict:
+                        return jsonify({"error": f"La IP '{ip}' en el campo {field} ya está en uso en otro servidor."}), 409
+                
+                # Para ip_mask25, solo debe ser única contra ip_mgmt y ip_real
+                elif field == "ip_mask25":
+                    conflict = Servidor.query.filter(Servidor.id != record_id).filter(
+                        db.or_(Servidor.ip_mgmt == ip, Servidor.ip_real == ip)
+                    ).first()
+                    if conflict:
+                        return jsonify({"error": f"La IP '{ip}' en el campo {field} ya está en uso en ip_mgmt o ip_real de otro servidor."}), 409
 
         # Actualizar campos simples
         for field in ["nombre", "tipo", "ip_mgmt", "ip_real", "ip_mask25", "balanceador", "vlan", "descripcion", "link", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "aplicacion_id", "estatus_id", "ecosistema_id"]:

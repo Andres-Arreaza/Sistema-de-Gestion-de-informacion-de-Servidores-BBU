@@ -276,27 +276,31 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
 
         // Validar que al menos uno de los tres campos de IP esté lleno (no vacío, no solo espacios)
         const idActual = servidorInicial?.id;
-        const ipFields = ["ip_mgmt", "ip_real"]; // ip_mask25 se excluye de la validación de unicidad
+        const ipFields = ["ip_mgmt", "ip_real", "ip_mask25"]; // ip_mask25 se incluye en la validación de unicidad
         const servidoresArray = Array.isArray(allServers) ? allServers : [];
         const ipMgmt = formData.ip_mgmt && formData.ip_mgmt.trim() !== "" ? formData.ip_mgmt.trim() : null;
         const ipReal = formData.ip_real && formData.ip_real.trim() !== "" ? formData.ip_real.trim() : null;
         const ipMask25 = formData.ip_mask25 && formData.ip_mask25.trim() !== "" ? formData.ip_mask25.trim() : null;
-        const ipList = [ipMgmt, ipReal].filter(ip => ip); // ip_mask25 se excluye de la validación de duplicados internos
+        const ipList = [ipMgmt, ipReal, ipMask25].filter(ip => ip);
         if (!ipMgmt && !ipReal && !ipMask25) {
             // Si todos están vacíos, mostrar el error en los tres campos de IP
             newErrors.ip_mgmt = "Debe ingresar al menos una IP.";
             newErrors.ip_real = "Debe ingresar al menos una IP.";
             newErrors.ip_mask25 = "Debe ingresar al menos una IP.";
         } else {
-            // Si hay IPs repetidas entre los campos MGMT y Real
-            if (ipMgmt && ipReal && ipMgmt === ipReal) {
-                if (ipMgmt && ipList.filter(ip => ip === ipMgmt).length > 1) newErrors.ip_mgmt = "IP repetida en otro campo.";
-                if (ipReal && ipList.filter(ip => ip === ipReal).length > 1) newErrors.ip_real = "IP repetida en otro campo.";
-            } else {
-                // Si ya no son duplicados, limpiar errores previos de duplicidad interna
-                if (newErrors.ip_mgmt === "IP repetida en otro campo.") delete newErrors.ip_mgmt;
-                if (newErrors.ip_real === "IP repetida en otro campo.") delete newErrors.ip_real;
-            }
+            // Si hay IPs repetidas entre los campos MGMT, Real y Mask25
+            const ipCounts = ipList.reduce((acc, ip) => {
+                acc[ip] = (acc[ip] || 0) + 1;
+                return acc;
+            }, {});
+            if (ipMgmt && ipCounts[ipMgmt] > 1) newErrors.ip_mgmt = "IP repetida en otro campo.";
+            if (ipReal && ipCounts[ipReal] > 1) newErrors.ip_real = "IP repetida en otro campo.";
+            if (ipMask25 && ipCounts[ipMask25] > 1) newErrors.ip_mask25 = "IP repetida en otro campo.";
+
+            // Limpiar errores si ya no hay duplicados internos
+            if (newErrors.ip_mgmt === "IP repetida en otro campo." && (!ipMgmt || ipCounts[ipMgmt] <= 1)) delete newErrors.ip_mgmt;
+            if (newErrors.ip_real === "IP repetida en otro campo." && (!ipReal || ipCounts[ipReal] <= 1)) delete newErrors.ip_real;
+            if (newErrors.ip_mask25 === "IP repetida en otro campo." && (!ipMask25 || ipCounts[ipMask25] <= 1)) delete newErrors.ip_mask25;
         }
         // Validar que ninguna IP esté repetida en ningún campo de ningún servidor existente si tienen valor
         ipFields.forEach(f => {
@@ -304,20 +308,30 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                 let conflictFound = false;
                 for (const s of servidoresArray) {
                     if (s.id !== idActual) {
-                        if (s.ip_mgmt === formData[f] || s.ip_real === formData[f]) {
-                            newErrors[f] = `La IP ya está en uso en otro servidor.`;
-                            conflictFound = true;
-                            break; // Se encontró un conflicto para este campo IP, no es necesario seguir buscando
+                        if (f === 'ip_mask25') {
+                            // ip_mask25 no puede existir en ip_mgmt o ip_real de otro servidor
+                            if (s.ip_mgmt === formData[f] || s.ip_real === formData[f]) {
+                                newErrors[f] = `La IP ya está en uso en ip_mgmt o ip_real de otro servidor.`;
+                                conflictFound = true;
+                                break;
+                            }
+                        } else {
+                            // ip_mgmt y ip_real no pueden existir en ningún campo de IP de otro servidor
+                            if (s.ip_mgmt === formData[f] || s.ip_real === formData[f] || s.ip_mask25 === formData[f]) {
+                                newErrors[f] = `La IP ya está en uso en otro servidor.`;
+                                conflictFound = true;
+                                break;
+                            }
                         }
                     }
                 }
                 // Si no se encontró conflicto, limpiar cualquier error de unicidad previo para este campo
-                if (!conflictFound && newErrors[f] === `La IP ya está en uso en otro servidor.`) {
+                if (!conflictFound && (newErrors[f] === `La IP ya está en uso en otro servidor.` || newErrors[f] === `La IP ya está en uso en ip_mgmt o ip_real de otro servidor.`)) {
                     delete newErrors[f];
                 }
             } else {
                 // Si el campo ahora está vacío, limpiar cualquier error de unicidad previo
-                if (newErrors[f] === `La IP ya está en uso en otro servidor.`) {
+                if (newErrors[f] === `La IP ya está en uso en otro servidor.` || newErrors[f] === `La IP ya está en uso en ip_mgmt o ip_real de otro servidor.`) {
                     delete newErrors[f];
                 }
             }
