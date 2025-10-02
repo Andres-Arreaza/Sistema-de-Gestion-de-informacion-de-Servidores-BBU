@@ -3,7 +3,7 @@ import Swal from "sweetalert2";
 import Icon from './Icon'; // Asegúrate de tener un componente Icon.js
 
 // --- Componente Reutilizable para Dropdowns de Selección Única ---
-const SingleSelectDropdown = ({ name, label, options, selectedValue, onSelect, error }) => {
+const SingleSelectDropdown = ({ name, label, options, selectedValue, onSelect, error, required = true }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -27,7 +27,7 @@ const SingleSelectDropdown = ({ name, label, options, selectedValue, onSelect, e
 
     return (
         <div className={`form__group ${isOpen ? 'is-open' : ''}`} ref={dropdownRef}>
-            <label className="form__label">{label} <span style={{ color: 'var(--color-error)' }}>*</span></label>
+            <label className="form__label">{label} {required && <span style={{ color: 'var(--color-error)' }}>*</span>}</label>
             <div className="custom-select">
                 <button type="button" className={`form__input custom-select__trigger ${error ? 'form__input--error' : ''}`} onClick={() => setIsOpen(!isOpen)}>
                     <span>{displayLabel}</span>
@@ -243,7 +243,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
 
     const validateForm = () => {
         const newErrors = { ...errors };
-        const requiredFields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "balanceador", "vlan", "ecosistema_id", "aplicacion_id"];
+        const requiredFields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "balanceador", "vlan"];
 
         // Limpiar errores específicos de "Debe ingresar al menos una IP." de la validación anterior
         if (newErrors.ip_mgmt === "Debe ingresar al menos una IP.") delete newErrors.ip_mgmt;
@@ -253,7 +253,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
         requiredFields.forEach(field => {
             let isEmpty = !formData[field] || (Array.isArray(formData[field]) ? formData[field].length === 0 : String(formData[field]).trim() === "");
             if (isEmpty) {
-                if (["tipo", "dominio_id", "capa_id", "balanceador", "vlan", "ecosistema_id", "aplicacion_id"].includes(field)) {
+                if (["tipo", "dominio_id", "capa_id", "balanceador", "vlan"].includes(field)) {
                     if (newErrors[field] === 'Valor inválido' || newErrors[field] === 'Valor inválido. Este campo es obligatorio.') {
                         newErrors[field] = 'Este campo es obligatorio.';
                     } else if (!newErrors[field]) {
@@ -431,7 +431,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                 <SingleSelectDropdown name="servicio_id" label="Servicio" selectedValue={formData.servicio_id} onSelect={handleChange} error={errors.servicio_id}
                     options={catalogos.servicios.map(s => ({ value: s.id, label: s.nombre }))} />
                 <SingleSelectDropdown name="ecosistema_id" label="Ecosistema" selectedValue={formData.ecosistema_id} onSelect={handleChange} error={errors.ecosistema_id}
-                    options={catalogos.ecosistemas.map(e => ({ value: e.id, label: e.nombre }))} />
+                    options={catalogos.ecosistemas.map(e => ({ value: e.id, label: e.nombre }))} required={false} />
                 <SingleSelectDropdown
                     name="aplicacion_id"
                     label="Aplicación"
@@ -439,6 +439,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                     onSelect={handleChange}
                     error={errors.aplicacion_id}
                     options={catalogos.aplicaciones.map(app => ({ value: app.id, label: `${app.nombre} - V${app.version}` }))}
+                    required={false}
                 />
                 <SingleSelectDropdown name="capa_id" label="Capa" selectedValue={formData.capa_id} onSelect={handleChange} error={errors.capa_id}
                     options={catalogos.capas.map(c => ({ value: c.id, label: c.nombre }))} />

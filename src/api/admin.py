@@ -6,6 +6,10 @@ from wtforms_sqlalchemy.fields import QuerySelectField
 
 def aplicacion_query():
     return Aplicacion.query.order_by(Aplicacion.nombre).all()
+
+def get_aplicacion_label(model):
+    return f"{model.nombre} - V{model.version}"
+
 # 🔹 Funciones para cargar los datos basados en nombre
 
 def servicio_query():
@@ -103,7 +107,7 @@ class ServidorView(BaseView):
         "dominio": lambda v, c, m, p: m.dominio.nombre if m.dominio else "",
         "sistema_operativo": lambda v, c, m, p: m.sistema_operativo.nombre if m.sistema_operativo else "",
         "estatus": lambda v, c, m, p: m.estatus.nombre if m.estatus else "",
-        "aplicacion": lambda v, c, m, p: m.aplicacion.nombre if m.aplicacion else ""
+        "aplicacion": lambda v, c, m, p: f"{m.aplicacion.nombre} - V{m.aplicacion.version}" if m.aplicacion else ""
     }
 
     # Hacer que los campos sean seleccionables por nombre al agregar registros
@@ -125,7 +129,7 @@ class ServidorView(BaseView):
         "ambiente": {"query_factory": ambiente_query, "allow_blank": False, "get_label": "nombre"},
         "dominio": {"query_factory": dominio_query, "allow_blank": False, "get_label": "nombre"},
         "sistema_operativo": {"query_factory": sistema_operativo_query, "allow_blank": False, "get_label": "nombre"},
-        "aplicacion": {"query_factory": aplicacion_query, "allow_blank": False, "get_label": "nombre"},
+        "aplicacion": {"query_factory": aplicacion_query, "allow_blank": True, "get_label": get_aplicacion_label},
         "estatus": {"query_factory": estatus_query, "allow_blank": True, "get_label": "nombre"}
     }
 

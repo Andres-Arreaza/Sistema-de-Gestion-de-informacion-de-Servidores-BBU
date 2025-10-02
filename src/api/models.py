@@ -151,7 +151,7 @@ class Servidor(BaseModel):
     ambiente_id = db.Column(db.Integer, db.ForeignKey("ambientes.id"), nullable=False)
     dominio_id = db.Column(db.Integer, db.ForeignKey("dominios.id"), nullable=False)
     sistema_operativo_id = db.Column(db.Integer, db.ForeignKey("sistemas_operativos.id"), nullable=False)
-    aplicacion_id = db.Column(db.Integer, db.ForeignKey("aplicaciones.id"), nullable=False)
+    aplicacion_id = db.Column(db.Integer, db.ForeignKey("aplicaciones.id"), nullable=True)
     estatus_id = db.Column(db.Integer, db.ForeignKey("estatus.id"), nullable=True)
 
     # Relaciones de uno a muchos

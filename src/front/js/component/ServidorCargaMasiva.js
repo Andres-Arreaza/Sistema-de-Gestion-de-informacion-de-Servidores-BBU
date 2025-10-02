@@ -375,7 +375,10 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
 
     function revalidarFila(fila, encabezado, todasLasFilas, rowIndex) {
         var errores = {};
-        function findIndex(keyword) { return encabezado.findIndex(function (h) { return getHeaderKey(h) === getHeaderKey(keyword); }); }
+        function findIndex(keyword) {
+            const keywords = Array.isArray(keyword) ? keyword.map(k => getHeaderKey(k)) : [getHeaderKey(keyword)];
+            return encabezado.findIndex(function (h) { return keywords.includes(getHeaderKey(h)); });
+        }
         function getValue(index) { return (index !== -1 ? String(fila[index] || '').trim() : ''); }
 
         function checkCatalog(catalogName, header, value, formKey) {
@@ -409,9 +412,9 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             { key: 'capa', header: 'Capa', required: true, catalog: 'capas', formKey: 'capa_id' },
             { key: 'ambiente', header: 'Ambiente', required: true, catalog: 'ambientes', formKey: 'ambiente_id' },
             { key: 'dominio', header: 'Dominio', required: true, catalog: 'dominios', formKey: 'dominio_id' },
-            { key: 'ecosistema', header: 'Ecosistema', required: true, catalog: 'ecosistemas', formKey: 'ecosistema_id' },
-            { key: 'aplicacion', header: 'Aplicacion', required: true, catalog: 'aplicaciones', formKey: 'aplicacion_id' },
-            { key: 's.o.', header: 'S.O.', required: true, catalog: 'sistemasOperativos', formKey: 'sistema_operativo_id' },
+            { key: 'ecosistema', header: 'Ecosistema', required: false, catalog: 'ecosistemas', formKey: 'ecosistema_id' },
+            { key: 'aplicacion', header: ['Aplicación', 'Aplicacion', 'Aplicaciones'], required: false, catalog: 'aplicaciones', formKey: 'aplicacion_id' },
+            { key: 's.o.', header: ['S.O.', 'so'], required: true, catalog: 'sistemasOperativos', formKey: 'sistema_operativo_id' },
             { key: 'estatus', header: 'Estatus', required: true, catalog: 'estatus', formKey: 'estatus_id' },
             { key: 'link', header: 'Link', required: false, formKey: 'link' }
         ];
@@ -494,6 +497,9 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                     return catalog[i].id;
                 }
             }
+            // Fallback por si solo viene el nombre
+            const match = catalog.find(item => item.nombre.toLowerCase() === name.trim().toLowerCase());
+            if (match) return match.id;
             return null;
         }
         for (var j = 0; j < catalog.length; j++) {
@@ -511,7 +517,10 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
         var filasValidas = datosCSV.filter(function (dato) { return Object.keys(dato.errores).length === 0; });
         var servidoresParaGuardar = filasValidas.map(function (obj) {
             var fila = obj.fila;
-            var servidor = {};
+            var servidor = {
+                aplicacion_id: null, // Inicializar campos opcionales
+                ecosistema_id: null
+            };
             var ipFields = ['ip_mgmt', 'ip_real', 'ip_mask25'];
             for (var i = 0; i < encabezadoCSV.length; i++) {
                 var header = encabezadoCSV[i];
@@ -536,14 +545,15 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                             servidor.dominio_id = findIdByName('dominios', value);
                             break;
                         case 'ecosistema':
-                            if (value === 'N/A' || value === '') {
-                                servidor.ecosistema_id = null;
-                            } else {
-                                servidor.ecosistema_id = findIdByName('ecosistemas', value);
-                            }
+                            servidor.ecosistema_id = (value === 'N/A' || value === '' || value == null) ? null : findIdByName('ecosistemas', value);
                             break;
-                        case 'aplicacion': servidor.aplicacion_id = findIdByName('aplicaciones', value); break;
+                        case 'aplicación':
+                        case 'aplicacion':
+                        case 'aplicaciones':
+                            servidor.aplicacion_id = (value === 'N/A' || value === '' || value == null) ? null : findIdByName('aplicaciones', value);
+                            break;
                         case 'so': servidor.sistema_operativo_id = findIdByName('sistemasOperativos', value); break;
+                        case 's.o.': servidor.sistema_operativo_id = findIdByName('sistemasOperativos', value); break;
                         case 'estatus': servidor.estatus_id = findIdByName('estatus', value); break;
                         default: break;
                     }
@@ -611,56 +621,55 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
         var errores = obj.errores;
         var initialData = {};
         let ipIndex = encabezadoCSV.findIndex(h => getHeaderKey(h) === 'ip');
+
         for (var i = 0; i < encabezadoCSV.length; i++) {
             var header = encabezadoCSV[i];
-            if (header && typeof header === 'string') {
-                var key = getHeaderKey(header);
-                var value = fila[i] || '';
-                if (key === 'dominio') {
-                    initialData.dominio_id = value && typeof value === 'string' ? findIdByName('dominios', value) : value;
-                }
-                if (key === 'descripcion') {
-                    // Precargar descripcion exactamente como viene del CSV, permitiendo acentos y caracteres especiales
-                    initialData.descripcion = (typeof value === 'string') ? value : '';
-                }
-                if (ipIndex !== -1 && i === ipIndex) {
-                    initialData.ip_mgmt = fila[ipIndex] || '';
-                    initialData.ip_real = fila[ipIndex + 1] || '';
-                    initialData.ip_mask25 = fila[ipIndex + 2] || '';
-                    i += 2;
-                    continue;
-                }
-                if (key === 'ip_mgmt') { initialData.ip_mgmt = value; }
-                else if (key === 'ip_real') { initialData.ip_real = value; }
-                else if (key === 'ip_mask25') { initialData.ip_mask25 = value; }
-                else {
-                    var formKeyMap = { servicio: 'servicio_id', capa: 'capa_id', ambiente: 'ambiente_id', dominio: 'dominio_id', ecosistema: 'ecosistema_id', aplicacion: 'aplicacion_id', so: 'sistema_operativo_id', estatus: 'estatus_id', nombre: 'nombre', tipo: 'tipo', balanceador: 'balanceador', vlan: 'vlan', link: 'link' };
-                    var catalogMap = { servicio: 'servicios', capa: 'capas', ambiente: 'ambientes', dominio: 'dominios', ecosistema: 'ecosistemas', aplicacion: 'aplicaciones', so: 'sistemasOperativos', estatus: 'estatus' };
-                    var formKey = formKeyMap[key];
-                    var catalogName = catalogMap[key];
-                    if (formKey) {
-                        if (key === 'ecosistema') {
-                            initialData[formKey] = findIdByName('ecosistemas', value);
-                        } else if (key === 'so' || key === 'aplicacion') {
-                            initialData[formKey] = findIdByName(catalogName, value);
-                        } else {
-                            var idValue = value;
-                            if (catalogName && isNaN(Number(value))) {
-                                idValue = findIdByName(catalogName, value);
-                            }
-                            initialData[formKey] = idValue;
-                        }
-                    }
+            if (!header || typeof header !== 'string') continue;
+
+            var key = getHeaderKey(header);
+            var value = fila[i] || '';
+
+            if (ipIndex !== -1 && i === ipIndex) {
+                initialData.ip_mgmt = fila[ipIndex] || '';
+                initialData.ip_real = fila[ipIndex + 1] || '';
+                initialData.ip_mask25 = fila[ipIndex + 2] || '';
+                i += 2; // Saltar las siguientes dos columnas de IP
+                continue;
+            }
+
+            var formKeyMap = {
+                nombre: 'nombre', tipo: 'tipo', ip_mgmt: 'ip_mgmt', ip_real: 'ip_real', ip_mask25: 'ip_mask25',
+                balanceador: 'balanceador', vlan: 'vlan', link: 'link', descripcion: 'descripcion',
+                servicio: 'servicio_id', capa: 'capa_id', ambiente: 'ambiente_id', dominio: 'dominio_id',
+                ecosistema: 'ecosistema_id', aplicacion: 'aplicacion_id', aplicación: 'aplicacion_id',
+                aplicaciones: 'aplicacion_id', 's.o.': 'sistema_operativo_id', so: 'sistema_operativo_id',
+                estatus: 'estatus_id'
+            };
+
+            var catalogMap = {
+                servicio: 'servicios', capa: 'capas', ambiente: 'ambientes', dominio: 'dominios',
+                ecosistema: 'ecosistemas', aplicacion: 'aplicaciones', aplicación: 'aplicaciones',
+                aplicaciones: 'aplicaciones', 's.o.': 'sistemasOperativos', so: 'sistemasOperativos',
+                estatus: 'estatus'
+            };
+
+            var formKey = formKeyMap[key];
+            var catalogName = catalogMap[key];
+
+            if (formKey) {
+                if (catalogName) {
+                    initialData[formKey] = value ? findIdByName(catalogName, value) : '';
+                } else {
+                    initialData[formKey] = value;
                 }
             }
         }
-        if (!initialData.ip_mask25) {
-            initialData.ip_mask25 = '';
-        }
-        // Siempre asegurar que descripcion esté presente como string
-        if (typeof initialData.descripcion !== 'string') {
-            initialData.descripcion = '';
-        }
+
+        // Asegurar que los campos opcionales/IP existan en el objeto
+        if (!initialData.ip_mask25) initialData.ip_mask25 = '';
+        if (typeof initialData.descripcion !== 'string') initialData.descripcion = '';
+        if (!initialData.link) initialData.link = '';
+
         initialData.errors = errores;
         setEditModal({ open: true, data: initialData, rowIndex: rowIndex });
     }
@@ -729,6 +738,7 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 case 'dominio': filaActualizadaArray.push(findNameById('dominios', updatedData.dominio_id)); break;
                 case 'ecosistema': filaActualizadaArray.push(findNameById('ecosistemas', updatedData.ecosistema_id)); break;
                 case 'aplicacion':
+                case 'aplicación':
                 case 'aplicaciones':
                     filaActualizadaArray.push(findNameById('aplicaciones', updatedData.aplicacion_id)); break;
                 case 'so':
@@ -866,4 +876,4 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
     );
 };
 
-export default ServidorCargaMasiva;
+export default ServidorCargaMasiva

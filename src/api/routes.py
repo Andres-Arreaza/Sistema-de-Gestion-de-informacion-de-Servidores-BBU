@@ -275,7 +275,7 @@ def create_servidor():
     if not data:
         return jsonify({"error": "No se recibieron datos"}), 400
 
-    required_fields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "aplicacion_id"]
+    required_fields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id"]
     for field in required_fields:
         if field not in data or not data[field]:
             return jsonify({"error": f"El campo '{field}' es obligatorio"}), 400
@@ -293,7 +293,7 @@ def create_servidor():
             ambiente_id=data["ambiente_id"],
             dominio_id=data["dominio_id"],
             sistema_operativo_id=data["sistema_operativo_id"],
-            aplicacion_id=data["aplicacion_id"],
+            aplicacion_id=data.get("aplicacion_id"),
             ecosistema_id=data.get("ecosistema_id"),
             estatus_id=data.get("estatus_id"),
             ip_mgmt=data.get("ip_mgmt") or None,
@@ -399,7 +399,7 @@ def buscar_servidores():
         # CORRECCIÓN: Filtrar por la relación 'aplicaciones'
         if request.args.getlist("sistemas_operativos"): query = query.filter(Servidor.sistema_operativo_id.in_(request.args.getlist("sistemas_operativos")))
         if request.args.getlist("aplicacion_ids"):
-            query = query.join(Servidor.aplicacion).filter(Aplicacion.id.in_(request.args.getlist("aplicacion_ids")))
+            query = query.filter(Servidor.aplicacion_id.in_(request.args.getlist("aplicacion_ids")))
         if request.args.getlist("estatus"): query = query.filter(Servidor.estatus_id.in_(request.args.getlist("estatus")))
 
         servidores = query.all()
