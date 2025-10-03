@@ -39,6 +39,8 @@ const exportarCSV = (servidores) => {
         if (Array.isArray(srv.aplicaciones) && srv.aplicaciones.length > 0) {
             const app = srv.aplicaciones[0];
             aplicacion = `${app.nombre} - V${app.version}`;
+        } else if (srv.aplicacion) {
+            aplicacion = `${srv.aplicacion.nombre} - V${srv.aplicacion.version}`;
         }
         // Capa
         let capa = srv.capa?.nombre || srv.capas?.[0]?.nombre || '';
