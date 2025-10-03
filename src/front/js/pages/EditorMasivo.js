@@ -32,12 +32,13 @@ const abrirModalLink = (servidor) => {
 
 const exportarCSV = (servidores) => {
     if (!servidores.length) return;
-    const encabezados = `"Nombre";"Tipo";"IP MGMT";"IP Real";"IP Mask/25";"Servicio";"Ecosistema";"Aplicaciones";"Capa";"Ambiente";"Balanceador";"VLAN";"Dominio";"S.O.";"Estatus";"Descripción";"Link"\n`;
+    const encabezados = `Nombre;Tipo;IP MGMT;IP Real;IP Mask/25;Servicio;Ecosistema;Aplicacion;Capa;Ambiente;Balanceador;VLAN;Dominio;S.O.;Estatus;Descripcion;Link\n`;
     const filas = servidores.map(srv => {
         // Aplicaciones
-        let aplicaciones = '';
+        let aplicacion = '';
         if (Array.isArray(srv.aplicaciones) && srv.aplicaciones.length > 0) {
-            aplicaciones = srv.aplicaciones.map(app => `${app.nombre} V${app.version}`).join(', ');
+            const app = srv.aplicaciones[0];
+            aplicacion = `${app.nombre} - V${app.version}`;
         }
         // Capa
         let capa = srv.capa?.nombre || srv.capas?.[0]?.nombre || '';
@@ -62,14 +63,14 @@ const exportarCSV = (servidores) => {
         let servicio = srv.servicio?.nombre || srv.servicios?.[0]?.nombre || '';
         // Ambiente
         let ambiente = srv.ambiente?.nombre || srv.ambientes?.[0]?.nombre || '';
-        return `"${srv.nombre || ''}";"${srv.tipo || ''}";` +
-            `"${srv.ip_mgmt || ''}";"${srv.ip_real || ''}";"${srv.ip_mask25 || ''}";` +
-            `"${servicio}";` +
-            `"${ecosistema}";` +
-            `"${aplicaciones}";` +
-            `"${capa}";"${ambiente}";"${srv.balanceador || ''}";"${srv.vlan || ''}";` +
-            `"${dominio}";"${so}";"${estatus}";"${descripcion}";` +
-            `"${link}"`;
+        return `${srv.nombre || ''};${srv.tipo || ''};` +
+            `${srv.ip_mgmt || ''};${srv.ip_real || ''};${srv.ip_mask25 || ''};` +
+            `${servicio};` +
+            `${ecosistema};` +
+            `${aplicacion};` +
+            `${capa};${ambiente};${srv.balanceador || ''};${srv.vlan || ''};` +
+            `${dominio};${so};${estatus};${descripcion};` +
+            `${link}`;
     }).join("\n");
     const csvContent = `data:text/csv;charset=utf-8,\uFEFF${encodeURI(encabezados + filas)}`;
     const link = document.createElement("a");
