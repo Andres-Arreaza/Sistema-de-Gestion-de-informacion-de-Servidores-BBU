@@ -96,7 +96,7 @@ const exportarExcel = (servidores) => {
             .sub-title { color: #005A9C; font-size: 14px; font-style: italic; margin: 0; padding: 0; }
         </style>
     `;
-    const encabezados = `<tr><th>Nombre</th><th>Tipo</th><th>IP MGMT</th><th>IP Real</th><th>IP Mask/25</th><th>Servicio</th><th>Ecosistema</th><th>Aplicaciones</th><th>Capa</th><th>Ambiente</th><th>Balanceador</th><th>VLAN</th><th>Dominio</th><th>S.O.</th><th>Estatus</th><th>Descripción</th><th>Link</th></tr>`;
+    const encabezados = `<tr><th>Nombre</th><th>Tipo</th><th>IP MGMT</th><th>IP Real</th><th>IP Mask/25</th><th>Servicio</th><th>Ecosistema</th><th>Aplicacion</th><th>Capa</th><th>Ambiente</th><th>Balanceador</th><th>VLAN</th><th>Dominio</th><th>S.O.</th><th>Estatus</th><th>Descripcion</th><th>Link</th></tr>`;
     const filas = servidores.map(srv => {
         // Servicio
         let servicio = srv.servicio?.nombre || (srv.servicios && Array.isArray(srv.servicios) && srv.servicios.length > 0 ? srv.servicios[0].nombre : 'N/A');
@@ -118,11 +118,12 @@ const exportarExcel = (servidores) => {
             so = 'N/A';
         }
         // Aplicaciones
-        let aplicaciones = '';
+        let aplicacion = '';
         if (Array.isArray(srv.aplicaciones) && srv.aplicaciones.length > 0) {
-            aplicaciones = srv.aplicaciones.map(app => `${app.nombre} V${app.version}`).join(', ');
-        } else {
-            aplicaciones = 'N/A';
+            const app = srv.aplicaciones[0];
+            aplicacion = `${app.nombre} - V${app.version}`;
+        } else if (srv.aplicacion) {
+            aplicacion = `${srv.aplicacion.nombre} - V${srv.aplicacion.version}`;
         }
         // Ecosistema
         let ecosistema = srv.ecosistema?.nombre || (srv.ecosistemas && Array.isArray(srv.ecosistemas) && srv.ecosistemas.length > 0 ? srv.ecosistemas[0].nombre : 'N/A');
@@ -134,7 +135,7 @@ const exportarExcel = (servidores) => {
             <td>${srv.ip_mask25 || 'N/A'}</td>
             <td>${servicio}</td>
             <td>${ecosistema}</td>
-            <td>${aplicaciones}</td>
+            <td>${aplicacion || 'N/A'}</td>
             <td>${capa}</td>
             <td>${ambiente}</td>
             <td>${srv.balanceador || 'N/A'}</td>
