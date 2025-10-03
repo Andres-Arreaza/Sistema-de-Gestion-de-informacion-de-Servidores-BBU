@@ -388,9 +388,18 @@ def update_servidor(record_id):
                         return jsonify({"error": f"La IP '{ip}' en el campo {field} ya está en uso en ip_mgmt o ip_real de otro servidor."}), 409
 
         # Actualizar campos simples
-        for field in ["nombre", "tipo", "ip_mgmt", "ip_real", "ip_mask25", "balanceador", "vlan", "descripcion", "link", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "aplicacion_id", "estatus_id", "ecosistema_id"]:
+        for field in ["nombre", "tipo", "ip_mgmt", "ip_real", "ip_mask25", "balanceador", "vlan", "descripcion", "link", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "ecosistema_id"]:
             if field in data:
                 setattr(servidor, field, data[field])
+
+        # Manejar actualización de aplicación
+        if "aplicacion_ids" in data and data["aplicacion_ids"]:
+            # Como el frontend está diseñado para una sola aplicación, tomamos el primer ID
+            servidor.aplicacion_id = data["aplicacion_ids"][0]
+        elif "aplicacion_ids" in data and not data["aplicacion_ids"]:
+             # Si se envía un array vacío, se desasigna la aplicación
+            servidor.aplicacion_id = None
+
 
         servidor.fecha_modificacion = datetime.utcnow()
         db.session.commit()
