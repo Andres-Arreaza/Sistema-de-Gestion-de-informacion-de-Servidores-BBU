@@ -35,12 +35,12 @@
 }
 
 .navbar-logo-img {
-  height: 70px;
+  height: 60px;
   transition: transform 0.3s ease-in-out;
 }
 
 .navbar-logo-img:hover {
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
 .navbar-links-desktop {
