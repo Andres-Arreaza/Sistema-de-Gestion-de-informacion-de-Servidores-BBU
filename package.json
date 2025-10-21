@@ -11,12 +11,12 @@
 		"build": "webpack --config webpack.prod.js"
 	},
 	"author": {
-		"name": "Alejandro Sanchez",
+		"name": "Andrés Eduardo Arreaza D'Antonio",
 		"url": "http://alesanchezr.com/"
 	},
 	"contributors": [
 		{
-			"name": "Alejandro Sanchez",
+			"name": "Andrés Eduardo Arreaza D'Antonio",
 			"url": "http://alesanchezr.com/"
 		},
 		{

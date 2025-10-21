@@ -311,7 +311,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                         if (f === 'ip_mask25') {
                             // ip_mask25 no puede existir en ip_mgmt o ip_real de otro servidor
                             if (s.ip_mgmt === formData[f] || s.ip_real === formData[f]) {
-                                newErrors[f] = `La IP ya está en uso en ip_mgmt o ip_real de otro servidor.`;
+                                newErrors[f] = `La IP ya está en uso en otro servidor.`;
                                 conflictFound = true;
                                 break;
                             }
@@ -326,12 +326,12 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                     }
                 }
                 // Si no se encontró conflicto, limpiar cualquier error de unicidad previo para este campo
-                if (!conflictFound && (newErrors[f] === `La IP ya está en uso en otro servidor.` || newErrors[f] === `La IP ya está en uso en ip_mgmt o ip_real de otro servidor.`)) {
+                if (!conflictFound && (newErrors[f] === `La IP ya está en uso en otro servidor.` || newErrors[f] === `La IP ya está en uso en otro servidor.`)) {
                     delete newErrors[f];
                 }
             } else {
                 // Si el campo ahora está vacío, limpiar cualquier error de unicidad previo
-                if (newErrors[f] === `La IP ya está en uso en otro servidor.` || newErrors[f] === `La IP ya está en uso en ip_mgmt o ip_real de otro servidor.`) {
+                if (newErrors[f] === `La IP ya está en uso en otro servidor.` || newErrors[f] === `La IP ya está en uso en otro servidor.`) {
                     delete newErrors[f];
                 }
             }
