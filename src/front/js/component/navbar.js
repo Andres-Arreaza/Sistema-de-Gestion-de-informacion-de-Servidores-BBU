@@ -6,7 +6,7 @@ import Icon from './Icon';
 export const Navbar = () => {
     const location = useLocation();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
+    /**BORRARR   */
     const adminLinks = [
         { to: "/configuracion", label: "Configuración" },
         { type: 'divider' },
