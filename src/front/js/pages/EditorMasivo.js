@@ -688,10 +688,16 @@ const EditorMasivo = () => {
                     ambiente_id: cambiosParaServidor.ambiente_id ?? servidorOriginal.ambiente_id,
                     dominio_id: cambiosParaServidor.dominio_id ?? servidorOriginal.dominio_id,
                     sistema_operativo_id: cambiosParaServidor.sistema_operativo_id ?? servidorOriginal.sistema_operativo_id,
-                    aplicacion_ids: cambiosParaServidor.aplicacion_id ? [cambiosParaServidor.aplicacion_id] : (servidorOriginal.aplicaciones?.map(a => a.id) || []),
                     estatus_id: cambiosParaServidor.estatus_id ?? servidorOriginal.estatus_id,
                     activo: servidorOriginal.activo,
                 };
+
+                // Incluir aplicacion_ids únicamente si el usuario modificó la aplicación
+                if (Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'aplicacion_id')) {
+                    // Si el valor es nulo/vacío se envía array vacío para desasignar; si tiene valor, enviar como array con el id
+                    payload.aplicacion_ids = cambiosParaServidor.aplicacion_id ? [cambiosParaServidor.aplicacion_id] : [];
+                }
+
                 try {
                     const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/${id}`, {
                         method: 'PUT',

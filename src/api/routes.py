@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, Blueprint
 from api.models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, Ecosistema, TipoServidorEnum, Aplicacion
 from flask_cors import CORS, cross_origin
 from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 
 api = Blueprint('api', __name__)
 CORS(api)
@@ -19,7 +20,7 @@ def update_record(record, data):
 def delete_record(record):
     """ Borrado lógico de un registro """
     if not record:
-        return jsonify({"msg": f"{record.__class__.__name__} no encontrado"}), 404
+        return jsonify({"msg": "Registro no encontrado"}), 404
     if not record.activo:
         return jsonify({"msg": f"{record.__class__.__name__} ya está eliminado"}), 400
 
@@ -361,25 +362,50 @@ def update_servidor(record_id):
         if not servidor:
             return jsonify({"error": "Servidor no encontrado"}), 404
 
-        data = request.get_json()
+        data = request.get_json() or {}
 
-        # --- Nueva Validación Cruzada de IPs para Actualización ---
+        # --- Normalizar/convertir datos entrantes ---
+        # Campos de IDs simples que pueden venir como strings; convertir a int o None
+        id_fields = ["servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "ecosistema_id", "aplicacion_id"]
+        for f in id_fields:
+            if f in data:
+                val = data.get(f)
+                if val is None or val == "" or (isinstance(val, str) and val.strip() == ""):
+                    data[f] = None
+                else:
+                    try:
+                        data[f] = int(val)
+                    except Exception:
+                        # dejar tal cual si no es convertible (p. ej. ya es int)
+                        pass
+
+        # Normalizar IPs: convertir '' a None
+        for ipf in ["ip_mgmt", "ip_real", "ip_mask25"]:
+            if ipf in data and data[ipf] == "":
+                data[ipf] = None
+
+        # Convertir 'tipo' string a Enum si viene como string
+        if "tipo" in data and data["tipo"] is not None and not isinstance(data["tipo"], TipoServidorEnum):
+            try:
+                data["tipo"] = TipoServidorEnum.from_str(data["tipo"])
+            except Exception:
+                return jsonify({"error": f"Valor inválido para 'tipo': {data.get('tipo')}"}), 400
+
+        # --- Validación cruzada de IPs para Actualización ---
         ip_fields_to_check = {
             "ip_mgmt": data.get("ip_mgmt"),
             "ip_real": data.get("ip_real"),
             "ip_mask25": data.get("ip_mask25")
         }
         for field, ip in ip_fields_to_check.items():
-            if ip and ip != getattr(servidor, field): # Solo validar si la IP cambió
-                # Para ip_mgmt y ip_real, deben ser únicos en todas partes
+            # Solo validar si la IP fue proporcionada y cambió respecto al valor actual
+            if ip is not None and ip != getattr(servidor, field):
                 if field in ["ip_mgmt", "ip_real"]:
                     conflict = Servidor.query.filter(Servidor.id != record_id).filter(
                         db.or_(Servidor.ip_mgmt == ip, Servidor.ip_real == ip, Servidor.ip_mask25 == ip)
                     ).first()
                     if conflict:
                         return jsonify({"error": f"La IP '{ip}' en el campo {field} ya está en uso en otro servidor."}), 409
-                
-                # Para ip_mask25, solo debe ser única contra ip_mgmt y ip_real
                 elif field == "ip_mask25":
                     conflict = Servidor.query.filter(Servidor.id != record_id).filter(
                         db.or_(Servidor.ip_mgmt == ip, Servidor.ip_real == ip)
@@ -387,22 +413,90 @@ def update_servidor(record_id):
                     if conflict:
                         return jsonify({"error": f"La IP '{ip}' en el campo {field} ya está en uso en ip_mgmt o ip_real de otro servidor."}), 409
 
-        # Actualizar campos simples
-        for field in ["nombre", "tipo", "ip_mgmt", "ip_real", "ip_mask25", "balanceador", "vlan", "descripcion", "link", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "ecosistema_id"]:
+        # --- NUEVAS VALIDACIONES PRE-COMMIT (evitar IntegrityError) ---
+        # Validar nombre único (si se cambió)
+        if "nombre" in data and data.get("nombre") and data["nombre"] != servidor.nombre:
+            conflicto_nombre = Servidor.query.filter(
+                Servidor.nombre == data["nombre"],
+                Servidor.id != record_id,
+                Servidor.activo == True
+            ).first()
+            if conflicto_nombre:
+                return jsonify({"error": f"El nombre '{data['nombre']}' ya está en uso por otro servidor.", "field": "nombre"}), 409
+
+        # Validar link único (si se cambió)
+        if "link" in data and data.get("link") and data["link"] != servidor.link:
+            conflicto_link = Servidor.query.filter(
+                Servidor.link == data["link"],
+                Servidor.id != record_id,
+                Servidor.activo == True
+            ).first()
+            if conflicto_link:
+                return jsonify({"error": f"El Link '{data['link']}' ya está en uso por otro servidor.", "field": "link"}), 409
+
+        # Validar IPs únicas (si cambiaron)
+        # Para ip_mgmt e ip_real: deben ser únicas frente a ip_mgmt, ip_real e ip_mask25 de otros servidores
+        for field in ["ip_mgmt", "ip_real"]:
             if field in data:
+                ip_val = data.get(field)
+                if ip_val is not None and ip_val != getattr(servidor, field):
+                    conflicto_ip = Servidor.query.filter(
+                        Servidor.id != record_id,
+                        Servidor.activo == True,
+                        db.or_(Servidor.ip_mgmt == ip_val, Servidor.ip_real == ip_val, Servidor.ip_mask25 == ip_val)
+                    ).first()
+                    if conflicto_ip:
+                        return jsonify({"error": f"La IP '{ip_val}' en el campo {field} ya está en uso en otro servidor.", "field": field}), 409
+
+        # Para ip_mask25: debe ser única frente a ip_mgmt e ip_real de otros servidores
+        if "ip_mask25" in data:
+            ip_val = data.get("ip_mask25")
+            if ip_val is not None and ip_val != getattr(servidor, "ip_mask25"):
+                conflicto_ip = Servidor.query.filter(
+                    Servidor.id != record_id,
+                    Servidor.activo == True,
+                    db.or_(Servidor.ip_mgmt == ip_val, Servidor.ip_real == ip_val)
+                ).first()
+                if conflicto_ip:
+                    return jsonify({"error": f"La IP '{ip_val}' en el campo ip_mask25 ya está en uso en ip_mgmt o ip_real de otro servidor.", "field": "ip_mask25"}), 409
+
+        # --- Asignar campos normales (después de validaciones y conversiones) ---
+        simple_fields = ["nombre", "tipo", "ip_mgmt", "ip_real", "ip_mask25", "balanceador", "vlan", "descripcion", "link",
+                         "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "ecosistema_id", "aplicacion_id"]
+        for field in simple_fields:
+            if field in data and hasattr(servidor, field):
                 setattr(servidor, field, data[field])
 
-        # Manejar actualización de aplicación
-        if "aplicacion_ids" in data and data["aplicacion_ids"]:
-            # Como el frontend está diseñado para una sola aplicación, tomamos el primer ID
-            servidor.aplicacion_id = data["aplicacion_ids"][0]
-        elif "aplicacion_ids" in data and not data["aplicacion_ids"]:
-             # Si se envía un array vacío, se desasigna la aplicación
-            servidor.aplicacion_id = None
-
+        # Manejar actualización de aplicación cuando viene como aplicacion_ids (lista) o aplicacion_id (single)
+        if "aplicacion_ids" in data:
+            try:
+                if data["aplicacion_ids"]:
+                    first_id = data["aplicacion_ids"][0]
+                    servidor.aplicacion_id = int(first_id) if first_id is not None and first_id != "" else None
+                else:
+                    servidor.aplicacion_id = None
+            except Exception:
+                # si no es convertible, asignar tal cual (se validará por FK/DB)
+                servidor.aplicacion_id = data["aplicacion_ids"][0] if data["aplicacion_ids"] else None
+        elif "aplicacion_id" in data:
+            servidor.aplicacion_id = data.get("aplicacion_id")
 
         servidor.fecha_modificacion = datetime.utcnow()
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError as ie:
+            db.session.rollback()
+            msg = str(ie.orig) if hasattr(ie, 'orig') else str(ie)
+            # Intentar mapear errores comunes de unicidad con campo específico
+            if "uq_servidor_nombre" in msg or "servidores.nombre" in msg:
+                return jsonify({"error": f"El nombre de servidor '{data.get('nombre')}' ya existe.", "field": "nombre"}), 409
+            if "uq_servidor_ip_mgmt" in msg or "servidores.ip_mgmt" in msg:
+                return jsonify({"error": f"La IP MGMT '{data.get('ip_mgmt')}' ya está en uso.", "field": "ip_mgmt"}), 409
+            if "uq_servidor_ip_real" in msg or "servidores.ip_real" in msg:
+                return jsonify({"error": f"La IP Real '{data.get('ip_real')}' ya está en uso.", "field": "ip_real"}), 409
+            # Respuesta genérica si no se pudo mapear
+            return jsonify({"error": "Violación de integridad en la base de datos."}), 409
+
         return jsonify(servidor.serialize()), 200
     except Exception as e:
         db.session.rollback()
