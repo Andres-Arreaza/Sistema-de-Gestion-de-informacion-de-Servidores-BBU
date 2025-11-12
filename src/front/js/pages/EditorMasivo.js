@@ -32,7 +32,8 @@ const abrirModalLink = (servidor) => {
 
 const exportarCSV = (servidores) => {
     if (!servidores.length) return;
-    const encabezados = `Nombre;Tipo;IP MGMT;IP Real;IP Mask/25;Servicio;Ecosistema;Aplicacion;Capa;Ambiente;Balanceador;VLAN;Dominio;S.O.;Estatus;Descripcion;Link\n`;
+    // VLANs colocadas junto a sus IPs: VLAN MGMT junto a IP MGMT, VLAN REAL junto a IP Real
+    const encabezados = `Nombre;Tipo;IP MGMT;VLAN MGMT;IP Real;VLAN REAL;IP Mask/25;Servicio;Ecosistema;Aplicacion;Capa;Ambiente;Balanceador;Dominio;S.O.;Estatus;Descripcion;Link\n`;
     const filas = servidores.map(srv => {
         // Aplicaciones
         let aplicacion = '';
@@ -66,11 +67,11 @@ const exportarCSV = (servidores) => {
         // Ambiente
         let ambiente = srv.ambiente?.nombre || srv.ambientes?.[0]?.nombre || '';
         return `${srv.nombre || ''};${srv.tipo || ''};` +
-            `${srv.ip_mgmt || ''};${srv.ip_real || ''};${srv.ip_mask25 || ''};` +
+            `${srv.ip_mgmt || ''};${srv.vlan_mgmt || ''};${srv.ip_real || ''};${srv.vlan_real || ''};${srv.ip_mask25 || ''};` +
             `${servicio};` +
             `${ecosistema};` +
             `${aplicacion};` +
-            `${capa};${ambiente};${srv.balanceador || ''};${srv.vlan || ''};` +
+            `${capa};${ambiente};${srv.balanceador || ''};` +
             `${dominio};${so};${estatus};${descripcion};` +
             `${link}`;
     }).join("\n");
@@ -98,7 +99,8 @@ const exportarExcel = (servidores) => {
             .sub-title { color: #005A9C; font-size: 14px; font-style: italic; margin: 0; padding: 0; }
         </style>
     `;
-    const encabezados = `<tr><th>Nombre</th><th>Tipo</th><th>IP MGMT</th><th>IP Real</th><th>IP Mask/25</th><th>Servicio</th><th>Ecosistema</th><th>Aplicacion</th><th>Capa</th><th>Ambiente</th><th>Balanceador</th><th>VLAN</th><th>Dominio</th><th>S.O.</th><th>Estatus</th><th>Descripcion</th><th>Link</th></tr>`;
+    // Encabezados con VLANs junto a sus IPs
+    const encabezados = `<tr><th>Nombre</th><th>Tipo</th><th>IP MGMT</th><th>VLAN MGMT</th><th>IP Real</th><th>VLAN REAL</th><th>IP Mask/25</th><th>Servicio</th><th>Ecosistema</th><th>Aplicacion</th><th>Capa</th><th>Ambiente</th><th>Balanceador</th><th>Dominio</th><th>S.O.</th><th>Estatus</th><th>Descripcion</th><th>Link</th></tr>`;
     const filas = servidores.map(srv => {
         // Servicio
         let servicio = srv.servicio?.nombre || (srv.servicios && Array.isArray(srv.servicios) && srv.servicios.length > 0 ? srv.servicios[0].nombre : 'N/A');
@@ -133,7 +135,9 @@ const exportarExcel = (servidores) => {
             <td>${srv.nombre || 'N/A'}</td>
             <td>${srv.tipo || 'N/A'}</td>
             <td>${srv.ip_mgmt || 'N/A'}</td>
+            <td>${srv.vlan_mgmt || 'N/A'}</td>
             <td>${srv.ip_real || 'N/A'}</td>
+            <td>${srv.vlan_real || 'N/A'}</td>
             <td>${srv.ip_mask25 || 'N/A'}</td>
             <td>${servicio}</td>
             <td>${ecosistema}</td>
@@ -141,7 +145,6 @@ const exportarExcel = (servidores) => {
             <td>${capa}</td>
             <td>${ambiente}</td>
             <td>${srv.balanceador || 'N/A'}</td>
-            <td>${srv.vlan || 'N/A'}</td>
             <td>${dominio}</td>
             <td>${so}</td>
             <td>${estatus}</td>
@@ -308,7 +311,7 @@ const ItemsPerPageDropdown = ({ value, onChange }) => {
 
 const EditorMasivo = () => {
     const [filtro, setFiltro] = useState({
-        nombre: '', ip: '', balanceador: '', vlan: '', descripcion: '', link: '',
+        nombre: '', ip: '', balanceador: '', descripcion: '', link: '',
         tipo: [], servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [], ecosistemas: []
     });
     const [servidores, setServidores] = useState([]);
@@ -444,10 +447,11 @@ const EditorMasivo = () => {
         { value: 'nombre', label: 'Nombre', type: 'input', disabled: servidores.length > 1 },
         { value: 'tipo', label: 'Tipo', type: 'select', options: [{ id: 'VIRTUAL', nombre: 'Virtual' }, { id: 'FISICO', nombre: 'Físico' }] },
         { value: 'ip_mgmt', label: 'IP MGMT', type: 'input', disabled: servidores.length > 1 },
+        { value: 'vlan_mgmt', label: 'VLAN MGMT', type: 'input' },
         { value: 'ip_real', label: 'IP Real', type: 'input', disabled: servidores.length > 1 },
+        { value: 'vlan_real', label: 'VLAN REAL', type: 'input' },
         { value: 'ip_mask25', label: 'IP Mask/25', type: 'input', disabled: servidores.length > 1 },
         { value: 'balanceador', label: 'Balanceador', type: 'input' },
-        { value: 'vlan', label: 'VLAN', type: 'input' },
         { value: 'link', label: 'Link', type: 'input', disabled: servidores.length > 1 },
         { value: 'descripcion', label: 'Descripción', type: 'input' },
         { value: 'servicio_id', label: 'Servicio', type: 'select', catalog: 'servicios' },
@@ -679,7 +683,8 @@ const EditorMasivo = () => {
                     ip_real: cambiosParaServidor.hasOwnProperty('ip_real') ? cambiosParaServidor.ip_real : servidorOriginal.ip_real,
                     ip_mask25: cambiosParaServidor.hasOwnProperty('ip_mask25') ? cambiosParaServidor.ip_mask25 : servidorOriginal.ip_mask25,
                     balanceador: cambiosParaServidor.balanceador ?? servidorOriginal.balanceador,
-                    vlan: cambiosParaServidor.vlan ?? servidorOriginal.vlan,
+                    vlan_mgmt: cambiosParaServidor.hasOwnProperty('vlan_mgmt') ? cambiosParaServidor.vlan_mgmt : servidorOriginal.vlan_mgmt,
+                    vlan_real: cambiosParaServidor.hasOwnProperty('vlan_real') ? cambiosParaServidor.vlan_real : servidorOriginal.vlan_real,
                     link: cambiosParaServidor.link ?? servidorOriginal.link,
                     descripcion: cambiosParaServidor.descripcion ?? servidorOriginal.descripcion,
                     servicio_id: cambiosParaServidor.servicio_id ?? servidorOriginal.servicio_id,
@@ -733,7 +738,9 @@ const EditorMasivo = () => {
         { header: 'Nombre', key: 'nombre', sortable: true },
         { header: 'Tipo', key: 'tipo' },
         { header: 'IP MGMT', key: 'ip_mgmt' },
+        { header: 'VLAN MGMT', key: 'vlan_mgmt' },
         { header: 'IP Real', key: 'ip_real' },
+        { header: 'VLAN REAL', key: 'vlan_real' },
         { header: 'IP Mask/25', key: 'ip_mask25' },
         { header: 'Servicio', key: 'servicio_id', catalog: 'servicios' },
         { header: 'Ecosistema', key: 'ecosistema_id', catalog: 'ecosistemas' },
@@ -741,7 +748,6 @@ const EditorMasivo = () => {
         { header: 'Capa', key: 'capa_id', catalog: 'capas' },
         { header: 'Ambiente', key: 'ambiente_id', catalog: 'ambientes' },
         { header: 'Balanceador', key: 'balanceador' },
-        { header: 'VLAN', key: 'vlan' },
         { header: 'Dominio', key: 'dominio_id', catalog: 'dominios' },
         { header: 'S.O.', key: 'sistema_operativo_id', catalog: 'sistemasOperativos' },
         { header: 'Estatus', key: 'estatus_id', catalog: 'estatus' },
@@ -1037,5 +1043,6 @@ const EditorMasivo = () => {
         </div>
     );
 };
+
 
 export default EditorMasivo;

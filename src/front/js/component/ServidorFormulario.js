@@ -129,7 +129,7 @@ const CampoTexto = ({ name, label, value, onChange, error, placeholder = '', req
 // --- Componente Principal del Formulario ---
 const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdicion, onSaveRow }) => {
     const [formData, setFormData] = useState({
-        nombre: "", tipo: "", ip_mgmt: "", ip_real: "", ip_mask25: "", balanceador: "", vlan: "",
+        nombre: "", tipo: "", ip_mgmt: "", ip_real: "", ip_mask25: "", balanceador: "", vlan_mgmt: "", vlan_real: "",
         servicio_id: "", capa_id: "", ambiente_id: "", link: "", aplicacion_id: "",
         descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: "", ecosistema_id: ""
     });
@@ -201,6 +201,8 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             dataToSet.ip_real = servidorInicial.ip_real || "";
             dataToSet.ip_mask25 = servidorInicial.ip_mask25 || "";
             dataToSet.aplicacion_id = servidorInicial.aplicacion_id ? String(servidorInicial.aplicacion_id) : "";
+            dataToSet.vlan_mgmt = servidorInicial.vlan_mgmt || "";
+            dataToSet.vlan_real = servidorInicial.vlan_real || "";
             delete dataToSet.errors;
             setFormData(dataToSet);
             // Manejo de errores
@@ -220,7 +222,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             }
         } else {
             setFormData({
-                nombre: "", tipo: "", ip_mgmt: "", ip_real: "", ip_mask25: "", balanceador: "", vlan: "",
+                nombre: "", tipo: "", ip_mgmt: "", ip_real: "", ip_mask25: "", balanceador: "", vlan_mgmt: "", vlan_real: "",
                 servicio_id: "", capa_id: "", ambiente_id: "", link: "", aplicacion_id: "",
                 descripcion: "", dominio_id: "", sistema_operativo_id: "", estatus_id: "1", ecosistema_id: ""
             });
@@ -243,7 +245,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
 
     const validateForm = () => {
         const newErrors = { ...errors };
-        const requiredFields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "balanceador", "vlan"];
+        const requiredFields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "balanceador"];
 
         // Limpiar errores específicos de "Debe ingresar al menos una IP." de la validación anterior
         if (newErrors.ip_mgmt === "Debe ingresar al menos una IP.") delete newErrors.ip_mgmt;
@@ -253,7 +255,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
         requiredFields.forEach(field => {
             let isEmpty = !formData[field] || (Array.isArray(formData[field]) ? formData[field].length === 0 : String(formData[field]).trim() === "");
             if (isEmpty) {
-                if (["tipo", "dominio_id", "capa_id", "balanceador", "vlan"].includes(field)) {
+                if (["tipo", "dominio_id", "capa_id", "balanceador"].includes(field)) {
                     if (newErrors[field] === 'Valor inválido' || newErrors[field] === 'Valor inválido. Este campo es obligatorio.') {
                         newErrors[field] = 'Este campo es obligatorio.';
                     } else if (!newErrors[field]) {
@@ -438,10 +440,11 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                 <SingleSelectDropdown name="tipo" label="Tipo" selectedValue={formData.tipo} onSelect={handleChange} error={errors.tipo}
                     options={[{ value: "FISICO", label: "FISICO" }, { value: "VIRTUAL", label: "VIRTUAL" }]} />
                 <CampoTexto name="ip_mgmt" label="IP MGMT" value={formData.ip_mgmt || ''} onChange={handleChange} error={errors.ip_mgmt} />
+                <CampoTexto name="vlan_mgmt" label="VLAN MGMT" value={formData.vlan_mgmt || ''} onChange={handleChange} error={errors.vlan_mgmt} required={false} />
                 <CampoTexto name="ip_real" label="IP Real" value={formData.ip_real || ''} onChange={handleChange} error={errors.ip_real} />
+                <CampoTexto name="vlan_real" label="VLAN REAL" value={formData.vlan_real || ''} onChange={handleChange} error={errors.vlan_real} required={false} />
                 <CampoTexto name="ip_mask25" label="IP Mask/25" value={formData.ip_mask25 || ''} onChange={handleChange} error={errors.ip_mask25} />
                 <CampoTexto name="balanceador" label="Balanceador" value={formData.balanceador || ''} onChange={handleChange} error={errors.balanceador} />
-                <CampoTexto name="vlan" label="VLAN" value={formData.vlan || ''} onChange={handleChange} error={errors.vlan} />
                 <SingleSelectDropdown name="servicio_id" label="Servicio" selectedValue={formData.servicio_id} onSelect={handleChange} error={errors.servicio_id}
                     options={catalogos.servicios.map(s => ({ value: s.id, label: s.nombre }))} />
                 <SingleSelectDropdown name="ecosistema_id" label="Ecosistema" selectedValue={formData.ecosistema_id} onSelect={handleChange} error={errors.ecosistema_id}

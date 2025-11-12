@@ -141,7 +141,9 @@ class Servidor(BaseModel):
     ip_real = db.Column(db.String(50), nullable=True)
     ip_mask25 = db.Column(db.String(50), nullable=True)
     balanceador = db.Column(db.String(120), nullable=True)
-    vlan = db.Column(db.String(50), nullable=True)
+    vlan = db.Column(db.String(50), nullable=True)  # mantengo por compatibilidad
+    vlan_mgmt = db.Column(db.String(50), nullable=True)
+    vlan_real = db.Column(db.String(50), nullable=True)
     descripcion = db.Column(db.String(250), nullable=True)
     link = db.Column(db.String(250), nullable=True)
 
@@ -187,7 +189,8 @@ class Servidor(BaseModel):
             "ip_real": self.ip_real,
             "ip_mask25": self.ip_mask25,
             "balanceador": self.balanceador,
-            "vlan": self.vlan,
+            "vlan_mgmt": self.vlan_mgmt,
+            "vlan_real": self.vlan_real,
             "descripcion": self.descripcion,
             "link": self.link,
             "servicio_id": self.servicio_id,
@@ -207,4 +210,5 @@ class Servidor(BaseModel):
             "estatus": self.estatus.serialize() if self.estatus else None,
             "ecosistema": self.ecosistema.serialize() if self.ecosistema else None,
         })
+        return data
         return data

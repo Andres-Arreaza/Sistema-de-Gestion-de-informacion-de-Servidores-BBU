@@ -20,9 +20,13 @@ const TablaPrevisualizacion = function ({ datos, encabezado, onEdit, onDelete, s
     }
     // Generar encabezado modificado para mostrar las tres IPs
     const customHeaders = encabezado.slice();
-    let ipIndex = customHeaders.findIndex(h => getHeaderKey(h) === 'ip');
+    // Buscar índices reales en el encabezado original
+    const ipIndex = encabezado.findIndex(h => getHeaderKey(h) === 'ip');
+    const vlanMgmtIndex = encabezado.findIndex(h => getHeaderKey(h) === 'vlan_mgmt' || getHeaderKey(h) === 'vlan');
+    const vlanRealIndex = encabezado.findIndex(h => getHeaderKey(h) === 'vlan_real');
+    // Si existe columna 'ip' en el CSV, reemplazar por columnas: IP MGMT, VLAN MGMT, IP Real, VLAN REAL, IP Mask25
     if (ipIndex !== -1) {
-        customHeaders.splice(ipIndex, 1, 'IP MGMT', 'IP Real', 'IP Mask25');
+        customHeaders.splice(ipIndex, 1, 'IP MGMT', 'VLAN MGMT', 'IP Real', 'VLAN REAL', 'IP Mask25');
     }
     return (
         <div className="table-container">
@@ -41,24 +45,33 @@ const TablaPrevisualizacion = function ({ datos, encabezado, onEdit, onDelete, s
                             <tr key={rowIndex} className={tieneErrorFila ? 'fila-con-error' : 'fila-correcta'}>
                                 <td>{startIndex + rowIndex + 1}</td>
                                 {fila.map(function (celda, cellIndex) {
-                                    // Si es la columna IP, mostrar las tres IPs con validación de error
+                                    // Si es la columna IP combinada, mostrar IP MGMT + VLAN MGMT + IP REAL + VLAN REAL + IP MASK25
                                     if (ipIndex !== -1 && cellIndex === ipIndex) {
-                                        // Validar errores para las 3 IPs
-                                        const ipKeys = ['ip_mgmt', 'ip_real', 'ip_mask25'];
+                                        const ipMgmtVal = fila[ipIndex] || '';
+                                        const ipRealVal = fila[ipIndex + 1] || '';
+                                        const ipMaskVal = fila[ipIndex + 2] || '';
+                                        const vlanMgmtVal = vlanMgmtIndex !== -1 ? (fila[vlanMgmtIndex] || '') : '';
+                                        const vlanRealVal = vlanRealIndex !== -1 ? (fila[vlanRealIndex] || '') : '';
                                         return [
-                                            <td key={cellIndex + '-mgmt'} className={errores[ipKeys[0]] ? 'celda-con-error' : ''}>
-                                                <span className={errores[ipKeys[0]] ? 'texto-error' : ''}>{(fila[ipIndex] === null || fila[ipIndex] === '' || typeof fila[ipIndex] === 'undefined') ? '' : fila[ipIndex]}</span>
+                                            <td key={cellIndex + '-mgmt'} className={errores['ip_mgmt'] ? 'celda-con-error' : ''}>
+                                                <span className={errores['ip_mgmt'] ? 'texto-error' : ''}>{ipMgmtVal}</span>
                                             </td>,
-                                            <td key={cellIndex + '-real'} className={errores[ipKeys[1]] ? 'celda-con-error' : ''}>
-                                                <span className={errores[ipKeys[1]] ? 'texto-error' : ''}>{(fila[ipIndex + 1] === null || fila[ipIndex + 1] === '' || typeof fila[ipIndex + 1] === 'undefined') ? '' : fila[ipIndex + 1]}</span>
+                                            <td key={cellIndex + '-vlan-mgmt'} className={errores['vlan_mgmt'] ? 'celda-con-error' : ''}>
+                                                <span className={errores['vlan_mgmt'] ? 'texto-error' : ''}>{vlanMgmtVal}</span>
                                             </td>,
-                                            <td key={cellIndex + '-mask25'} className={errores[ipKeys[2]] ? 'celda-con-error' : ''}>
-                                                <span className={errores[ipKeys[2]] ? 'texto-error' : ''}>{(fila[ipIndex + 2] === null || fila[ipIndex + 2] === '' || typeof fila[ipIndex + 2] === 'undefined') ? '' : fila[ipIndex + 2]}</span>
+                                            <td key={cellIndex + '-real'} className={errores['ip_real'] ? 'celda-con-error' : ''}>
+                                                <span className={errores['ip_real'] ? 'texto-error' : ''}>{ipRealVal}</span>
+                                            </td>,
+                                            <td key={cellIndex + '-vlan-real'} className={errores['vlan_real'] ? 'celda-con-error' : ''}>
+                                                <span className={errores['vlan_real'] ? 'texto-error' : ''}>{vlanRealVal}</span>
+                                            </td>,
+                                            <td key={cellIndex + '-mask25'} className={errores['ip_mask25'] ? 'celda-con-error' : ''}>
+                                                <span className={errores['ip_mask25'] ? 'texto-error' : ''}>{ipMaskVal}</span>
                                             </td>
                                         ];
                                     }
-                                    // Omitir las columnas IP Real y IP Mask/25 en el mapeo normal
-                                    if (ipIndex !== -1 && (cellIndex === ipIndex + 1 || cellIndex === ipIndex + 2)) {
+                                    // Omitir las columnas IP Real/IP Mask/25 y las VLAN originales si ya las mostramos
+                                    if (ipIndex !== -1 && (cellIndex === ipIndex + 1 || cellIndex === ipIndex + 2 || cellIndex === vlanMgmtIndex || cellIndex === vlanRealIndex)) {
                                         return null;
                                     }
                                     var headerKey = getHeaderKey(encabezado[cellIndex]);
@@ -560,7 +573,10 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                         case 'nombre': servidor.nombre = value; break;
                         case 'tipo': servidor.tipo = value; break;
                         case 'balanceador': servidor.balanceador = value; break;
-                        case 'vlan': servidor.vlan = value; break;
+                        // legacy 'vlan' (si existe) mapearlo a vlan_mgmt por compatibilidad
+                        case 'vlan': servidor.vlan_mgmt = (value === 'N/A' || value === '' || value == null) ? null : value; break;
+                        case 'vlan_mgmt': servidor.vlan_mgmt = (value === 'N/A' || value === '' || value == null) ? null : value; break;
+                        case 'vlan_real': servidor.vlan_real = (value === 'N/A' || value === '' || value == null) ? null : value; break;
                         case 'link': servidor.link = (value === 'N/A' || value === '' || value == null) ? null : value; break;
                         case 'descripcion':
                             servidor.descripcion = typeof value === 'string' ? value : '';
@@ -586,21 +602,9 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                     }
                 }
             }
-            let ipCount = ipFields.filter(f => servidor[f] && servidor[f].trim() !== '' && servidor[f] !== 'N/A').length;
-            if (ipCount === 1) {
-                ipFields.forEach(f => {
-                    if (!servidor[f] || servidor[f].trim() === '' || servidor[f] === 'N/A') {
-                        servidor[f] = null;
-                    }
-                });
-            } else {
-                ipFields.forEach(f => {
-                    if (servidor[f] === 'N/A' || servidor[f] === '' || servidor[f] == null) {
-                        servidor[f] = null;
-                    }
-                });
-            }
-            if (servidor.link === 'N/A' || servidor.link === '' || servidor.link == null) servidor.link = null;
+            // Asegurar que los campos VLAN estén presentes (null si no vienen)
+            if (typeof servidor.vlan_mgmt === 'undefined') servidor.vlan_mgmt = null;
+            if (typeof servidor.vlan_real === 'undefined') servidor.vlan_real = null;
             return Object.assign({}, servidor, { activo: true });
         });
         //console.log('Payload a enviar al backend:', servidoresParaGuardar);
@@ -648,6 +652,9 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
         var errores = obj.errores;
         var initialData = {};
         let ipIndex = encabezadoCSV.findIndex(h => getHeaderKey(h) === 'ip');
+        // localizar índices de VLAN en el encabezado (vlan_mgmt, vlan_real o legacy 'vlan')
+        const vlanMgmtIndex = encabezadoCSV.findIndex(h => getHeaderKey(h) === 'vlan_mgmt' || getHeaderKey(h) === 'vlan');
+        const vlanRealIndex = encabezadoCSV.findIndex(h => getHeaderKey(h) === 'vlan_real');
 
         for (var i = 0; i < encabezadoCSV.length; i++) {
             var header = encabezadoCSV[i];
@@ -660,13 +667,16 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 initialData.ip_mgmt = fila[ipIndex] || '';
                 initialData.ip_real = fila[ipIndex + 1] || '';
                 initialData.ip_mask25 = fila[ipIndex + 2] || '';
+                // precargar VLANs si existen en el CSV
+                if (vlanMgmtIndex !== -1) initialData.vlan_mgmt = fila[vlanMgmtIndex] || '';
+                if (vlanRealIndex !== -1) initialData.vlan_real = fila[vlanRealIndex] || '';
                 i += 2; // Saltar las siguientes dos columnas de IP
                 continue;
             }
 
             var formKeyMap = {
                 nombre: 'nombre', tipo: 'tipo', ip_mgmt: 'ip_mgmt', ip_real: 'ip_real', ip_mask25: 'ip_mask25',
-                balanceador: 'balanceador', vlan: 'vlan', link: 'link', descripcion: 'descripcion',
+                balanceador: 'balanceador', vlan: 'vlan', vlan_mgmt: 'vlan_mgmt', vlan_real: 'vlan_real', link: 'link', descripcion: 'descripcion',
                 servicio: 'servicio_id', capa: 'capa_id', ambiente: 'ambiente_id', dominio: 'dominio_id',
                 ecosistema: 'ecosistema_id', aplicacion: 'aplicacion_id', aplicación: 'aplicacion_id',
                 aplicaciones: 'aplicacion_id', 's.o.': 'sistema_operativo_id', so: 'sistema_operativo_id',
@@ -694,6 +704,8 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
 
         // Asegurar que los campos opcionales/IP existan en el objeto
         if (!initialData.ip_mask25) initialData.ip_mask25 = '';
+        if (!initialData.vlan_mgmt) initialData.vlan_mgmt = '';
+        if (!initialData.vlan_real) initialData.vlan_real = '';
         if (typeof initialData.descripcion !== 'string') initialData.descripcion = '';
         if (!initialData.link) initialData.link = '';
 
@@ -757,6 +769,8 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 case 'ip_mask25': filaActualizadaArray.push(updatedData.ip_mask25); break;
                 case 'balanceador': filaActualizadaArray.push(updatedData.balanceador); break;
                 case 'vlan': filaActualizadaArray.push(updatedData.vlan); break;
+                case 'vlan_mgmt': filaActualizadaArray.push(updatedData.vlan_mgmt); break;
+                case 'vlan_real': filaActualizadaArray.push(updatedData.vlan_real); break;
                 case 'link': filaActualizadaArray.push(updatedData.link); break;
                 case 'descripcion': filaActualizadaArray.push(updatedData.descripcion && updatedData.descripcion.trim() !== '' ? updatedData.descripcion : ''); break;
                 case 'servicio': filaActualizadaArray.push(findNameById('servicios', updatedData.servicio_id)); break;

@@ -296,23 +296,57 @@ def create_servidor():
             # Verificar que la IP no exista en los otros dos campos
             other_fields = [f for f in ["ip_mgmt", "ip_real", "ip_mask25"] if f != field]
             
-            # Para ip_mgmt y ip_real, deben ser únicos en todas partes
+            # Para ip_mgmt y ip_real, deben ser únicos en todas partes (solo en servidores activos)
             if field in ["ip_mgmt", "ip_real"]:
                 conflict = Servidor.query.filter(
+                    Servidor.activo == True,
                     db.or_(Servidor.ip_mgmt == ip, Servidor.ip_real == ip, Servidor.ip_mask25 == ip)
                 ).first()
                 if conflict:
                     return jsonify({"error": f"La IP '{ip}' en el campo {field} ya está en uso en otro servidor."}), 409
             
-            # Para ip_mask25, solo debe ser única contra ip_mgmt y ip_real
+            # Para ip_mask25, solo debe ser única contra ip_mgmt y ip_real (solo servidores activos)
             elif field == "ip_mask25":
                 conflict = Servidor.query.filter(
+                    Servidor.activo == True,
                     db.or_(Servidor.ip_mgmt == ip, Servidor.ip_real == ip)
                 ).first()
                 if conflict:
                     return jsonify({"error": f"La IP '{ip}' en el campo {field} ya está en uso en ip_mgmt o ip_real de otro servidor."}), 409
 
+    # --- Intentar reactivar servidor inactivo con mismo nombre o mismas IPs ---
     try:
+        # Buscar por nombre inactivo
+        existente = None
+        if data.get("nombre"):
+            existente = Servidor.query.filter_by(nombre=data["nombre"], activo=False).first()
+
+        # Si no por nombre, buscar por IPs en registros inactivos
+        if not existente:
+            ip_search_vals = [v for v in (data.get("ip_mgmt"), data.get("ip_real"), data.get("ip_mask25")) if v]
+            if ip_search_vals:
+                existente = Servidor.query.filter(Servidor.activo == False).filter(
+                    db.or_(
+                        *(db.or_(Servidor.ip_mgmt == ip, Servidor.ip_real == ip, Servidor.ip_mask25 == ip) for ip in ip_search_vals)
+                    )
+                ).first()
+
+        if existente:
+            # Reactivar y actualizar campos relevantes
+            existente.activo = True
+            existente.fecha_modificacion = datetime.utcnow()
+            # Asignar campos si vienen en payload (incluye VLANs)
+            fields_to_assign = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id",
+                                "aplicacion_id", "ecosistema_id", "estatus_id",
+                                "ip_mgmt", "ip_real", "ip_mask25", "balanceador", "vlan", "vlan_mgmt", "vlan_real",
+                                "descripcion", "link"]
+            for f in fields_to_assign:
+                if f in data:
+                    setattr(existente, f, data.get(f) or None)
+            db.session.commit()
+            return jsonify(existente.serialize()), 200
+
+        # Si no existe inactivo, proceder a creación normal
         nuevo_servidor = Servidor(
             nombre=data["nombre"],
             tipo=data["tipo"],
@@ -329,6 +363,8 @@ def create_servidor():
             ip_mask25=data.get("ip_mask25") or None,
             balanceador=data.get("balanceador"),
             vlan=data.get("vlan"),
+            vlan_mgmt=data.get("vlan_mgmt"),
+            vlan_real=data.get("vlan_real"),
             descripcion=data.get("descripcion"),
             link=data.get("link"),
             activo=True,
@@ -340,9 +376,7 @@ def create_servidor():
         return jsonify(nuevo_servidor.serialize()), 201
     except Exception as e:
         db.session.rollback()
-        # Log the full error for debugging
         print(f"Error al crear servidor: {e}")
-        # Check for unique constraint violations
         if "UNIQUE constraint failed" in str(e):
             if "servidores.nombre" in str(e):
                 return jsonify({"error": f"El nombre de servidor '{data['nombre']}' ya existe."}), 409
@@ -350,8 +384,6 @@ def create_servidor():
                 return jsonify({"error": f"La IP MGMT '{data['ip_mgmt']}' ya está en uso."}), 409
             if "servidores.ip_real" in str(e) and data.get("ip_real"):
                 return jsonify({"error": f"La IP Real '{data['ip_real']}' ya está en uso."}), 409
-            # No se maneja un error específico para ip_mask25, ya que se permite su repetición.
-            # Si hay otro error de unicidad, se mostrará el mensaje genérico.
         return jsonify({"error": "Error interno del servidor al crear el servidor."}), 500
 
 @api.route("/servidores/<int:record_id>", methods=["PUT"])
@@ -379,8 +411,8 @@ def update_servidor(record_id):
                         # dejar tal cual si no es convertible (p. ej. ya es int)
                         pass
 
-        # Normalizar IPs: convertir '' a None
-        for ipf in ["ip_mgmt", "ip_real", "ip_mask25"]:
+        # Normalizar IPs and VLANs: convertir '' a None
+        for ipf in ["ip_mgmt", "ip_real", "ip_mask25", "vlan_mgmt", "vlan_real"]:
             if ipf in data and data[ipf] == "":
                 data[ipf] = None
 
@@ -461,7 +493,7 @@ def update_servidor(record_id):
                     return jsonify({"error": f"La IP '{ip_val}' en el campo ip_mask25 ya está en uso en ip_mgmt o ip_real de otro servidor.", "field": "ip_mask25"}), 409
 
         # --- Asignar campos normales (después de validaciones y conversiones) ---
-        simple_fields = ["nombre", "tipo", "ip_mgmt", "ip_real", "ip_mask25", "balanceador", "vlan", "descripcion", "link",
+        simple_fields = ["nombre", "tipo", "ip_mgmt", "ip_real", "ip_mask25", "balanceador", "vlan", "vlan_mgmt", "vlan_real", "descripcion", "link",
                          "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "ecosistema_id", "aplicacion_id"]
         for field in simple_fields:
             if field in data and hasattr(servidor, field):
