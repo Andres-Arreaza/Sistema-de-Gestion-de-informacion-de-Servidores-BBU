@@ -95,11 +95,14 @@ export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios,
     const formFields = [
         { type: 'text', name: "nombre", label: "Nombre", icon: <Icon name="server" size={16} /> },
         { type: 'dropdown', key: "tipo", label: "Tipo", icon: <Icon name="type" size={16} />, data: [{ id: "VIRTUAL", nombre: "Virtual" }, { id: "FISICO", nombre: "Físico" }] },
+        // IPs y sus VLANs adyacentes
         { type: 'text', name: "ip_mgmt", label: "IP MGMT", icon: <Icon name="ip" size={16} /> },
+        { type: 'text', name: "vlan_mgmt", label: "VLAN MGMT", icon: <Icon name="vlan" size={16} /> },
         { type: 'text', name: "ip_real", label: "IP Real", icon: <Icon name="ip" size={16} /> },
+        { type: 'text', name: "vlan_real", label: "VLAN REAL", icon: <Icon name="vlan" size={16} /> },
         { type: 'text', name: "ip_mask25", label: "IP Mask/25", icon: <Icon name="ip" size={16} /> },
         { type: 'text', name: "balanceador", label: "Balanceador", icon: <Icon name="balanceador" size={16} /> },
-        { type: 'text', name: "vlan", label: "VLAN", icon: <Icon name="vlan" size={16} /> },
+        // campo 'vlan' genérico eliminado (usamos vlan_mgmt / vlan_real junto a sus IPs)
         { type: 'dropdown', key: "servicios", label: "Servicios", data: uniqueServicios, icon: <Icon name="servicios" size={16} /> },
         { type: 'dropdown', key: "ecosistemas", label: "Ecosistemas", data: uniqueEcosistemas.map(e => ({ id: e.id, nombre: e.nombre })), icon: <Icon name="ecosistema" size={16} /> },
         { type: 'dropdown', key: "aplicacion_ids", label: "Aplicaciones", data: uniqueAplicaciones.map(app => ({ id: app.id, nombre: `${app.nombre} - V${app.version}` })), icon: <Icon name="app" size={16} /> },

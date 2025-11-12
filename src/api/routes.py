@@ -562,12 +562,16 @@ def buscar_servidores():
             if request.args.get("nombre"): query = query.filter(Servidor.nombre == request.args["nombre"])
             if request.args.get("balanceador"): query = query.filter(Servidor.balanceador == request.args["balanceador"])
             if request.args.get("vlan"): query = query.filter(Servidor.vlan == request.args["vlan"])
+            if request.args.get("vlan_mgmt"): query = query.filter(Servidor.vlan_mgmt == request.args["vlan_mgmt"])
+            if request.args.get("vlan_real"): query = query.filter(Servidor.vlan_real == request.args["vlan_real"])
             if request.args.get("link"): query = query.filter(Servidor.link == request.args["link"])
             if request.args.get("descripcion"): query = query.filter(Servidor.descripcion == request.args["descripcion"])
         else:
             if request.args.get("nombre"): query = query.filter(Servidor.nombre.ilike(f"%{request.args['nombre']}%"))
             if request.args.get("balanceador"): query = query.filter(Servidor.balanceador.ilike(f"%{request.args['balanceador']}%"))
             if request.args.get("vlan"): query = query.filter(Servidor.vlan.ilike(f"%{request.args['vlan']}%"))
+            if request.args.get("vlan_mgmt"): query = query.filter(Servidor.vlan_mgmt.ilike(f"%{request.args['vlan_mgmt']}%"))
+            if request.args.get("vlan_real"): query = query.filter(Servidor.vlan_real.ilike(f"%{request.args['vlan_real']}%"))
             if request.args.get("link"): query = query.filter(Servidor.link.ilike(f"%{request.args['link']}%"))
             if request.args.get("descripcion"): query = query.filter(Servidor.descripcion.ilike(f"%{request.args['descripcion']}%"))
 

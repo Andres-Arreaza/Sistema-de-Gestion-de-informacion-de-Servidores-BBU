@@ -32,7 +32,9 @@ const abrirModalLink = (servidor) => {
 
 const exportarCSV = (servidores) => {
     if (!servidores.length) return;
-    // VLANs colocadas junto a sus IPs: VLAN MGMT junto a IP MGMT, VLAN REAL junto a IP Real
+    // Preparar helpers para CSV: envolver campos entre comillas; para VLAN usar ="000" para preservar ceros a la izquierda en Excel
+    const csvQuote = (v) => `"${String(v || '').replace(/"/g, '""')}"`;
+    const csvVlan = (v) => v ? `="${String(v).replace(/"/g, '""')}"` : '';
     const encabezados = `Nombre;Tipo;IP MGMT;VLAN MGMT;IP Real;VLAN REAL;IP Mask/25;Servicio;Ecosistema;Aplicacion;Capa;Ambiente;Balanceador;Dominio;S.O.;Estatus;Descripcion;Link\n`;
     const filas = servidores.map(srv => {
         // Aplicaciones
@@ -66,14 +68,33 @@ const exportarCSV = (servidores) => {
         let servicio = srv.servicio?.nombre || srv.servicios?.[0]?.nombre || '';
         // Ambiente
         let ambiente = srv.ambiente?.nombre || srv.ambientes?.[0]?.nombre || '';
-        return `${srv.nombre || ''};${srv.tipo || ''};` +
-            `${srv.ip_mgmt || ''};${srv.vlan_mgmt || ''};${srv.ip_real || ''};${srv.vlan_real || ''};${srv.ip_mask25 || ''};` +
-            `${servicio};` +
-            `${ecosistema};` +
-            `${aplicacion};` +
-            `${capa};${ambiente};${srv.balanceador || ''};` +
-            `${dominio};${so};${estatus};${descripcion};` +
-            `${link}`;
+        const cols = [
+            srv.nombre || '',
+            srv.tipo || '',
+            srv.ip_mgmt || '',
+            srv.vlan_mgmt || '',
+            srv.ip_real || '',
+            srv.vlan_real || '',
+            srv.ip_mask25 || '',
+            servicio,
+            ecosistema,
+            aplicacion,
+            capa,
+            ambiente,
+            srv.balanceador || '',
+            dominio,
+            so,
+            estatus,
+            descripcion,
+            link
+        ];
+        // Mapear y formatear: VLANs con tratamiento especial
+        const mapped = cols.map((val, idx) => {
+            // índices 3 y 5 corresponden a vlan_mgmt y vlan_real en el array anterior
+            if (idx === 3 || idx === 5) return csvVlan(val);
+            return csvQuote(val);
+        });
+        return mapped.join(';');
     }).join("\n");
     const csvContent = `data:text/csv;charset=utf-8,\uFEFF${encodeURI(encabezados + filas)}`;
     const link = document.createElement("a");
@@ -131,13 +152,16 @@ const exportarExcel = (servidores) => {
         }
         // Ecosistema
         let ecosistema = srv.ecosistema?.nombre || (srv.ecosistemas && Array.isArray(srv.ecosistemas) && srv.ecosistemas.length > 0 ? srv.ecosistemas[0].nombre : 'N/A');
+        // Usar mso-number-format:'\@' para forzar formato texto en Excel y conservar ceros a la izquierda
+        const vlanMgmtCell = `<td style="mso-number-format:'\\@'">${srv.vlan_mgmt || ''}</td>`;
+        const vlanRealCell = `<td style="mso-number-format:'\\@'">${srv.vlan_real || ''}</td>`;
         return `<tr>
             <td>${srv.nombre || 'N/A'}</td>
             <td>${srv.tipo || 'N/A'}</td>
             <td>${srv.ip_mgmt || 'N/A'}</td>
-            <td>${srv.vlan_mgmt || 'N/A'}</td>
+            ${vlanMgmtCell}
             <td>${srv.ip_real || 'N/A'}</td>
-            <td>${srv.vlan_real || 'N/A'}</td>
+            ${vlanRealCell}
             <td>${srv.ip_mask25 || 'N/A'}</td>
             <td>${servicio}</td>
             <td>${ecosistema}</td>
@@ -312,6 +336,7 @@ const ItemsPerPageDropdown = ({ value, onChange }) => {
 const EditorMasivo = () => {
     const [filtro, setFiltro] = useState({
         nombre: '', ip: '', balanceador: '', descripcion: '', link: '',
+        vlan_mgmt: '', vlan_real: '',
         tipo: [], servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [], ecosistemas: []
     });
     const [servidores, setServidores] = useState([]);
