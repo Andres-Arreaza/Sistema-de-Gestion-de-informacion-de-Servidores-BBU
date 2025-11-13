@@ -46,15 +46,25 @@ const Home = () => {
 
     return (
         <>
+            {/* Incluir la fuente Audiowide y la clase para usarla */}
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Audiowide&display=swap');
+                .audiowide-regular {
+                    font-family: "Audiowide", sans-serif;
+                    font-weight: 400;
+                    font-style: normal;
+                }
+            `}</style>
+
             {/* La clase 'loaded' se aplica aquí cuando isLoaded es true */}
             <div className={`page-container home-page ${isLoaded ? 'loaded' : ''}`}>
                 <section className="hero">
                     <div className="hero__content">
-                        <h1 className="hero__title">
-                            Gerencia de Operaciones de Canales Virtuales y Medios de Pagos
+                        <h1 className="hero__title audiowide-regular">
+                            G.I.B.S.
                         </h1>
                         <p className="hero__subtitle">
-                            "Gestiona y visualiza servidores"
+                            "Gestión de la Información y Búsqueda de servidores"
                         </p>
                     </div>
                 </section>

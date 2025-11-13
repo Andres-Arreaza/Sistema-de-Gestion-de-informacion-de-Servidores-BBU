@@ -141,16 +141,28 @@
 .app-footer {
   background: var(--color-fondo);
   color: var(--color-primario-hover);
-  padding: var(--espaciado-md) 0;
+  padding: var(--espaciado-xs) 0;
   font-size: 0.9rem;
-  /*border-top: 1px solid #c9c9c9;*/
+  /* Se apilan verticalmente para que el texto solicitado quede encima del copyright */
   display: flex;
-  justify-content: center; /* Centra horizontalmente */
-  align-items: center; /* Centra verticalmente */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  /*border-top: 1px solid #c9c9c9;*/
 }
 
-/* =====> AQUÍ ESTÁ LA CORRECCIÓN <===== */
-/* Se elimina el margen del párrafo para un centrado perfecto */
-.app-footer p {
+/* Estilo específico para el párrafo superior (Gerencia...) */
+.app-footer p:first-child {
   margin: 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+/* Estilo para el párrafo de copyright (segundo) */
+.app-footer p:last-child {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-texto-secundario);
 }

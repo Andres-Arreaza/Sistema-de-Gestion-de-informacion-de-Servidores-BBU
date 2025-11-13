@@ -27,7 +27,8 @@
 
 .hero__subtitle {
   font-size: 2.5rem;
-  font-family: var(--fuente-display);
+  /* Usar Audiowide para el subtítulo */
+  font-family: "Audiowide", sans-serif;
   color: rgba(255, 255, 255, 0.9);
   margin-top: var(--espaciado-xs);
   opacity: 0;
@@ -292,4 +293,22 @@
 .home-page.loaded .action-button {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Clase para aplicar la tipografía Audiowide (usar desde el HTML/JS con class="audiowide-regular") */
+.audiowide-regular {
+  font-family: "Audiowide", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  /* Ajustes opcionales para que combine con hero__title */
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+/* Aplicar Audiowide también al subtítulo cuando se le asigne la clase */
+.hero__subtitle.audiowide-regular {
+  font-family: "Audiowide", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
 }
