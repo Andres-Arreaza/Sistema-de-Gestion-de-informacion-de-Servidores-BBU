@@ -312,3 +312,815 @@
   letter-spacing: 0.01em;
   line-height: 1.05;
 }
+
+/* Estilos compartidos para checkboxes del filtro y los checkboxes de la tabla */
+.custom-select__option input[type="checkbox"],
+.filter-checkbox {
+  width: 18px;
+  height: 18px;
+  margin: 0 0.6rem 0 0;
+  vertical-align: middle;
+  cursor: pointer;
+  border-radius: 4px;
+  /* color del check/indicador en navegadores modernos */
+  accent-color: var(--color-primario);
+  /* fallback visual para navegadores sin accent-color */
+  background-color: #fff;
+  border: 1px solid var(--color-borde);
+  box-shadow: inset 0 0 0 0 rgba(0,0,0,0.05);
+  transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
+}
+
+/* Cuando esté checked, reforzamos fondo y borde para que destaque */
+.custom-select__option input[type="checkbox"]:checked,
+.filter-checkbox:checked {
+  background-color: var(--color-primario);
+  border-color: var(--color-primario);
+  color: #fff;
+}
+
+/* Hover/Focus states */
+.custom-select__option input[type="checkbox"]:hover,
+.filter-checkbox:hover,
+.custom-select__option input[type="checkbox"]:focus,
+.filter-checkbox:focus {
+  transform: translateY(-1px);
+  outline: none;
+  border-color: var(--color-primario-hover);
+}
+
+/* Alineación en tablas: asegurar espaciado correcto */
+.table input.filter-checkbox {
+  margin: 0;
+}
+
+/* Ajustes: campos más anchos y letra más pequeña para formularios y tablas */
+
+/* Reduce ligeramente la tipografía base de campos y etiquetas de formulario */
+.form__label {
+  font-size: 0.88rem; /* antes ~1rem */
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+/* Entradas y triggers ocupan todo el ancho de su contenedor y fuente reducida */
+.form__input,
+.custom-select__trigger,
+.custom-select__panel .custom-select__option input[type="radio"],
+.custom-select__panel .custom-select__option input[type="checkbox"] {
+  width: 100%;
+  font-size: 0.88rem;
+  padding: 8px 10px;
+  box-sizing: border-box;
+}
+
+/* Asegurar que los triggers de custom-select se comporten como inputs de ancho completo */
+.custom-select {
+  min-width: 0; /* permitir que el contenedor se reduzca si es necesario; los triggers llenarán su celda */
+}
+.custom-select .custom-select__trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Formularios grid: cada grupo ocupará su celda, inputs llenarán esa celda */
+.form__group {
+  width: 100%;
+}
+
+/* Si hay forms con clase grid-form, forzar inputs a ocupar 100% de la celda */
+.grid-form .form__group .form__input {
+  width: 100%;
+}
+
+/* Scoped table styles: aplicar únicamente a la tabla dentro de resultados-editor */
+.resultados-editor .table th,
+.resultados-editor .table td {
+  font-size: 0.82rem; /* bajado desde 0.85rem */
+  padding: 6px 10px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Aumentar ancho de columnas de datos en la tabla de resultados (scope) */
+.resultados-editor .table {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+
+/* checkbox (col 1) y índice (col 2) compactos (scope) */
+.resultados-editor .table th:nth-child(1),
+.resultados-editor .table td:nth-child(1),
+.resultados-editor .table th:nth-child(2),
+.resultados-editor .table td:nth-child(2) {
+  white-space: nowrap;
+  width: 48px;
+  min-width: 48px;
+  text-align: center;
+}
+
+/* Todas las columnas de datos (a partir de la 3) más anchas (scope) */
+.resultados-editor .table th:nth-child(n+3),
+.resultados-editor .table td:nth-child(n+3) {
+  min-width: 160px;
+  max-width: 420px;
+  word-break: break-word;
+}
+
+/* Columna "Link" (última columna) y su botón (scope) */
+.resultados-editor .table th:nth-child(20),
+.resultados-editor .table td:nth-child(20) {
+  min-width: 80px;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  vertical-align: middle;
+}
+.resultados-editor .table td:nth-child(20) .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 4px;
+  margin: 0 auto;
+  border-radius: 50%;
+  transition: background-color 0.12s ease, transform 0.08s ease;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.resultados-editor .table td:nth-child(20) .btn-icon svg,
+.resultados-editor .table td:nth-child(20) .btn-icon i {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+.resultados-editor .table td:nth-child(20) .btn-icon:hover {
+  background: var(--color-primario);
+  transform: translateY(-1px);
+}
+.resultados-editor .table td:nth-child(20) .btn-icon:hover svg,
+.resultados-editor .table td:nth-child(20) .btn-icon:hover i {
+  color: #fff;
+}
+
+/* VLANs y columnas específicas (scope) */
+.resultados-editor .table th:nth-child(6),
+.resultados-editor .table td:nth-child(6),
+.resultados-editor .table th:nth-child(8),
+.resultados-editor .table td:nth-child(8) {
+  min-width: 90px;
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Columna "Estatus" y "Tipo" (scope) */
+.resultados-editor .table th:nth-child(18),
+.resultados-editor .table td:nth-child(18) {
+  min-width: 100px;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  vertical-align: middle;
+}
+.resultados-editor .table th:nth-child(4),
+.resultados-editor .table td:nth-child(4) {
+  min-width: 80px;
+  max-width: 110px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Si la tabla es más ancha que su contenedor, permitir scroll horizontal (scope) */
+.resultados-editor .table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ajustes responsivos (scope) */
+@media (max-width: 800px) {
+  .resultados-editor .table th:nth-child(n+3),
+  .resultados-editor .table td:nth-child(n+3) {
+    min-width: 120px;
+  }
+  .resultados-editor .table th:nth-child(6),
+  .resultados-editor .table td:nth-child(6),
+  .resultados-editor .table th:nth-child(8),
+  .resultados-editor .table td:nth-child(8) {
+    min-width: 70px;
+    max-width: 120px;
+  }
+  .resultados-editor .table th:nth-child(18),
+  .resultados-editor .table td:nth-child(18) {
+    min-width: 90px;
+  }
+  .resultados-editor .table th:nth-child(4),
+  .resultados-editor .table td:nth-child(4) {
+    min-width: 70px;
+  }
+}
+
+/* Mantener centrado únicamente del header de resultados (no afecta filtros) */
+.resultados-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* mover a la izquierda */
+  justify-content: center;
+  gap: 0.4rem;
+  text-align: left;        /* texto alineado a la izquierda */
+  width: 100%;
+}
+
+/* Asegurar que el título ocupe el ancho disponible y no esté centrado por otras reglas */
+.resultados-header .resultados-titulo {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+/* Columna "Tipo" (nth-child(4)): más compacta y con truncado */
+.table th:nth-child(4),
+.table td:nth-child(4) {
+  min-width: 80px;
+  max-width: 110px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  vertical-align: middle;
+}
+
+@media (max-width: 800px) {
+  .table th:nth-child(4),
+  .table td:nth-child(4) {
+    min-width: 70px;
+  }
+}
+
+/* Columna "VLAN MGMT" (nth-child(6)): más compacta y con truncado */
+.table th:nth-child(6),
+.table td:nth-child(6) {
+  min-width: 90px;
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Columna "VLAN REAL" (nth-child(8)): más compacta y con truncado */
+.table th:nth-child(8),
+.table td:nth-child(8) {
+  min-width: 90px;
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Ajustes responsivos para VLANs en pantallas pequeñas */
+@media (max-width: 800px) {
+  .table th:nth-child(6),
+  .table td:nth-child(6),
+  .table th:nth-child(8),
+  .table td:nth-child(8) {
+    min-width: 70px;
+    max-width: 120px;
+  }
+}
+
+/* Estilos para el área de paginación y contador de servidores */
+.pagination-controls {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; /* izquierda (selector), centro (contador), derecha (navegación) */
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Alinear el bloque izquierdo al inicio y el derecho al final */
+.pagination-controls > .pagination__items-per-page {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-controls > .pagination__navigation {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Centrar el contador en la columna central y usar azul */
+.pagination-controls > .servers-found--center {
+  justify-self: center;
+  text-align: center;
+  color: var(--color-secundario); /* cambiado a azul */
+  font-weight: 700;
+}
+
+/* Responsivo: en pantallas pequeñas apilar en 2 filas manteniendo el contador centrado */
+@media (max-width: 700px) {
+  .pagination-controls {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+    row-gap: 0.5rem;
+  }
+  .pagination-controls > .pagination__items-per-page,
+  .pagination-controls > .pagination__navigation {
+    justify-self: center;
+  }
+  .pagination-controls > .servers-found--center {
+    justify-self: center;
+  }
+}
+
+/* ----- Scoped styles: FILTER FORM (alineado a la izquierda) ----- */
+.filter-form {
+  /* asegurar que el grid/layout del filtro permanezca orientado a la izquierda */
+}
+.filter-form .form__group {
+  align-items: flex-start; /* etiquetas a la izquierda dentro del grid */
+}
+.filter-form .form__label {
+  text-align: left;
+  width: 100%;
+  display: block;
+}
+.filter-form .form__input,
+.filter-form .custom-select__trigger {
+  text-align: left;         /* valor y placeholder alineados a la izquierda */
+  justify-content: flex-start; /* icon + texto en trigger alineado a la izquierda */
+  gap: 0.5rem;
+}
+.filter-form .custom-select__trigger span {
+  display: inline-block;
+}
+.filter-form .custom-select__panel .custom-select__option {
+  text-align: left; /* mantener opciones del panel a la izquierda */
+}
+
+/* ----- Scoped styles: RESULTADOS (EditorMasivo) — centrado ----- */
+.resultados-editor .form__group {
+  align-items: center;
+}
+.resultados-editor .form__label {
+  text-align: center;
+  width: 100%;
+  display: block;
+}
+.resultados-editor .form__input,
+.resultados-editor .custom-select__trigger {
+  text-align: center;       /* centrar el texto dentro de inputs / triggers */
+  justify-content: center;  /* centrar icon + texto en trigger */
+  gap: 0.5rem;
+}
+.resultados-editor .custom-select__trigger span {
+  display: inline-block;
+}
+
+/* Mantener las opciones del panel legibles: no forzarles centrado para checkbox/radio */
+.resultados-editor .custom-select__panel .custom-select__option {
+  text-align: left; /* opciones internas siguen alineadas a la izquierda */
+}
+
+/* Si hay triggers dentro de la tabla-container (ej. bulk edit), aseguramos centrado visual */
+.resultados-editor .bulk-edit-field,
+.resultados-editor .pagination__items-per-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+/* Asegurar anchos uniformes para los campos del formulario de filtros */
+.filter-form .form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--espaciado-md);
+  align-items: start;
+}
+
+/* Cada grupo del filtro tendrá un ancho mínimo consistente */
+.filter-form .form__group {
+  min-width: 220px;
+}
+
+/* Forzar inputs/triggers del filtro a ocupar todo el ancho de su celda y alinearse a la izquierda */
+.filter-form .form__input,
+.filter-form .custom-select__trigger {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+/* Asegurar que los panels de opciones mantengan su alineación natural */
+.filter-form .custom-select__panel .custom-select__option {
+  text-align: left;
+}
+
+/* Pequeña mejora responsiva para móviles */
+@media (max-width: 560px) {
+  .filter-form .form__grid {
+    grid-template-columns: 1fr;
+    gap: var(--espaciado-sm);
+  }
+  .filter-form .form__group {
+    min-width: 0;
+  }
+}
+
+/* Hacer que los dropdowns del formulario de filtros ocupen el mismo ancho que los inputs */
+.filter-form .custom-select {
+  width: 100%;
+  min-width: 0;          /* permitir que respeten la rejilla del filtro */
+  position: relative;    /* necesario para posicionar el panel absoluto */
+  box-sizing: border-box;
+}
+
+.filter-form .custom-select .custom-select__trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* texto a la izquierda igual que los inputs */
+  gap: 0.5rem;
+  padding: 8px 10px;
+  box-sizing: border-box;
+}
+
+/* El panel del dropdown se expande al ancho del trigger y queda superpuesto (no rompe layout) */
+.filter-form .custom-select__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  max-height: 320px;
+  overflow: auto;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  box-shadow: var(--sombra-caja);
+  z-index: 1200;
+  box-sizing: border-box;
+  padding: 0.25rem 0;
+}
+
+.filter-form .custom-select__option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.75rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.filter-form .custom-select__option input[type="checkbox"],
+.filter-form .custom-select__option input[type="radio"] {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+/* Mover la chevron al extremo derecho dentro del trigger sin afectar otros scopes */
+.filter-form .custom-select__trigger .chevron {
+  margin-left: auto;
+}
+
+/* Asegurar que los campos seleccionables del filtro estén a la IZQUIERDA y no afecten a resultados-editor */
+/* Estas reglas están al final para garantizar prioridad sobre reglas anteriores (sin usar !important) */
+
+.filter-form {
+  /* contexto explícito para evitar fugas a otros formularios */
+}
+.filter-form .form__group { 
+  align-items: flex-start; /* etiquetas e inputs alineados al inicio de la celda */
+}
+
+/* Labels del filtro a la izquierda */
+.filter-form .form__label {
+  text-align: left;
+  display: block;
+  width: 100%;
+}
+
+/* Triggers (dropdowns) y inputs del filtro ocupan todo el ancho y texto alineado a la izquierda */
+.filter-form .custom-select,
+.filter-form .form__input,
+.filter-form .custom-select__trigger {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+/* Asegurar que el span dentro del trigger muestre el texto a la izquierda */
+.filter-form .custom-select__trigger > span {
+  display: inline-block;
+  text-align: left;
+}
+
+/* Panel del dropdown: se superpone y toma el ancho del trigger (no afecta el layout) */
+.filter-form .custom-select {
+  position: relative;
+}
+.filter-form .custom-select__panel {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 1300;
+}
+
+/* Mantener chevron a la derecha dentro del trigger */
+.filter-form .custom-select__trigger .chevron {
+  margin-left: auto;
+}
+
+/* Reafirmar centrado en resultados-editor (no tocar) para evitar conflictos: */
+.resultados-editor .form__input,
+.resultados-editor .custom-select__trigger {
+  text-align: center;
+  justify-content: center;
+}
+
+/* Reducir tamaño de los checkboxes SOLO en el formulario de filtros (no afecta .filter-checkbox de la tabla) */
+.filter-form input[type="checkbox"]:not(.filter-checkbox),
+.filter-form .custom-select__option input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  margin: 0 0.45rem 0 0; /* espacio a la derecha ligeramente menor */
+  vertical-align: middle;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+/* Asegurar que la etiqueta que envuelve el checkbox en el filtro mantenga align y no se descuadre */
+.filter-form .custom-select__option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Checkbox "Coincidencia exacta" (fuera de panels) también reducido y alineado */
+.filter-form #busqueda-exacta {
+  width: 14px;
+  height: 14px;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+/* Igualar altura de triggers (dropdowns) y inputs dentro del formulario de filtros
+   y mantenerlos alineados a la izquierda. Scoped a .filter-form para no afectar EditorMasivo. */
+.filter-form .form__input,
+.filter-form .custom-select__trigger {
+  /* Mismo alto visual que los inputs: ajusta 40px si quieres más/menos */
+  min-height: 40px;
+  height: 40px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center; /* centrar verticalmente el texto y chevron */
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+/* Garantizar que el texto del trigger use todo el espacio disponible y trunque correctamente */
+.filter-form .custom-select__trigger > span {
+  flex: 1 1 auto;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+/* Mantener la chevron centrada verticalmente y al final */
+.filter-form .custom-select__trigger .chevron {
+  align-self: center;
+  margin-left: 0.5rem;
+}
+
+/* Asegurar paneles superpuestos no alteren el flujo */
+.filter-form .custom-select {
+  position: relative;
+}
+
+/* Encabezados de la tabla de RESULTADOS: aumentar altura y usar color AZUL (scope .resultados-editor) */
+.resultados-editor .table thead th {
+  padding: 18px 12px;
+  min-height: 72px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--color-secundario); /* cambiado a azul */
+  background: transparent;
+  vertical-align: middle;
+  white-space: normal;
+}
+
+/* Restaurar encabezados de resultados a VERDE (variable --color-primario) */
+.resultados-editor .table thead th {
+  color: var(--color-primario);
+}
+.resultados-editor .table thead th svg,
+.resultados-editor .table thead th i {
+  color: var(--color-primario);
+  fill: currentColor;
+}
+
+/* Ajuste responsivo para dispositivos pequeños */
+@media (max-width: 800px) {
+  .resultados-editor .table thead th {
+    padding: 14px 8px;
+    min-height: 60px;
+  }
+}
+
+/* Mostrar contenido completo en la tabla de RESULTADOS: quitar truncado/ellipsis */
+.resultados-editor .table th,
+.resultados-editor .table td {
+  white-space: normal !important;   /* permitir varias líneas */
+  overflow: visible !important;     /* no ocultar contenido */
+  text-overflow: clip !important;   /* no usar "..." */
+  word-break: break-word !important;/* romper palabras largas si es necesario */
+}
+
+/* Anular reglas específicas que forzaban nowrap/ellipsis en columnas concretas */
+.resultados-editor .table th:nth-child(20),
+.resultados-editor .table td:nth-child(20),
+.resultados-editor .table th:nth-child(6),
+.resultados-editor .table td:nth-child(6),
+.resultados-editor .table th:nth-child(8),
+.resultados-editor .table td:nth-child(8),
+.resultados-editor .table th:nth-child(18),
+.resultados-editor .table td:nth-child(18),
+.resultados-editor .table th:nth-child(4),
+.resultados-editor .table td:nth-child(4),
+.resultados-editor .table th:nth-child(n+3),
+.resultados-editor .table td:nth-child(n+3) {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  word-break: break-word !important;
+}
+
+/* Si deseas que ciertos botones/íconos sigan centrados, mantenemos sus estilos de layout,
+   pero permitimos al texto escalar verticalmente. */
+.resultados-editor .table td .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ajustes responsivos: mantener wrapping en pantallas pequeñas */
+@media (max-width: 800px) {
+  .resultados-editor .table th,
+  .resultados-editor .table td {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+}
+
+/* Hacer la columna "Nombre" (segunda columna) más ancha y permitir wrapping */
+.resultados-editor .table th:nth-child(2),
+.resultados-editor .table td:nth-child(2) {
+  min-width: 105px;      /* reducido desde 220px */
+  max-width: 360px;      /* reducido desde 500px */
+  width: 22%;            /* reducido desde 28% */
+  text-align: left;
+  white-space: normal !important;
+  overflow: visible !important;
+  word-break: break-word !important;
+}
+
+/* Ajuste responsivo: menor ancho en pantallas pequeñas */
+@media (max-width: 800px) {
+  .resultados-editor .table th:nth-child(2),
+  .resultados-editor .table td:nth-child(2) {
+    min-width: 120px;    /* reducido desde 150px */
+    max-width: 100%;
+    width: auto;
+  }
+}
+
+/* Reducir ancho de la columna "Tipo" (tercera columna: #, Nombre, Tipo) */
+.resultados-editor .table th:nth-child(3),
+.resultados-editor .table td:nth-child(3) {
+  min-width: 70px;    /* ancho mínimo más pequeño */
+  max-width: 110px;   /* ancho máximo reducido */
+  width: 10%;         /* ocupar poca proporción del ancho total */
+  text-align: center; /* mantener centrado */
+  white-space: normal !important;
+  overflow: visible !important;
+  word-break: break-word !important;
+}
+
+/* Ajuste responsivo: asegurar legibilidad en móviles */
+@media (max-width: 800px) {
+  .resultados-editor .table th:nth-child(3),
+  .resultados-editor .table td:nth-child(3) {
+    min-width: 60px;
+    max-width: 120px;
+    width: auto;
+  }
+}
+
+/* Ajuste: reducir anchura de las columnas de IP (IP MGMT nth-child(4), IP Real nth-child(6), IP Mask/25 nth-child(8)) */
+.resultados-editor .table th:nth-child(4),
+.resultados-editor .table td:nth-child(4),
+.resultados-editor .table th:nth-child(6),
+.resultados-editor .table td:nth-child(6),
+.resultados-editor .table th:nth-child(8),
+.resultados-editor .table td:nth-child(8) {
+  min-width: 180px !important;   /* reducido desde 220px */
+  max-width: 320px !important;   /* reducido desde 420px */
+  width: 12% !important;         /* reducido desde 14% */
+  text-align: center !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  word-break: break-word !important;
+}
+
+/* Responsivo: mantener menor ancho en móviles */
+@media (max-width: 800px) {
+  .resultados-editor .table th:nth-child(4),
+  .resultados-editor .table td:nth-child(4),
+  .resultados-editor .table th:nth-child(6),
+  .resultados-editor .table td:nth-child(6),
+  .resultados-editor .table th:nth-child(8),
+  .resultados-editor .table td:nth-child(8) {
+    min-width: 100px !important;  /* reducido desde 120px */
+    max-width: 200px !important;  /* reducido desde 240px */
+    width: auto !important;
+    text-align: center !important;
+  }
+}
+
+/* OVERRIDE FINAL: permitir que las VLANs se muestren en varias líneas sin cortar palabras.
+   Preferir salto en espacios; solo romper palabras largas si es necesario para evitar overflow. */
+.resultados-editor .table th:nth-child(5),
+.resultados-editor .table td:nth-child(5),
+.resultados-editor .table th:nth-child(6),
+.resultados-editor .table td:nth-child(6),
+.resultados-editor .table th:nth-child(7),
+.resultados-editor .table td:nth-child(7),
+.resultados-editor .table th:nth-child(8),
+.resultados-editor .table td:nth-child(8) {
+  min-width: 50px !important;
+  max-width: 120px !important;       /* permitir algo más de ancho pero controlado */
+  width: auto !important;
+  text-align: center !important;
+
+  /* Allow wrapping at word boundaries (spaces) and avoid breaking words unnecessarily */
+  white-space: normal !important;
+  word-break: normal !important;           /* don't break words arbitrarily */
+  overflow-wrap: break-word !important;    /* only break long words if necessary to avoid overflow */
+
+  /* Mostrar todo el contenido en varias líneas si hace falta */
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+/* Ajuste responsivo: mantener comportamiento de wrapping en móviles */
+@media (max-width: 800px) {
+  .resultados-editor .table th:nth-child(5),
+  .resultados-editor .table td:nth-child(5),
+  .resultados-editor .table th:nth-child(6),
+  .resultados-editor .table td:nth-child(6),
+  .resultados-editor .table th:nth-child(7),
+  .resultados-editor .table td:nth-child(7),
+  .resultados-editor .table th:nth-child(8),
+  .resultados-editor .table td:nth-child(8) {
+    min-width: 40px !important;
+    max-width: 100px !important;
+    width: auto !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+}

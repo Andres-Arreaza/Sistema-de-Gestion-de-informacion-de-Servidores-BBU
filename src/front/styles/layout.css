@@ -166,3 +166,28 @@
   font-size: 0.85rem;
   color: var(--color-texto-secundario);
 }
+
+/* Estilo para botones de peligro (Eliminar) */
+.btn--danger {
+  background-color: var(--color-error);
+  color: #ffffff;
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.08s ease;
+}
+.btn--danger:hover {
+  background-color: #d33c3c; /* tono ligeramente más oscuro */
+  transform: translateY(-1px);
+  color: #ffffff;
+}
+.btn--danger:disabled,
+.btn--danger[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}

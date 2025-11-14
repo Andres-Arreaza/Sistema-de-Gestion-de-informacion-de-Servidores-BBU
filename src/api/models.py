@@ -211,4 +211,3 @@ class Servidor(BaseModel):
             "ecosistema": self.ecosistema.serialize() if self.ecosistema else None,
         })
         return data
-        return data

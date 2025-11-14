@@ -339,6 +339,8 @@ const EditorMasivo = () => {
         vlan_mgmt: '', vlan_real: '',
         tipo: [], servicios: [], capas: [], ambientes: [], dominios: [], sistemasOperativos: [], estatus: [], ecosistemas: []
     });
+    // Ids seleccionados para eliminación múltiple
+    const [seleccionados, setSeleccionados] = useState(new Set());
     const [servidores, setServidores] = useState([]);
     const [cargando, setCargando] = useState(false);
     const [busquedaRealizada, setBusquedaRealizada] = useState(false);
@@ -588,6 +590,58 @@ const EditorMasivo = () => {
         }
     };
 
+    // Eliminar todos los servidores obtenidos por la búsqueda actual
+    const handleEliminarResultados = async () => {
+        const ids = Array.from(seleccionados);
+        if (!ids.length) {
+            Swal.fire('Sin selección', 'Por favor selecciona al menos un servidor para eliminar.', 'info');
+            return;
+        }
+
+        const result = await Swal.fire({
+            title: `Eliminar ${ids.length} servidor(es)?`,
+            text: 'Esta acción eliminará permanentemente los servidores seleccionados. ¿Deseas continuar?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: 'var(--color-error)',
+            cancelButtonColor: 'var(--color-texto-secundario)',
+            confirmButtonText: 'Eliminar seleccionados',
+            cancelButtonText: 'Cancelar'
+        });
+        if (!result.isConfirmed) return;
+
+        try {
+            Swal.fire({ title: 'Eliminando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const backendUrl = process.env.BACKEND_URL;
+            const response = await fetch(`${backendUrl}/api/servidores/bulk-delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids })
+            });
+            const contentType = response.headers.get('content-type');
+            let data = null;
+            if (contentType && contentType.includes('application/json')) data = await response.json();
+
+            if (!response.ok) {
+                const msg = (data && data.error) ? data.error : `Error al eliminar: ${response.status}`;
+                Swal.close();
+                Swal.fire('Error', msg, 'error');
+                return;
+            }
+
+            const deletedCount = data && data.deleted_count ? data.deleted_count : ids.length;
+            setServidores(prev => prev.filter(s => !ids.includes(s.id)));
+            setCambios(prev => { const copy = { ...prev }; ids.forEach(id => delete copy[id]); return copy; });
+            limpiarSeleccion();
+            Swal.close();
+            Swal.fire('Eliminados', `${deletedCount} servidores fueron eliminados permanentemente.`, 'success');
+        } catch (err) {
+            Swal.close();
+            console.error('Error en eliminación masiva:', err);
+            Swal.fire('Error', 'Ocurrió un error al eliminar los servidores.', 'error');
+        }
+    };
+
     const handleGuardarCambios = async () => {
         setValidationErrors({});
         const numCambios = Object.keys(cambios).length;
@@ -777,8 +831,7 @@ const EditorMasivo = () => {
         { header: 'S.O.', key: 'sistema_operativo_id', catalog: 'sistemasOperativos' },
         { header: 'Estatus', key: 'estatus_id', catalog: 'estatus' },
         { header: 'Descripción', key: 'descripcion' },
-        { header: 'Link', key: 'link' },
-        { header: 'Acciones', key: 'acciones' }
+        { header: 'Link', key: 'link' }
     ];
 
     // Función para ordenar los servidores según sortConfig
@@ -858,6 +911,19 @@ const EditorMasivo = () => {
                                 </span>
                             </th>
                         ))}
+                        <th style={{ textAlign: 'center', width: '140px', minWidth: '120px', maxWidth: '180px' }}>
+                            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                <span style={{ userSelect: 'none' }}>Eliminar</span>
+                                <input
+                                    type="checkbox"
+                                    className="filter-checkbox"
+                                    checked={currentServidores.length > 0 && currentServidores.every(s => seleccionados.has(s.id))}
+                                    onChange={() => toggleSeleccionarTodosPagina(currentServidores)}
+                                    title="Seleccionar/Deseleccionar todos en esta página"
+                                    style={{ transform: 'scale(0.95)' }}
+                                />
+                            </label>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -867,22 +933,27 @@ const EditorMasivo = () => {
 
                         return (
                             <tr key={servidor.id} className={isModified ? 'fila-modificada' : ''}>
-                                <td>{indexOfFirstItem + index + 1}</td>
+                                <td style={{ textAlign: 'center' }}>{indexOfFirstItem + index + 1}</td>
                                 {columnas.map(col => {
                                     if (col.key === 'link') {
                                         return (
-                                            <td key={`${servidor.id}-link`}>
-                                                <button className="btn-icon" onClick={() => abrirModalLink(servidor)} title="Ver detalles y enlace" disabled={!servidor.link}>
+                                            <td key={`${servidor.id}-link`} style={{ textAlign: 'center', width: '90px', minWidth: '70px', maxWidth: '110px' }}>
+                                                <button
+                                                    className="btn-icon"
+                                                    onClick={() => abrirModalLink(servidor)}
+                                                    title="Ver detalles y enlace"
+                                                    disabled={!servidor.link}
+                                                    style={{
+                                                        width: 34,
+                                                        height: 34,
+                                                        padding: 4,
+                                                        borderRadius: '50%',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}
+                                                >
                                                     <Icon name="visibility" />
-                                                </button>
-                                            </td>
-                                        );
-                                    }
-                                    if (col.key === 'acciones') {
-                                        return (
-                                            <td key={`${servidor.id}-acciones`}>
-                                                <button className="btn-icon" onClick={() => handleEliminarServidor(servidor)} title="Eliminar servidor">
-                                                    <Icon name="trash" />
                                                 </button>
                                             </td>
                                         );
@@ -908,12 +979,37 @@ const EditorMasivo = () => {
                                     }
 
                                     const hasError = !!errorsInRow[col.key];
+
+                                    // --- CAMBIO: si la columna es vlan_mgmt o vlan_real, dividir por espacios y mostrar cada palabra en su propia línea ---
+                                    if (col.key === 'vlan_mgmt' || col.key === 'vlan_real') {
+                                        const text = displayValue || '';
+                                        const parts = String(text).split(/\s+/).filter(Boolean);
+                                        return (
+                                            <td key={`${servidor.id}-${col.key}`} title={text} className={hasError ? 'celda-con-error-validacion' : ''} style={{ whiteSpace: 'normal' }}>
+                                                {parts.length > 1
+                                                    ? parts.map((p, i) => <span key={i}>{p}{i < parts.length - 1 && <br />}</span>)
+                                                    : text
+                                                }
+                                            </td>
+                                        );
+                                    }
+
                                     return (
                                         <td key={`${servidor.id}-${col.key}`} title={displayValue} className={hasError ? 'celda-con-error-validacion' : ''}>
                                             {displayValue}
                                         </td>
                                     );
                                 })}
+                                <td style={{ textAlign: 'center', width: '140px', minWidth: '120px', maxWidth: '180px' }}>
+                                    <input
+                                        type="checkbox"
+                                        className="filter-checkbox"
+                                        checked={seleccionados.has(servidor.id)}
+                                        onChange={() => toggleSeleccionado(servidor.id)}
+                                        title={`Seleccionar servidor ${servidor.nombre}`}
+                                        style={{ transform: 'scale(0.95)' }}
+                                    />
+                                </td>
                             </tr>
                         );
                     })}
@@ -960,12 +1056,21 @@ const EditorMasivo = () => {
 
     const PaginacionControles = () => {
         const totalPages = Math.ceil(servidores.length / itemsPerPage);
+        const count = servidores.length;
+        const contadorTexto = count === 1 ? 'servidor encontrado' : 'servidores encontrados';
+
         return (
             <div className="pagination-controls">
                 <div className="pagination__items-per-page">
                     <label>Mostrar:</label>
                     <ItemsPerPageDropdown value={itemsPerPage} onChange={setItemsPerPage} />
                 </div>
+
+                {/* Contador centrado (singular/plural) */}
+                <div className="servers-found--center" aria-live="polite">
+                    {count} {contadorTexto}
+                </div>
+
                 <div className="pagination__navigation">
                     <button className="btn-icon" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
                         <Icon name="chevron-left" />
@@ -978,6 +1083,33 @@ const EditorMasivo = () => {
             </div>
         );
     };
+
+    // Toggle selección individual (checkbox fila)
+    const toggleSeleccionado = (id) => {
+        setSeleccionados(prev => {
+            const copia = new Set(prev);
+            if (copia.has(id)) copia.delete(id);
+            else copia.add(id);
+            return copia;
+        });
+    };
+
+    // Seleccionar/deseleccionar todos los de la página actual
+    const toggleSeleccionarTodosPagina = (currentServidores) => {
+        const idsPagina = currentServidores.map(s => s.id);
+        setSeleccionados(prev => {
+            const copia = new Set(prev);
+            const todosSeleccionados = idsPagina.every(id => copia.has(id));
+            idsPagina.forEach(id => {
+                if (todosSeleccionados) copia.delete(id);
+                else copia.add(id);
+            });
+            return copia;
+        });
+    };
+
+    // Limpiar selección completa
+    const limpiarSeleccion = () => setSeleccionados(new Set());
 
     return (
         <div className="page-container">
@@ -1004,7 +1136,6 @@ const EditorMasivo = () => {
                         <>
                             <header className="resultados-header">
                                 <h2 className="resultados-titulo">Resultados de la Búsqueda</h2>
-                                <span className="badge">{servidores.length} servidores encontrados</span>
                             </header>
 
                             {servidores.length > 0 ? (
@@ -1026,8 +1157,18 @@ const EditorMasivo = () => {
                                             )}
                                         </div>
 
+
                                         <button className="btn btn--primary" onClick={() => setIsEditMode(true)} disabled={isEditMode}>
                                             <Icon name="edit" /> Editar
+                                        </button>
+
+                                        <button
+                                            className="btn btn--danger"
+                                            onClick={handleEliminarResultados}
+                                            disabled={cargando || seleccionados.size === 0}
+                                            title="Eliminar servidores seleccionados"
+                                        >
+                                            <Icon name="trash" /> Eliminar Selecionados
                                         </button>
                                     </div>
 
@@ -1068,6 +1209,5 @@ const EditorMasivo = () => {
         </div>
     );
 };
-
 
 export default EditorMasivo;

@@ -538,7 +538,18 @@ def update_servidor(record_id):
 @api.route("/servidores/<int:record_id>", methods=["DELETE"])
 @cross_origin()
 def delete_servidor(record_id):
-    return delete_generic(Servidor, record_id)
+    """Eliminación permanente (hard delete) de un servidor por ID"""
+    servidor = Servidor.query.get(record_id)
+    if not servidor:
+        return jsonify({"error": "Servidor no encontrado"}), 404
+    try:
+        db.session.delete(servidor)
+        db.session.commit()
+        return jsonify({"msg": f"Servidor con ID {record_id} eliminado permanentemente."}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al eliminar servidor permanentemente: {e}")
+        return jsonify({"error": "Error interno al eliminar servidor"}), 500
 
 
 @api.route("/servidores/busqueda", methods=["GET"])
@@ -695,3 +706,24 @@ def update_ecosistema(record_id):
 @api.route("/ecosistemas/<int:record_id>", methods=["DELETE"])
 def delete_ecosistema(record_id):
     return delete_generic(Ecosistema, record_id)
+
+@api.route("/servidores/bulk-delete", methods=["POST"])
+@cross_origin()
+def bulk_delete_servidores():
+    """
+    Elimina permanentemente (hard delete) los servidores cuyos ids se envían en el body:
+    { "ids": [1,2,3] }
+    """
+    data = request.get_json() or {}
+    ids = data.get("ids")
+    if not ids or not isinstance(ids, list):
+        return jsonify({"error": "Se requiere una lista de ids bajo la clave 'ids'."}), 400
+    try:
+        # Eliminar por consulta para eficiencia
+        deleted = db.session.query(Servidor).filter(Servidor.id.in_(ids)).delete(synchronize_session=False)
+        db.session.commit()
+        return jsonify({"deleted_count": deleted}), 200
+    except Exception as e:
+        db.session.rollback()
+        print("ERROR EN BULK DELETE SERVIDORES:", e)
+        return jsonify({"error": str(e)}), 500
