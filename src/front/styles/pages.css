@@ -365,9 +365,7 @@
 
 /* Entradas y triggers ocupan todo el ancho de su contenedor y fuente reducida */
 .form__input,
-.custom-select__trigger,
-.custom-select__panel .custom-select__option input[type="radio"],
-.custom-select__panel .custom-select__option input[type="checkbox"] {
+.custom-select__trigger {
   width: 100%;
   font-size: 0.88rem;
   padding: 8px 10px;
@@ -417,7 +415,8 @@
 .resultados-editor .table td:nth-child(2) {
   white-space: nowrap;
   width: 48px;
-  min-width: 48px;
+  min-width: 60px;
+  max-width: 70px;
   text-align: center;
 }
 
@@ -656,9 +655,7 @@
 }
 
 /* ----- Scoped styles: FILTER FORM (alineado a la izquierda) ----- */
-.filter-form {
-  /* asegurar que el grid/layout del filtro permanezca orientado a la izquierda */
-}
+
 .filter-form .form__group {
   align-items: flex-start; /* etiquetas a la izquierda dentro del grid */
 }
@@ -810,9 +807,6 @@
 /* Asegurar que los campos seleccionables del filtro estén a la IZQUIERDA y no afecten a resultados-editor */
 /* Estas reglas están al final para garantizar prioridad sobre reglas anteriores (sin usar !important) */
 
-.filter-form {
-  /* contexto explícito para evitar fugas a otros formularios */
-}
 .filter-form .form__group { 
   align-items: flex-start; /* etiquetas e inputs alineados al inicio de la celda */
 }
@@ -1122,5 +1116,472 @@
     overflow-wrap: break-word !important;
     overflow: visible !important;
     text-overflow: clip !important;
+  }
+}
+
+/* Scoped override: alinear los checkboxes y opciones a la izquierda DENTRO del panel de edición
+   Esto afecta sólo a la UI que aparece al pulsar "Editar" en Resultados, sin modificar el resto. */
+.resultados-editor .editor-panel .bulk-edit-field,
+.resultados-editor .editor-panel .selector-columnas-container,
+.resultados-editor .editor-panel .custom-select,
+.resultados-editor .editor-panel .custom-select__panel {
+  justify-content: flex-start !important;  /* forzar alineación izquierda del layout flex */
+  text-align: left !important;             /* asegurar texto a la izquierda dentro del scope */
+}
+
+/* Asegurar que cada opción muestre checkbox + label alineados a la izquierda */
+.resultados-editor .editor-panel .custom-select__panel .custom-select__option,
+.resultados-editor .editor-panel .custom-select__option {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.6rem !important;
+  white-space: normal !important;
+  padding-left: 0.25rem !important;
+}
+
+/* Mantener tamaño y espaciado correcto del checkbox dentro del panel de edición */
+.resultados-editor .editor-panel .custom-select__option input[type="checkbox"],
+.resultados-editor .editor-panel .custom-select__panel input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 0.5rem 0 0 !important;
+  flex: 0 0 auto !important;
+}
+
+/* Si hay campos con label + checkbox dentro de bulk-edit-field, no centrar el grupo */
+.resultados-editor .editor-panel .bulk-edit-field {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: var(--espaciado-md) !important;
+}
+
+/* Mantener los triggers y panels del selector de columnas comportándose (pero alineados a la izquierda en el editor) */
+.resultados-editor .editor-panel .selector-columnas-container .custom-select__trigger,
+.resultados-editor .editor-panel .selector-columnas-container .custom-select__panel {
+  text-align: left !important;
+}
+
+/* FORCE: Alinear TODO lo relacionado con edición (panel) a la IZQUIERDA.
+   Esto se aplica sólo dentro de .resultados-editor .editor-panel para no afectar otras áreas. */
+.resultados-editor .editor-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start !important;   /* forzar alineación izquierda del contenedor */
+  text-align: left !important;
+  gap: var(--espaciado-lg) !important;
+}
+
+/* Selector "Columnas a editar" y su trigger: texto y opciones a la izquierda */
+.resultados-editor .editor-panel .selector-columnas-container,
+.resultados-editor .editor-panel .selector-columnas-container .custom-select {
+  width: 100%;
+  align-self: stretch;
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+
+.resultados-editor .editor-panel .selector-columnas-container .custom-select__trigger {
+  justify-content: flex-start !important;
+  text-align: left !important;
+  padding-left: 0.5rem !important;
+}
+
+/* Alinear las opciones del panel (checkbox + label) a la izquierda */
+.resultados-editor .editor-panel .selector-columnas-container .custom-select__panel .custom-select__option,
+.resultados-editor .editor-panel .custom-select__panel .custom-select__option {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.5rem !important;
+  padding: 0.4rem 0.5rem !important;
+}
+
+/* Bulk edit: forzar que los campos y botones estén alineados a la izquierda */
+.resultados-editor .editor-panel .bulk-edit-controls {
+  width: 100%;
+  align-self: stretch;
+  justify-items: start !important;
+}
+
+.resultados-editor .editor-panel .bulk-edit-field {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: var(--espaciado-md) !important;
+  width: 100%;
+}
+
+/* Asegurar inputs/triggers dentro del bulk-edit ocupen el espacio y el texto quede a la izquierda */
+.resultados-editor .editor-panel .bulk-edit-field .form__input,
+.resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
+  width: auto;
+  min-width: 160px;
+  flex: 1 1 auto;
+  text-align: left !important;
+  justify-content: flex-start !important;
+}
+
+/* Botones de acciones del editor también a la izquierda (si se desea) */
+.resultados-editor .editor-panel .editor-panel__actions {
+  width: 100%;
+  display: flex !important;
+  justify-content: flex-start !important; /* mover botones a la izquierda */
+  gap: var(--espaciado-md) !important;
+  padding-top: var(--espaciado-sm) !important;
+}
+
+/* Asegurar tamaño y posicionamiento correcto de checkboxes dentro del panel de edición */
+.resultados-editor .editor-panel input[type="checkbox"],
+.resultados-editor .editor-panel input[type="radio"] {
+  margin-right: 0.5rem !important;
+  margin-left: 0 !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* Mantener paneles desplegables encima del layout y alineados al trigger */
+.resultados-editor .editor-panel .custom-select__panel {
+  left: 0 !important;
+  right: auto !important;
+  width: auto !important;
+  min-width: 220px !important;
+}
+
+/* REEMPLAZAR: evitar que los radios entren en la regla de width:100% para triggers/inputs */
+/* Antes: .form__input, .custom-select__trigger, .custom-select__panel .custom-select__option input[type="radio"], .custom-select__panel .custom-select__option input[type="checkbox"] { ... } */
+
+/* NUEVO: radios en panels y select options — tamaño pequeño, margen y comportamiento consistente */
+.custom-select__panel .custom-select__option input[type="radio"],
+.selector-columnas-container .custom-select__panel .custom-select__option input[type="radio"],
+.resultados-editor .custom-select__panel .custom-select__option input[type="radio"] {
+  width: 14px;
+  height: 14px;
+  margin: 0 0.5rem 0 0;
+  vertical-align: middle;
+  cursor: pointer;
+  flex: 0 0 auto;
+  /* evitar herencias inesperadas */
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* OVERRIDE: radios dentro del panel de edición deben ser pequeños también */
+.resultados-editor .editor-panel input[type="radio"] {
+  width: 14px !important;
+  height: 14px !important;
+  margin-right: 0.5rem !important;
+  margin-left: 0 !important;
+}
+
+/* Botón "Aplicar Cambios" - forzar estilo primario (AZUL) dentro del panel de edición */
+.resultados-editor .editor-panel .btn--apply-all {
+  background-color: var(--color-secundario); /* azul */
+  color: #fff;
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.12s ease, transform 0.08s ease;
+}
+
+.resultados-editor .editor-panel .btn--apply-all:hover:not(:disabled) {
+  background-color: #003355;
+  transform: translateY(-1px);
+}
+
+.resultados-editor .editor-panel .btn--apply-all:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Asegurar que el label del selector de columnas en el editor esté a la izquierda */
+.resultados-editor .editor-panel .selector-columnas-container .form__label {
+  text-align: left !important;
+  width: 100%;
+  display: block;
+  align-self: flex-start;
+  margin-bottom: 0.5rem; /* pequeño espacio entre "Columnas a editar:" y el input/select */
+}
+
+/* Opcional: si el icon está dentro del label, mantenerlo alineado con el texto */
+.resultados-editor .editor-panel .selector-columnas-container .form__label svg,
+.resultados-editor .editor-panel .selector-columnas-container .form__label i {
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+/* Hacer el selector de columnas menos ancho dentro del panel de edición */
+.resultados-editor .editor-panel .selector-columnas-container .custom-select {
+  width: auto !important;        /* no forzar 100% del contenedor */
+  max-width: 220px !important;   /* menos ancho (ajustado desde 300px) */
+  min-width: 120px !important;   /* mantener mínimo razonable para legibilidad */
+}
+
+/* Asegurar que el trigger use el ancho disponible del custom-select (hasta max-width) */
+.resultados-editor .editor-panel .selector-columnas-container .custom-select__trigger {
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* Posicionar la chevron del selector "Columnas a editar" más a la derecha sin tocar el campo
+   y aplicar la animación de rotación (igual que en BusquedaFiltro) */
+.resultados-editor .editor-panel .selector-columnas-container .custom-select__trigger {
+  position: relative !important; /* permitir posicionamiento absoluto del icono */
+}
+
+/* Estilo base para la chevron (triángulo simple hecho con borders) */
+.resultados-editor .editor-panel .selector-columnas-container .custom-select__trigger .chevron {
+  position: absolute !important;
+  right: 12px !important;               /* pequeño ajuste para centrar con nuevo grosor */
+  top: 50% !important;
+  width: 8px;                            /* mantiene tamaño compacto */
+  height: 8px;
+  box-sizing: border-box;
+  /* menos grueso y color gris */
+  border-right: 1.6px solid #6b7280;     /* antes 2.8px solid currentColor */
+  border-bottom: 1.6px solid #6b7280;    /* antes 2.8px solid currentColor */
+  transform: translateY(-50%) rotate(45deg) !important; /* estado cerrado */
+  transform-origin: center;
+  transition: transform 0.18s ease, opacity 0.10s ease;
+  margin-left: 0 !important;
+  opacity: 0.95;
+}
+
+/* Estado "open" — misma animación (rotación) que en BusquedaFiltro */
+.resultados-editor .editor-panel .selector-columnas-container .custom-select__trigger .chevron.open {
+  transform: translateY(-50%) rotate(-135deg) !important;
+}
+
+/* Ajustes: campos de Bulk Edit más compactos y en línea (no ocupen todo el ancho) */
+.resultados-editor .editor-panel .bulk-edit-controls {
+  /* Usar flex para que los campos fluyan uno al lado del otro y salten a la siguiente línea si no caben */
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: var(--espaciado-md) !important;
+  align-items: flex-start !important;
+  /* eliminar restricciones previas de grid */
+  grid-template-columns: none !important;
+}
+
+/* Cada campo del bulk edit debe ser compacto y no estirarse */
+.resultados-editor .editor-panel .bulk-edit-field {
+  flex: 0 0 auto !important;        /* no crecer, no ocupar todo el espacio */
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  min-width: 160px !important;      /* ancho mínimo razonable */
+  max-width: 360px !important;      /* evitar que se vuelvan demasiado largos */
+  width: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Etiqueta del campo en una sola línea y sin quebrar */
+.resultados-editor .editor-panel .bulk-edit-field > label {
+  white-space: nowrap;
+  margin-right: 0.35rem;
+  flex: 0 0 auto;
+}
+
+/* Inputs y triggers dentro de bulk-edit deben ajustarse al contenido (no forzar width:100%) */
+.resultados-editor .editor-panel .bulk-edit-field .form__input,
+.resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
+  width: auto !important;
+  flex: 0 0 auto !important;
+  min-width: 120px !important;   /* ajusta si necesitas más/menos espacio */
+  max-width: 260px !important;
+  box-sizing: border-box !important;
+}
+
+/* Si hay select custom con panel, limitar su trigger para que no empuje el layout */
+.resultados-editor .editor-panel .bulk-edit-field .custom-select {
+  min-width: 120px !important;
+  max-width: 320px !important;
+  width: auto !important;
+}
+
+/* En pantallas muy pequeñas, permitir que los campos ocupen el 100% para legibilidad */
+@media (max-width: 560px) {
+  .resultados-editor .editor-panel .bulk-edit-controls {
+    gap: var(--espaciado-sm) !important;
+  }
+  .resultados-editor .editor-panel .bulk-edit-field {
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  .resultados-editor .editor-panel .bulk-edit-field > label {
+    flex: 0 0 auto;
+    width: 100%;
+    margin-bottom: 0.35rem;
+  }
+  .resultados-editor .editor-panel .bulk-edit-field .form__input,
+  .resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
+    width: 100% !important;
+    height: 40px !important;
+  }
+}
+
+/* ===== Unificación de espaciado y tamaño en Bulk Edit (armonía visual) =====
+   - Usar la variable --espaciado-md / --espaciado-sm para consistencia
+   - Cada campo (.bulk-edit-field) mantiene la misma altura y padding
+   - Label tiene ancho fijo consistente; control ocupa el resto
+   - El contenedor (.bulk-edit-controls) mantiene gap uniforme entre filas/columnas
+*/
+.resultados-editor .editor-panel .bulk-edit-controls {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: var(--espaciado-md) !important;     /* espacio uniforme entre campos */
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  grid-template-columns: none !important;
+  padding: 0; /* evitar padding inesperado */
+  box-sizing: border-box;
+}
+
+/* Cada campo mantiene la misma caja visual */
+.resultados-editor .editor-panel .bulk-edit-field {
+  flex: 0 0 260px !important;               /* ancho fijo por campo para uniformidad */
+  min-width: 200px !important;
+  max-width: 320px !important;
+  height: 48px !important;                  /* altura uniforme */
+  display: flex !important;
+  align-items: center !important;
+  gap: var(--espaciado-sm) !important;      /* espacio entre label y control */
+  padding: 0.35rem !important;              /* padding interior consistente */
+  box-sizing: border-box !important;
+  background: transparent;
+  margin: 0 !important;
+  border-radius: 8px;
+}
+
+/* Ancho fijo y truncado responsable para la etiqueta dentro del campo */
+.resultados-editor .editor-panel .bulk-edit-field > label {
+  flex: 0 0 110px !important;               /* ancho de etiqueta consistente */
+  width: 110px !important;
+  margin: 0 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+/* Control (input / trigger) ocupa el espacio restante y mantiene misma altura */
+.resultados-editor .editor-panel .bulk-edit-field .form__input,
+.resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
+  flex: 1 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 36px !important;
+  padding: 20px 10px !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+/*/////////////////////////////////////////////////////////////////////////////////*/
+
+
+/* Ajuste visual de triggers pequeños: chevron, iconografía, etc. */
+.resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger .chevron {
+  right: 8px !important;
+  width: 7px !important;
+  height: 7px !important;
+  border-right: 1.6px solid #6b7280 !important;
+  border-bottom: 1.6px solid #6b7280 !important;
+}
+
+/* Asegurar espacio vertical uniforme entre filas en móviles */
+@media (max-width: 560px) {
+  .resultados-editor .editor-panel .bulk-edit-controls {
+    gap: var(--espaciado-sm) !important;
+  }
+  .resultados-editor .editor-panel .bulk-edit-field {
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    padding: 0.5rem !important;
+    gap: var(--espaciado-sm) !important;
+  }
+}
+
+/* OVERRIDE: aumentar un poco los anchos de los campos de Bulk Edit para mayor legibilidad
+    - flex-basis aumentado a 340px (era 320px)
+    - min/max actualizados para permitir mayor espacio
+    - etiqueta (label) más ancha para que no comprima el control
+    - inputs/triggers internos también reciben min-width mayor
+ */
+.resultados-editor .editor-panel .bulk-edit-field {
+  flex: 0 0 340px !important;    /* ancho base por campo (aumentado desde 320px) */
+  min-width: 240px !important;   /* mínimo razonable ampliado */
+  max-width: 460px !important;   /* permitir más expansión si hay espacio */
+  height: 48px !important;       /* conservar altura uniforme */
+  padding: 0.35rem !important;
+  box-sizing: border-box !important;
+  gap: var(--espaciado-sm) !important;
+}
+
+/* Etiqueta dentro del campo: un poco más ancha para no apretar el control */
+.resultados-editor .editor-panel .bulk-edit-field > label {
+  flex: 0 0 140px !important;    /* ancho fijo de etiqueta aumentado desde 130px */
+  width: 140px !important;
+  margin: 0 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Inputs/triggers dentro de cada campo: ocupar el resto y tener un mínimo mayor */
+.resultados-editor .editor-panel .bulk-edit-field .form__input,
+.resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
+  flex: 1 1 auto !important;
+  min-width: 180px !important;   /* aumentado desde 160px */
+  max-width: 360px !important;
+  height: 36px !important;
+  box-sizing: border-box !important;
+}
+/* Etiqueta dentro del campo: un poco más ancha para no apretar el control */
+.resultados-editor .editor-panel .bulk-edit-field > label {
+  flex: 0 0 130px !important;    /* ancho fijo de etiqueta aumentado */
+  width: 130px !important;
+  margin: 0 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Inputs/triggers dentro de cada campo: ocupar el resto y tener un mínimo mayor */
+.resultados-editor .editor-panel .bulk-edit-field .form__input,
+.resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
+  flex: 1 1 auto !important;
+  min-width: 160px !important;   /* aumentado desde 120px */
+  max-width: 320px !important;
+  height: 36px !important;
+  box-sizing: border-box !important;
+}
+
+/* Ajustes responsivos: mantener el apilado en móvil */
+@media (max-width: 560px) {
+  .resultados-editor .editor-panel .bulk-edit-field {
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    padding: 0.5rem !important;
+  }
+  .resultados-editor .editor-panel .bulk-edit-field > label {
+    width: auto !important;
+    margin-bottom: 0.35rem !important;
+    flex: 0 0 auto !important;
+  }
+  .resultados-editor .editor-panel .bulk-edit-field .form__input,
+  .resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
+    width: 100% !important;
+    height: 40px !important;
   }
 }

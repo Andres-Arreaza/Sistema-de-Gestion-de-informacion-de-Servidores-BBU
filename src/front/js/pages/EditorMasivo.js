@@ -456,6 +456,8 @@ const EditorMasivo = () => {
                 ambiente_id: srv.ambientes?.[0]?.id || srv.ambiente_id || null,
                 dominio_id: srv.dominios?.[0]?.id || srv.dominio_id || null,
                 sistema_operativo_id: srv.sistemasOperativos?.[0]?.id || srv.sistemas_operativos?.[0]?.id || srv.sistema_operativo_id || null,
+                // Asegurar ecosistema_id (puede venir como lista srv.ecosistemas, objeto srv.ecosistema o campo directo)
+                ecosistema_id: srv.ecosistemas?.[0]?.id || (srv.ecosistema && srv.ecosistema.id) || srv.ecosistema_id || null,
                 estatus_id: srv.estatus?.[0]?.id || srv.estatus_id || null,
             }));
             setServidores(normalizedData);
@@ -557,6 +559,93 @@ const EditorMasivo = () => {
 
             Swal.fire("Aplicado", `El campo "${campoLabel}" ha sido actualizado en la vista previa.`, "success");
         }
+    };
+
+    // --- NUEVO: aplicar todos los cambios seleccionados en un único paso ---
+    const handleApplyAllBulkEdits = async () => {
+        if (!columnasEditables || columnasEditables.length === 0) {
+            Swal.fire("Sin columnas", "Selecciona las columnas que deseas aplicar.", "info");
+            return;
+        }
+
+        // Validar que los campos no-IP tengan valor (si es requerido)
+        const missingNonIp = columnasEditables.filter(col => {
+            const isIp = ['ip_mgmt', 'ip_real', 'ip_mask25'].includes(col);
+            const val = bulkEditValues[col];
+            return !isIp && (val === undefined || val === '');
+        });
+        if (missingNonIp.length > 0) {
+            const labels = missingNonIp.map(c => opcionesColumnas.find(o => o.value === c)?.label || c).join(', ');
+            Swal.fire("Valores incompletos", `Proporciona un valor para: ${labels}`, "warning");
+            return;
+        }
+
+        // Validación: evitar que al aplicar se deje algún servidor sin ninguna IP
+        const willClearIp = ['ip_mgmt', 'ip_real', 'ip_mask25'].some(ipf => bulkEditValues[ipf] === '');
+        if (willClearIp) {
+            const servidoresQueQuedarianSinIp = servidores.filter(servidor => {
+                const cambiosServidor = cambios[servidor.id] || {};
+                const ipMgmt = bulkEditValues.hasOwnProperty('ip_mgmt') ? bulkEditValues['ip_mgmt'] : (cambiosServidor.ip_mgmt ?? servidor.ip_mgmt);
+                const ipReal = bulkEditValues.hasOwnProperty('ip_real') ? bulkEditValues['ip_real'] : (cambiosServidor.ip_real ?? servidor.ip_real);
+                const ipMask = bulkEditValues.hasOwnProperty('ip_mask25') ? bulkEditValues['ip_mask25'] : (cambiosServidor.ip_mask25 ?? servidor.ip_mask25);
+                const anyIp = (ipMgmt && String(ipMgmt).trim() !== '') || (ipReal && String(ipReal).trim() !== '') || (ipMask && String(ipMask).trim() !== '');
+                return !anyIp;
+            });
+            if (servidoresQueQuedarianSinIp.length > 0) {
+                Swal.fire("Acción no permitida", `Al aplicar, los siguientes servidores quedarían sin IP: ${servidoresQueQuedarianSinIp.map(s => s.nombre).join(', ')}`, "error");
+                return;
+            }
+        }
+
+        // Resumen para confirmación
+        const resumen = columnasEditables.map(col => {
+            const label = opcionesColumnas.find(o => o.value === col)?.label || col;
+            const val = bulkEditValues[col] !== undefined ? bulkEditValues[col] : "(sin cambio)";
+            return `<strong>${label}:</strong> ${String(val)}`;
+        }).join('<br/>');
+
+        const result = await Swal.fire({
+            title: `¿Aplicar cambios a los ${servidores.length} servidores?`,
+            html: `<div style="text-align:left">${resumen}</div>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, aplicar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: 'var(--color-primario)'
+        });
+        if (!result.isConfirmed) return;
+
+        // Aplicar cambios en memoria (vista previa) y en el objeto "cambios"
+        let nuevosCambios = { ...cambios };
+        const servidoresActualizados = servidores.map(servidor => {
+            const prev = nuevosCambios[servidor.id] || {};
+            columnasEditables.forEach(col => {
+                // Sólo aplicar si hay valor definido en bulkEditValues (permite desasignar con null/'' si se desea)
+                if (Object.prototype.hasOwnProperty.call(bulkEditValues, col)) {
+                    prev[col] = bulkEditValues[col];
+                }
+                // Si aplicacion_id, actualizar representación local de aplicaciones
+                if (col === 'aplicacion_id') {
+                    const app = catalogos.aplicaciones.find(a => String(a.id) === String(prev.aplicacion_id));
+                    servidor.aplicaciones = app ? [app] : [];
+                }
+            });
+            nuevosCambios[servidor.id] = prev;
+
+            // Actualizar la vista previa del servidor
+            const servidorActualizado = { ...servidor };
+            columnasEditables.forEach(col => {
+                if (Object.prototype.hasOwnProperty.call(prev, col)) {
+                    servidorActualizado[col] = prev[col];
+                }
+            });
+            return servidorActualizado;
+        });
+
+        setServidores(servidoresActualizados);
+        setCambios(nuevosCambios);
+        setValidationErrors({});
+        Swal.fire("Aplicado", "Los cambios han sido aplicados en la vista previa.", "success");
     };
 
     const handleEliminarServidor = async (servidorParaEliminar) => {
@@ -837,29 +926,32 @@ const EditorMasivo = () => {
     // Función para ordenar los servidores según sortConfig
     const getSortedServidores = () => {
         if (!sortConfig.key) return servidores;
-        const sorted = [...servidores];
-        sorted.sort((a, b) => {
+        const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+        const sorted = [...servidores].sort((a, b) => {
             let aValue = a[sortConfig.key];
             let bValue = b[sortConfig.key];
-            // Si es columna con catálogo, comparar por nombre
+
+            // Si la columna tiene catálogo, comparar por nombre (o por "nombre - Vversion" para S.O./apps)
             const colDef = columnas.find(c => c.key === sortConfig.key);
             if (colDef && colDef.catalog) {
                 const aObj = catalogos[colDef.catalog]?.find(c => String(c.id) === String(aValue));
                 const bObj = catalogos[colDef.catalog]?.find(c => String(c.id) === String(bValue));
-                aValue = aObj ? aObj.nombre : '';
-                bValue = bObj ? bObj.nombre : '';
+                aValue = aObj ? (colDef.catalog === 'sistemasOperativos' ? `${aObj.nombre} - V${aObj.version}` : aObj.nombre) : '';
+                bValue = bObj ? (colDef.catalog === 'sistemasOperativos' ? `${bObj.nombre} - V${bObj.version}` : bObj.nombre) : '';
             }
-            // Si es aplicaciones, comparar por primer nombre
+
+            // Caso aplicaciones: comparar por primer nombre disponible
             if (sortConfig.key === 'aplicaciones') {
-                aValue = (a.aplicaciones && a.aplicaciones[0]) ? a.aplicaciones[0].nombre : '';
-                bValue = (b.aplicaciones && b.aplicaciones[0]) ? b.aplicaciones[0].nombre : '';
+                aValue = (a.aplicaciones && a.aplicaciones[0]) ? a.aplicaciones[0].nombre : (a.aplicacion ? a.aplicacion.nombre : '');
+                bValue = (b.aplicaciones && b.aplicaciones[0]) ? b.aplicaciones[0].nombre : (b.aplicacion ? b.aplicacion.nombre : '');
             }
-            // Normalizar a string para comparar
-            aValue = aValue ? aValue.toString().toLowerCase() : '';
-            bValue = bValue ? bValue.toString().toLowerCase() : '';
-            if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-            if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-            return 0;
+
+            aValue = aValue !== null && aValue !== undefined ? String(aValue) : '';
+            bValue = bValue !== null && bValue !== undefined ? String(bValue) : '';
+
+            // Normalizar para comparación y usar collator (soporta comparación numérica dentro de strings)
+            const cmp = collator.compare(aValue.toLowerCase(), bValue.toLowerCase());
+            return sortConfig.direction === 'asc' ? cmp : -cmp;
         });
         return sorted;
     };
@@ -888,15 +980,16 @@ const EditorMasivo = () => {
                     <tr>
                         <th style={{ textAlign: 'center' }}>#</th>
                         {columnas.map(c => (
-                            <th key={c.key} style={{ textAlign: 'center', cursor: c.sortable ? 'pointer' : 'default', userSelect: 'none' }}>
+                            <th
+                                key={c.key}
+                                style={{ textAlign: 'center', cursor: c.sortable ? 'pointer' : 'default', userSelect: 'none' }}
+                                onClick={() => c.sortable && handleSort(c.key)}
+                                title={c.sortable ? (sortConfig.key === c.key ? (sortConfig.direction === 'asc' ? 'Orden ascendente' : 'Orden descendente') : 'Ordenar') : undefined}
+                            >
                                 <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                                     {c.header}
                                     {c.sortable && (
-                                        <span
-                                            onClick={() => handleSort(c.key)}
-                                            style={{ marginLeft: 4, display: 'inline-flex', alignItems: 'center' }}
-                                            title={sortConfig.key === c.key ? (sortConfig.direction === 'asc' ? 'Orden ascendente' : 'Orden descendente') : 'Ordenar'}
-                                        >
+                                        <span style={{ marginLeft: 4, display: 'inline-flex', alignItems: 'center' }}>
                                             {sortConfig.key === c.key ? (
                                                 sortConfig.direction === 'asc' ? (
                                                     <Icon name="arrow-upward" size={16} style={{ color: '#005A9C' }} />
@@ -1044,9 +1137,7 @@ const EditorMasivo = () => {
                                     catalogos={catalogos}
                                 />
                             )}
-                            <button className="btn btn--apply-bulk" onClick={() => handleApplyBulkEdit(colKey)}>
-                                Aplicar
-                            </button>
+                            {/* boton por-campo eliminado: ahora sólo existe el botón global "Aplicar Cambios" */}
                         </div>
                     );
                 })}
@@ -1184,6 +1275,17 @@ const EditorMasivo = () => {
                                                 <button className="btn btn--secondary" onClick={() => setIsEditMode(false)}>
                                                     Cancelar
                                                 </button>
+
+                                                {/* NUEVO: botón para aplicar todos los cambios seleccionados en un solo paso */}
+                                                <button
+                                                    className="btn btn--primary btn--apply-all"
+                                                    onClick={handleApplyAllBulkEdits}
+                                                    disabled={columnasEditables.length === 0}
+                                                    title={columnasEditables.length === 0 ? "Selecciona columnas para aplicar" : "Aplicar cambios seleccionados a todos los servidores"}
+                                                >
+                                                    Aplicar Cambios
+                                                </button>
+
                                                 <button className="btn btn--primary" onClick={handleGuardarCambios} disabled={Object.keys(cambios).length === 0}>
                                                     <Icon name="save" /> Guardar Cambios
                                                 </button>

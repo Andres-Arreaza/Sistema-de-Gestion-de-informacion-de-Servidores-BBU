@@ -10,7 +10,7 @@ import { Footer } from "./component/footer";
 
 // Importación de las páginas
 import Configuracion from "./pages/Configuracion";
-import Home from "./pages/Home";
+import Home from "./pages/home";
 import { Busqueda } from "./pages/Busqueda";
 import EditorMasivo from './pages/EditorMasivo';
 import Servidor from "./pages/Servidor";

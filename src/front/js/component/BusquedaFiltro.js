@@ -93,6 +93,11 @@ export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios,
         : [];
 
     const formFields = [
+        // MOVIDOS: poner primero Servicios y luego Ecosistemas
+        { type: 'dropdown', key: "servicios", label: "Servicios", data: uniqueServicios, icon: <Icon name="servicios" size={16} /> },
+        { type: 'dropdown', key: "ecosistemas", label: "Ecosistemas", data: uniqueEcosistemas.map(e => ({ id: e.id, nombre: e.nombre })), icon: <Icon name="ecosistema" size={16} /> },
+
+        // Resto de campos (sin cambios en su contenido u orden relativo)
         { type: 'text', name: "nombre", label: "Nombre", icon: <Icon name="server" size={16} /> },
         { type: 'dropdown', key: "tipo", label: "Tipo", icon: <Icon name="type" size={16} />, data: [{ id: "VIRTUAL", nombre: "Virtual" }, { id: "FISICO", nombre: "Físico" }] },
         { type: 'text', name: "ip_mgmt", label: "IP MGMT", icon: <Icon name="ip" size={16} /> },
@@ -101,8 +106,6 @@ export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios,
         { type: 'text', name: "vlan_real", label: "VLAN REAL", icon: <Icon name="vlan" size={16} /> },
         { type: 'text', name: "ip_mask25", label: "IP Mask/25", icon: <Icon name="ip" size={16} /> },
         { type: 'text', name: "balanceador", label: "Balanceador", icon: <Icon name="balanceador" size={16} /> },
-        { type: 'dropdown', key: "servicios", label: "Servicios", data: uniqueServicios, icon: <Icon name="servicios" size={16} /> },
-        { type: 'dropdown', key: "ecosistemas", label: "Ecosistemas", data: uniqueEcosistemas.map(e => ({ id: e.id, nombre: e.nombre })), icon: <Icon name="ecosistema" size={16} /> },
         { type: 'dropdown', key: "aplicacion_ids", label: "Aplicaciones", data: uniqueAplicaciones.map(app => ({ id: app.id, nombre: `${app.nombre} - V${app.version}` })), icon: <Icon name="app" size={16} /> },
         { type: 'dropdown', key: "capas", label: "Capas", data: uniqueCapas, icon: <Icon name="layers" size={16} /> },
         { type: 'dropdown', key: "ambientes", label: "Ambientes", data: uniqueAmbientes, icon: <Icon name="globe" size={16} /> },

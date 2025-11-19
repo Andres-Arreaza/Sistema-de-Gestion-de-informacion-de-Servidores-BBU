@@ -597,6 +597,8 @@ def buscar_servidores():
         if request.args.getlist("capas"): query = query.filter(Servidor.capa_id.in_(request.args.getlist("capas")))
         if request.args.getlist("ambientes"): query = query.filter(Servidor.ambiente_id.in_(request.args.getlist("ambientes")))
         if request.args.getlist("dominios"): query = query.filter(Servidor.dominio_id.in_(request.args.getlist("dominios")))
+        # Filtrar por ecosistemas si se proporcionan
+        if request.args.getlist("ecosistemas"): query = query.filter(Servidor.ecosistema_id.in_(request.args.getlist("ecosistemas")))
         # CORRECCIÓN: Filtrar por la relación 'aplicaciones'
         if request.args.getlist("sistemas_operativos"): query = query.filter(Servidor.sistema_operativo_id.in_(request.args.getlist("sistemas_operativos")))
         if request.args.getlist("aplicacion_ids"):
