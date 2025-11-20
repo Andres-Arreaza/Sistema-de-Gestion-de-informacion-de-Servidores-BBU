@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import Icon from './Icon';
+import banescoLogo from '../../img/BanescoServers.png';
+
 
 const Login = ({ open, onClose }) => {
     const [username, setUsername] = useState('');
@@ -14,6 +17,17 @@ const Login = ({ open, onClose }) => {
             setLoading(false);
         }
     }, [open]);
+
+    // Asegurar que Material Icons esté cargado (Google Fonts) para usar el icono "close"
+    useEffect(() => {
+        const href = 'https://fonts.googleapis.com/icon?family=Material+Icons';
+        if (!document.querySelector(`link[href="${href}"]`)) {
+            const link = document.createElement('link');
+            link.href = href;
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+        }
+    }, []);
 
     const handleLogin = async (e) => {
         e && e.preventDefault();
@@ -48,11 +62,42 @@ const Login = ({ open, onClose }) => {
     return (
         <div className="modal__overlay" onClick={() => onClose && onClose()}>
             <div className="modal__content" onClick={(e) => e.stopPropagation()}>
-                <div className="modal__header">
-                    <h2 className="modal__title">Iniciar sesión</h2>
-                    <button className="btn-close" onClick={() => onClose && onClose()} />
+                <div className="modal__header" style={{ borderBottom: 'none', position: 'relative', height: 0, padding: 0, margin: 0, overflow: 'visible' }}>
+                    <button
+                        aria-label="Cerrar"
+                        onClick={() => onClose && onClose()}
+                        style={{
+                            position: 'absolute',
+                            right: 12,
+                            top: 8,
+                            background: 'transparent',
+                            border: 'none',
+                            lineHeight: '1',
+                            cursor: 'pointer',
+                            color: 'var(--color-texto-secundario)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: 6,
+                        }}
+                        title="Cerrar"
+                    >
+                        <span className="material-icons" aria-hidden="true" style={{ fontSize: 28, lineHeight: 1 }}>close</span>
+                    </button>
                 </div>
                 <div className="modal__body">
+                    {/* Logo centrado encima del formulario */}
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+                        <Link to="/" className="navbar-logo-link" aria-label="Inicio">
+                            <img
+                                className="navbar-logo-img"
+                                src={banescoLogo}
+                                alt="Banesco Servers"
+                                style={{ height: 56, objectFit: 'contain' }}
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                        </Link>
+                    </div>
                     <form onSubmit={handleLogin}>
                         <div className="form__group">
                             <label className="form__label">Usuario</label>
@@ -62,10 +107,24 @@ const Login = ({ open, onClose }) => {
                             <label className="form__label">Contraseña</label>
                             <input className="form__input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
                         </div>
-                        <div className="form__actions" style={{ justifyContent: 'flex-end' }}>
-                            <button type="button" className="btn btn--secondary" onClick={() => onClose && onClose()} disabled={loading}>Cancelar</button>
-                            <button type="submit" className="btn btn--primary" disabled={loading}>
-                                {loading ? 'Entrando...' : (<><Icon name="login" /> Entrar</>)}
+                        {/* Separación superior entre campos y botones; botones centrados */}
+                        <div className="form__actions" style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', borderTop: 'none', marginTop: '1rem', paddingTop: '0.5rem' }}>
+                            <button
+                                type="button"
+                                className="btn btn--secondary"
+                                onClick={() => onClose && onClose()}
+                                disabled={loading}
+                                style={{ minWidth: 160, width: 160 }}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                className="btn btn--primary"
+                                disabled={loading}
+                                style={{ minWidth: 160, width: 160 }}
+                            >
+                                {loading ? 'Entrando...' : (<><Icon name="login" /> Iniciar sesión</>)}
                             </button>
                         </div>
                     </form>
