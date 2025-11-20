@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 import ServidorCargaMasiva from '../component/ServidorCargaMasiva';
 import Icon from '../component/Icon';
 
-const Home = () => {
+const Home = (props) => {
     // Este estado controla cuándo se añade la clase para la animación
     const [isLoaded, setIsLoaded] = useState(false);
     const navigate = useNavigate();
@@ -44,6 +44,24 @@ const Home = () => {
         setModalCargaVisible(false);
     };
 
+    // nuevo: detectar si hay sesión activa (leer rol) y actualizar al recibir authChanged
+    const [userRole, setUserRole] = useState(() => localStorage.getItem('auth_role') || null);
+
+    useEffect(() => {
+        function onAuthChanged() {
+            setUserRole(localStorage.getItem('auth_role') || null);
+        }
+        window.addEventListener('authChanged', onAuthChanged);
+        return () => window.removeEventListener('authChanged', onAuthChanged);
+    }, []);
+
+    // Navegar a la página de carga masiva (o abrir modal de carga masiva)
+    const handleCargaMasiva = () => {
+        // Si dispones de una ruta para carga masiva, navegar a ella:
+        navigate('/editor-masivo');
+        // Si prefieres abrir un modal, reemplaza lo anterior por la lógica del modal.
+    };
+
     return (
         <>
             {/* Incluir la fuente Audiowide y la clase para usarla */}
@@ -71,23 +89,11 @@ const Home = () => {
 
                 <main className="main-content-area">
                     <div className="actions-section">
-                        {
-                            /*
-                            <ActionButton
-                            text="Búsqueda"
-                            icon={<Icon name="search" size={24} />}
-                            onClick={() => handleNavigate('/busqueda')}
-                        />
-                            */
-                        }
+
 
                         <ActionButton
                             text="Búsqueda"
                             icon={<Icon name="search" size={24} />}
-                            /*
-                            text="Editor Masivo"
-                            icon={<Icon name="edit" size={24} />}
-                            */
 
                             onClick={() => handleNavigate('/editor-masivo')}
                         />

@@ -331,6 +331,11 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
         document.body.removeChild(link);
     }
 
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('auth_token');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+    };
+
     useEffect(function () {
         async function fetchData() {
             try {
@@ -346,7 +351,8 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                     { name: "ecosistemas", url: backendUrl + "/api/ecosistemas" },
                     { name: "aplicaciones", url: backendUrl + "/api/aplicaciones" }
                 ];
-                var responses = await Promise.all(urls.map(function (item) { return fetch(item.url).then(function (res) { return res.ok ? res.json() : []; }); }));
+                var headers = { 'Content-Type': 'application/json', ...getAuthHeaders() };
+                var responses = await Promise.all(urls.map(function (item) { return fetch(item.url, { headers }).then(function (res) { return res.ok ? res.json() : []; }); }));
                 var servidoresData = responses[0];
                 var catalogosData = responses.slice(1);
                 setServidoresExistentes(servidoresData || []);
@@ -629,7 +635,7 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
         Promise.all(servidoresParaGuardar.map(function (servidor) {
             return fetch(process.env.BACKEND_URL + '/api/servidores', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
                 body: JSON.stringify(servidor)
             }).then(function (res) {
                 if (!res.ok) return res.json().then(function (err) { return Promise.reject(err); });
@@ -917,4 +923,4 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
     );
 };
 
-export default ServidorCargaMasiva
+export default ServidorCargaMasiva;

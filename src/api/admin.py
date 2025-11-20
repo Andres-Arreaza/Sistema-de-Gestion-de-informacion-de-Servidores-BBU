@@ -1,8 +1,9 @@
 import os
 from flask_admin import Admin
-from .models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, Ecosistema, Aplicacion
+from .models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, Ecosistema, Aplicacion, User, UserRole
 from flask_admin.contrib.sqla import ModelView
 from wtforms_sqlalchemy.fields import QuerySelectField
+from wtforms import PasswordField, SelectField
 
 def aplicacion_query():
     return Aplicacion.query.order_by(Aplicacion.nombre).all()
@@ -133,6 +134,38 @@ class ServidorView(BaseView):
         "estatus": {"query_factory": estatus_query, "allow_blank": True, "get_label": "nombre"}
     }
 
+class UserView(BaseView):
+    """ Vista personalizada para gestionar usuarios en Flask-Admin """
+    column_list = ["id", "username", "email", "role", "activo", "fecha_creacion", "fecha_modificacion"]
+    form_excluded_columns = ["password_hash"]  # no exponer el hash
+    form_extra_fields = {
+        # campo virtual para que el admin pueda introducir contraseña en texto plano
+        "password": PasswordField("Password")
+    }
+    # Mostrar role como select con opciones
+    form_overrides = {
+        "role": SelectField
+    }
+    form_args = {
+        "username": {"validators": [lambda form, field: field.data or field.errors.append("El username es obligatorio")]},
+        "role": {"choices": [(r.value, r.value) for r in UserRole]}
+    }
+
+    def on_model_change(self, form, model, is_created):
+        """
+        Antes de guardar el modelo, si el admin proporcionó 'password' la convertimos en hash
+        y la guardamos en password_hash; si se está creando un usuario nuevo y no hay contraseña,
+        lanzamos un error para evitar insertar NULL en password_hash.
+        """
+        # Si el formulario trae password (campo extra), aplicar hashing
+        pw = getattr(form, "password", None)
+        if pw and pw.data:
+            model.set_password(pw.data)
+        elif is_created:
+            # crear sin contraseña no está permitido -> evitar NOT NULL violation
+            raise ValueError("Es obligatorio establecer una contraseña al crear un usuario desde el administrador.")
+        # Si no es creación y no se suministró password, dejar password_hash sin cambios
+
 def setup_admin(app):
     """ Configurar Flask-Admin para gestionar modelos """
     app.secret_key = os.environ.get('FLASK_APP_KEY', 'sample key')
@@ -149,3 +182,6 @@ def setup_admin(app):
     admin.add_view(AplicacionView(Aplicacion, db.session))
     admin.add_view(EstatusView(Estatus, db.session))
     admin.add_view(ServidorView(Servidor, db.session))
+
+    # Añadir UserView al final
+    admin.add_view(UserView(User, db.session))

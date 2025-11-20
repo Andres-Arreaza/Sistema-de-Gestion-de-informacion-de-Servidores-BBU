@@ -1,8 +1,11 @@
 from flask import Flask, request, jsonify, Blueprint
-from api.models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, Ecosistema, TipoServidorEnum, Aplicacion
+from api.models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, Ecosistema, TipoServidorEnum, Aplicacion, User, UserRole
 from flask_cors import CORS, cross_origin
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
+from flask import current_app, g
+from itsdangerous import URLSafeTimedSerializer as Serializer, BadSignature, SignatureExpired
+from functools import wraps
 
 api = Blueprint('api', __name__)
 CORS(api)
@@ -77,6 +80,92 @@ def delete_generic(model, record_id):
     record = model.query.get(record_id)
     return delete_record(record)
 
+# ---- Autenticación / autorización simple con tokens firmados ----
+def generate_auth_token(user_id, role, expires_sec=None):
+    """
+    Genera un token firmado (URL-safe). La expiración se aplica en la verificación (loads max_age).
+    expires_sec: opción para documentar la expiración; por defecto se usa SECRET_TOKEN_EXPIRATION o 8h.
+    """
+    secret = current_app.config.get('SECRET_KEY', 'dev-secret')
+    s = Serializer(secret)
+    payload = {"id": user_id, "role": role}
+    # URLSafeTimedSerializer.dumps devuelve str en versiones modernas
+    return s.dumps(payload)
+
+def verify_auth_token(token, max_age=None):
+    """
+    Verifica token firmado. max_age en segundos; si no se pasa, toma SECRET_TOKEN_EXPIRATION o 8h.
+    Devuelve el payload dict si válido, o None si inválido/expirado.
+    """
+    secret = current_app.config.get('SECRET_KEY', 'dev-secret')
+    s = Serializer(secret)
+    if max_age is None:
+        max_age = current_app.config.get('SECRET_TOKEN_EXPIRATION', 60 * 60 * 8)
+    try:
+        data = s.loads(token, max_age=max_age)
+    except SignatureExpired:
+        # token válido pero expirado
+        return None
+    except BadSignature:
+        return None
+    return data
+
+def require_roles(allowed_roles):
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            auth = request.headers.get('Authorization', None)
+            if not auth or not auth.startswith('Bearer '):
+                return jsonify({"error": "Autenticación requerida"}), 401
+            token = auth.split(' ', 1)[1].strip()
+            # usar expiración configurable
+            payload = verify_auth_token(token)
+            if not payload:
+                return jsonify({"error": "Token inválido o expirado"}), 401
+            # Adjuntar info del usuario en g
+            g.current_user = User.query.get(payload.get('id'))
+            g.current_role = payload.get('role')
+            if g.current_role not in allowed_roles:
+                return jsonify({"error": "Permiso denegado"}), 403
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
+
+# --- Nuevo endpoint de login ---
+@api.route("/auth/login", methods=["POST"])
+def auth_login():
+    data = request.get_json() or {}
+    username = data.get("username")
+    password = data.get("password")
+    if not username or not password:
+        return jsonify({"error": "username y password son requeridos"}), 400
+    user = User.query.filter_by(username=username, activo=True).first()
+    if not user or not user.check_password(password):
+        return jsonify({"error": "Credenciales inválidas"}), 401
+    token = generate_auth_token(user.id, user.role.value)
+    return jsonify({"token": token, "role": user.role.value, "user": user.serialize()}), 200
+
+# --- Crear usuario (solo GERENTE) ---
+@api.route("/auth/users", methods=["POST"])
+@require_roles([UserRole.GERENTE.value])
+def create_user():
+    data = request.get_json() or {}
+    username = data.get("username")
+    password = data.get("password")
+    role = data.get("role", UserRole.ESPECIALISTA.value)
+    email = data.get("email")
+    if not username or not password:
+        return jsonify({"error": "username y password son obligatorios"}), 400
+    if role not in [r.value for r in UserRole]:
+        return jsonify({"error": "role inválido"}), 400
+    if User.query.filter_by(username=username).first():
+        return jsonify({"error": "El username ya existe"}), 409
+    new_user = User(username=username, email=email, role=UserRole(role))
+    new_user.set_password(password)
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify(new_user.serialize()), 201
+
 # --- Rutas CRUD genéricas para cada modelo ---
 @api.route("/servicios", methods=["GET"])
 def get_servicios():
@@ -88,6 +177,7 @@ def get_servicio_by_id(record_id):
 
 @api.route("/servicios", methods=["POST"])
 @cross_origin()
+@require_roles([UserRole.GERENTE.value, UserRole.ESPECIALISTA.value])
 def create_servicio():
     return create_generic(Servicio)
 
@@ -271,6 +361,7 @@ def get_servidor_by_id(record_id):
 
 @api.route("/servidores", methods=["POST"])
 @cross_origin()
+@require_roles([UserRole.GERENTE.value, UserRole.ESPECIALISTA.value])
 def create_servidor():
     data = request.get_json()
     if not data:
@@ -388,6 +479,7 @@ def create_servidor():
 
 @api.route("/servidores/<int:record_id>", methods=["PUT"])
 @cross_origin()
+@require_roles([UserRole.GERENTE.value, UserRole.ESPECIALISTA.value])
 def update_servidor(record_id):
     try:
         servidor = Servidor.query.get(record_id)
@@ -537,6 +629,7 @@ def update_servidor(record_id):
 
 @api.route("/servidores/<int:record_id>", methods=["DELETE"])
 @cross_origin()
+@require_roles([UserRole.GERENTE.value, UserRole.ESPECIALISTA.value])
 def delete_servidor(record_id):
     """Eliminación permanente (hard delete) de un servidor por ID"""
     servidor = Servidor.query.get(record_id)
@@ -711,6 +804,7 @@ def delete_ecosistema(record_id):
 
 @api.route("/servidores/bulk-delete", methods=["POST"])
 @cross_origin()
+@require_roles([UserRole.GERENTE.value, UserRole.ESPECIALISTA.value])
 def bulk_delete_servidores():
     """
     Elimina permanentemente (hard delete) los servidores cuyos ids se envían en el body:

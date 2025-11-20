@@ -1,6 +1,8 @@
 import click
 from api.models import db, Servicio, Capa, Ambiente, Dominio, SistemaOperativo, Estatus, Servidor, Ecosistema
 from datetime import datetime
+from werkzeug.security import generate_password_hash
+from api.models import User, UserRole
 
 """
 Este archivo define comandos CLI en Flask para la gestión de modelos.
@@ -175,3 +177,30 @@ def setup_commands(app):
     @click.argument("count")
     def insert_test_estatus(count):
         insert_test_generic(Estatus, count, "Estatus")
+
+    # Nuevo comando: crear gerente inicial
+    @app.cli.command("create-gerente")
+    @click.argument("username")
+    @click.argument("password")
+    @click.option("--email", default=None, help="Email opcional del gerente")
+    def create_gerente(username, password, email):
+        """Crear un usuario con rol GERENTE (si ya existe y está inactivo, lo reactiva)."""
+        existing = User.query.filter_by(username=username).first()
+        if existing:
+            if existing.activo:
+                print(f"Usuario {username} ya existe y está activo.")
+                return
+            existing.activo = True
+            existing.role = UserRole.GERENTE
+            existing.set_password(password)
+            if email:
+                existing.email = email
+            existing.fecha_modificacion = datetime.utcnow()
+            db.session.commit()
+            print(f"Usuario {username} reactivado como GERENTE.")
+            return
+        u = User(username=username, email=email, role=UserRole.GERENTE)
+        u.set_password(password)
+        db.session.add(u)
+        db.session.commit()
+        print(f"Gerente {username} creado con éxito.")

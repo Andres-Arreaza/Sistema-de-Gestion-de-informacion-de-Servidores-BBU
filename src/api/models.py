@@ -211,3 +211,37 @@ class Servidor(BaseModel):
             "ecosistema": self.ecosistema.serialize() if self.ecosistema else None,
         })
         return data
+
+from werkzeug.security import generate_password_hash, check_password_hash
+from enum import Enum as PyEnum
+
+class UserRole(PyEnum):
+    GERENTE = "GERENTE"
+    ESPECIALISTA = "ESPECIALISTA"
+
+class User(BaseModel):
+    __tablename__ = 'users'
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=True)
+    password_hash = db.Column(db.String(256), nullable=False)
+    role = db.Column(db.Enum(UserRole), nullable=False, default=UserRole.ESPECIALISTA)
+
+    __table_args__ = (
+        db.UniqueConstraint('username', name='uq_user_username'),
+        db.UniqueConstraint('email', name='uq_user_email'),
+    )
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def serialize(self):
+        data = super().serialize()
+        data.update({
+            "username": self.username,
+            "email": self.email,
+            "role": self.role.value if self.role else None
+        })
+        return data

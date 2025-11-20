@@ -191,3 +191,395 @@
   cursor: not-allowed;
   transform: none;
 }
+
+/* ===== Estilos para el trigger de usuario y su menú desplegable ===== */
+.btn--link {
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  color: var(--color-texto-principal);
+  font-weight: 600;
+  border-radius: 8px;
+  transition: background 0.14s ease, transform 0.06s ease;
+}
+.btn--link:focus,
+.btn--link:active {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0,122,255,0.08);
+}
+.btn--link:hover {
+  background: rgba(0,0,0,0.04);
+  transform: translateY(-1px);
+}
+
+/* Chevron pequeño dentro del trigger (triángulo/rotador) */
+.btn--link .chevron,
+.chevron {
+  width: 9px;
+  height: 9px;
+  display: inline-block;
+  box-sizing: border-box;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.18s ease, opacity 0.12s ease;
+  opacity: 0.85;
+  margin-left: 6px;
+}
+.btn--link .chevron.open,
+.chevron.open {
+  transform: rotate(-135deg);
+}
+
+/* Contenedor del menú de usuario */
+.navbar-user-menu {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.12);
+  min-width: 220px;
+  padding: 6px 6px;
+  z-index: 1400;
+  animation: fadeInMenu 160ms ease-out;
+}
+
+/* Override: reducir ancho del dropdown del usuario y hacerlo responsivo */
+.navbar-user-menu {
+  min-width: 160px;    /* ancho mínimo menor */
+  max-width: 240px;    /* no demasiado ancho */
+  width: auto;         /* dejar que el contenido determine el ancho dentro de límites */
+  padding: 6px;        /* más compacto */
+}
+
+/* Si el contenido es muy estrecho, evitar que se vea comprimido */
+.navbar-user-menu .navbar-link,
+.navbar-user-menu .btn--primary,
+.navbar-user-menu .navbar-link-highlight {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* En pantallas pequeñas, usar ancho relativo para evitar overflow */
+@media (max-width: 480px) {
+  .navbar-user-menu {
+    right: 8px !important;
+    left: auto !important;
+    min-width: 140px;
+    max-width: calc(100vw - 24px);
+    width: auto;
+  }
+}
+
+/* Animación de entrada */
+@keyframes fadeInMenu {
+  from { opacity: 0; transform: translateY(-6px) scale(0.995); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Opciones internas del menú (links y botones) */
+.navbar-user-menu .navbar-link {
+  display: block;
+  width: 100%;
+  padding: var(--espaciado-sm) var(--espaciado-md); /* padding reducido para compactar */
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-texto-principal);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  text-align: left;
+  box-sizing: border-box;
+  border-radius: 6px;
+  transition: var(--transicion-rapida);
+  cursor: pointer;
+}
+
+.navbar-user-menu .navbar-link:hover,
+.navbar-user-menu .navbar-link:focus {
+  background-color: var(--color-primario);
+  color: var(--color-superficie);
+  outline: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06); /* ligera elevación para énfasis */
+}
+
+/* ====== Botón "Crear Servidor" en menú de usuario: estilo igual a .config-menu-header ====== */
+.navbar-user-menu .btn--primary {
+  display: block;
+  width: 100%;
+  padding: var(--espaciado-sm) var(--espaciado-md); /* padding reducido */
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: left;
+  color: var(--color-superficie);
+  background: var(--color-primario);
+  border: none;
+  border-radius: 6px;
+  box-sizing: border-box;
+  transition: var(--transicion-rapida);
+  cursor: pointer;
+}
+
+/* Hover / focus igual que .config-menu-header */
+.navbar-user-menu .btn--primary:hover,
+.navbar-user-menu .btn--primary:focus {
+  background-color: var(--color-primario-hover);
+  color: var(--color-superficie);
+  outline: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* Asegurar que la clase de highlight no rompa la apariencia */
+.navbar-user-menu .btn--primary.navbar-link-highlight {
+  font-weight: 700; /* mantener énfasis en el texto destacado */
+}
+
+/* Mantener el estilo "highlight" (crear servidor) consistente */
+.navbar-user-menu .btn--primary.navbar-link-highlight,
+.navbar-user-menu .navbar-link.navbar-link-highlight {
+  background-color: var(--color-primario);
+  color: var(--color-superficie);
+  font-weight: 700;
+}
+
+/* Separador compacto entre grupos (administración / usuario) */
+.navbar-user-menu .navbar-divider {
+  height: 1px;
+  background: var(--color-borde);
+  margin: 6px 0;
+}
+
+/* Asegurar foco accesible (keyboard) con sombra suave */
+.navbar-user-menu .navbar-link:focus {
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.08);
+}
+
+/* Ajustes responsivos: asegurar que el menú no salga del viewport en móviles */
+@media (max-width: 720px) {
+  .navbar-user-menu {
+    right: 8px !important;
+    left: auto !important;
+    min-width: calc(100vw - 32px);
+    max-width: calc(100vw - 32px);
+  }
+}
+
+/* ===== Override: "Crear Servidor" debe ser blanco por defecto y verde al hover ===== */
+.navbar-user-menu .btn--primary {
+  /* estado por defecto: fondo claro (superficie), texto en color primario */
+  background: var(--color-superficie) !important;
+  color: var(--color-primario) !important;
+  border: none !important; /* sin borde visible */
+  box-shadow: none !important;
+  padding: var(--espaciado-sm) var(--espaciado-md); /* padding reducido */
+  transition: background-color 160ms ease, color 160ms ease, transform 80ms ease;
+}
+
+/* Hover / focus: fondo verde y texto blanco */
+.navbar-user-menu .btn--primary:hover,
+.navbar-user-menu .btn--primary:focus {
+  background-color: var(--color-primario) !important;
+  color: var(--color-superficie) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* Mantener el estilo destacado si además se usa la clase .navbar-link_highlight */
+.navbar-user-menu .btn--primary.navbar-link-highlight {
+  font-weight: 700;
+  /* la apariencia por defecto ya es blanca; mantener hover igual */
+}
+
+/* Contenedor derecho del navbar: control centralizado del espaciado entre elementos */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem; /* separación ligera entre Administrar / Usuario / Home */
+}
+
+/* Espacio pequeño entre items del menú de usuario (vertical) */
+.navbar-user-menu .navbar-link,
+.navbar-user-menu .btn--primary {
+  margin: 4px 0; /* 4px arriba/abajo para separar levemente */
+}
+
+/* Ajuste: margen horizontal para botones/iconos dentro del navbar (evita exceso de pegado) */
+.navbar-container .btn,
+.navbar-container .btn-icon,
+.navbar-container .btn--link {
+  margin-left: 6px;
+}
+
+/* Evitar añadir margen extra al primer elemento del grupo derecho */
+.navbar-right > :first-child {
+  margin-left: 0;
+}
+
+/* Forzar consistencia en los items del menú de usuario:
+   - todos ocupan 100% de ancho del panel
+   - padding y alineado idéntico
+   - quitar márgenes laterales extra que venían de .navbar-container .btn
+*/
+.navbar-user-menu .navbar-link,
+.navbar-user-menu .btn--primary,
+.navbar-user-menu .btn {
+  display: block;
+  width: 100%;
+  padding: var(--espaciado-sm) var(--espaciado-md);
+  text-align: left;
+  box-sizing: border-box;
+  margin: 4px 0; /* separación vertical pequeña entre items */
+  border: none; /* evitar líneas inesperadas */
+  background: transparent; /* por defecto transparente; btn--primary tendrá override en hover */
+  color: var(--color-texto-principal);
+}
+
+/* El item destacado (Crear Servidor) mantendrá su apariencia blanca por defecto y verde al hover,
+   pero comparte padding/anchura con los demás gracias a la regla anterior. */
+.navbar-user-menu .btn--primary {
+  background: var(--color-superficie) !important;
+  color: var(--color-primario) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Hover / focus del botón destacado */
+.navbar-user-menu .btn--primary:hover,
+.navbar-user-menu .btn--primary:focus {
+  background-color: var(--color-primario) !important;
+  color: var(--color-superficie) !important;
+}
+
+/* Asegurar que los items no hereden margin-left desde el navbar principal */
+.navbar-user-menu .btn,
+.navbar-user-menu .navbar-link,
+.navbar-user-menu .btn--primary {
+  margin-left: 0 !important;
+}
+
+/* Restablecer cualquier regla general que diera margen a los botones dentro del navbar */
+.navbar-container .btn,
+.navbar-container .btn-icon,
+.navbar-container .btn--link {
+  margin-left: 6px; /* conservar para el navbar principal */
+}
+/* Pero dentro del menú de usuario no aplicar ese margin-left */
+.navbar-user-menu .btn,
+.navbar-user-menu .btn-icon,
+.navbar-user-menu .btn--link {
+  margin-left: 0 !important;
+}
+
+/* ===== Uniformizar items del menú de usuario: todos mismos estilos base (excepto logout) ===== */
+.navbar-user-menu .navbar-link,
+.navbar-user-menu .navbar-link-highlight {
+  display: block;
+  width: 100%;
+  padding: var(--espaciado-sm) var(--espaciado-md);
+  text-align: left;
+  box-sizing: border-box;
+  margin: 4px 0;
+  border: none;
+  background: transparent;
+  color: var(--color-texto-principal);
+  border-radius: 6px;
+  transition: background-color 0.12s ease, color 0.12s ease, transform 0.06s ease;
+  cursor: pointer;
+}
+
+/* Hover / focus idéntico para todos los items (excepto logout que tendrá override) */
+.navbar-user-menu .navbar-link:hover,
+.navbar-user-menu .navbar-link:focus,
+.navbar-user-menu .navbar-link-highlight:hover,
+.navbar-user-menu .navbar-link-highlight:focus {
+  background-color: var(--color-primario);
+  color: var(--color-superficie);
+  outline: none;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* ===== Excepción: estilo para "Cerrar sesión" ===== */
+.navbar-user-menu .logout-link {
+  color: var(--color-error);
+  background: transparent;
+  font-weight: 600;
+}
+
+/* Hover/focus específico para logout: fondo rojo y texto blanco */
+.navbar-user-menu .logout-link:hover,
+.navbar-user-menu .logout-link:focus {
+  background: var(--color-error);
+  color: var(--color-superficie);
+  outline: none;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* Asegurar que no haya margen-left heredado dentro del menú */
+.navbar-user-menu .btn,
+.navbar-user-menu .btn-icon,
+.navbar-user-menu .btn--link {
+  margin-left: 0 !important;
+}
+
+/* OVERRIDE FINAL: asegurar que "Crear Servidor" (btn--primary en el menú) y el item destacado
+   tengan el mismo color de texto por defecto que los demás items (var(--color-texto-principal)). */
+.navbar-user-menu .btn--primary,
+.navbar-user-menu .navbar-link-highlight {
+  background: var(--color-superficie) !important; /* fondo por defecto (blanco/superficie) */
+  color: var(--color-texto-principal) !important;  /* texto igual que el resto de items */
+  border: none !important;
+  box-shadow: none !important;
+  font-weight: 500 !important;
+}
+
+/* Hover / focus: conservar que se pongan verdes con texto blanco */
+.navbar-user-menu .navbar-link:hover,
+.navbar-user-menu .navbar-link:focus,
+.navbar-user-menu .navbar-link-highlight:hover,
+.navbar-user-menu .navbar-link-highlight:focus,
+.navbar-user-menu .btn--primary:hover,
+.navbar-user-menu .btn--primary:focus {
+  background-color: var(--color-primario) !important;
+  color: var(--color-superficie) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
+
+/* Mantener excepción visual para "Cerrar sesión" (logout) */
+.navbar-user-menu .logout-link {
+  color: var(--color-error) !important;
+  background: transparent !important;
+  font-weight: 600;
+}
+.navbar-user-menu .logout-link:hover,
+.navbar-user-menu .logout-link:focus {
+  background: var(--color-error) !important;
+  color: var(--color-superficie) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
+
+/* Persistir selección: el item marcado con .selected mantiene fondo primario y texto superficie */
+.navbar-user-menu .navbar-link.selected,
+.navbar-user-menu .navbar-link-highlight.selected,
+.navbar-user-menu .btn--primary.selected,
+.navbar-user-menu .logout-link.selected {
+  background-color: var(--color-secundario) !important; /* usar azul cuando está activo */
+  color: var(--color-superficie) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
+
+/* Mantener hover igual cuando está seleccionado */
+.navbar-user-menu .navbar-link.selected:hover,
+.navbar-user-menu .navbar-link-highlight.selected:hover,
+.navbar-user-menu .btn--primary.selected:hover,
+.navbar-user-menu .logout-link.selected:hover {
+  background-color: var(--color-secundario) !important; /* hover mantiene azul para los seleccionados */
+  color: var(--color-superficie) !important;
+}

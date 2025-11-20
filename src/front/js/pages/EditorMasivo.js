@@ -360,15 +360,20 @@ const EditorMasivo = () => {
     // Estado para ordenamiento
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
+    // Helper para auth
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('auth_token');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+    };
+    const getAuthRole = () => localStorage.getItem('auth_role') || null;
+
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (exportMenuRef.current && !exportMenuRef.current.contains(event.target)) {
-                setIsExportMenuOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        function onAuthChanged() { setUserRole(getAuthRole()); }
+        window.addEventListener('authChanged', onAuthChanged);
+        return () => window.removeEventListener('authChanged', onAuthChanged);
     }, []);
+
+    const [userRole, setUserRole] = useState(getAuthRole());
 
     useEffect(() => {
         const fetchCatalogos = async () => {
@@ -384,18 +389,14 @@ const EditorMasivo = () => {
                     { name: "ecosistemas", url: `${backendUrl}/api/ecosistemas` },
                     { name: "aplicaciones", url: `${backendUrl}/api/aplicaciones` }
                 ];
+                const headers = { 'Content-Type': 'application/json', ...getAuthHeaders() };
                 const responses = await Promise.all(urls.map(async item => {
                     try {
-                        const res = await fetch(item.url);
-                        if (!res.ok) {
-                            throw new Error(`HTTP ${res.status} al cargar ${item.name}`);
-                        }
+                        const res = await fetch(item.url, { headers });
+                        if (!res.ok) throw new Error(`HTTP ${res.status} al cargar ${item.name}`);
                         const contentType = res.headers.get('content-type');
-                        if (contentType && contentType.includes('application/json')) {
-                            return await res.json();
-                        } else {
-                            throw new Error(`Respuesta no es JSON para ${item.name}`);
-                        }
+                        if (contentType && contentType.includes('application/json')) return await res.json();
+                        else throw new Error(`Respuesta no es JSON para ${item.name}`);
                     } catch (err) {
                         console.error(`Error al cargar catálogo ${item.name}:`, err);
                         return [];
@@ -649,6 +650,11 @@ const EditorMasivo = () => {
     };
 
     const handleEliminarServidor = async (servidorParaEliminar) => {
+        // verificar permisos
+        if (!userRole || !['GERENTE', 'ESPECIALISTA'].includes(userRole)) {
+            return Swal.fire('Permiso denegado', 'Debes iniciar sesión con un rol que tenga permisos para eliminar.', 'error');
+        }
+
         const result = await Swal.fire({
             title: '¿Estás seguro?',
             text: `El servidor "${servidorParaEliminar.nombre}" será eliminado permanentemente. Esta acción no se puede deshacer.`,
@@ -664,6 +670,7 @@ const EditorMasivo = () => {
             try {
                 const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/${servidorParaEliminar.id}`, {
                     method: 'DELETE',
+                    headers: getAuthHeaders()
                 });
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -681,6 +688,10 @@ const EditorMasivo = () => {
 
     // Eliminar todos los servidores obtenidos por la búsqueda actual
     const handleEliminarResultados = async () => {
+        if (!userRole || !['GERENTE', 'ESPECIALISTA'].includes(userRole)) {
+            return Swal.fire('Permiso denegado', 'Debes iniciar sesión con un rol que tenga permisos para eliminar.', 'error');
+        }
+
         const ids = Array.from(seleccionados);
         if (!ids.length) {
             Swal.fire('Sin selección', 'Por favor selecciona al menos un servidor para eliminar.', 'info');
@@ -704,7 +715,7 @@ const EditorMasivo = () => {
             const backendUrl = process.env.BACKEND_URL;
             const response = await fetch(`${backendUrl}/api/servidores/bulk-delete`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
                 body: JSON.stringify({ ids })
             });
             const contentType = response.headers.get('content-type');
@@ -732,6 +743,10 @@ const EditorMasivo = () => {
     };
 
     const handleGuardarCambios = async () => {
+        if (!userRole || !['GERENTE', 'ESPECIALISTA'].includes(userRole)) {
+            return Swal.fire('Permiso denegado', 'Debes iniciar sesión con un rol que tenga permisos para guardar cambios.', 'error');
+        }
+
         setValidationErrors({});
         const numCambios = Object.keys(cambios).length;
         if (numCambios === 0) {
@@ -874,7 +889,7 @@ const EditorMasivo = () => {
                 try {
                     const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/${id}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
                         body: JSON.stringify(payload)
                     });
                     return response.ok;
@@ -1249,14 +1264,14 @@ const EditorMasivo = () => {
                                         </div>
 
 
-                                        <button className="btn btn--primary" onClick={() => setIsEditMode(true)} disabled={isEditMode}>
+                                        <button className="btn btn--primary" onClick={() => setIsEditMode(true)} disabled={isEditMode || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}>
                                             <Icon name="edit" /> Editar
                                         </button>
 
                                         <button
                                             className="btn btn--danger"
                                             onClick={handleEliminarResultados}
-                                            disabled={cargando || seleccionados.size === 0}
+                                            disabled={cargando || seleccionados.size === 0 || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}
                                             title="Eliminar servidores seleccionados"
                                         >
                                             <Icon name="trash" /> Eliminar Selecionados

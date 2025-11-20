@@ -139,6 +139,12 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
     });
     const [allServers, setAllServers] = useState([]);
 
+    // Añadir helper para headers auth
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('auth_token');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+    };
+
     useEffect(() => {
         const fetchAllData = async () => {
             try {
@@ -154,9 +160,10 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
                     { name: "aplicaciones", url: `${backendUrl}/api/aplicaciones` },
                     { name: "allServers", url: `${backendUrl}/api/servidores` }
                 ];
+                const headers = { 'Content-Type': 'application/json', ...getAuthHeaders() };
                 const responses = await Promise.all(urls.map(async item => {
                     try {
-                        const res = await fetch(item.url);
+                        const res = await fetch(item.url, { headers });
                         if (!res.ok) {
                             const contentType = res.headers.get('content-type');
                             let errorMsg = `Error HTTP ${res.status} al cargar ${item.name}`;
@@ -372,7 +379,7 @@ const ServidorFormulario = ({ servidorInicial, onSuccess, setModalVisible, esEdi
             try {
                 const response = await fetch(url, {
                     method: method,
-                    headers: { "Content-Type": "application/json" },
+                    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
                     body: JSON.stringify({ ...datosParaEnviar, activo: true })
                 });
                 const contentType = response.headers.get('content-type');
