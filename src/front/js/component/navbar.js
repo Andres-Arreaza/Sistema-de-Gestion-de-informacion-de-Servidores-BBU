@@ -21,7 +21,13 @@ export const Navbar = () => {
     const userMenuRef = useRef(null);
 
     useEffect(() => {
+        // cerrar dropdowns generales y menú de usuario al cambiar de ruta
         setIsDropdownOpen(false);
+        setIsUserMenuOpen(false);
+        // Si estamos en Home, limpiar la selección de "Administrar"
+        if (location.pathname === "/") {
+            setSelectedMenuItem(null);
+        }
     }, [location]);
 
     useEffect(() => {
@@ -157,14 +163,23 @@ export const Navbar = () => {
 
                     {/* Home (derecha) */}
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <Link className={`btn-icon ${location.pathname === "/" ? "active" : ""}`} to="/" aria-label="Página de inicio">
+                        <Link
+                            className={`btn-icon ${location.pathname === "/" ? "active" : ""}`}
+                            to="/"
+                            aria-label="Página de inicio"
+                            onClick={() => {
+                                // al pulsar Home cerrar menú de usuario y limpiar selección
+                                setIsUserMenuOpen(false);
+                                setSelectedMenuItem(null);
+                            }}
+                        >
                             <Icon name="home" size={24} />
                         </Link>
                     </div>
                 </div>
             </nav>
 
-            {/* Login componente */}
+            {/* Mostrar el componente Login cuando open === true */}
             {open && <Login open={open} onClose={() => setOpen(false)} />}
         </header>
     );
