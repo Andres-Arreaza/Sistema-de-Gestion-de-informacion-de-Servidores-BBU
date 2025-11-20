@@ -916,29 +916,7 @@ const EditorMasivo = () => {
         }
     };
 
-    // --- Ordenamiento de la tabla ---
-    const columnas = [
-        { header: 'Nombre', key: 'nombre', sortable: true },
-        { header: 'Tipo', key: 'tipo' },
-        { header: 'IP MGMT', key: 'ip_mgmt' },
-        { header: 'VLAN MGMT', key: 'vlan_mgmt' },
-        { header: 'IP Real', key: 'ip_real' },
-        { header: 'VLAN REAL', key: 'vlan_real' },
-        { header: 'IP Mask/25', key: 'ip_mask25' },
-        { header: 'Servicio', key: 'servicio_id', catalog: 'servicios' },
-        { header: 'Ecosistema', key: 'ecosistema_id', catalog: 'ecosistemas' },
-        { header: 'Aplicacion', key: 'aplicaciones' },
-        { header: 'Capa', key: 'capa_id', catalog: 'capas' },
-        { header: 'Ambiente', key: 'ambiente_id', catalog: 'ambientes' },
-        { header: 'Balanceador', key: 'balanceador' },
-        { header: 'Dominio', key: 'dominio_id', catalog: 'dominios' },
-        { header: 'S.O.', key: 'sistema_operativo_id', catalog: 'sistemasOperativos' },
-        { header: 'Estatus', key: 'estatus_id', catalog: 'estatus' },
-        { header: 'Descripción', key: 'descripcion' },
-        { header: 'Link', key: 'link' }
-    ];
-
-    // Función para ordenar los servidores según sortConfig
+    // --- FUNCION: ordenar servidores según sortConfig (reinserción para evitar ReferenceError) ---
     const getSortedServidores = () => {
         if (!sortConfig.key) return servidores;
         const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
@@ -971,18 +949,17 @@ const EditorMasivo = () => {
         return sorted;
     };
 
-    // Handler para ordenar por columna
+    // --- NUEVO: handler para cambiar la columna y dirección de ordenamiento ---
     const handleSort = (key) => {
         setSortConfig(prev => {
             if (prev.key === key) {
-                // Alternar dirección
                 return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
-            } else {
-                return { key, direction: 'asc' };
             }
+            return { key, direction: 'asc' };
         });
     };
 
+    // --- RENDER: tabla de resultados (reintegrada para evitar ReferenceError) ---
     const renderResultadosTabla = () => {
         const sortedServidores = getSortedServidores();
         const indexOfLastItem = currentPage * itemsPerPage;
@@ -1006,11 +983,8 @@ const EditorMasivo = () => {
                                     {c.sortable && (
                                         <span style={{ marginLeft: 4, display: 'inline-flex', alignItems: 'center' }}>
                                             {sortConfig.key === c.key ? (
-                                                sortConfig.direction === 'asc' ? (
-                                                    <Icon name="arrow-upward" size={16} style={{ color: '#005A9C' }} />
-                                                ) : (
-                                                    <Icon name="arrow-downward" size={16} style={{ color: '#005A9C' }} />
-                                                )
+                                                sortConfig.direction === 'asc' ? <Icon name="arrow-upward" size={16} style={{ color: '#005A9C' }} />
+                                                    : <Icon name="arrow-downward" size={16} style={{ color: '#005A9C' }} />
                                             ) : (
                                                 <Icon name="unfold-more" size={16} style={{ color: '#888' }} />
                                             )}
@@ -1035,14 +1009,17 @@ const EditorMasivo = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {currentServidores.map((servidor, index) => {
+                    {currentServidores.map((servidor, idx) => {
+                        const rowIndex = indexOfFirstItem + idx + 1;
                         const isModified = !!cambios[servidor.id];
                         const errorsInRow = validationErrors[servidor.id] || {};
 
                         return (
                             <tr key={servidor.id} className={isModified ? 'fila-modificada' : ''}>
-                                <td style={{ textAlign: 'center' }}>{indexOfFirstItem + index + 1}</td>
+                                <td style={{ textAlign: 'center' }}>{rowIndex}</td>
+
                                 {columnas.map(col => {
+                                    // Link como botón
                                     if (col.key === 'link') {
                                         return (
                                             <td key={`${servidor.id}-link`} style={{ textAlign: 'center', width: '90px', minWidth: '70px', maxWidth: '110px' }}>
@@ -1051,53 +1028,46 @@ const EditorMasivo = () => {
                                                     onClick={() => abrirModalLink(servidor)}
                                                     title="Ver detalles y enlace"
                                                     disabled={!servidor.link}
-                                                    style={{
-                                                        width: 34,
-                                                        height: 34,
-                                                        padding: 4,
-                                                        borderRadius: '50%',
-                                                        display: 'inline-flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}
+                                                    style={{ width: 34, height: 34, padding: 4, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                                                 >
                                                     <Icon name="visibility" />
                                                 </button>
                                             </td>
                                         );
                                     }
+
                                     let displayValue = servidor[col.key];
-                                    // Para las IPs, mostrar N/A si no hay valor
-                                    if (["ip_mgmt", "ip_real", "ip_mask25"].includes(col.key)) {
-                                        displayValue = displayValue || 'N/A';
-                                    }
+
+                                    // Catálogos: mostrar nombre/versión si corresponde
                                     if (col.catalog) {
                                         const found = catalogos[col.catalog]?.find(c => String(c.id) === String(displayValue));
                                         displayValue = found ? (col.catalog === 'sistemasOperativos' ? `${found.nombre} - V${found.version}` : found.nombre) : 'N/A';
                                     }
+
+                                    // Aplicaciones: manejar arrays
                                     if (col.key === 'aplicaciones') {
                                         const apps = servidor.aplicaciones || [];
                                         if (servidor.aplicacion_id && apps.length === 0) {
                                             const appFromCatalog = catalogos.aplicaciones.find(a => String(a.id) === String(servidor.aplicacion_id));
-                                            if (appFromCatalog) {
-                                                apps.push(appFromCatalog);
-                                            }
+                                            if (appFromCatalog) apps.push(appFromCatalog);
                                         }
                                         displayValue = apps.length > 0 ? apps.map(a => `${a.nombre} - V${a.version}`).join(', ') : 'N/A';
                                     }
 
+                                    // IPs: mostrar N/A si vacío
+                                    if (["ip_mgmt", "ip_real", "ip_mask25"].includes(col.key)) {
+                                        displayValue = displayValue || 'N/A';
+                                    }
+
                                     const hasError = !!errorsInRow[col.key];
 
-                                    // --- CAMBIO: si la columna es vlan_mgmt o vlan_real, dividir por espacios y mostrar cada palabra en su propia línea ---
+                                    // VLAN: dividir por espacios para mostrar en varias líneas si aplica
                                     if (col.key === 'vlan_mgmt' || col.key === 'vlan_real') {
-                                        const text = displayValue || '';
-                                        const parts = String(text).split(/\s+/).filter(Boolean);
+                                        const text = String(displayValue || '');
+                                        const parts = text.split(/\s+/).filter(Boolean);
                                         return (
                                             <td key={`${servidor.id}-${col.key}`} title={text} className={hasError ? 'celda-con-error-validacion' : ''} style={{ whiteSpace: 'normal' }}>
-                                                {parts.length > 1
-                                                    ? parts.map((p, i) => <span key={i}>{p}{i < parts.length - 1 && <br />}</span>)
-                                                    : text
-                                                }
+                                                {parts.length > 1 ? parts.map((p, i) => <span key={i}>{p}{i < parts.length - 1 && <br />}</span>) : text}
                                             </td>
                                         );
                                     }
@@ -1108,6 +1078,7 @@ const EditorMasivo = () => {
                                         </td>
                                     );
                                 })}
+
                                 <td style={{ textAlign: 'center', width: '140px', minWidth: '120px', maxWidth: '180px' }}>
                                     <input
                                         type="checkbox"
@@ -1126,40 +1097,6 @@ const EditorMasivo = () => {
         );
     };
 
-    const renderBulkEditControls = () => {
-        return (
-            <div className="bulk-edit-controls">
-                {columnasEditables.map(colKey => {
-                    const colDef = opcionesColumnas.find(c => c.value === colKey);
-                    if (!colDef) return null;
-
-                    return (
-                        <div key={colKey} className="bulk-edit-field">
-                            <label>{colDef.label}:</label>
-                            {colDef.type === 'input' ? (
-                                <input
-                                    type="text"
-                                    className="form__input"
-                                    value={bulkEditValues[colKey] || ''}
-                                    onChange={(e) => handleBulkEditChange(colKey, e.target.value)}
-                                />
-                            ) : (
-                                <BulkEditDropdown
-                                    value={bulkEditValues[colKey] || ''}
-                                    onChange={(value) => handleBulkEditChange(colKey, value)}
-                                    options={colDef.options}
-                                    catalog={colDef.catalog}
-                                    catalogos={catalogos}
-                                />
-                            )}
-                            {/* boton por-campo eliminado: ahora sólo existe el botón global "Aplicar Cambios" */}
-                        </div>
-                    );
-                })}
-            </div>
-        );
-    };
-
     const PaginacionControles = () => {
         const totalPages = Math.ceil(servidores.length / itemsPerPage);
         const count = servidores.length;
@@ -1167,22 +1104,42 @@ const EditorMasivo = () => {
 
         return (
             <div className="pagination-controls">
+                {/* IZQUIERDA: Descargar (si no hay sesión) + Mostrar + selector */}
                 <div className="pagination__items-per-page">
+                    {!userRole && (
+                        <div className="export-dropdown-container" ref={exportMenuRef}>
+                            <button className="btn btn--primary" onClick={() => setIsExportMenuOpen(prev => !prev)} style={{ whiteSpace: 'nowrap' }}>
+                                <Icon name="upload" /> Descargar
+                            </button>
+                            {isExportMenuOpen && (
+                                <div className="export-menu">
+                                    <button className="export-menu-item" onClick={() => { exportarCSV(servidores); setIsExportMenuOpen(false); }}>
+                                        <Icon name="csv" size={16} /> Exportar como CSV
+                                    </button>
+                                    <button className="export-menu-item" onClick={() => { exportarExcel(servidores); setIsExportMenuOpen(false); }}>
+                                        <Icon name="file-excel" size={16} /> Exportar como Excel
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <label>Mostrar:</label>
                     <ItemsPerPageDropdown value={itemsPerPage} onChange={setItemsPerPage} />
                 </div>
 
-                {/* Contador centrado (singular/plural) */}
+                {/* CENTRO: contador */}
                 <div className="servers-found--center" aria-live="polite">
                     {count} {contadorTexto}
                 </div>
 
+                {/* DERECHA: navegación de página */}
                 <div className="pagination__navigation">
-                    <button className="btn-icon" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
+                    <button className="btn-icon" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1}>
                         <Icon name="chevron-left" />
                     </button>
                     <span>Página {currentPage} de {totalPages}</span>
-                    <button className="btn-icon" onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>
+                    <button className="btn-icon" onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}>
                         <Icon name="chevron-right" />
                     </button>
                 </div>
@@ -1217,6 +1174,28 @@ const EditorMasivo = () => {
     // Limpiar selección completa
     const limpiarSeleccion = () => setSeleccionados(new Set());
 
+    // Definición de columnas usada por la tabla y funciones de ordenamiento
+    const columnas = [
+        { header: 'Nombre', key: 'nombre', sortable: true },
+        { header: 'Tipo', key: 'tipo' },
+        { header: 'IP MGMT', key: 'ip_mgmt' },
+        { header: 'VLAN MGMT', key: 'vlan_mgmt' },
+        { header: 'IP Real', key: 'ip_real' },
+        { header: 'VLAN REAL', key: 'vlan_real' },
+        { header: 'IP Mask/25', key: 'ip_mask25' },
+        { header: 'Servicio', key: 'servicio_id', catalog: 'servicios' },
+        { header: 'Ecosistema', key: 'ecosistema_id', catalog: 'ecosistemas' },
+        { header: 'Aplicacion', key: 'aplicaciones' },
+        { header: 'Capa', key: 'capa_id', catalog: 'capas' },
+        { header: 'Ambiente', key: 'ambiente_id', catalog: 'ambientes' },
+        { header: 'Balanceador', key: 'balanceador' },
+        { header: 'Dominio', key: 'dominio_id', catalog: 'dominios' },
+        { header: 'S.O.', key: 'sistema_operativo_id', catalog: 'sistemasOperativos' },
+        { header: 'Estatus', key: 'estatus_id', catalog: 'estatus' },
+        { header: 'Descripción', key: 'descripcion' },
+        { header: 'Link', key: 'link' }
+    ];
+
     return (
         <div className="page-container">
 
@@ -1247,35 +1226,42 @@ const EditorMasivo = () => {
                             {servidores.length > 0 ? (
                                 <>
                                     <div className="editor-top-actions">
-                                        <div className="export-dropdown-container" ref={exportMenuRef}>
-                                            <button className="btn btn--primary" onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}>
-                                                <Icon name="upload" /> Descargar
-                                            </button>
-                                            {isExportMenuOpen && (
-                                                <div className="export-menu">
-                                                    <button className="export-menu-item" onClick={() => { exportarCSV(servidores); setIsExportMenuOpen(false); }}>
-                                                        <Icon name="csv" size={16} /> Exportar como CSV
-                                                    </button>
-                                                    <button className="export-menu-item" onClick={() => { exportarExcel(servidores); setIsExportMenuOpen(false); }}>
-                                                        <Icon name="file-excel" size={16} /> Exportar como Excel
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
+                                        {/* Si HAY sesión, mantener el botón de descarga dentro de las acciones superiores */}
+                                        {userRole && (
+                                            <div className="export-dropdown-container" ref={exportMenuRef}>
+                                                <button className="btn btn--primary" onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}>
+                                                    <Icon name="upload" /> Descargar
+                                                </button>
+                                                {isExportMenuOpen && (
+                                                    <div className="export-menu">
+                                                        <button className="export-menu-item" onClick={() => { exportarCSV(servidores); setIsExportMenuOpen(false); }}>
+                                                            <Icon name="csv" size={16} /> Exportar como CSV
+                                                        </button>
+                                                        <button className="export-menu-item" onClick={() => { exportarExcel(servidores); setIsExportMenuOpen(false); }}>
+                                                            <Icon name="file-excel" size={16} /> Exportar como Excel
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
 
+                                        {/* Mostrar acciones de edición/elim solo si hay sesión iniciada */}
+                                        {userRole && (
+                                            <>
+                                                <button className="btn btn--primary" onClick={() => setIsEditMode(true)} disabled={isEditMode || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}>
+                                                    <Icon name="edit" /> Editar
+                                                </button>
 
-                                        <button className="btn btn--primary" onClick={() => setIsEditMode(true)} disabled={isEditMode || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}>
-                                            <Icon name="edit" /> Editar
-                                        </button>
-
-                                        <button
-                                            className="btn btn--danger"
-                                            onClick={handleEliminarResultados}
-                                            disabled={cargando || seleccionados.size === 0 || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}
-                                            title="Eliminar servidores seleccionados"
-                                        >
-                                            <Icon name="trash" /> Eliminar Selecionados
-                                        </button>
+                                                <button
+                                                    className="btn btn--danger"
+                                                    onClick={handleEliminarResultados}
+                                                    disabled={cargando || seleccionados.size === 0 || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}
+                                                    title="Eliminar servidores seleccionados"
+                                                >
+                                                    <Icon name="trash" /> Eliminar Selecionados
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
 
                                     {isEditMode && (

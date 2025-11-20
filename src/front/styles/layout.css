@@ -216,6 +216,32 @@
   transform: translateY(-1px);
 }
 
+/* Botón específico para el trigger "Administrar" (verde) */
+.btn--admin {
+  background: var(--color-primario);
+  color: var(--color-superficie);
+  border: none;
+  padding: 6px 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background 0.14s ease, transform 0.06s ease, box-shadow 0.12s ease;
+}
+
+.btn--admin:hover,
+.btn--admin:focus {
+  background: var(--color-primario-hover);
+  color: var(--color-superficie);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  outline: none;
+}
+
 /* Chevron pequeño dentro del trigger (triángulo/rotador) */
 .btn--link .chevron,
 .chevron {
@@ -564,22 +590,20 @@
   box-shadow: 0 8px 20px rgba(0,0,0,0.06);
 }
 
-/* Persistir selección: el item marcado con .selected mantiene fondo primario y texto superficie */
+/* Persistir selección: el item marcado con .selected mantiene fondo (ahora EXCLUYE logout-link) */
 .navbar-user-menu .navbar-link.selected,
 .navbar-user-menu .navbar-link-highlight.selected,
-.navbar-user-menu .btn--primary.selected,
-.navbar-user-menu .logout-link.selected {
+.navbar-user-menu .btn--primary.selected {
   background-color: var(--color-secundario) !important; /* usar azul cuando está activo */
   color: var(--color-superficie) !important;
   transform: translateY(-1px);
   box-shadow: 0 8px 20px rgba(0,0,0,0.06);
 }
 
-/* Mantener hover igual cuando está seleccionado */
+/* Mantener hover igual cuando está seleccionado (excluye logout-link) */
 .navbar-user-menu .navbar-link.selected:hover,
 .navbar-user-menu .navbar-link-highlight.selected:hover,
-.navbar-user-menu .btn--primary.selected:hover,
-.navbar-user-menu .logout-link.selected:hover {
+.navbar-user-menu .btn--primary.selected:hover {
   background-color: var(--color-secundario) !important; /* hover mantiene azul para los seleccionados */
   color: var(--color-superficie) !important;
 }

@@ -94,14 +94,15 @@ const Home = (props) => {
                         <ActionButton
                             text="Búsqueda"
                             icon={<Icon name="search" size={24} />}
-
                             onClick={() => handleNavigate('/editor-masivo')}
                         />
-                        <ActionButton
-                            text="Carga Masiva"
-                            icon={<Icon name="upload-cloud" size={24} />}
-                            onClick={() => setModalCargaVisible(true)}
-                        />
+                        {userRole && (
+                            <ActionButton
+                                text="Carga Masiva"
+                                icon={<Icon name="upload-cloud" size={24} />}
+                                onClick={() => setModalCargaVisible(true)}
+                            />
+                        )}
 
                     </div>
                 </main>

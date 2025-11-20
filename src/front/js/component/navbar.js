@@ -87,7 +87,7 @@ export const Navbar = () => {
                         {auth.token ? (
                             <div ref={userMenuRef} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                 <button
-                                    className="btn btn--link"
+                                    className="btn btn--link btn--admin"
                                     onClick={() => setIsUserMenuOpen(prev => !prev)}
                                     aria-haspopup="true"
                                     aria-expanded={isUserMenuOpen}
@@ -148,8 +148,8 @@ export const Navbar = () => {
                                         <div className="navbar-divider" />
 
                                         <button
-                                            className={`navbar-link logout-link ${selectedMenuItem === 'cerrar-sesion' ? 'selected' : ''}`}
-                                            onClick={() => { setSelectedMenuItem('cerrar-sesion'); setIsUserMenuOpen(false); handleLogout(); }}
+                                            className="navbar-link logout-link"
+                                            onClick={() => { setIsUserMenuOpen(false); handleLogout(); }}
                                         >
                                             Cerrar sesión
                                         </button>
