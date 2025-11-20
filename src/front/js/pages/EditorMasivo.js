@@ -368,7 +368,16 @@ const EditorMasivo = () => {
     const getAuthRole = () => localStorage.getItem('auth_role') || null;
 
     useEffect(() => {
-        function onAuthChanged() { setUserRole(getAuthRole()); }
+        function onAuthChanged() {
+            const role = getAuthRole();
+            setUserRole(role);
+            // Si la sesión se cerró (no hay role), cerrar modo edición y limpiar selecciones/menus asociados
+            if (!role) {
+                setIsEditMode(false);
+                setIsExportMenuOpen(false);
+                setSeleccionados(new Set());
+            }
+        }
         window.addEventListener('authChanged', onAuthChanged);
         return () => window.removeEventListener('authChanged', onAuthChanged);
     }, []);
@@ -993,19 +1002,21 @@ const EditorMasivo = () => {
                                 </span>
                             </th>
                         ))}
-                        <th style={{ textAlign: 'center', width: '140px', minWidth: '120px', maxWidth: '180px' }}>
-                            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                                <span style={{ userSelect: 'none' }}>Eliminar</span>
-                                <input
-                                    type="checkbox"
-                                    className="filter-checkbox"
-                                    checked={currentServidores.length > 0 && currentServidores.every(s => seleccionados.has(s.id))}
-                                    onChange={() => toggleSeleccionarTodosPagina(currentServidores)}
-                                    title="Seleccionar/Deseleccionar todos en esta página"
-                                    style={{ transform: 'scale(0.95)' }}
-                                />
-                            </label>
-                        </th>
+                        {userRole && (
+                            <th style={{ textAlign: 'center', width: '140px', minWidth: '120px', maxWidth: '180px' }}>
+                                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                    <span style={{ userSelect: 'none' }}>Eliminar</span>
+                                    <input
+                                        type="checkbox"
+                                        className="filter-checkbox"
+                                        checked={currentServidores.length > 0 && currentServidores.every(s => seleccionados.has(s.id))}
+                                        onChange={() => toggleSeleccionarTodosPagina(currentServidores)}
+                                        title="Seleccionar/Deseleccionar todos en esta página"
+                                        style={{ transform: 'scale(0.95)' }}
+                                    />
+                                </label>
+                            </th>
+                        )}
                     </tr>
                 </thead>
                 <tbody>
@@ -1078,17 +1089,18 @@ const EditorMasivo = () => {
                                         </td>
                                     );
                                 })}
-
-                                <td style={{ textAlign: 'center', width: '140px', minWidth: '120px', maxWidth: '180px' }}>
-                                    <input
-                                        type="checkbox"
-                                        className="filter-checkbox"
-                                        checked={seleccionados.has(servidor.id)}
-                                        onChange={() => toggleSeleccionado(servidor.id)}
-                                        title={`Seleccionar servidor ${servidor.nombre}`}
-                                        style={{ transform: 'scale(0.95)' }}
-                                    />
-                                </td>
+                                {userRole && (
+                                    <td style={{ textAlign: 'center', width: '140px', minWidth: '120px', maxWidth: '180px' }}>
+                                        <input
+                                            type="checkbox"
+                                            className="filter-checkbox"
+                                            checked={seleccionados.has(servidor.id)}
+                                            onChange={() => toggleSeleccionado(servidor.id)}
+                                            title={`Seleccionar servidor ${servidor.nombre}`}
+                                            style={{ transform: 'scale(0.95)' }}
+                                        />
+                                    </td>
+                                )}
                             </tr>
                         );
                     })}
