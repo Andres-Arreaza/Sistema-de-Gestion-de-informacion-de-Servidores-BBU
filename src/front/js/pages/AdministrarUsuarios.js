@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import Navbar from '../component/navbar';
 import AdministrarUsuariosTabla from '../component/AdministrarUsuariosTabla';
-import { Footer } from '../component/footer';
 import Swal from 'sweetalert2';
 
 const AdministrarUsuariosPage = () => {
-    useEffect(() => { document.title = 'Administrar Usuarios — G.I.B.S.'; }, []);
+    // useEffect(() => { document.title = 'Administrar Usuarios — G.I.B.S.'; }, []);
 
     const [userRole, setUserRole] = useState(() => localStorage.getItem('auth_role') || null);
     const [showCreateModal, setShowCreateModal] = useState(false); // controla el modal de creación
