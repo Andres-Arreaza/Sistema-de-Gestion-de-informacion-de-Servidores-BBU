@@ -15,6 +15,7 @@ import { Busqueda } from "./pages/Busqueda";
 import EditorMasivo from './pages/EditorMasivo';
 import Servidor from "./pages/Servidor";
 import SistemaOperativo from "./pages/SistemaOperativo"; // Asegúrate que la importación sea correcta si es una página
+import AdministrarUsuariosPage from "./pages/AdministrarUsuarios"; // <-- importada la nueva página de administración
 
 const Layout = () => {
     const basename = process.env.BASENAME || "";
@@ -37,6 +38,7 @@ const Layout = () => {
                             <Route element={<Busqueda />} path="/busqueda" />
                             <Route element={<Configuracion />} path="/configuracion" />
                             <Route element={<EditorMasivo />} path="/editor-masivo" />
+                            <Route element={<AdministrarUsuariosPage />} path="/administrar-usuarios" />
                             <Route element={<Servidor />} path="/servidor" />
                             <Route element={<SistemaOperativo />} path="/sistema-operativo" />
 

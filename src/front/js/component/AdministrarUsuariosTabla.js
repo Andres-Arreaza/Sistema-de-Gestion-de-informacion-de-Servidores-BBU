@@ -1,13 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Swal from 'sweetalert2';
 import Icon from './Icon';
-import '../../styles/pages.css';
 
-const AdministrarUsuarios = () => {
+const AdministrarUsuariosTabla = () => {
     const [usuarios, setUsuarios] = useState([]);
     const [cargando, setCargando] = useState(false);
-    const [form, setForm] = useState({ username: '', password: '', role: 'ESPECIALISTA', email: '' });
-    const [loadingCreate, setLoadingCreate] = useState(false);
+    const [query, setQuery] = useState('');
+
+    // Asegurar que Material Symbols Outlined esté cargado para usar el icono "search"
+    useEffect(() => {
+        const href = "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200";
+        if (!document.querySelector(`link[href="${href}"]`)) {
+            const link = document.createElement('link');
+            link.href = href;
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+        }
+    }, []);
 
     const getAuthHeaders = () => {
         const token = localStorage.getItem('auth_token');
@@ -18,27 +27,59 @@ const AdministrarUsuarios = () => {
         setCargando(true);
         try {
             const backend = process.env.BACKEND_URL || '';
-            const candidates = ['/api/users', '/api/auth/users', '/api/usuarios'];
+            const candidates = ['/api/users', '/api/auth/users', '/api/usuarios', '/auth/users'];
             let data = null;
+            let lastError = null;
             for (const path of candidates) {
                 try {
-                    const res = await fetch(`${backend}${path}`, { headers: { 'Content-Type': 'application/json', ...getAuthHeaders() } });
-                    if (!res.ok) continue;
-                    data = await res.json();
-                    break;
+                    const res = await fetch(`${backend}${path}`, {
+                        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }
+                    });
+                    if (res.status === 401 || res.status === 403) {
+                        Swal.fire('No autorizado', 'Tu sesión expiró o no tienes permiso para ver usuarios. Inicia sesión.', 'warning');
+                        setUsuarios([]);
+                        setCargando(false);
+                        return;
+                    }
+                    if (!res.ok) {
+                        lastError = `HTTP ${res.status} en ${path}`;
+                        continue;
+                    }
+                    const contentType = res.headers.get('content-type') || '';
+                    if (contentType.includes('application/json')) {
+                        const json = await res.json();
+                        if (Array.isArray(json)) data = json;
+                        else if (Array.isArray(json.users)) data = json.users;
+                        else if (Array.isArray(json.data)) data = json.data;
+                        else if (Array.isArray(json.result)) data = json.result;
+                        else {
+                            const arr = Object.values(json).find(v => Array.isArray(v));
+                            if (arr) data = arr;
+                            else {
+                                lastError = `Respuesta JSON sin lista en ${path}`;
+                                continue;
+                            }
+                        }
+                        break;
+                    } else {
+                        lastError = `Tipo de contenido inesperado (${contentType}) en ${path}`;
+                        continue;
+                    }
                 } catch (err) {
-                    // seguir al siguiente endpoint candidato
+                    lastError = err.message;
                 }
             }
             if (!data) {
                 setUsuarios([]);
-                console.warn('No se pudo obtener lista de usuarios; revisa los endpoints disponibles en el backend.');
+                console.warn('No se encontró endpoint de usuarios en el backend. Último error:', lastError);
+                Swal.fire('Sin datos', 'No se pudo obtener la lista de usuarios desde el backend. Revisa la consola y los endpoints.', 'info');
                 return;
             }
             setUsuarios(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error(err);
             Swal.fire('Error', 'No se pudieron cargar los usuarios.', 'error');
+            setUsuarios([]);
         } finally {
             setCargando(false);
         }
@@ -46,74 +87,105 @@ const AdministrarUsuarios = () => {
 
     useEffect(() => {
         fetchUsuarios();
+        function handleUsuariosChanged() { fetchUsuarios(); }
+        window.addEventListener('usuariosChanged', handleUsuariosChanged);
+        return () => window.removeEventListener('usuariosChanged', handleUsuariosChanged);
     }, []);
 
-    const handleInput = (e) => {
-        const { name, value } = e.target;
-        setForm(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleCreate = async (e) => {
-        e.preventDefault();
-        if (!form.username || !form.password) {
-            return Swal.fire('Campos requeridos', 'Usuario y contraseña son obligatorios.', 'warning');
-        }
-        setLoadingCreate(true);
-        try {
-            const backend = process.env.BACKEND_URL || '';
-            const res = await fetch(`${backend}/api/auth/users`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-                body: JSON.stringify({ username: form.username, password: form.password, role: form.role, email: form.email })
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Error al crear usuario');
-            Swal.fire({ icon: 'success', title: 'Usuario creado', timer: 1500, showConfirmButton: false });
-            setForm({ username: '', password: '', role: 'ESPECIALISTA', email: '' });
-            fetchUsuarios();
-        } catch (err) {
-            console.error(err);
-            Swal.fire('Error', err.message || 'No se pudo crear el usuario.', 'error');
-        } finally {
-            setLoadingCreate(false);
-        }
-    };
+    // Filtrado por nombre de usuario únicamente (case-insensitive)
+    const filteredUsuarios = useMemo(() => {
+        if (!query || !query.trim()) return usuarios;
+        const q = query.trim().toLowerCase();
+        return usuarios.filter(u => (u.username || '').toLowerCase().includes(q));
+    }, [usuarios, query]);
 
     return (
-        <div style={{ padding: '1rem', maxWidth: 1100, margin: '0 auto' }}>
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2 style={{ margin: 0 }}>Administrar Usuarios</h2>
-                <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn btn--secondary" onClick={fetchUsuarios}><Icon name="refresh" /> Refrescar</button>
-                </div>
-            </header>
+        <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ width: '100%', maxWidth: 1100 }}>
+                {/* Filtro por cualquier campo (arriba de la tabla) */}
+                {/* filtro + crear: alineados a la misma altura */}
+                <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
+                    {/* wrapper para input + icon dentro */}
+                    <div style={{ position: 'relative', width: 250, maxWidth: '100%' }}>
+                        <span className="material-symbols-outlined" aria-hidden="true"
+                            style={{
+                                position: 'absolute',
+                                left: 10,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                fontSize: 20,
+                                color: 'var(--color-texto-secundario)',
+                                pointerEvents: 'none',
+                                marginTop: -4
+                            }}>
+                            search
+                        </span>
+                        <input
+                            type="text"
+                            placeholder="Buscar por usuario..."
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            className="form__input"
+                            style={{
+                                width: '100%',
+                                padding: '8px 12px 8px 38px', /* espacio para el icono dentro */
+                                height: 40,
+                                boxSizing: 'border-box',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                verticalAlign: 'middle'
+                            }}
+                            aria-label="Buscar usuarios por nombre"
+                        />
+                    </div>
 
-            <section style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '1rem' }}>
+                    <button
+                        type="button"
+                        className="btn btn--primary"
+                        onClick={() => window.dispatchEvent(new Event('openCreateUser'))}
+                        title="Crear usuario"
+                        style={{
+                            height: 40,
+                            padding: '8px 12px',
+                            fontSize: '0.88rem',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minWidth: 140,
+                            whiteSpace: 'nowrap',
+                            boxSizing: 'border-box',
+                            lineHeight: '40px',
+                            margin: 0,
+                            marginTop: -10,
+                            verticalAlign: 'middle'
+                        }}
+                    >
+                        Crear Usuario
+                    </button>
+                </div>
+
                 <div style={{ background: 'var(--color-superficie)', padding: '1rem', borderRadius: 8, boxShadow: 'var(--sombra-caja)' }}>
-                    <h3 style={{ marginTop: 0 }}>Usuarios existentes</h3>
-                    {cargando ? <p>Cargando...</p> : (
-                        usuarios.length === 0 ? <p>No hay usuarios para mostrar.</p> : (
+                    {cargando ? <p style={{ textAlign: 'center' }}>Cargando usuarios...</p> : (
+                        filteredUsuarios.length === 0 ? <p style={{ textAlign: 'center' }}>No hay usuarios para mostrar.</p> : (
                             <div style={{ overflowX: 'auto' }}>
-                                <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                <table className="table" style={{ width: '100%', borderCollapse: 'collapse', margin: '0 auto', textAlign: 'center' }}>
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Usuario</th>
-                                            <th>Email</th>
-                                            <th>Rol</th>
-                                            <th>Activo</th>
-                                            <th>Creado</th>
+                                            <th style={{ textAlign: 'center' }}>#</th>
+                                            <th style={{ textAlign: 'center' }}>Usuario</th>
+                                            <th style={{ textAlign: 'center' }}>Email</th>
+                                            <th style={{ textAlign: 'center' }}>Rol</th>
+                                            <th style={{ textAlign: 'center' }}>Fecha de Creación</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {usuarios.map(u => (
-                                            <tr key={u.id}>
-                                                <td>{u.id}</td>
-                                                <td>{u.username}</td>
-                                                <td>{u.email || '—'}</td>
-                                                <td>{u.role || (u.role && u.role.value) || '—'}</td>
-                                                <td>{u.activo ? 'Sí' : 'No'}</td>
-                                                <td style={{ whiteSpace: 'nowrap' }}>{u.fecha_creacion ? new Date(u.fecha_creacion).toLocaleString() : ''}</td>
+                                        {filteredUsuarios.map((u, idx) => (
+                                            <tr key={u.id ?? u.username}>
+                                                <td style={{ textAlign: 'center' }}>{idx + 1}</td>
+                                                <td style={{ textAlign: 'center' }}>{u.username ?? '—'}</td>
+                                                <td style={{ textAlign: 'center' }}>{u.email ?? '—'}</td>
+                                                <td style={{ textAlign: 'center' }}>{u.role ?? (u.role && u.role.value) ?? '—'}</td>
+                                                <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>{u.fecha_creacion ? new Date(u.fecha_creacion).toLocaleString() : '—'}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -122,42 +194,9 @@ const AdministrarUsuarios = () => {
                         )
                     )}
                 </div>
-
-                <aside style={{ background: 'var(--color-superficie)', padding: '1rem', borderRadius: 8, boxShadow: 'var(--sombra-caja)' }}>
-                    <h3 style={{ marginTop: 0 }}>Crear usuario</h3>
-                    <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                        <label className="form__label">Usuario</label>
-                        <input name="username" value={form.username} onChange={handleInput} className="form__input" />
-
-                        <label className="form__label">Contraseña</label>
-                        <input type="password" name="password" value={form.password} onChange={handleInput} className="form__input" />
-
-                        <label className="form__label">Email (opcional)</label>
-                        <input name="email" value={form.email} onChange={handleInput} className="form__input" />
-
-                        <label className="form__label">Rol</label>
-                        <select name="role" value={form.role} onChange={handleInput} className="form__input">
-                            <option value="ESPECIALISTA">ESPECIALISTA</option>
-                            <option value="GERENTE">GERENTE</option>
-                        </select>
-
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', justifyContent: 'center' }}>
-                            <button type="button" className="btn btn--secondary" onClick={() => setForm({ username: '', password: '', role: 'ESPECIALISTA', email: '' })} disabled={loadingCreate}>
-                                Cancelar
-                            </button>
-                            <button type="submit" className="btn btn--primary" disabled={loadingCreate}>
-                                {loadingCreate ? 'Creando...' : 'Crear Usuario'}
-                            </button>
-                        </div>
-
-                        <p style={{ fontSize: '0.85rem', color: 'var(--color-texto-secundario)' }}>
-                            Nota: la creación requiere que tu sesión tenga permisos (GERENTE). Si no tienes permisos, el backend rechazará la petición.
-                        </p>
-                    </form>
-                </aside>
-            </section>
+            </div>
         </div>
     );
 };
 
-export default AdministrarUsuarios;
+export default AdministrarUsuariosTabla;

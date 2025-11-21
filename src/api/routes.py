@@ -166,6 +166,17 @@ def create_user():
     db.session.commit()
     return jsonify(new_user.serialize()), 201
 
+# --- Nuevo endpoint: listar usuarios (protegido) ---
+@api.route("/auth/users", methods=["GET"])
+@require_roles([UserRole.GERENTE.value, UserRole.ESPECIALISTA.value])
+def list_users():
+    try:
+        users = User.query.filter_by(activo=True).all()
+        return jsonify([u.serialize() for u in users]), 200
+    except Exception as e:
+        print("ERROR EN LISTAR USUARIOS:", e)
+        return jsonify({"error": "No se pudieron obtener los usuarios"}), 500
+
 # --- Rutas CRUD genéricas para cada modelo ---
 @api.route("/servicios", methods=["GET"])
 def get_servicios():

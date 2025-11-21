@@ -1588,21 +1588,52 @@
   }
 }
 
-/* Separación entre el botón Descargar y el bloque 'Mostrar' en el área de paginación */
-.pagination__items-per-page .export-dropdown-container {
-  margin-right: 1.2rem; /* separación generosa en pantallas normales */
+/* Mejora: más separación y padding en formularios tipo grid (ej. ServidorFormulario) */
+.grid-form .form__row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;            /* mayor separación entre campos */
+  align-items: start;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* Si el download está presente, mantener el grupo alineado y con espacio consistente */
-.pagination__items-per-page {
-  display: inline-flex;
+.grid-form .form__group {
+  margin: 0;               /* eliminar márgenes inconsistentes */
+  padding: 0.5rem 0;       /* espacio interior para que los campos no queden pegados */
+  box-sizing: border-box;
+}
+
+.grid-form .form__group .form__label {
+  margin-bottom: 0.4rem;   /* separa label del input */
+  display: block;
+}
+
+.grid-form .form__group .form__input,
+.grid-form .form__group .custom-select__trigger {
+  min-height: 44px;        /* inputs un poco más altos para mejorar tacto y legibilidad */
+  padding: 10px 12px;
+}
+
+/* Acciones del formulario con separación clara */
+.grid-form .form__actions {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
   align-items: center;
-  gap: 0.5rem;
 }
 
-/* Responsive: reducir la separación en pantallas pequeñas para evitar overflow */
-@media (max-width: 700px) {
-  .pagination__items-per-page .export-dropdown-container {
-    margin-right: 0.5rem;
+/* Responsive: en pantallas pequeñas apilar en una columna con gap reducido */
+@media (max-width: 720px) {
+  .grid-form .form__row {
+    grid-template-columns: 1fr;
+    gap: 0.9rem;
+  }
+  .grid-form .form__group {
+    padding: 0.35rem 0;
+  }
+  .grid-form .form__actions {
+    flex-direction: column;
   }
 }

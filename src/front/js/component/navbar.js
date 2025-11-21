@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
 import banescoLogo from '../../img/BanescoServers.png';
 import Icon from './Icon';
@@ -7,6 +7,7 @@ import Login from './login'; // <-- nuevo componente importado
 
 export const Navbar = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [open, setOpen] = useState(false);
     const [auth, setAuth] = useState({
@@ -14,6 +15,19 @@ export const Navbar = () => {
         role: localStorage.getItem('auth_role') || null,
         user: localStorage.getItem('auth_user') ? JSON.parse(localStorage.getItem('auth_user')) : null
     });
+
+    // Redirigir automáticamente a home si la ruta es protegida y no hay sesión activa
+    useEffect(() => {
+        const protectedPaths = ['/servidor', '/configuracion'];
+        const currentPath = location.pathname.replace(/\/+$/, ''); // normalizar sin slash final
+        const isProtected = protectedPaths.includes(currentPath);
+        if (isProtected && !auth.token) {
+            // evitar bucles si ya estamos en "/"
+            if (currentPath !== '/') {
+                navigate('/');
+            }
+        }
+    }, [location.pathname, auth.token, navigate]);
 
     // Nuevo: menú del usuario (toggle al click)
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -139,12 +153,14 @@ export const Navbar = () => {
                                         )}
 
                                         {/* Opciones del usuario: usar la misma clase y marcar selected al click */}
+                                        {/*
                                         <button
                                             className={`navbar-link ${selectedMenuItem === 'perfil' ? 'selected' : ''}`}
-                                            onClick={() => { setIsUserMenuOpen(false); setSelectedMenuItem('perfil'); /* navegar a perfil si corresponde */ }}
+                                            onClick={() => { setIsUserMenuOpen(false); setSelectedMenuItem('perfil');  }}
                                         >
                                             Perfil
                                         </button>
+                                        */}
 
                                         <div className="navbar-divider" />
 
