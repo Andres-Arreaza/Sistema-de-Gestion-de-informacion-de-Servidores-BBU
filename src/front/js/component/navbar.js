@@ -66,7 +66,8 @@ export const Navbar = () => {
         { to: "/servidor", label: "Crear Servidor", isHighlight: true },
     ];
 
-    const isGerente = auth.token && auth.role === 'GERENTE';
+    // Permite acceso a las opciones de administración tanto a GERENTE como a ESPECIALISTA
+    const canManage = auth.token && ['GERENTE', 'ESPECIALISTA'].includes(auth.role);
 
     return (
         <header className="navbar-header">
@@ -110,8 +111,8 @@ export const Navbar = () => {
                                         zIndex: 1200,
                                         overflow: 'hidden'
                                     }}>
-                                        {/* Admin links (si es GERENTE) — al hacer click se marca como seleccionado */}
-                                        {isGerente && (
+                                        {/* Admin links (si es GERENTE o ESPECIALISTA) — al hacer click se marca como seleccionado */}
+                                        {canManage && (
                                             <>
                                                 {adminLinks.map((link, idx) => (
                                                     link.isHighlight ? (

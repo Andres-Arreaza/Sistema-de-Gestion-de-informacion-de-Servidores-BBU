@@ -32,7 +32,6 @@ const Servidor = () => {
         <div className="page-container">
             <section className="hero">
                 <div className="hero__content">
-                    <h1 className="hero__title">Gestión de Servidores</h1>
                     <p className="hero__subtitle">Crea servidores de forma individual o mediante carga masiva.</p>
                 </div>
             </section>

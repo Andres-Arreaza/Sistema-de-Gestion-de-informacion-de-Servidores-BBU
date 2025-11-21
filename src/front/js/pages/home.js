@@ -10,8 +10,23 @@ const Home = (props) => {
     const navigate = useNavigate();
     const [modalCargaVisible, setModalCargaVisible] = useState(false);
 
-    const ActionButton = ({ icon, text, onClick }) => (
-        <button onClick={onClick} className="action-button">
+    const ActionButton = ({ icon, text, onClick, minWidth = 200 }) => (
+        <button
+            onClick={onClick}
+            className="action-button"
+            style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                padding: '12px 20px',
+                minWidth: minWidth,
+                whiteSpace: 'nowrap', // evitar quiebre de texto dentro del botón
+                justifyContent: 'center',
+                borderRadius: 10,
+                fontWeight: 600,
+                cursor: 'pointer'
+            }}
+        >
             {icon}
             <span>{text}</span>
         </button>
@@ -21,6 +36,18 @@ const Home = (props) => {
     useEffect(() => {
         const timer = setTimeout(() => setIsLoaded(true), 100);
         return () => clearTimeout(timer);
+    }, []);
+
+    // Asegurar que Material Symbols Outlined esté cargado para usar el icono "groups"
+    useEffect(() => {
+        // Usar la URL que incluye icon_names=groups para asegurar disponibilidad del glifo específico
+        const href = "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=groups";
+        if (!document.querySelector(`link[href="${href}"]`)) {
+            const link = document.createElement('link');
+            link.href = href;
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+        }
     }, []);
 
     useEffect(() => {
@@ -97,11 +124,20 @@ const Home = (props) => {
                             onClick={() => handleNavigate('/editor-masivo')}
                         />
                         {userRole && (
-                            <ActionButton
-                                text="Carga Masiva"
-                                icon={<Icon name="upload-cloud" size={24} />}
-                                onClick={() => setModalCargaVisible(true)}
-                            />
+                            <>
+                                <ActionButton
+                                    text="Carga Masiva"
+                                    icon={<Icon name="upload-cloud" size={24} />}
+                                    onClick={() => setModalCargaVisible(true)}
+                                />
+                                {userRole === 'GERENTE' && (
+                                    <ActionButton
+                                        text="Administrar Usuarios"
+                                        icon={<span className="material-symbols-outlined" style={{ fontSize: 24 }}>groups</span>}
+                                        onClick={() => handleNavigate('/administrar-usuarios')}
+                                    />
+                                )}
+                            </>
                         )}
 
                     </div>
@@ -114,6 +150,8 @@ const Home = (props) => {
                     actualizarServidores={handleUploadSuccess}
                 />
             )}
+
+            {/* Administrar Usuarios se abre vía ruta /administrar-usuarios (no modal) */}
         </>
     );
 };
