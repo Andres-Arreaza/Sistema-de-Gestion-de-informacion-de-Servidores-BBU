@@ -49,6 +49,12 @@ const ServicioFormulario = ({ onSave, onCancel, servicio, serviciosExistentes })
         onSave(formData);
     };
 
+    // helper para añadir Authorization si existe token
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('auth_token');
+        return token ? { Authorization: `Bearer ${token}` } : {};
+    };
+
     return (
         <div className="modal__content">
             <div className="modal__header">

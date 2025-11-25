@@ -1637,3 +1637,53 @@
     flex-direction: column;
   }
 }
+
+.modal__content select.form__input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  padding: 10px 12px;
+  padding-right: 36px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: var(--color-texto-principal);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.06s ease;
+  box-shadow: none;
+}
+
+.modal__content select.form__input:hover,
+.modal__content select.form__input:focus {
+  border-color: var(--color-primario);
+  box-shadow: 0 6px 18px rgba(0, 121, 83, 0.06);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.modal__content .select__chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--color-texto-secundario);
+  font-size: 18px;
+}
+
+.modal__content select.form__input option {
+  padding: 8px 10px;
+  background: var(--color-superficie);
+  color: var(--color-texto-principal);
+}
+
+.modal__content select.form__input option:hover {
+  background-color: rgba(0, 121, 83, 0.10);
+  color: var(--color-primario-hover);
+}
+
+.modal__content select.form__input option:checked {
+  background-color: rgba(0, 121, 83, 0.12);
+  color: var(--color-primario);
+}

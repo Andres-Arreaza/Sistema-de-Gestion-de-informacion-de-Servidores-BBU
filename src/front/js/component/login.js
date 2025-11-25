@@ -9,11 +9,16 @@ const Login = ({ open, onClose }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [passwordFocused, setPasswordFocused] = useState(false);
+    const [materialSymbolsReady, setMaterialSymbolsReady] = useState(false);
 
     useEffect(() => {
         if (!open) {
             setUsername('');
             setPassword('');
+            setShowPassword(false);
+            setPasswordFocused(false);
             setLoading(false);
         }
     }, [open]);
@@ -26,6 +31,34 @@ const Login = ({ open, onClose }) => {
             link.href = href;
             link.rel = 'stylesheet';
             document.head.appendChild(link);
+        }
+    }, []);
+
+    // Cargar Material Symbols Outlined para los iconos visibility / visibility_off
+    useEffect(() => {
+        const href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0';
+        if (!document.querySelector(`link[href^="${href}"]`)) {
+            const link = document.createElement('link');
+            link.href = href;
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+        }
+    }, []);
+
+    // Intentar detectar cuando la fuente Material Symbols quedó disponible en el navegador
+    useEffect(() => {
+        if (document.fonts && document.fonts.load) {
+            // solicitar carga (intentar varias variantes por si acaso)
+            Promise.all([
+                document.fonts.load('1rem "Material Symbols Outlined"'),
+                document.fonts.load('16px "Material Symbols Outlined"')
+            ]).then(() => setMaterialSymbolsReady(true)).catch(() => {
+                // si falla, no bloquear: dejamos false y el fallback Icon se mostrará
+                setMaterialSymbolsReady(false);
+            });
+        } else {
+            // si no hay API, marcar como listo para evitar bloqueo
+            setMaterialSymbolsReady(true);
         }
     }, []);
 
@@ -105,7 +138,62 @@ const Login = ({ open, onClose }) => {
                         </div>
                         <div className="form__group">
                             <label className="form__label">Contraseña</label>
-                            <input className="form__input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                            <div style={{ position: 'relative', width: '100%' }}>
+                                <input
+                                    className="form__input"
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    onFocus={() => setPasswordFocused(true)}
+                                    onBlur={() => setPasswordFocused(false)}
+                                    aria-label="Contraseña"
+                                    style={{ paddingRight: 44 }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(prev => !prev)}
+                                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                    title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                    style={{
+                                        position: 'absolute',
+                                        right: 8,
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        padding: 6,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        color: passwordFocused ? 'var(--color-primario)' : 'var(--color-texto-secundario)',
+                                        lineHeight: 1
+                                    }}
+                                >
+                                    {materialSymbolsReady ? (
+                                        <span
+                                            className="material-symbols-outlined"
+                                            aria-hidden="true"
+                                            style={{
+                                                fontSize: 20,
+                                                lineHeight: 1,
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            {showPassword ? 'visibility_off' : 'visibility'}
+                                        </span>
+                                    ) : (
+                                        // Fallback visual mientras la fuente no está lista
+                                        <Icon
+                                            name={showPassword ? 'visibility_off' : 'visibility'}
+                                            size={20}
+                                            style={{ color: passwordFocused ? 'var(--color-primario)' : 'var(--color-texto-secundario)', lineHeight: 1 }}
+                                        />
+                                    )}
+                                </button>
+                            </div>
                         </div>
                         {/* Separación superior entre campos y botones; botones centrados */}
                         <div className="form__actions" style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', borderTop: 'none', marginTop: '1rem', paddingTop: '0.5rem' }}>

@@ -177,6 +177,40 @@ def list_users():
         print("ERROR EN LISTAR USUARIOS:", e)
         return jsonify({"error": "No se pudieron obtener los usuarios"}), 500
 
+# --- Eliminar usuario (borrado lógico por defecto, hard delete con ?hard=true) ---
+@api.route("/auth/users/<int:user_id>", methods=["DELETE"])
+@require_roles([UserRole.GERENTE.value])
+def delete_user(user_id):
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "Usuario no encontrado"}), 404
+
+        hard = request.args.get('hard', 'false').lower() == 'true'
+
+        if hard:
+            # Borrado permanente
+            try:
+                db.session.delete(user)
+                db.session.commit()
+                return jsonify({"msg": f"Usuario {user.username} eliminado permanentemente."}), 200
+            except Exception as e:
+                db.session.rollback()
+                print("ERROR EN HARD DELETE USUARIO:", e)
+                return jsonify({"error": "No se pudo eliminar el usuario"}), 500
+        else:
+            # Borrado lógico (por compatibilidad)
+            if not user.activo:
+                return jsonify({"error": "Usuario ya está inactivo"}), 400
+            user.activo = False
+            user.fecha_modificacion = datetime.utcnow()
+            db.session.commit()
+            return jsonify({"msg": f"Usuario {user.username} desactivado correctamente."}), 200
+    except Exception as e:
+        db.session.rollback()
+        print("ERROR AL ELIMINAR USUARIO:", e)
+        return jsonify({"error": "No se pudo eliminar el usuario"}), 500
+
 # --- Rutas CRUD genéricas para cada modelo ---
 @api.route("/servicios", methods=["GET"])
 def get_servicios():

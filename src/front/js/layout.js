@@ -1,5 +1,5 @@
-import React from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import ScrollToTop from "./component/scrollToTop";
 import { BackendURL } from "./component/backendURL";
 import injectContext from "./store/appContext";
@@ -19,6 +19,19 @@ import AdministrarUsuariosPage from "./pages/AdministrarUsuarios"; // <-- import
 
 const Layout = () => {
     const basename = process.env.BASENAME || "";
+    // estado que refleja la existencia del token para forzar re-render cuando cambie la sesión
+    const [authToken, setAuthToken] = useState(() => localStorage.getItem('auth_token'));
+    useEffect(() => {
+        const handler = () => setAuthToken(localStorage.getItem('auth_token'));
+        window.addEventListener('authChanged', handler);
+        // también reaccionar a cambios en localStorage desde otras pestañas (opcional)
+        const onStorage = (e) => { if (e.key === 'auth_token') setAuthToken(localStorage.getItem('auth_token')); };
+        window.addEventListener('storage', onStorage);
+        return () => {
+            window.removeEventListener('authChanged', handler);
+            window.removeEventListener('storage', onStorage);
+        };
+    }, []);
 
     if (!process.env.BACKEND_URL || process.env.BACKEND_URL === "") {
         return <BackendURL />;
@@ -38,7 +51,10 @@ const Layout = () => {
                             <Route element={<Busqueda />} path="/busqueda" />
                             <Route element={<Configuracion />} path="/configuracion" />
                             <Route element={<EditorMasivo />} path="/editor-masivo" />
-                            <Route element={<AdministrarUsuariosPage />} path="/administrar-usuarios" />
+                            <Route
+                                path="/administrar-usuarios"
+                                element={authToken ? <AdministrarUsuariosPage /> : <Navigate to="/" replace />}
+                            />
                             <Route element={<Servidor />} path="/servidor" />
                             <Route element={<SistemaOperativo />} path="/sistema-operativo" />
 

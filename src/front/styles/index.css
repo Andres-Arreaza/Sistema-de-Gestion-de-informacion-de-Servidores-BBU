@@ -3,6 +3,30 @@
 @import url("https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Caveat&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Audiowide&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0");
+
+/* Garantizar que los Material Symbols se rendericen como iconos y no como texto plano */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined' !important;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;                 /* ajustar según necesites */
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  /* Permitir ajustar peso/estilo desde la propia etiqueta si se desea */
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Variante más pequeña / control de tamaño por clase */
+.material-symbols-outlined.sm {
+  font-size: 16px;
+}
 
 :root {
   /* 1. Paleta de Colores (Unificada de tus archivos) */

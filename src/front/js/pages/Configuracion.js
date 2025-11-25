@@ -100,10 +100,16 @@ const Configuracion = () => {
             .finally(() => setCargando(false));
     };
 
-    const handleSave = (formData) => {
+    // helper para incluir Authorization en requests
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('auth_token');
+        return token ? { Authorization: `Bearer ${token}` } : {};
+    };
+
+    const handleSave = async (formData) => {
+        // Determinar recurso/URL
         const configItem = configItems.find(item => item.createView === activeView);
         if (!configItem) return;
-
         const { apiResource, listView, label } = configItem;
         const esEdicion = !!currentItem;
         const metodo = esEdicion ? "PUT" : "POST";
@@ -111,34 +117,43 @@ const Configuracion = () => {
             ? `${process.env.BACKEND_URL}/api/${apiResource}/${currentItem?.id}`
             : `${process.env.BACKEND_URL}/api/${apiResource}`;
 
-        fetch(url, {
-            method: metodo,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData),
-        })
-            .then(response => {
-                if (!response.ok) return response.json().then(err => Promise.reject(err));
-                return response.json();
-            })
-            .then(() => {
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Éxito!',
-                    text: `${label} ${esEdicion ? 'actualizado' : 'creado'} correctamente.`,
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                setCurrentItem(null);
-                setActiveView(listView);
-                fetchRecurso(apiResource);
-            })
-            .catch(err => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error al Guardar',
-                    text: err.msg || `No se pudo guardar el registro.`,
-                });
+        try {
+            const response = await fetch(url, {
+                method: metodo,
+                headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+                body: JSON.stringify(formData),
             });
+
+            if (response.status === 401) {
+                Swal.fire('No autorizado', 'Tu sesión expiró o no tienes permisos para esta operación.', 'warning');
+                return;
+            }
+
+            const contentType = response.headers.get('content-type') || '';
+            const payload = contentType.includes('application/json') ? await response.json() : null;
+
+            if (!response.ok) {
+                const msg = (payload && (payload.msg || payload.error)) || `Error HTTP ${response.status}`;
+                throw new Error(msg);
+            }
+
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: `${label} ${esEdicion ? 'actualizado' : 'creado'} correctamente.`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+            setCurrentItem(null);
+            setActiveView(listView);
+            fetchRecurso(apiResource);
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al Guardar',
+                text: err.message || `No se pudo guardar el registro.`,
+            });
+        }
     };
 
     const handleAccordionClick = (index) => setOpenIndex(openIndex === index ? null : index);

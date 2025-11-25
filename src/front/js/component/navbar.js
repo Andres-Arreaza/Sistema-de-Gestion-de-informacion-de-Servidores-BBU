@@ -70,8 +70,11 @@ export const Navbar = () => {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_role');
         localStorage.removeItem('auth_user');
+        // Notificar al resto de la app que cambió la autenticación
         window.dispatchEvent(new Event('authChanged'));
-        Swal.fire('Sesión cerrada', 'Has cerrado sesión correctamente', 'success');
+        // Cerrar menú de usuario y redirigir a inicio
+        setIsUserMenuOpen(false);
+        navigate('/');
     };
 
     // Antes: incluía un entry { type: 'divider' } — lo eliminamos para no renderizar líneas entre botones.

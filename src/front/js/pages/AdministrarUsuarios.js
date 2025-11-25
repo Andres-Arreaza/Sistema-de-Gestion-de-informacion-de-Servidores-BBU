@@ -1,18 +1,37 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AdministrarUsuariosTabla from '../component/AdministrarUsuariosTabla';
 import Swal from 'sweetalert2';
+import Icon from '../component/Icon'; // <-- importar Icon para usar en el formulario CrearUsuarioForm
+import banescoLogo from '../../img/BanescoServers.png';
 
 const AdministrarUsuariosPage = () => {
     // useEffect(() => { document.title = 'Administrar Usuarios — G.I.B.S.'; }, []);
 
     const [userRole, setUserRole] = useState(() => localStorage.getItem('auth_role') || null);
     const [showCreateModal, setShowCreateModal] = useState(false); // controla el modal de creación
+    const navigate = useNavigate();
 
     useEffect(() => {
         function onAuthChanged() { setUserRole(localStorage.getItem('auth_role') || null); }
         window.addEventListener('authChanged', onAuthChanged);
         return () => window.removeEventListener('authChanged', onAuthChanged);
     }, []);
+
+    // Si no hay token, redirigir al home (protege cuando se cierra sesión en tiempo de ejecución)
+    useEffect(() => {
+        const checkTokenAndRedirect = () => {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                navigate('/', { replace: true });
+            }
+        };
+        // Comprobar ahora
+        checkTokenAndRedirect();
+        // Escuchar cambios globales (ej. logout desde el navbar)
+        window.addEventListener('authChanged', checkTokenAndRedirect);
+        return () => window.removeEventListener('authChanged', checkTokenAndRedirect);
+    }, [navigate]);
 
     // Escuchar evento global disparado desde el componente de tabla para abrir el modal de creación
     useEffect(() => {
@@ -28,6 +47,10 @@ const AdministrarUsuariosPage = () => {
         const [email, setEmail] = useState('');
         const [role, setRole] = useState('ESPECIALISTA');
         const [loading, setLoading] = useState(false);
+        const [showPassword, setShowPassword] = useState(false);
+        const [passwordFocused, setPasswordFocused] = useState(false);
+        const roleSelectRef = React.useRef(null);
+        const [roleOpen, setRoleOpen] = React.useState(false);
 
         const getAuthHeaders = () => {
             const token = localStorage.getItem('auth_token');
@@ -64,35 +87,188 @@ const AdministrarUsuariosPage = () => {
             return null;
         }
 
+        // Cerrar el panel del custom-select si se hace clic fuera de él
+        useEffect(() => {
+            const handleClickOutside = (e) => {
+                if (roleSelectRef.current && !roleSelectRef.current.contains(e.target)) {
+                    setRoleOpen(false);
+                }
+            };
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }, [roleSelectRef]);
+
+        React.useEffect(() => {
+            const onDocClick = (e) => {
+                if (roleSelectRef.current && !roleSelectRef.current.contains(e.target)) setRoleOpen(false);
+            };
+            document.addEventListener('mousedown', onDocClick);
+            return () => document.removeEventListener('mousedown', onDocClick);
+        }, []);
+
+        // Asegurar que Material Symbols Outlined esté cargado para los iconos visibility/visibility_off
+        useEffect(() => {
+            const href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0';
+            if (!document.querySelector(`link[href^="${href}"]`)) {
+                const link = document.createElement('link');
+                link.href = href;
+                link.rel = 'stylesheet';
+                document.head.appendChild(link);
+            }
+        }, []);
+
         return (
             <section style={{ background: 'var(--color-superficie)', padding: '1rem', borderRadius: 8, boxShadow: 'var(--sombra-caja)', margin: '1rem' }}>
-                <h3 style={{ marginTop: 0 }}>Crear usuario</h3>
-                <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
-                    <div>
-                        <label className="form__label">Usuario</label>
+                {/* Logo centrado encima del formulario (igual que en login) */}
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+                    <img
+                        src={banescoLogo}
+                        alt="Banesco Servers"
+                        style={{ height: 56, objectFit: 'contain' }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                </div>
+                <h3 style={{ marginTop: 0, textAlign: 'center' }}>Crear usuario</h3>
+                <form onSubmit={handleSubmit} style={{ display: 'block', gap: '0.8rem' }}>
+                    <div className="form__group" style={{ marginBottom: '0.75rem' }}>
+                        <label className="form__label" style={{ marginBottom: '0.45rem', display: 'block' }}>Usuario</label>
                         <input className="form__input" value={username} onChange={e => setUsername(e.target.value)} />
                     </div>
-                    <div>
-                        <label className="form__label">Email (opcional)</label>
+
+                    <div className="form__group" style={{ marginBottom: '0.75rem' }}>
+                        <label className="form__label" style={{ marginBottom: '0.45rem', display: 'block' }}>Email (opcional)</label>
                         <input className="form__input" value={email} onChange={e => setEmail(e.target.value)} />
                     </div>
-                    <div>
-                        <label className="form__label">Contraseña</label>
-                        <input className="form__input" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+
+                    {/* ROLE: custom-select igual al usado en BusquedaFiltro */}
+                    <div className="form__group" style={{ marginBottom: '0.75rem' }}>
+                        <label className="form__label" style={{ marginBottom: '0.45rem', display: 'block' }}>Rol</label>
+                        {/* wrapper con ref para detectar clicks fuera */}
+                        <div className="custom-select" ref={roleSelectRef} style={{ position: 'relative' }}>
+                            <button
+                                type="button"
+                                className="form__input custom-select__trigger"
+                                onClick={() => setRoleOpen(prev => !prev)}
+                                aria-haspopup="listbox"
+                                aria-expanded={roleOpen}
+                                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'space-between' }}
+                            >
+                                <span>{role}</span>
+                                <div className={`chevron ${roleOpen ? "open" : ""}`}></div>
+                            </button>
+
+                            <div className={`custom-select__panel ${roleOpen ? "open" : ""}`} style={{ minWidth: 200, zIndex: 1400 }}>
+                                <label className={`custom-select__option ${role === 'ESPECIALISTA' ? 'selected' : ''}`}>
+                                    <input
+                                        type="radio"
+                                        name="role"
+                                        value="ESPECIALISTA"
+                                        checked={role === 'ESPECIALISTA'}
+                                        onChange={() => { setRole('ESPECIALISTA'); setRoleOpen(false); }}
+                                    />
+                                    <span>ESPECIALISTA</span>
+                                </label>
+                                <label className={`custom-select__option ${role === 'GERENTE' ? 'selected' : ''}`}>
+                                    <input
+                                        type="radio"
+                                        name="role"
+                                        value="GERENTE"
+                                        checked={role === 'GERENTE'}
+                                        onChange={() => { setRole('GERENTE'); setRoleOpen(false); }}
+                                    />
+                                    <span>GERENTE</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label className="form__label">Rol</label>
-                        <select className="form__input" value={role} onChange={e => setRole(e.target.value)}>
-                            <option value="ESPECIALISTA">ESPECIALISTA</option>
-                            <option value="GERENTE">GERENTE</option>
-                        </select>
+
+                    <div className="form__group" style={{ marginBottom: '0.75rem' }}>
+                        <label className="form__label" style={{ marginBottom: '0.45rem', display: 'block' }}>Contraseña</label>
+                        {/* Contenedor relativo: input ocupa 100% ancho, icono posicionado absolutamente */}
+                        <div style={{ position: 'relative', width: '100%' }}>
+                            <input
+                                className="form__input"
+                                type={showPassword ? 'text' : 'password'}
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                aria-label="Contraseña"
+                                style={{ width: '100%', paddingRight: 44, height: 48, boxSizing: 'border-box' }} /* aumentado a 48px */
+                                onFocus={() => setPasswordFocused(true)}
+                                onBlur={() => setPasswordFocused(false)}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(prev => !prev)}
+                                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                style={{
+                                    position: 'absolute',
+                                    right: 8,
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    padding: 6,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    color: passwordFocused ? 'var(--color-primario)' : 'var(--color-texto-secundario)',
+                                    lineHeight: 1
+                                }}
+                            >
+                                <span
+                                    className="material-symbols-outlined"
+                                    aria-hidden="true"
+                                    style={{
+                                        fontSize: 20,
+                                        lineHeight: 1,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    {showPassword ? 'visibility_off' : 'visibility'}
+                                </span>
+                            </button>
+                        </div>
                     </div>
-                    <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', gap: '0.6rem', marginTop: '0.5rem' }}>
-                        <button type="button" className="btn btn--secondary" onClick={() => { setUsername(''); setPassword(''); setEmail(''); setRole('ESPECIALISTA'); }} disabled={loading}>Cancelar</button>
-                        <button type="submit" className="btn btn--primary" disabled={loading}>{loading ? 'Creando...' : 'Crear Usuario'}</button>
+
+                    <div
+                        className="form__actions"
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            gap: '0.75rem',
+                            marginTop: '1rem',
+                            borderTop: 'none',      /* quitar la línea superior */
+                            paddingTop: '0.6rem'    /* mantener separación visual */
+                        }}
+                    >
+                        <button
+                            type="button"
+                            className="btn btn--secondary"
+                            onClick={() => {
+                                setUsername(''); setPassword(''); setEmail(''); setRole('ESPECIALISTA');
+                                setModalVisible && setModalVisible(false);
+                            }}
+                            disabled={loading}
+                            style={{ minWidth: 160, width: 160 }}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            className="btn btn--primary"
+                            disabled={loading}
+                            style={{ minWidth: 160, width: 160 }}
+                        >
+                            {loading ? 'Creando...' : (<><Icon name="login" /> Crear Usuario</>)}
+                        </button>
                     </div>
                 </form>
-
             </section>
         );
     };
@@ -106,8 +282,14 @@ const AdministrarUsuariosPage = () => {
                 {/* Modal con formulario de creación */}
                 {showCreateModal && (
                     <div className="modal__overlay" onClick={() => setShowCreateModal(false)}>
-                        <div className="modal__content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 640, width: '95%' }}>
-                            <button className="btn-close" onClick={() => setShowCreateModal(false)} />
+                        <div className="modal__content" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', maxWidth: 640, width: '95%' }}>
+                            {/* X posicionada a la derecha dentro del modal */}
+                            <button
+                                className="btn-close"
+                                onClick={() => setShowCreateModal(false)}
+                                aria-label="Cerrar"
+                                style={{ position: 'absolute', top: 8, right: 8, zIndex: 10 }}
+                            />
                             {/* Pasamos setModalVisible para que el formulario pueda cerrarlo */}
                             <CrearUsuarioForm setModalVisible={() => setShowCreateModal(false)} />
                         </div>
