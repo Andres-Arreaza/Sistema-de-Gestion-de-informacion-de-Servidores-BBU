@@ -1466,10 +1466,10 @@
    - inputs/triggers internos también reciben min-width mayor
 */
 .resultados-editor .editor-panel .bulk-edit-field {
-  flex: 0 0 420px !important;    /* ancho base por campo aumentado */
-  min-width: 320px !important;   /* mínimo razonable ampliado */
-  max-width: 560px !important;   /* permitir más expansión si hay espacio */
-  height: auto !important;
+  flex: 0 0 340px !important;    /* ancho base por campo (aumentado desde 320px) */
+  min-width: 240px !important;   /* mínimo razonable ampliado */
+  max-width: 460px !important;   /* permitir más expansión si hay espacio */
+  height: 48px !important;
   padding: 0.35rem !important;
   box-sizing: border-box !important;
   gap: var(--espaciado-sm) !important;
@@ -1498,209 +1498,94 @@
   max-width: 420px !important;
   height: 40px !important;
   box-sizing: border-box !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-}
-/*/////////////////////////////////////////////////////////////////////////////////*/
-
-
-/* Ajuste visual de triggers pequeños: chevron, iconografía, etc. */
-.resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger .chevron {
-  right: 8px !important;
-  width: 7px !important;
-  height: 7px !important;
-  border-right: 1.6px solid #6b7280 !important;
-  border-bottom: 1.6px solid #6b7280 !important;
 }
 
-/* Asegurar espacio vertical uniforme entre filas en móviles */
+/* REDUCE ESPACIADO ENTRE INPUTS (override global para formularios y modales) */
+.form__group {
+  margin-bottom: 0.4rem !important;    /* antes ~0.75rem - reduce espacio vertical entre controles */
+  padding-bottom: 0 !important;
+}
+
+/* Hacer las filas de formulario un poco más compactas horizontalmente */
+.form__row {
+  gap: 0.5rem !important;               /* antes 0.75rem */
+  margin-bottom: 0.4rem !important;
+}
+
+/* Labels más compactos respecto al control */
+.form__label {
+  margin-bottom: 0.32rem !important;    /* antes ~0.45rem */
+}
+
+/* Asegurar que en modales también se reduzca el espacio (prioridad) */
+.modal__content .form__group,
+.modal__content .form__row {
+  margin-bottom: 0.36rem !important;
+  padding-bottom: 0 !important;
+}
+
+/* Ajuste para filas que usan display:flex con wrap (mantener compactación en móviles) */
 @media (max-width: 560px) {
-  .resultados-editor .editor-panel .bulk-edit-controls {
-    gap: var(--espaciado-sm) !important;
-  }
-  .resultados-editor .editor-panel .bulk-edit-field {
-    flex: 1 1 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-    height: auto !important;
-    padding: 0.5rem !important;
-    gap: var(--espaciado-sm) !important;
-  }
-}
-
-/* OVERRIDE: aumentar un poco los anchos de los campos de Bulk Edit para mayor legibilidad
-    - flex-basis aumentado a 340px (era 320px)
-    - min/max actualizados para permitir mayor espacio
-    - etiqueta (label) más ancha para que no comprima el control
-    - inputs/triggers internos también reciben min-width mayor
- */
-.resultados-editor .editor-panel .bulk-edit-field {
-  flex: 0 0 340px !important;    /* ancho base por campo (aumentado desde 320px) */
-  min-width: 240px !important;   /* mínimo razonable ampliado */
-  max-width: 460px !important;   /* permitir más expansión si hay espacio */
-  height: 48px !important;       /* conservar altura uniforme */
-  padding: 0.35rem !important;
-  box-sizing: border-box !important;
-  gap: var(--espaciado-sm) !important;
-}
-
-/* Etiqueta dentro del campo: un poco más ancha para no apretar el control */
-.resultados-editor .editor-panel .bulk-edit-field > label {
-  flex: 0 0 140px !important;    /* ancho de etiqueta consistente */
-  width: 140px !important;
-  margin: 0 !important;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Inputs/triggers dentro de cada campo: ocupar el resto y tener un mínimo mayor */
-.resultados-editor .editor-panel .bulk-edit-field .form__input,
-.resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
-  flex: 1 1 auto !important;
-  min-width: 180px !important;   /* aumentado desde 160px */
-  max-width: 360px !important;
-  height: 36px !important;
-  box-sizing: border-box !important;
-}
-/* Etiqueta dentro del campo: un poco más ancha para no apretar el control */
-.resultados-editor .editor-panel .bulk-edit-field > label {
-  flex: 0 0 130px !important;    /* ancho fijo de etiqueta aumentado */
-  width: 130px !important;
-  margin: 0 !important;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Inputs/triggers dentro de cada campo: ocupar el resto y tener un mínimo mayor */
-.resultados-editor .editor-panel .bulk-edit-field .form__input,
-.resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
-  flex: 1 1 auto !important;
-  min-width: 160px !important;   /* aumentado desde 120px */
-  max-width: 320px !important;
-  height: 36px !important;
-  box-sizing: border-box !important;
-}
-
-/* Ajustes responsivos: mantener el apilado en móvil */
-@media (max-width: 560px) {
-  .resultados-editor .editor-panel .bulk-edit-field {
-    flex: 1 1 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-    height: auto !important;
-    padding: 0.5rem !important;
-  }
-  .resultados-editor .editor-panel .bulk-edit-field > label {
-    width: auto !important;
+  .form__group {
     margin-bottom: 0.35rem !important;
-    flex: 0 0 auto !important;
   }
-  .resultados-editor .editor-panel .bulk-edit-field .form__input,
-  .resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
-    width: 100% !important;
-    height: 40px !important;
+  .form__row {
+    gap: 0.45rem !important;
+    margin-bottom: 0.35rem !important;
   }
 }
 
-/* Mejora: más separación y padding en formularios tipo grid (ej. ServidorFormulario) */
-.grid-form .form__row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.25rem;            /* mayor separación entre campos */
-  align-items: start;
-  width: 100%;
+/* Si quieres aún más compactado, baja estos valores (ej. 0.25rem) — cambio centralizado aquí. */
+
+/* EVITAR SOLAPAMIENTO DE MENSAJES DE VALIDACIÓN */
+/* Reservar espacio suficiente dentro de cada grupo de formulario para errores (especialmente en modales) */
+.form__group {
+  /* aumentar padding-bottom para dejar sitio a mensajes de error */
+  padding-bottom: 0.7rem !important;
+  margin-bottom: 0.35rem !important;
   box-sizing: border-box;
 }
 
-.grid-form .form__group {
-  margin: 0;               /* eliminar márgenes inconsistentes */
-  padding: 0.5rem 0;       /* espacio interior para que los campos no queden pegados */
-  box-sizing: border-box;
+/* Reforzar comportamiento de los mensajes de error: bloque, espaciado claro y line-height legible */
+.form__error-text {
+  display: block !important;
+  position: static !important;
+  margin: 6px 0 0 !important;
+  padding: 0 !important;
+  color: var(--color-error) !important;
+  font-size: 0.88rem !important;
+  line-height: 1.3 !important; /* aumenta la altura de línea para evitar solapamiento */
+  z-index: 2 !important;
+  background: transparent !important;
+  word-break: break-word;
 }
 
-.grid-form .form__group .form__label {
-  margin-bottom: 0.4rem;   /* separa label del input */
-  display: block;
+/* En modales, aplicar el mismo padding con mayor prioridad */
+.modal__content .form__group {
+  padding-bottom: 0.8rem !important;
+  margin-bottom: 0.36rem !important;
 }
 
-.grid-form .form__group .form__input,
-.grid-form .form__group .custom-select__trigger {
-  min-height: 44px;        /* inputs un poco más altos para mejorar tacto y legibilidad */
-  padding: 10px 12px;
+/* Asegurar que los inputs no usen z-index que cubra los errores */
+.form__input {
+  position: relative;
+  z-index: 0 !important;
 }
 
-/* Acciones del formulario con separación clara */
-.grid-form .form__actions {
-  margin-top: 1.25rem;
-  display: flex;
-  justify-content: center;
-  gap: 0.75rem;
-  align-items: center;
+/* Si existen botones dentro del form__group (ej. "eye"), mantenerlos encima del input pero debajo del mensaje de error visualmente */
+.modal__content .form__group button[aria-label^="Mostrar"],
+.modal__content .form__group button[aria-label^="Ocultar"] {
+  z-index: 1; /* encima del input, debajo del mensaje de error (que tiene z-index:2) */
 }
 
-/* Responsive: en pantallas pequeñas apilar en una columna con gap reducido */
-@media (max-width: 720px) {
-  .grid-form .form__row {
-    grid-template-columns: 1fr;
-    gap: 0.9rem;
+/* Pequeño ajuste responsivo: reducir padding en mobile pero mantener espacio para errores */
+@media (max-width: 560px) {
+  .form__group {
+    padding-bottom: 0.6rem !important;
   }
-  .grid-form .form__group {
-    padding: 0.35rem 0;
-  }
-  .grid-form .form__actions {
-    flex-direction: column;
+  .modal__content .form__group {
+    padding-bottom: 0.64rem !important;
   }
 }
 
-.modal__content select.form__input {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-color: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  padding: 10px 12px;
-  padding-right: 36px;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  color: var(--color-texto-principal);
-  cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.06s ease;
-  box-shadow: none;
-}
-
-.modal__content select.form__input:hover,
-.modal__content select.form__input:focus {
-  border-color: var(--color-primario);
-  box-shadow: 0 6px 18px rgba(0, 121, 83, 0.06);
-  outline: none;
-  transform: translateY(-1px);
-}
-
-.modal__content .select__chevron {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  color: var(--color-texto-secundario);
-  font-size: 18px;
-}
-
-.modal__content select.form__input option {
-  padding: 8px 10px;
-  background: var(--color-superficie);
-  color: var(--color-texto-principal);
-}
-
-.modal__content select.form__input option:hover {
-  background-color: rgba(0, 121, 83, 0.10);
-  color: var(--color-primario-hover);
-}
-
-.modal__content select.form__input option:checked {
-  background-color: rgba(0, 121, 83, 0.12);
-  color: var(--color-primario);
-}
+/* ...existing code... */
