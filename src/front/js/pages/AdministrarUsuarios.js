@@ -43,6 +43,8 @@ const AdministrarUsuariosPage = () => {
     // Componente interno: formulario de creación de usuarios
     const CrearUsuarioForm = ({ setModalVisible }) => {
         const [username, setUsername] = useState('');
+        const USERNAME_MIN_LEN = 4; // ajustar si se requiere otro mínimo
+        const [usernameError, setUsernameError] = useState(''); // mensaje de error inline para username
         const [password, setPassword] = useState('');
         const [confirmPassword, setConfirmPassword] = useState('');
         const [passwordErrors, setPasswordErrors] = useState([]); // lista de mensajes de validación
@@ -52,6 +54,10 @@ const AdministrarUsuariosPage = () => {
         const [showPassword, setShowPassword] = useState(false);
         const [showConfirmPassword, setShowConfirmPassword] = useState(false);
         const [email, setEmail] = useState('');
+        const [emailValid, setEmailValid] = useState(true);
+        const [usernameExists, setUsernameExists] = useState(false);
+        const [emailExists, setEmailExists] = useState(false);
+        const [checkingExistence, setCheckingExistence] = useState(false);
         const [role, setRole] = useState('ESPECIALISTA');
         const [loading, setLoading] = useState(false);
         const [passwordFocused, setPasswordFocused] = useState(false);
@@ -64,26 +70,84 @@ const AdministrarUsuariosPage = () => {
             return token ? { 'Authorization': `Bearer ${token}` } : {};
         };
 
-        // Reglas de validación para la contraseña
+        // Reglas de validación para la contraseña (mínimo 6 caracteres según requerimiento)
         const validatePassword = (pwd, conf) => {
             const errors = [];
-            if (!pwd || pwd.length < 8) errors.push('La contraseña debe tener al menos 8 caracteres.');
+            if (!pwd || pwd.length < 6) errors.push('La contraseña debe tener al menos 6 caracteres.');
             if (!/[A-Z]/.test(pwd)) errors.push('Incluir al menos una letra mayúscula.');
             if (!/[a-z]/.test(pwd)) errors.push('Incluir al menos una letra minúscula.');
             if (!/[0-9]/.test(pwd)) errors.push('Incluir al menos un número.');
             if (!/[!@#$%^&*()_\-+=\[\]{};:\\|,.<>/?]/.test(pwd)) errors.push('Incluir al menos un carácter especial (ej. !@#$%).');
-            // confirm
             const confErr = (pwd && conf && pwd !== conf) ? 'La contraseña y su confirmación no coinciden.' : '';
+            // valid sólo si no hay errores y no hay mismatch
             return { errors, confErr, valid: errors.length === 0 && confErr === '' };
+        };
+
+        // Validación simple de email (presencia de @ y estructura básica)
+        const validateEmail = (em) => {
+            if (!em) return true; // opcional: vacío es válido (campo opcional)
+            // regex simple: algo@algo.algo
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em);
         };
 
         // Efecto para validar en cada cambio
         useEffect(() => {
             const { errors, confErr, valid } = validatePassword(password, confirmPassword);
             setPasswordErrors(errors);
-            setConfirmError(confErr);
+            setConfirmError(confErr); // mantener confErr actualizado en tiempo real
             setIsPasswordValid(valid);
+            // actualizar validez del email en tiempo real
+            setEmailValid(validateEmail(email));
         }, [password, confirmPassword]);
+
+        // Validar username en tiempo real (mínimo de caracteres)
+        useEffect(() => {
+            if (!username) {
+                setUsernameError('');
+                return;
+            }
+            if (String(username).trim().length < USERNAME_MIN_LEN) {
+                setUsernameError(`El usuario debe tener al menos ${USERNAME_MIN_LEN} caracteres.`);
+            } else {
+                setUsernameError('');
+            }
+        }, [username]);
+
+        // Comprueba si username/email existen consultando el endpoint protegido de usuarios
+        const checkExists = async (field, value) => {
+            if (!value) {
+                if (field === 'username') setUsernameExists(false);
+                if (field === 'email') setEmailExists(false);
+                return;
+            }
+            if (field === 'email' && !validateEmail(value)) {
+                // no hacer petición si el email localmente es inválido
+                setEmailExists(false);
+                return;
+            }
+            try {
+                setCheckingExistence(true);
+                const res = await fetch(`${process.env.BACKEND_URL || ''}/api/auth/users`, {
+                    method: 'GET',
+                    headers: { ...getAuthHeaders() }
+                });
+                if (!res.ok) {
+                    // si no autorizados o error, no bloquear creación; manejar en submit por si backend responde 409
+                    console.warn('No se pudo comprobar existencia (status):', res.status);
+                    return;
+                }
+                const users = await res.json();
+                if (field === 'username') {
+                    setUsernameExists(users.some(u => u.username && u.username.toLowerCase() === String(value).toLowerCase()));
+                } else {
+                    setEmailExists(users.some(u => u.email && u.email.toLowerCase() === String(value).toLowerCase()));
+                }
+            } catch (err) {
+                console.error('Error comprobando existencia:', err);
+            } finally {
+                setCheckingExistence(false);
+            }
+        };
 
         const handleSubmit = async (e) => {
             e && e.preventDefault();
@@ -100,8 +164,16 @@ const AdministrarUsuariosPage = () => {
                 Swal.fire({ icon: 'error', title: 'Contraseña inválida', text: confErr });
                 // mantener passwordErrors vacío si no hay otros errores
                 setPasswordErrors(errors || []);
-                // no asignamos setConfirmError para evitar render inline del mensaje
+                // mostrar también el mensaje inline bajo el campo de confirmación
+                setConfirmError(confErr);
                 return;
+            }
+
+            // Validación final de username mínimo antes de enviar
+            if (!username || String(username).trim().length < USERNAME_MIN_LEN) {
+                setUsernameTouched && setUsernameTouched(true);
+                setUsernameError(`El usuario debe tener al menos ${USERNAME_MIN_LEN} caracteres.`);
+                return Swal.fire('Usuario inválido', `El usuario debe tener al menos ${USERNAME_MIN_LEN} caracteres.`, 'warning');
             }
 
             if (!valid) {
@@ -127,6 +199,9 @@ const AdministrarUsuariosPage = () => {
                 setConfirmPassword('');
                 setPasswordErrors([]);
                 setConfirmError('');
+                // limpiar flags de existencia tras crear con éxito
+                setUsernameExists(false);
+                setEmailExists(false);
                 // Notificar a la tabla que debe refrescar
                 window.dispatchEvent(new Event('usuariosChanged'));
                 setModalVisible && setModalVisible(false); // Cerrar modal si se proporciona la función
@@ -192,11 +267,26 @@ const AdministrarUsuariosPage = () => {
                     <div className="form__row" style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
                         <div className="form__group" style={{ flex: '1 1 0', minWidth: 200 }}>
                             <label className="form__label" style={{ marginBottom: '0.45rem', display: 'block' }}>Usuario</label>
-                            <input className="form__input" value={username} onChange={e => setUsername(e.target.value)} />
+                            <input
+                                className="form__input"
+                                value={username}
+                                onChange={e => { setUsername(e.target.value); setUsernameExists(false); setUsernameError(''); }}
+                                onBlur={() => { checkExists('username', username); }}
+                            />
+                            {usernameError && <p className="form__error-text" style={{ margin: '6px 0 0' }}>{usernameError}</p>}
+                            {usernameExists && !usernameError && <p className="form__error-text" style={{ margin: '6px 0 0' }}>El usuario ya existe.</p>}
                         </div>
                         <div className="form__group" style={{ flex: '1 1 0', minWidth: 200 }}>
                             <label className="form__label" style={{ marginBottom: '0.45rem', display: 'block' }}>Email (opcional)</label>
-                            <input className="form__input" value={email} onChange={e => setEmail(e.target.value)} />
+                            <input
+                                className="form__input"
+                                value={email}
+                                onChange={e => { setEmail(e.target.value); setEmailExists(false); setEmailValid(validateEmail(e.target.value)); }}
+                                onBlur={() => checkExists('email', email)}
+                            />
+                            {/* Mostrar error de formato o existencia */}
+                            {!emailValid && <p className="form__error-text" style={{ margin: '6px 0 0' }}>Email inválido.</p>}
+                            {email && emailValid && emailExists && <p className="form__error-text" style={{ margin: '6px 0 0' }}>El correo ya está registrado.</p>}
                         </div>
                         <div className="form__group" style={{ flex: '1 1 0', minWidth: 160 }}>
                             <label className="form__label" style={{ marginBottom: '0.45rem', display: 'block' }}>Rol</label>
@@ -323,7 +413,10 @@ const AdministrarUsuariosPage = () => {
                                     <Icon name={showConfirmPassword ? 'visibility_off' : 'visibility'} size={20} style={{ color: confirmTouched ? 'var(--color-primario)' : 'var(--color-texto-secundario)' }} />
                                 </button>
                             </div>
-                            {/* NOTA: el mensaje de mismatch se sigue mostrando en modal al submit, no inline */}
+                            {/* Mostrar inline el mensaje de mismatch si el usuario ya tocó el campo o ingresó confirmPassword */}
+                            {(confirmTouched || confirmPassword) && confirmError && (
+                                <p className="form__error-text" style={{ margin: '4px 0' }}>{confirmError}</p>
+                            )}
                         </div>
                     </div>
 
@@ -356,7 +449,14 @@ const AdministrarUsuariosPage = () => {
                         <button
                             type="submit"
                             className="btn btn--primary"
-                            disabled={loading || !isPasswordValid || !username}
+                            disabled={
+                                loading ||
+                                !isPasswordValid ||
+                                !username ||
+                                usernameExists ||
+                                !!usernameError ||
+                                (email && (emailExists || !emailValid))
+                            }
                             style={{ minWidth: 160, width: 160 }}
                         >
                             {loading ? 'Creando...' : (<><Icon name="login" /> Crear Usuario</>)}
