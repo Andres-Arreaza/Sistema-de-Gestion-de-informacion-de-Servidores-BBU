@@ -219,19 +219,11 @@ const AdministrarUsuariosPage = () => {
                                     lineHeight: 1
                                 }}
                             >
-                                <span
-                                    className="material-symbols-outlined"
-                                    aria-hidden="true"
-                                    style={{
-                                        fontSize: 20,
-                                        lineHeight: 1,
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}
-                                >
-                                    {showPassword ? 'visibility_off' : 'visibility'}
-                                </span>
+                                <Icon
+                                    name={showPassword ? 'visibility_off' : 'visibility'}
+                                    size={20}
+                                    style={{ color: passwordFocused ? 'var(--color-primario)' : 'var(--color-texto-secundario)', lineHeight: 1 }}
+                                />
                             </button>
                         </div>
                     </div>
