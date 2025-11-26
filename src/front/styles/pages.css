@@ -1460,26 +1460,43 @@
   border-radius: 8px;
 }
 
-/* Ancho fijo y truncado responsable para la etiqueta dentro del campo */
+/* OVERRIDE FINAL: aumentar un poco los anchos de los campos de Bulk Edit para mayor legibilidad
+   - flex-basis aumentado
+   - etiqueta (label) más ancha
+   - inputs/triggers internos también reciben min-width mayor
+*/
+.resultados-editor .editor-panel .bulk-edit-field {
+  flex: 0 0 420px !important;    /* ancho base por campo aumentado */
+  min-width: 320px !important;   /* mínimo razonable ampliado */
+  max-width: 560px !important;   /* permitir más expansión si hay espacio */
+  height: auto !important;
+  padding: 0.35rem !important;
+  box-sizing: border-box !important;
+  gap: var(--espaciado-sm) !important;
+  background: transparent;
+  margin: 0 !important;
+  border-radius: 8px;
+}
+
+/* Etiqueta dentro del campo: más ancha para no apretar el control */
 .resultados-editor .editor-panel .bulk-edit-field > label {
-  flex: 0 0 110px !important;               /* ancho de etiqueta consistente */
-  width: 110px !important;
+  flex: 0 0 160px !important;    /* ancho de etiqueta aumentado */
+  width: 160px !important;
   margin: 0 !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: 600;
-  font-size: 0.88rem;
+  font-size: 0.92rem;
 }
 
-/* Control (input / trigger) ocupa el espacio restante y mantiene misma altura */
+/* Inputs/triggers dentro de cada campo: ocupar el resto y tener un mínimo mayor */
 .resultados-editor .editor-panel .bulk-edit-field .form__input,
 .resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
   flex: 1 1 auto !important;
-  width: auto !important;
-  min-width: 0 !important;
-  height: 36px !important;
-  padding: 20px 10px !important;
+  min-width: 260px !important;
+  max-width: 420px !important;
+  height: 40px !important;
   box-sizing: border-box !important;
   display: inline-flex !important;
   align-items: center !important;

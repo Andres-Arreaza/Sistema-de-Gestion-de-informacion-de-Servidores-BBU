@@ -32,12 +32,11 @@ const abrirModalLink = (servidor) => {
 
 const exportarCSV = (servidores) => {
     if (!servidores.length) return;
-    // Preparar helpers para CSV: envolver campos entre comillas; para VLAN usar ="000" para preservar ceros a la izquierda en Excel
+    // Preparar helper para CSV: envolver todos los campos entre comillas y escapar comillas internas
     const csvQuote = (v) => `"${String(v || '').replace(/"/g, '""')}"`;
-    const csvVlan = (v) => v ? `="${String(v).replace(/"/g, '""')}"` : '';
     const encabezados = `Nombre;Tipo;IP MGMT;VLAN MGMT;IP Real;VLAN REAL;IP Mask/25;Servicio;Ecosistema;Aplicacion;Capa;Ambiente;Balanceador;Dominio;S.O.;Estatus;Descripcion;Link\n`;
     const filas = servidores.map(srv => {
-        // Aplicaciones
+        // Aplicación
         let aplicacion = '';
         if (Array.isArray(srv.aplicaciones) && srv.aplicaciones.length > 0) {
             const app = srv.aplicaciones[0];
@@ -45,29 +44,18 @@ const exportarCSV = (servidores) => {
         } else if (srv.aplicacion) {
             aplicacion = `${srv.aplicacion.nombre} - V${srv.aplicacion.version}`;
         }
-        // Capa
-        let capa = srv.capa?.nombre || srv.capas?.[0]?.nombre || '';
-        // Dominio
-        let dominio = srv.dominio?.nombre || srv.dominios?.[0]?.nombre || '';
-        // S.O.
-        let so = '';
-        if (srv.sistema_operativo) {
-            so = `${srv.sistema_operativo.nombre} - V${srv.sistema_operativo.version}`;
-        } else if (srv.sistemasOperativos?.[0]) {
-            so = `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}`;
-        }
-        // Estatus
-        let estatus = srv.estatus?.nombre || srv.estatus?.[0]?.nombre || '';
-        // Descripción
-        let descripcion = srv.descripcion || '';
-        // Link
-        let link = srv.link || '';
-        // Ecosistema
-        let ecosistema = srv.ecosistema?.nombre || srv.ecosistemas?.[0]?.nombre || '';
-        // Servicio
-        let servicio = srv.servicio?.nombre || srv.servicios?.[0]?.nombre || '';
-        // Ambiente
-        let ambiente = srv.ambiente?.nombre || srv.ambientes?.[0]?.nombre || '';
+        // Otros campos derivados
+        const servicio = srv.servicio?.nombre || (srv.servicios && srv.servicios[0]?.nombre) || '';
+        const capa = srv.capa?.nombre || (srv.capas && srv.capas[0]?.nombre) || '';
+        const dominio = srv.dominio?.nombre || (srv.dominios && srv.dominios[0]?.nombre) || '';
+        const so = srv.sistema_operativo ? `${srv.sistema_operativo.nombre} - V${srv.sistema_operativo.version}` :
+            (srv.sistemasOperativos && srv.sistemasOperativos[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : '');
+        const estatus = srv.estatus?.nombre || (srv.estatus && srv.estatus[0]?.nombre) || '';
+        const descripcion = srv.descripcion || '';
+        const link = srv.link || '';
+        const ecosistema = srv.ecosistema?.nombre || (srv.ecosistemas && srv.ecosistemas[0]?.nombre) || '';
+        const ambiente = srv.ambiente?.nombre || (srv.ambientes && srv.ambientes[0]?.nombre) || '';
+
         const cols = [
             srv.nombre || '',
             srv.tipo || '',
@@ -88,14 +76,11 @@ const exportarCSV = (servidores) => {
             descripcion,
             link
         ];
-        // Mapear y formatear: VLANs con tratamiento especial
-        const mapped = cols.map((val, idx) => {
-            // índices 3 y 5 corresponden a vlan_mgmt y vlan_real en el array anterior
-            if (idx === 3 || idx === 5) return csvVlan(val);
-            return csvQuote(val);
-        });
+
+        const mapped = cols.map(val => csvQuote(val));
         return mapped.join(';');
     }).join("\n");
+
     const csvContent = `data:text/csv;charset=utf-8,\uFEFF${encodeURI(encabezados + filas)}`;
     const link = document.createElement("a");
     link.setAttribute("href", csvContent);
@@ -658,6 +643,59 @@ const EditorMasivo = () => {
         Swal.fire("Aplicado", "Los cambios han sido aplicados en la vista previa.", "success");
     };
 
+    // Renderiza los controles de edición masiva para las columnas seleccionadas
+    const renderBulkEditControls = () => {
+        if (!columnasEditables || columnasEditables.length === 0) return null;
+        return (
+            <div className="bulk-edit-controls" style={{ gap: '0.9rem', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+                {columnasEditables.map(colKey => {
+                    const colDef = opcionesColumnas.find(c => c.value === colKey) || { value: colKey, label: colKey, type: 'input' };
+                    const val = bulkEditValues[colKey] ?? '';
+                    return (
+                        <div
+                            key={colKey}
+                            className="bulk-edit-field"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',         // espacio reducido entre label y control
+                                minWidth: 260,         // campo algo más compacto
+                                maxWidth: 440,
+                                flex: '0 0 auto',
+                                padding: '4px 6px',    // padding reducido
+                                boxSizing: 'border-box',
+                                borderRadius: 6,
+                                background: 'transparent'
+                            }}
+                        >
+                            <label style={{ minWidth: 120, fontWeight: 600, whiteSpace: 'nowrap' }}>{colDef.label}</label>
+                            {colDef.type === 'select' ? (
+                                <div style={{ flex: '1 1 auto', minWidth: 220, maxWidth: 360 }}>
+                                    <BulkEditDropdown
+                                        value={val}
+                                        onChange={(v) => handleBulkEditChange(colKey, v)}
+                                        options={colDef.options}
+                                        catalog={colDef.catalog}
+                                        catalogos={catalogos}
+                                    />
+                                </div>
+                            ) : (
+                                <input
+                                    className="form__input"
+                                    style={{ minWidth: 160, maxWidth: 360, flex: '1 1 auto' }}
+                                    value={val}
+                                    onChange={(e) => handleBulkEditChange(colKey, e.target.value)}
+                                    placeholder={colDef.label}
+                                />
+                            )}
+                            {/* La aplicación de cambios sigue siendo con el botón global "Aplicar Cambios" */}
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
     const handleEliminarServidor = async (servidorParaEliminar) => {
         // verificar permisos
         if (!userRole || !['GERENTE', 'ESPECIALISTA'].includes(userRole)) {
@@ -762,6 +800,10 @@ const EditorMasivo = () => {
             Swal.fire("Sin cambios", "No se ha modificado ningún servidor.", "info");
             return;
         }
+
+        // NUEVO: validaciones client-side similares a ServidorFormulario antes de pedir validación al backend
+        const validLocal = validateEditChanges();
+        if (!validLocal) return; // si hay errores, se muestran y se aborta
 
         // 1. Validar que al menos una IP esté presente por servidor modificado
         const servidoresSinIp = [];
@@ -1207,6 +1249,102 @@ const EditorMasivo = () => {
         { header: 'Descripción', key: 'descripcion' },
         { header: 'Link', key: 'link' }
     ];
+
+    // Valida localmente los cambios (reutiliza reglas de ServidorFormulario)
+    const validateEditChanges = () => {
+        const errorsMap = {};
+
+        // Reconstruir snapshot con cambios aplicados para validar unicidades entre servidores
+        const mergedServidores = servidores.map(s => {
+            const change = cambios[s.id] || {};
+            return { ...s, ...change };
+        });
+
+        const requiredFields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "balanceador"];
+
+        // Helper para comparar igualdad considerándo null/undefined/empty
+        const norm = v => (v === null || v === undefined) ? "" : String(v).trim();
+
+        // Index merged by id for quick lookup
+        const mergedById = Object.fromEntries(mergedServidores.map(s => [s.id, s]));
+
+        for (const idStr of Object.keys(cambios)) {
+            const id = parseInt(idStr, 10);
+            const servidor = mergedById[id];
+            if (!servidor) continue;
+            const serverErrors = {};
+
+            // 1) Campos requeridos
+            requiredFields.forEach(f => {
+                if (!norm(servidor[f])) {
+                    serverErrors[f] = 'Este campo es obligatorio.';
+                }
+            });
+
+            // 2) Al menos una IP
+            const ipMgmt = norm(servidor.ip_mgmt);
+            const ipReal = norm(servidor.ip_real);
+            const ipMask = norm(servidor.ip_mask25);
+            if (!ipMgmt && !ipReal && !ipMask) {
+                serverErrors.ip_mgmt = "Debe ingresar al menos una IP.";
+                serverErrors.ip_real = "Debe ingresar al menos una IP.";
+                serverErrors.ip_mask25 = "Debe ingresar al menos una IP.";
+            } else {
+                // 3) Duplicados internos entre sus propias IPs
+                const ips = [ipMgmt, ipReal, ipMask].filter(Boolean);
+                const counts = ips.reduce((acc, ip) => (acc[ip] = (acc[ip] || 0) + 1, acc), {});
+                if (ipMgmt && counts[ipMgmt] > 1) serverErrors.ip_mgmt = "IP repetida en otro campo.";
+                if (ipReal && counts[ipReal] > 1) serverErrors.ip_real = "IP repetida en otro campo.";
+                if (ipMask && counts[ipMask] > 1) serverErrors.ip_mask25 = "IP repetida en otro campo.";
+            }
+
+            // 4) Unicidad frente a otros servidores (usar mergedServidores)
+            for (const other of mergedServidores) {
+                if (other.id === servidor.id) continue;
+                // Nombre único
+                if (norm(other.nombre) && norm(other.nombre).toLowerCase() === norm(servidor.nombre).toLowerCase()) {
+                    serverErrors.nombre = 'Este nombre ya está en uso.';
+                }
+                // Link único
+                if (norm(other.link) && norm(other.link) === norm(servidor.link)) {
+                    serverErrors.link = 'Este link ya está en uso.';
+                }
+                // IPs: reglas diferenciadas
+                // ip_mgmt / ip_real (debemos evitar que coincidan con cualquier ip en otro servidor)
+                if (ipMgmt) {
+                    if (norm(other.ip_mgmt) === ipMgmt || norm(other.ip_real) === ipMgmt || norm(other.ip_mask25) === ipMgmt) {
+                        serverErrors.ip_mgmt = 'La IP ya está en uso en otro servidor.';
+                    }
+                }
+                if (ipReal) {
+                    if (norm(other.ip_mgmt) === ipReal || norm(other.ip_real) === ipReal || norm(other.ip_mask25) === ipReal) {
+                        serverErrors.ip_real = 'La IP ya está en uso en otro servidor.';
+                    }
+                }
+                // ip_mask25 sólo debe ser única respecto ip_mgmt/ip_real en otros servidores
+                if (ipMask) {
+                    if (norm(other.ip_mgmt) === ipMask || norm(other.ip_real) === ipMask) {
+                        serverErrors.ip_mask25 = 'La IP ya está en uso en otro servidor.';
+                    }
+                }
+            }
+
+            if (Object.keys(serverErrors).length > 0) {
+                errorsMap[servidor.id] = serverErrors;
+            }
+        }
+
+        if (Object.keys(errorsMap).length > 0) {
+            setValidationErrors(errorsMap);
+            Swal.fire({
+                icon: 'error',
+                title: 'Validación fallida',
+                html: 'Hay errores en los datos. Revisa los campos marcados en rojo.',
+            });
+            return false;
+        }
+        return true;
+    };
 
     return (
         <div className="page-container">
