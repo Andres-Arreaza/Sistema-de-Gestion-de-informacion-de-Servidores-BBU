@@ -868,3 +868,69 @@ def bulk_delete_servidores():
         db.session.rollback()
         print("ERROR EN BULK DELETE SERVIDORES:", e)
         return jsonify({"error": str(e)}), 500
+
+# --- Nuevo endpoint para actualizar usuarios (autoriza GERENTE o el propio usuario) ---
+@api.route("/auth/users/<int:user_id>", methods=["PUT"])
+def update_user(user_id):
+    """
+    Actualiza un usuario:
+    - Permite a GERENTE actualizar cualquier usuario.
+    - Permite a un usuario autenticado actualizar su propio perfil.
+    Campos permitidos: username, email, password, role (role sólo GERENTE).
+    """
+    try:
+        # Verificar token
+        auth = request.headers.get('Authorization', None)
+        if not auth or not auth.startswith('Bearer '):
+            return jsonify({"error": "Autenticación requerida"}), 401
+        token = auth.split(' ', 1)[1].strip()
+        payload = verify_auth_token(token)
+        if not payload:
+            return jsonify({"error": "Token inválido o expirado"}), 401
+
+        requester_id = payload.get('id')
+        requester_role = payload.get('role')
+
+        # Autorización: GERENTE puede todo; usuario puede editar su propio registro
+        if requester_role != UserRole.GERENTE.value and int(requester_id) != int(user_id):
+            return jsonify({"error": "Permiso denegado"}), 403
+
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "Usuario no encontrado"}), 404
+
+        data = request.get_json() or {}
+
+        # Validar cambios de username/email: unicidad
+        if 'username' in data and data['username'] and data['username'] != user.username:
+            conflict = User.query.filter(User.username == data['username'], User.id != user_id).first()
+            if conflict:
+                return jsonify({"error": "El username ya existe"}), 409
+            user.username = data['username']
+
+        if 'email' in data and data['email'] and data['email'] != user.email:
+            conflict = User.query.filter(User.email == data['email'], User.id != user_id).first()
+            if conflict:
+                return jsonify({"error": "El email ya está registrado"}), 409
+            user.email = data['email']
+
+        # Role solo puede cambiar un GERENTE explícitamente
+        if 'role' in data:
+            if requester_role != UserRole.GERENTE.value:
+                return jsonify({"error": "Solo GERENTE puede cambiar el role"}), 403
+            if data['role'] not in [r.value for r in UserRole]:
+                return jsonify({"error": "role inválido"}), 400
+            user.role = UserRole(data['role'])
+
+        # Password: si viene, actualizar (hash interno)
+        if 'password' in data and data['password']:
+            user.set_password(data['password'])
+
+        user.fecha_modificacion = datetime.utcnow()
+        db.session.commit()
+
+        return jsonify(user.serialize()), 200
+    except Exception as e:
+        db.session.rollback()
+        print("ERROR update_user:", e)
+        return jsonify({"error": "Error interno al actualizar el usuario"}), 500

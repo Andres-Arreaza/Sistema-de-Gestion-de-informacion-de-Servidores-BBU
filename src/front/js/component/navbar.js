@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
 import banescoLogo from '../../img/BanescoServers.png';
 import Icon from './Icon';
-import Login from './login'; // <-- nuevo componente importado
+import Login from './login';
 
 export const Navbar = () => {
     const location = useLocation();
@@ -16,29 +16,24 @@ export const Navbar = () => {
         user: localStorage.getItem('auth_user') ? JSON.parse(localStorage.getItem('auth_user')) : null
     });
 
-    // Redirigir automáticamente a home si la ruta es protegida y no hay sesión activa
     useEffect(() => {
         const protectedPaths = ['/servidor', '/configuracion'];
-        const currentPath = location.pathname.replace(/\/+$/, ''); // normalizar sin slash final
+        const currentPath = location.pathname.replace(/\/+$/, '');
         const isProtected = protectedPaths.includes(currentPath);
         if (isProtected && !auth.token) {
-            // evitar bucles si ya estamos en "/"
             if (currentPath !== '/') {
                 navigate('/');
             }
         }
     }, [location.pathname, auth.token, navigate]);
 
-    // Nuevo: menú del usuario (toggle al click)
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-    const [selectedMenuItem, setSelectedMenuItem] = useState(null); // <-- nuevo estado
+    const [selectedMenuItem, setSelectedMenuItem] = useState(null);
     const userMenuRef = useRef(null);
 
     useEffect(() => {
-        // cerrar dropdowns generales y menú de usuario al cambiar de ruta
         setIsDropdownOpen(false);
         setIsUserMenuOpen(false);
-        // Si estamos en Home, limpiar la selección de "Administrar"
         if (location.pathname === "/") {
             setSelectedMenuItem(null);
         }
@@ -70,20 +65,16 @@ export const Navbar = () => {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_role');
         localStorage.removeItem('auth_user');
-        // Notificar al resto de la app que cambió la autenticación
         window.dispatchEvent(new Event('authChanged'));
-        // Cerrar menú de usuario y redirigir a inicio
         setIsUserMenuOpen(false);
         navigate('/');
     };
 
-    // Antes: incluía un entry { type: 'divider' } — lo eliminamos para no renderizar líneas entre botones.
     const adminLinks = [
         { to: "/configuracion", label: "Configuración" },
         { to: "/servidor", label: "Crear Servidor", isHighlight: true },
     ];
 
-    // Permite acceso a las opciones de administración tanto a GERENTE como a ESPECIALISTA
     const canManage = auth.token && ['GERENTE', 'ESPECIALISTA'].includes(auth.role);
 
     return (
@@ -98,9 +89,7 @@ export const Navbar = () => {
                     />
                 </Link>
 
-                {/* RIGHT SIDE */}
                 <div className="navbar-right">
-                    {/* Usuario (trigger ahora solo "Administrar") */}
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                         {auth.token ? (
                             <div ref={userMenuRef} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -111,7 +100,6 @@ export const Navbar = () => {
                                     aria-expanded={isUserMenuOpen}
                                     style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                                 >
-                                    {/* Mostrar solo "Administrar" */}
                                     <span>Administrar</span>
                                     <span className={`chevron ${isUserMenuOpen ? 'open' : ''}`} style={{ marginLeft: 8 }}></span>
                                 </button>
@@ -128,7 +116,26 @@ export const Navbar = () => {
                                         zIndex: 1200,
                                         overflow: 'hidden'
                                     }}>
-                                        {/* Admin links (si es GERENTE o ESPECIALISTA) — al hacer click se marca como seleccionado */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderBottom: '1px solid var(--color-borde)' }}>
+                                            <div style={{
+                                                width: 40, height: 40, borderRadius: 20, background: 'var(--color-primario)',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700
+                                            }}>
+                                                {auth.user && auth.user.username ? String(auth.user.username).trim().charAt(0).toUpperCase() : <Icon name="person" />}
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <strong style={{ fontSize: '0.95rem' }}>{auth.user?.username || 'Usuario'}</strong>
+                                                {auth.user?.email && <span style={{ fontSize: '0.82rem', color: 'var(--color-texto-secundario)' }}>{auth.user.email}</span>}
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            className={`navbar-link ${selectedMenuItem === 'perfil' ? 'selected' : ''}`}
+                                            onClick={() => { setIsUserMenuOpen(false); setSelectedMenuItem('perfil'); navigate('/perfil'); }}
+                                        >
+                                            Perfil
+                                        </button>
+
                                         {canManage && (
                                             <>
                                                 {adminLinks.map((link, idx) => (
@@ -155,16 +162,6 @@ export const Navbar = () => {
                                             </>
                                         )}
 
-                                        {/* Opciones del usuario: usar la misma clase y marcar selected al click */}
-                                        {/*
-                                        <button
-                                            className={`navbar-link ${selectedMenuItem === 'perfil' ? 'selected' : ''}`}
-                                            onClick={() => { setIsUserMenuOpen(false); setSelectedMenuItem('perfil');  }}
-                                        >
-                                            Perfil
-                                        </button>
-                                        */}
-
                                         <div className="navbar-divider" />
 
                                         <button
@@ -181,14 +178,12 @@ export const Navbar = () => {
                         )}
                     </div>
 
-                    {/* Home (derecha) */}
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                         <Link
                             className={`btn-icon ${location.pathname === "/" ? "active" : ""}`}
                             to="/"
                             aria-label="Página de inicio"
                             onClick={() => {
-                                // al pulsar Home cerrar menú de usuario y limpiar selección
                                 setIsUserMenuOpen(false);
                                 setSelectedMenuItem(null);
                             }}
@@ -199,7 +194,6 @@ export const Navbar = () => {
                 </div>
             </nav>
 
-            {/* Mostrar el componente Login cuando open === true */}
             {open && <Login open={open} onClose={() => setOpen(false)} />}
         </header>
     );
