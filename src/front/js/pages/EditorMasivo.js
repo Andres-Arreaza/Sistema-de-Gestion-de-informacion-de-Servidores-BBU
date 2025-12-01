@@ -1,323 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { BusquedaFiltro } from '../component/BusquedaFiltro';
 import Loading from '../component/Loading';
 import Icon from '../component/Icon';
-
-// --- Funciones de Exportación y Auxiliares ---
-const abrirModalLink = (servidor) => {
-    if (!servidor || !servidor.link) {
-        Swal.fire({
-            icon: 'info',
-            title: 'Sin Enlace',
-            text: `El servidor "${servidor.nombre}" no tiene un enlace asociado.`,
-            confirmButtonColor: "var(--color-primario)",
-        });
-        return;
-    }
-
-    Swal.fire({
-        title: "Información del Enlace",
-        html: `
-            <div style="text-align: left; padding: 0 1rem;">
-                <p><strong>Servidor:</strong> ${servidor.nombre || "No disponible"}</p>
-                <p><strong>Descripción:</strong> ${servidor.descripcion || "No disponible"}</p>
-                <p><strong>Enlace:</strong> <a href="${servidor.link}" target="_blank" rel="noopener noreferrer">${servidor.link}</a></p>
-            </div>
-        `,
-        confirmButtonText: "Cerrar",
-        confirmButtonColor: "var(--color-primario)",
-    });
-};
-
-const exportarCSV = (servidores) => {
-    if (!servidores.length) return;
-    // Preparar helper para CSV: envolver todos los campos entre comillas y escapar comillas internas
-    const csvQuote = (v) => `"${String(v || '').replace(/"/g, '""')}"`;
-    const encabezados = `Nombre;Tipo;IP MGMT;VLAN MGMT;IP Real;VLAN REAL;IP Mask/25;Servicio;Ecosistema;Aplicacion;Capa;Ambiente;Balanceador;Dominio;S.O.;Estatus;Descripcion;Link\n`;
-    const filas = servidores.map(srv => {
-        // Aplicación
-        let aplicacion = '';
-        if (Array.isArray(srv.aplicaciones) && srv.aplicaciones.length > 0) {
-            const app = srv.aplicaciones[0];
-            aplicacion = `${app.nombre} - V${app.version}`;
-        } else if (srv.aplicacion) {
-            aplicacion = `${srv.aplicacion.nombre} - V${srv.aplicacion.version}`;
-        }
-        // Otros campos derivados
-        const servicio = srv.servicio?.nombre || (srv.servicios && srv.servicios[0]?.nombre) || '';
-        const capa = srv.capa?.nombre || (srv.capas && srv.capas[0]?.nombre) || '';
-        const dominio = srv.dominio?.nombre || (srv.dominios && srv.dominios[0]?.nombre) || '';
-        const so = srv.sistema_operativo ? `${srv.sistema_operativo.nombre} - V${srv.sistema_operativo.version}` :
-            (srv.sistemasOperativos && srv.sistemasOperativos[0] ? `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}` : '');
-        const estatus = srv.estatus?.nombre || (srv.estatus && srv.estatus[0]?.nombre) || '';
-        const descripcion = srv.descripcion || '';
-        const link = srv.link || '';
-        const ecosistema = srv.ecosistema?.nombre || (srv.ecosistemas && srv.ecosistemas[0]?.nombre) || '';
-        const ambiente = srv.ambiente?.nombre || (srv.ambientes && srv.ambientes[0]?.nombre) || '';
-
-        const cols = [
-            srv.nombre || '',
-            srv.tipo || '',
-            srv.ip_mgmt || '',
-            srv.vlan_mgmt || '',
-            srv.ip_real || '',
-            srv.vlan_real || '',
-            srv.ip_mask25 || '',
-            servicio,
-            ecosistema,
-            aplicacion,
-            capa,
-            ambiente,
-            srv.balanceador || '',
-            dominio,
-            so,
-            estatus,
-            descripcion,
-            link
-        ];
-
-        const mapped = cols.map(val => csvQuote(val));
-        return mapped.join(';');
-    }).join("\n");
-
-    const csvContent = `data:text/csv;charset=utf-8,\uFEFF${encodeURI(encabezados + filas)}`;
-    const link = document.createElement("a");
-    link.setAttribute("href", csvContent);
-    link.setAttribute("download", "servidores.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-};
-
-const exportarExcel = (servidores) => {
-    if (!servidores.length) return;
-    const estilos = `
-        <style>
-            body { font-family: Arial, sans-serif; }
-            .excel-table { border-collapse: collapse; width: 100%; font-size: 12px; }
-            .excel-table th, .excel-table td { border: 1px solid #cccccc; padding: 8px; text-align: center; vertical-align: middle; }
-            .excel-table th { background-color: #005A9C; color: #FFFFFF; font-weight: bold; }
-            .excel-table tr:nth-child(even) { background-color: #f2f2f2; }
-            .header-table { border-collapse: collapse; width: 100%; margin-bottom: 25px; }
-            .header-table td { border: none; vertical-align: middle; text-align: left; }
-            .main-title { color: #000000; font-size: 28px; font-weight: bold; margin: 0; padding: 0; }
-            .sub-title { color: #005A9C; font-size: 14px; font-style: italic; margin: 0; padding: 0; }
-        </style>
-    `;
-    // Encabezados con VLANs junto a sus IPs
-    const encabezados = `<tr><th>Nombre</th><th>Tipo</th><th>IP MGMT</th><th>VLAN MGMT</th><th>IP Real</th><th>VLAN REAL</th><th>IP Mask/25</th><th>Servicio</th><th>Ecosistema</th><th>Aplicacion</th><th>Capa</th><th>Ambiente</th><th>Balanceador</th><th>Dominio</th><th>S.O.</th><th>Estatus</th><th>Descripcion</th><th>Link</th></tr>`;
-    const filas = servidores.map(srv => {
-        // Servicio
-        let servicio = srv.servicio?.nombre || (srv.servicios && Array.isArray(srv.servicios) && srv.servicios.length > 0 ? srv.servicios[0].nombre : 'N/A');
-        // Capa
-        let capa = srv.capa?.nombre || (srv.capas && Array.isArray(srv.capas) && srv.capas.length > 0 ? srv.capas[0].nombre : 'N/A');
-        // Ambiente
-        let ambiente = srv.ambiente?.nombre || (srv.ambientes && Array.isArray(srv.ambientes) && srv.ambientes.length > 0 ? srv.ambientes[0].nombre : 'N/A');
-        // Dominio
-        let dominio = srv.dominio?.nombre || (srv.dominios && Array.isArray(srv.dominios) && srv.dominios.length > 0 ? srv.dominios[0].nombre : 'N/A');
-        // Estatus
-        let estatus = srv.estatus?.nombre || (srv.estatus && Array.isArray(srv.estatus) && srv.estatus.length > 0 ? srv.estatus[0].nombre : 'N/A');
-        // S.O.
-        let so = '';
-        if (srv.sistema_operativo) {
-            so = `${srv.sistema_operativo.nombre} - V${srv.sistema_operativo.version}`;
-        } else if (srv.sistemasOperativos && Array.isArray(srv.sistemasOperativos) && srv.sistemasOperativos.length > 0) {
-            so = `${srv.sistemasOperativos[0].nombre} - V${srv.sistemasOperativos[0].version}`;
-        } else {
-            so = 'N/A';
-        }
-        // Aplicaciones
-        let aplicacion = '';
-        if (Array.isArray(srv.aplicaciones) && srv.aplicaciones.length > 0) {
-            const app = srv.aplicaciones[0];
-            aplicacion = `${app.nombre} - V${app.version}`;
-        } else if (srv.aplicacion) {
-            aplicacion = `${srv.aplicacion.nombre} - V${srv.aplicacion.version}`;
-        }
-        // Ecosistema
-        let ecosistema = srv.ecosistema?.nombre || (srv.ecosistemas && Array.isArray(srv.ecosistemas) && srv.ecosistemas.length > 0 ? srv.ecosistemas[0].nombre : 'N/A');
-        // Usar mso-number-format:'\@' para forzar formato texto en Excel y conservar ceros a la izquierda
-        const vlanMgmtCell = `<td style="mso-number-format:'\\@'">${srv.vlan_mgmt || ''}</td>`;
-        const vlanRealCell = `<td style="mso-number-format:'\\@'">${srv.vlan_real || ''}</td>`;
-        return `<tr>
-            <td>${srv.nombre || 'N/A'}</td>
-            <td>${srv.tipo || 'N/A'}</td>
-            <td>${srv.ip_mgmt || 'N/A'}</td>
-            ${vlanMgmtCell}
-            <td>${srv.ip_real || 'N/A'}</td>
-            ${vlanRealCell}
-            <td>${srv.ip_mask25 || 'N/A'}</td>
-            <td>${servicio}</td>
-            <td>${ecosistema}</td>
-            <td>${aplicacion || 'N/A'}</td>
-            <td>${capa}</td>
-            <td>${ambiente}</td>
-            <td>${srv.balanceador || 'N/A'}</td>
-            <td>${dominio}</td>
-            <td>${so}</td>
-            <td>${estatus}</td>
-            <td>${srv.descripcion || 'N/A'}</td>
-            <td>${srv.link || 'N/A'}</td>
-        </tr>`;
-    }).join("");
-    const plantillaHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8">${estilos}</head><body><table class="header-table"><tr><td colspan="14"><h1 class="main-title">Reporte de Servidores</h1></td></tr><tr><td colspan="14"><p class="sub-title">(Gerencia de Operaciones de Canales Virtuales y Medios de Pagos)</p></td></tr></table><table class="excel-table">${encabezados}${filas}</table></body></html>`;
-    const excelContent = `data:application/vnd.ms-excel;charset=utf-8,${encodeURIComponent(plantillaHtml)}`;
-    const link = document.createElement("a");
-    link.setAttribute("href", excelContent);
-    link.setAttribute("download", "Reporte_Servidores.xls");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-};
+import SelectorColumnasEditables from '../component/SelectorColumnasEditables';
+import BulkEditDropdown from '../component/BulkEditDropdown';
+import ItemsPerPageDropdown from '../component/ItemsPerPageDropdown'; // (si se usa directamente en otros componentes)
+import BulkEditControls from '../component/BulkEditControls';
+import ResultadosTabla from '../component/ResultadosTabla';
+// IMPORTS NUEVOS:
+import EditorPagination from '../component/EditorPagination';
+import { exportarCSV, exportarExcel, abrirModalLink } from '../component/ExportHelpers';
 
 // --- Componentes Internos ---
-const SelectorColumnasEditables = ({ opciones, seleccionadas, onChange }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef(null);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const handleCheckboxChange = (e) => {
-        const { value, checked } = e.target;
-        const nuevasColumnas = checked
-            ? [...seleccionadas, value]
-            : seleccionadas.filter(col => col !== value);
-        onChange(nuevasColumnas);
-    };
-
-    return (
-        <div className="selector-columnas-container" ref={dropdownRef}>
-            <label className="form__label">
-                <Icon name="columns" />
-                Columnas a editar:
-            </label>
-            <div className="custom-select">
-                <button type="button" className="form__input custom-select__trigger" onClick={() => setIsOpen(!isOpen)}>
-                    <span>{seleccionadas.length > 0 ? `${seleccionadas.length} seleccionada(s)` : "Ninguna"}</span>
-                    <div className={`chevron ${isOpen ? "open" : ""}`}></div>
-                </button>
-                <div className={`custom-select__panel ${isOpen ? "open" : ""}`}>
-                    {opciones.map((opcion) => (
-                        <label key={opcion.value} className="custom-select__option">
-                            <input
-                                type="checkbox"
-                                value={opcion.value}
-                                checked={seleccionadas.includes(opcion.value)}
-                                onChange={handleCheckboxChange}
-                                disabled={opcion.disabled}
-                            />
-                            <span className={opcion.disabled ? 'disabled-option' : ''}>{opcion.label}</span>
-                        </label>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const BulkEditDropdown = ({ value, onChange, options, catalog, catalogos }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef(null);
-    const displayOptions = options || catalogos[catalog] || [];
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const handleSelect = (optionValue) => {
-        onChange(optionValue);
-        setIsOpen(false);
-    };
-
-    const selectedOption = displayOptions.find(opt => String(opt.id) === String(value));
-    const displayLabel = selectedOption ? ((catalog === 'sistemasOperativos' || catalog === 'aplicaciones') ? `${selectedOption.nombre} - V${selectedOption.version}` : selectedOption.nombre) : "Seleccionar un valor...";
-
-    return (
-        <div className="custom-select" ref={dropdownRef} style={{ flexGrow: 1 }}>
-            <button type="button" className="form__input custom-select__trigger" onClick={() => setIsOpen(!isOpen)}>
-                <span>{displayLabel}</span>
-                <div className={`chevron ${isOpen ? "open" : ""}`}></div>
-            </button>
-            <div className={`custom-select__panel ${isOpen ? "open" : ""}`}>
-                {displayOptions.map(opt => (
-                    <label
-                        key={opt.id}
-                        className={`custom-select__option ${String(value) === String(opt.id) ? 'selected' : ''}`}
-                    >
-                        <input
-                            type="radio"
-                            name={`bulk-edit-${catalog}`}
-                            value={opt.id}
-                            checked={String(value) === String(opt.id)}
-                            onChange={() => handleSelect(String(opt.id))}
-                        />
-                        <span>
-                            {(catalog === 'sistemasOperativos' || catalog === 'aplicaciones') ? `${opt.nombre} - V${opt.version}` : opt.nombre}
-                        </span>
-                    </label>
-                ))}
-            </div>
-        </div>
-    );
-};
-
-const ItemsPerPageDropdown = ({ value, onChange }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const options = [50, 100, 150, 200];
-    const dropdownRef = useRef(null);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const handleSelect = (option) => {
-        onChange(option);
-        setIsOpen(false);
-    };
-
-    return (
-        <div className="custom-select pagination-select" ref={dropdownRef}>
-            <button type="button" className="form__input custom-select__trigger" onClick={() => setIsOpen(!isOpen)}>
-                <span>{value}</span>
-                <div className={`chevron ${isOpen ? "open" : ""}`}></div>
-            </button>
-            <div className={`custom-select__panel ${isOpen ? "open" : ""}`}>
-                {options.map(opt => (
-                    <div
-                        key={opt}
-                        className={`custom-select__option ${value === opt ? 'selected' : ''}`}
-                        onClick={() => handleSelect(opt)}
-                    >
-                        {opt}
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
-
-
 const EditorMasivo = () => {
     const [filtro, setFiltro] = useState({
         nombre: '', ip: '', balanceador: '', descripcion: '', link: '',
@@ -368,6 +64,93 @@ const EditorMasivo = () => {
     }, []);
 
     const [userRole, setUserRole] = useState(getAuthRole());
+
+    // Router + helper para manejar expiración/401
+    const navigate = useNavigate();
+    const handleAuthExpired = () => {
+        // Limpiar credenciales locales y notificar al resto de la app
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_role');
+        localStorage.removeItem('auth_user');
+        window.dispatchEvent(new Event('authChanged'));
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sesión expirada',
+            text: 'Tu sesión ha expirado o no estás autorizado. Por favor, inicia sesión de nuevo.',
+            confirmButtonColor: 'var(--color-primario)'
+        }).then(() => {
+            try { navigate('/login'); } catch (e) { /* navegación opcional */ }
+        });
+    };
+
+    // Estado y helpers para edición inline en la tabla
+    const [editingCell, setEditingCell] = useState(null); // { id, key, value } o null
+
+    const cancelEditing = () => {
+        setEditingCell(null);
+    };
+
+    const startEditCell = (servidor, key) => {
+        if (!userRole || !['GERENTE', 'ESPECIALISTA'].includes(userRole)) return;
+        const immutableCols = ['link']; // columnas no editables inline
+        if (immutableCols.includes(key)) return;
+        const current = servidor && (servidor[key] === null || servidor[key] === undefined) ? '' : String(servidor[key]);
+        setEditingCell({ id: servidor.id, key, value: current });
+    };
+
+    // Aplica un cambio inline SOLO en la vista: actualiza `cambios` y `servidores` para la preview
+    const applyInlineEdit = (servidorId, key, rawValue) => {
+        // Normalizar según campo (convertir ids a number cuando aplique)
+        const normalize = (k, v) => {
+            if (v === null || v === undefined) return null;
+            const s = String(v).trim();
+            if (s === "") return null;
+            if (/_id$/.test(k)) {
+                const n = Number(s);
+                return Number.isNaN(n) ? s : n;
+            }
+            return s;
+        };
+
+        const newValue = normalize(key, rawValue);
+
+        // Si no hay cambio real, sólo cerrar editor
+        const servidorActual = servidores.find(s => s.id === servidorId);
+        const oldValue = servidorActual ? (servidorActual[key] ?? null) : null;
+        if (String(oldValue) === String(newValue)) {
+            cancelEditing();
+            return;
+        }
+
+        // Actualizar `cambios`
+        setCambios(prev => {
+            const copia = { ...prev };
+            copia[servidorId] = { ...(copia[servidorId] || {}), [key]: newValue };
+            return copia;
+        });
+
+        // Actualizar vista local de servidores
+        setServidores(prev => prev.map(s => {
+            if (s.id !== servidorId) return s;
+            const updated = { ...s, [key]: newValue };
+            if (key === 'aplicacion_id') {
+                const app = (catalogos.aplicaciones || []).find(a => String(a.id) === String(newValue));
+                updated.aplicaciones = app ? [app] : [];
+            }
+            return updated;
+        }));
+
+        // Quitar errores previos para ese servidor (se revalidará al guardar)
+        setValidationErrors(prev => {
+            if (!prev || !prev[servidorId]) return prev;
+            const copy = { ...prev };
+            delete copy[servidorId];
+            return copy;
+        });
+
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Cambio aplicado en vista previa', showConfirmButton: false, timer: 1100 });
+        cancelEditing();
+    };
 
     useEffect(() => {
         const fetchCatalogos = async () => {
@@ -847,11 +630,16 @@ const EditorMasivo = () => {
 
         if (validaciones.length > 0) {
             try {
+                // Añadir headers de autenticación a la validación (requiere sesion)
                 const res = await fetch(`${process.env.BACKEND_URL}/api/servidores/validar-actualizaciones`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
                     body: JSON.stringify({ validaciones }),
                 });
+                if (res.status === 401) {
+                    handleAuthExpired();
+                    return;
+                }
                 if (!res.ok) {
                     const errorData = await res.json();
                     Swal.fire({
@@ -889,6 +677,11 @@ const EditorMasivo = () => {
                     return;
                 }
             } catch (error) {
+                // Si se obtiene 401 desde la capa de conexión o cualquier otro error, intentar manejar expiración
+                if (error && error.message && error.message.toLowerCase().includes('401')) {
+                    handleAuthExpired();
+                    return;
+                }
                 Swal.fire('Error de Conexión', 'No se pudo contactar al servidor para validar los datos.', 'error');
                 return;
             }
@@ -905,6 +698,11 @@ const EditorMasivo = () => {
 
         if (result.isConfirmed) {
             setCargando(true);
+            // Comprobar token local antes de intentar enviar PUTs
+            if (!localStorage.getItem('auth_token')) {
+                setCargando(false);
+                return Swal.fire('No autorizado', 'Debes iniciar sesión para guardar cambios.', 'error');
+            }
             const promesas = Object.keys(cambios).map(async id => {
                 const servidorOriginal = servidores.find(s => s.id === parseInt(id, 10));
                 const cambiosParaServidor = cambios[id];
@@ -943,8 +741,14 @@ const EditorMasivo = () => {
                         headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
                         body: JSON.stringify(payload)
                     });
+                    if (response.status === 401) {
+                        // manejar expiración y detener el proceso
+                        handleAuthExpired();
+                        return false;
+                    }
                     return response.ok;
                 } catch (err) {
+                    // si falla por red/otros, retornamos false para que el catch global lo reporte
                     return false;
                 }
             });
@@ -960,7 +764,12 @@ const EditorMasivo = () => {
 
                 setCambios({});
             } catch (error) {
-                Swal.fire('Error', `Ocurrió un problema: ${error.message}`, 'error');
+                // Si detectamos que la causa fue expiración (ya notificada por handleAuthExpired), no mostrar otro modal redundante
+                if (!localStorage.getItem('auth_token')) {
+                    // ya se manejó en handleAuthExpired
+                } else {
+                    Swal.fire('Error', `Ocurrió un problema: ${error.message}`, 'error');
+                }
             } finally {
                 setCargando(false);
             }
@@ -1151,56 +960,6 @@ const EditorMasivo = () => {
         );
     };
 
-    const PaginacionControles = () => {
-        const totalPages = Math.ceil(servidores.length / itemsPerPage);
-        const count = servidores.length;
-        const contadorTexto = count === 1 ? 'servidor encontrado' : 'servidores encontrados';
-
-        return (
-            <div className="pagination-controls">
-                {/* IZQUIERDA: Descargar (si no hay sesión) + Mostrar + selector */}
-                <div className="pagination__items-per-page">
-                    {!userRole && (
-                        <div className="export-dropdown-container" ref={exportMenuRef}>
-                            <button className="btn btn--primary" onClick={() => setIsExportMenuOpen(prev => !prev)} style={{ whiteSpace: 'nowrap' }}>
-                                <Icon name="upload" /> Descargar
-                            </button>
-                            {isExportMenuOpen && (
-                                <div className="export-menu">
-                                    <button className="export-menu-item" onClick={() => { exportarCSV(servidores); setIsExportMenuOpen(false); }}>
-                                        <Icon name="csv" size={16} /> Exportar como CSV
-                                    </button>
-                                    <button className="export-menu-item" onClick={() => { exportarExcel(servidores); setIsExportMenuOpen(false); }}>
-                                        <Icon name="file-excel" size={16} /> Exportar como Excel
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    <label>Mostrar:</label>
-                    <ItemsPerPageDropdown value={itemsPerPage} onChange={setItemsPerPage} />
-                </div>
-
-                {/* CENTRO: contador */}
-                <div className="servers-found--center" aria-live="polite">
-                    {count} {contadorTexto}
-                </div>
-
-                {/* DERECHA: navegación de página */}
-                <div className="pagination__navigation">
-                    <button className="btn-icon" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1}>
-                        <Icon name="chevron-left" />
-                    </button>
-                    <span>Página {currentPage} de {totalPages}</span>
-                    <button className="btn-icon" onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}>
-                        <Icon name="chevron-right" />
-                    </button>
-                </div>
-            </div>
-        );
-    };
-
     // Toggle selección individual (checkbox fila)
     const toggleSeleccionado = (id) => {
         setSeleccionados(prev => {
@@ -1376,24 +1135,9 @@ const EditorMasivo = () => {
                             {servidores.length > 0 ? (
                                 <>
                                     <div className="editor-top-actions">
-                                        {/* Si HAY sesión, mantener el botón de descarga dentro de las acciones superiores */}
-                                        {userRole && (
-                                            <div className="export-dropdown-container" ref={exportMenuRef}>
-                                                <button className="btn btn--primary" onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}>
-                                                    <Icon name="upload" /> Descargar
-                                                </button>
-                                                {isExportMenuOpen && (
-                                                    <div className="export-menu">
-                                                        <button className="export-menu-item" onClick={() => { exportarCSV(servidores); setIsExportMenuOpen(false); }}>
-                                                            <Icon name="csv" size={16} /> Exportar como CSV
-                                                        </button>
-                                                        <button className="export-menu-item" onClick={() => { exportarExcel(servidores); setIsExportMenuOpen(false); }}>
-                                                            <Icon name="file-excel" size={16} /> Exportar como Excel
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
+                                        {/* (Se removió el menú de descarga aquí para evitar duplicado).
+                                            La barra de descarga / mostrar / contador / paginación
+                                            se renderiza encima de la tabla mediante <EditorPagination />. */}
 
                                         {/* Mostrar acciones de edición/elim solo si hay sesión iniciada */}
                                         {userRole && (
@@ -1421,7 +1165,14 @@ const EditorMasivo = () => {
                                                 seleccionadas={columnasEditables}
                                                 onChange={setColumnasEditables}
                                             />
-                                            {columnasEditables.length > 0 && renderBulkEditControls()}
+                                            {columnasEditables.length > 0 && <BulkEditControls
+                                                columnasEditables={columnasEditables}
+                                                opcionesColumnas={opcionesColumnas}
+                                                bulkEditValues={bulkEditValues}
+                                                handleBulkEditChange={handleBulkEditChange}
+                                                catalogos={catalogos}
+                                                handleApplyBulkEdit={handleApplyBulkEdit}
+                                            />}
                                             <div className="editor-panel__actions">
                                                 <button className="btn btn--secondary" onClick={() => setIsEditMode(false)}>
                                                     Cancelar
@@ -1444,9 +1195,43 @@ const EditorMasivo = () => {
                                         </div>
                                     )}
 
-                                    <PaginacionControles />
+                                    {/* BARRA DE PAGINACIÓN / DESCARGA / MOSTRAR / CONTADOR:
+                                        ahora aparece encima de la tabla para coincidir con la maqueta. */}
+                                    <EditorPagination
+                                        servidores={servidores}
+                                        itemsPerPage={itemsPerPage}
+                                        setItemsPerPage={setItemsPerPage}
+                                        currentPage={currentPage}
+                                        setCurrentPage={setCurrentPage}
+                                        isExportMenuOpen={isExportMenuOpen}
+                                        setIsExportMenuOpen={setIsExportMenuOpen}
+                                        isExportMenuOpenRef={exportMenuRef}
+                                        exportarCSV={exportarCSV}
+                                        exportarExcel={exportarExcel}
+                                        userRole={userRole}
+                                    />
+
                                     <div className="table-container">
-                                        {renderResultadosTabla()}
+                                        <ResultadosTabla
+                                            servidores={servidores}
+                                            columnas={columnas}
+                                            catalogos={catalogos}
+                                            currentPage={currentPage}
+                                            itemsPerPage={itemsPerPage}
+                                            sortConfig={sortConfig}
+                                            handleSort={handleSort}
+                                            userRole={userRole}
+                                            seleccionados={seleccionados}
+                                            toggleSeleccionado={toggleSeleccionado}
+                                            toggleSeleccionarTodosPagina={toggleSeleccionarTodosPagina}
+                                            editingCell={editingCell}
+                                            setEditingCell={setEditingCell}
+                                            startEditCell={startEditCell}
+                                            applyInlineEdit={applyInlineEdit}
+                                            cancelEditing={cancelEditing}
+                                            validationErrors={validationErrors}
+                                            abrirModalLink={abrirModalLink}
+                                        />
                                     </div>
                                 </>
                             ) : (

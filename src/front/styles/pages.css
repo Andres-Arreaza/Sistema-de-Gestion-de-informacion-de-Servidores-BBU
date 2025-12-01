@@ -1357,235 +1357,82 @@
   transform: translateY(-50%) rotate(-135deg) !important;
 }
 
-/* Ajustes: campos de Bulk Edit más compactos y en línea (no ocupen todo el ancho) */
-.resultados-editor .editor-panel .bulk-edit-controls {
-  /* Usar flex para que los campos fluyan uno al lado del otro y salten a la siguiente línea si no caben */
-  display: flex !important;
-  flex-wrap: wrap !important;
-  gap: var(--espaciado-md) !important;
-  align-items: flex-start !important;
-  /* eliminar restricciones previas de grid */
-  grid-template-columns: none !important;
-}
-
-/* Cada campo del bulk edit debe ser compacto y no estirarse */
-.resultados-editor .editor-panel .bulk-edit-field {
-  flex: 0 0 auto !important;        /* no crecer, no ocupar todo el espacio */
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.5rem !important;
-  min-width: 160px !important;      /* ancho mínimo razonable */
-  max-width: 360px !important;      /* evitar que se vuelvan demasiado largos */
-  width: auto !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-/* Etiqueta del campo en una sola línea y sin quebrar */
-.resultados-editor .editor-panel .bulk-edit-field > label {
-  white-space: nowrap;
-  margin-right: 0.35rem;
-  flex: 0 0 auto;
-}
-
-/* Inputs y triggers dentro de bulk-edit deben ajustarse al contenido (no forzar width:100%) */
-.resultados-editor .editor-panel .bulk-edit-field .form__input,
-.resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
-  width: auto !important;
-  flex: 0 0 auto !important;
-  min-width: 120px !important;   /* ajusta si necesitas más/menos espacio */
-  max-width: 260px !important;
-  box-sizing: border-box !important;
-}
-
-/* Si hay select custom con panel, limitar su trigger para que no empuje el layout */
-.resultados-editor .editor-panel .bulk-edit-field .custom-select {
-  min-width: 120px !important;
-  max-width: 320px !important;
-  width: auto !important;
-}
-
-/* En pantallas muy pequeñas, permitir que los campos ocupen el 100% para legibilidad */
-@media (max-width: 560px) {
-  .resultados-editor .editor-panel .bulk-edit-controls {
-    gap: var(--espaciado-sm) !important;
-  }
-  .resultados-editor .editor-panel .bulk-edit-field {
-    flex: 1 1 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-  }
-  .resultados-editor .editor-panel .bulk-edit-field > label {
-    flex: 0 0 auto;
-    width: 100%;
-    margin-bottom: 0.35rem;
-  }
-  .resultados-editor .editor-panel .bulk-edit-field .form__input,
-  .resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
-    width: 100% !important;
-    height: 40px !important;
-  }
-}
-
-/* ===== Unificación de espaciado y tamaño en Bulk Edit (armonía visual) =====
-   - Usar la variable --espaciado-md / --espaciado-sm para consistencia
-   - Cada campo (.bulk-edit-field) mantiene la misma altura y padding
-   - Label tiene ancho fijo consistente; control ocupa el resto
-   - El contenedor (.bulk-edit-controls) mantiene gap uniforme entre filas/columnas
+/* Correcciones específicas para SelectorColumnasEditables:
+   - colocar label encima del trigger
+   - evitar overlapping mediante margin/padding y z-index controlado
 */
-.resultados-editor .editor-panel .bulk-edit-controls {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  gap: var(--espaciado-md) !important;     /* espacio uniforme entre campos */
-  align-items: flex-start !important;
-  justify-content: flex-start !important;
-  grid-template-columns: none !important;
-  padding: 0; /* evitar padding inesperado */
+.selector-columnas-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  width: 100%;
   box-sizing: border-box;
 }
 
-/* Cada campo mantiene la misma caja visual */
-.resultados-editor .editor-panel .bulk-edit-field {
-  flex: 0 0 260px !important;               /* ancho fijo por campo para uniformidad */
-  min-width: 200px !important;
-  max-width: 320px !important;
-  height: 48px !important;                  /* altura uniforme */
-  display: flex !important;
-  align-items: center !important;
-  gap: var(--espaciado-sm) !important;      /* espacio entre label y control */
-  padding: 0.35rem !important;              /* padding interior consistente */
-  box-sizing: border-box !important;
-  background: transparent;
-  margin: 0 !important;
-  border-radius: 8px;
+/* Label claramente separado, en bloque y encima del control */
+.selector-columnas-container .form__label {
+  display: block;
+  margin: 0 0 0.35rem 0; /* separación clara entre label y trigger */
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  z-index: 2; /* sitúa label por encima del trigger si hubiera solapamiento */
+  pointer-events: auto;
 }
 
-/* OVERRIDE FINAL: aumentar un poco los anchos de los campos de Bulk Edit para mayor legibilidad
-   - flex-basis aumentado
-   - etiqueta (label) más ancha
-   - inputs/triggers internos también reciben min-width mayor
-*/
-.resultados-editor .editor-panel .bulk-edit-field {
-  flex: 0 0 340px !important;    /* ancho base por campo (aumentado desde 320px) */
-  min-width: 240px !important;   /* mínimo razonable ampliado */
-  max-width: 460px !important;   /* permitir más expansión si hay espacio */
-  height: 48px !important;
-  padding: 0.35rem !important;
-  box-sizing: border-box !important;
-  gap: var(--espaciado-sm) !important;
-  background: transparent;
-  margin: 0 !important;
-  border-radius: 8px;
-}
-
-/* Etiqueta dentro del campo: más ancha para no apretar el control */
-.resultados-editor .editor-panel .bulk-edit-field > label {
-  flex: 0 0 160px !important;    /* ancho de etiqueta aumentado */
-  width: 160px !important;
-  margin: 0 !important;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 600;
-  font-size: 0.92rem;
-}
-
-/* Inputs/triggers dentro de cada campo: ocupar el resto y tener un mínimo mayor */
-.resultados-editor .editor-panel .bulk-edit-field .form__input,
-.resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
-  flex: 1 1 auto !important;
-  min-width: 260px !important;
-  max-width: 420px !important;
-  height: 40px !important;
-  box-sizing: border-box !important;
-}
-
-/* REDUCE ESPACIADO ENTRE INPUTS (override global para formularios y modales) */
-.form__group {
-  margin-bottom: 0.4rem !important;    /* antes ~0.75rem - reduce espacio vertical entre controles */
-  padding-bottom: 0 !important;
-}
-
-/* Hacer las filas de formulario un poco más compactas horizontalmente */
-.form__row {
-  gap: 0.5rem !important;               /* antes 0.75rem */
-  margin-bottom: 0.4rem !important;
-}
-
-/* Labels más compactos respecto al control */
-.form__label {
-  margin-bottom: 0.32rem !important;    /* antes ~0.45rem */
-}
-
-/* Asegurar que en modales también se reduzca el espacio (prioridad) */
-.modal__content .form__group,
-.modal__content .form__row {
-  margin-bottom: 0.36rem !important;
-  padding-bottom: 0 !important;
-}
-
-/* Ajuste para filas que usan display:flex con wrap (mantener compactación en móviles) */
-@media (max-width: 560px) {
-  .form__group {
-    margin-bottom: 0.35rem !important;
-  }
-  .form__row {
-    gap: 0.45rem !important;
-    margin-bottom: 0.35rem !important;
-  }
-}
-
-/* Si quieres aún más compactado, baja estos valores (ej. 0.25rem) — cambio centralizado aquí. */
-
-/* EVITAR SOLAPAMIENTO DE MENSAJES DE VALIDACIÓN */
-/* Reservar espacio suficiente dentro de cada grupo de formulario para errores (especialmente en modales) */
-.form__group {
-  /* aumentar padding-bottom para dejar sitio a mensajes de error */
-  padding-bottom: 0.7rem !important;
-  margin-bottom: 0.35rem !important;
-  box-sizing: border-box;
-}
-
-/* Reforzar comportamiento de los mensajes de error: bloque, espaciado claro y line-height legible */
-.form__error-text {
-  display: block !important;
-  position: static !important;
-  margin: 6px 0 0 !important;
-  padding: 0 !important;
-  color: var(--color-error) !important;
-  font-size: 0.88rem !important;
-  line-height: 1.3 !important; /* aumenta la altura de línea para evitar solapamiento */
-  z-index: 2 !important;
-  background: transparent !important;
-  word-break: break-word;
-}
-
-/* En modales, aplicar el mismo padding con mayor prioridad */
-.modal__content .form__group {
-  padding-bottom: 0.8rem !important;
-  margin-bottom: 0.36rem !important;
-}
-
-/* Asegurar que los inputs no usen z-index que cubra los errores */
-.form__input {
+/* Asegurar que el select/custom-trigger no se solape: ocupa 100% debajo del label */
+.selector-columnas-container .custom-select {
+  width: 100%;
   position: relative;
-  z-index: 0 !important;
+  margin-top: 0;
+  z-index: 1;
+  box-sizing: border-box;
 }
 
-/* Si existen botones dentro del form__group (ej. "eye"), mantenerlos encima del input pero debajo del mensaje de error visualmente */
-.modal__content .form__group button[aria-label^="Mostrar"],
-.modal__content .form__group button[aria-label^="Ocultar"] {
-  z-index: 1; /* encima del input, debajo del mensaje de error (que tiene z-index:2) */
+/* Trigger con altura mínima y padding para evitar que el texto quede encima de la label */
+.selector-columnas-container .custom-select__trigger,
+.selector-columnas-container .form__input {
+  position: relative; /* necesario para el chevron absoluto */
+  min-height: 40px;
+  height: auto;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  width: 100%;
+  background: var(--color-fondo);
 }
 
-/* Pequeño ajuste responsivo: reducir padding en mobile pero mantener espacio para errores */
+/* Chevron posicionado respecto al trigger, sin romper el flujo ni provocar overlap */
+.selector-columnas-container .custom-select__trigger .chevron {
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) rotate(45deg) !important;
+  position: absolute !important;
+  margin-left: 0 !important;
+}
+
+/* Panel del dropdown: separado del trigger (no tocar label) */
+.selector-columnas-container .custom-select__panel {
+  top: calc(100% + 8px) !important;
+  left: 0 !important;
+  right: auto !important;
+  min-width: 220px !important;
+  z-index: 1200 !important;
+}
+
+/* Responsive: en pantallas muy pequeñas mantener la label y el trigger apilados correctamente */
 @media (max-width: 560px) {
-  .form__group {
-    padding-bottom: 0.6rem !important;
+  .selector-columnas-container {
+    gap: 0.25rem;
   }
-  .modal__content .form__group {
-    padding-bottom: 0.64rem !important;
+  .selector-columnas-container .form__label {
+    font-size: 0.92rem;
+  }
+  .selector-columnas-container .custom-select__trigger {
+    min-height: 44px;
+    padding: 10px 12px;
   }
 }
-
-/* ...existing code... */
