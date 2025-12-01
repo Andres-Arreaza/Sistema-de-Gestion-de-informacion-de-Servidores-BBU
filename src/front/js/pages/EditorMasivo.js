@@ -99,7 +99,7 @@ const EditorMasivo = () => {
     };
 
     // Aplica un cambio inline SOLO en la vista: actualiza `cambios` y `servidores` para la preview
-    const applyInlineEdit = (servidorId, key, rawValue) => {
+    const applyInlineEdit = async (servidorId, key, rawValue) => {
         // Normalizar según campo (convertir ids a number cuando aplique)
         const normalize = (k, v) => {
             if (v === null || v === undefined) return null;
@@ -114,7 +114,7 @@ const EditorMasivo = () => {
 
         const newValue = normalize(key, rawValue);
 
-        // Si no hay cambio real, sólo cerrar editor
+        // Local snapshot para rollback si hace falta
         const servidorActual = servidores.find(s => s.id === servidorId);
         const oldValue = servidorActual ? (servidorActual[key] ?? null) : null;
         if (String(oldValue) === String(newValue)) {
@@ -122,14 +122,13 @@ const EditorMasivo = () => {
             return;
         }
 
-        // Actualizar `cambios`
+        // Actualizar `cambios` y vista local (optimista)
         setCambios(prev => {
             const copia = { ...prev };
             copia[servidorId] = { ...(copia[servidorId] || {}), [key]: newValue };
             return copia;
         });
 
-        // Actualizar vista local de servidores
         setServidores(prev => prev.map(s => {
             if (s.id !== servidorId) return s;
             const updated = { ...s, [key]: newValue };
@@ -140,7 +139,7 @@ const EditorMasivo = () => {
             return updated;
         }));
 
-        // Quitar errores previos para ese servidor (se revalidará al guardar)
+        // Limpiar errores previos de esa fila
         setValidationErrors(prev => {
             if (!prev || !prev[servidorId]) return prev;
             const copy = { ...prev };
@@ -148,8 +147,107 @@ const EditorMasivo = () => {
             return copy;
         });
 
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Cambio aplicado en vista previa', showConfirmButton: false, timer: 1100 });
-        cancelEditing();
+        // Si no hay token o permisos, solo aplicamos en vista (no persistir)
+        const token = localStorage.getItem('auth_token');
+        if (!token || !userRole || !['GERENTE', 'ESPECIALISTA'].includes(userRole)) {
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Cambio aplicado en vista previa', showConfirmButton: false, timer: 1100 });
+            cancelEditing();
+            return;
+        }
+
+        // Construir payload mínimo para el PUT (enviar campos relevantes, rellenando con valores actuales)
+        const servidorOriginal = servidorActual || {};
+        const cambiosParaServidor = { ...(cambios[servidorId] || {}), [key]: newValue };
+
+        const payload = {
+            id: servidorId,
+            nombre: cambiosParaServidor.nombre ?? servidorOriginal.nombre,
+            tipo: cambiosParaServidor.tipo ?? servidorOriginal.tipo,
+            ip_mgmt: Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'ip_mgmt') ? cambiosParaServidor.ip_mgmt : servidorOriginal.ip_mgmt,
+            ip_real: Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'ip_real') ? cambiosParaServidor.ip_real : servidorOriginal.ip_real,
+            ip_mask25: Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'ip_mask25') ? cambiosParaServidor.ip_mask25 : servidorOriginal.ip_mask25,
+            balanceador: cambiosParaServidor.balanceador ?? servidorOriginal.balanceador,
+            vlan_mgmt: Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'vlan_mgmt') ? cambiosParaServidor.vlan_mgmt : servidorOriginal.vlan_mgmt,
+            vlan_real: Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'vlan_real') ? cambiosParaServidor.vlan_real : servidorOriginal.vlan_real,
+            link: cambiosParaServidor.link ?? servidorOriginal.link,
+            descripcion: cambiosParaServidor.descripcion ?? servidorOriginal.descripcion,
+            servicio_id: cambiosParaServidor.servicio_id ?? servidorOriginal.servicio_id,
+            ecosistema_id: cambiosParaServidor.ecosistema_id ?? servidorOriginal.ecosistema_id,
+            capa_id: cambiosParaServidor.capa_id ?? servidorOriginal.capa_id,
+            ambiente_id: cambiosParaServidor.ambiente_id ?? servidorOriginal.ambiente_id,
+            dominio_id: cambiosParaServidor.dominio_id ?? servidorOriginal.dominio_id,
+            sistema_operativo_id: cambiosParaServidor.sistema_operativo_id ?? servidorOriginal.sistema_operativo_id,
+            estatus_id: cambiosParaServidor.estatus_id ?? servidorOriginal.estatus_id,
+            activo: servidorOriginal.activo
+        };
+        if (Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'aplicacion_id')) {
+            payload.aplicacion_ids = cambiosParaServidor.aplicacion_id ? [cambiosParaServidor.aplicacion_id] : [];
+        }
+
+        // Enviar petición al backend
+        try {
+            const res = await fetch(`${process.env.BACKEND_URL}/api/servidores/${servidorId}`, {
+                method: 'PUT',
+                headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
+                body: JSON.stringify(payload)
+            });
+            if (res.status === 401) {
+                // revert local
+                setServidores(prev => prev.map(s => s.id === servidorId ? { ...s, [key]: oldValue } : s));
+                setCambios(prev => { const c = { ...prev }; delete c[servidorId]; return c; });
+                handleAuthExpired();
+                return;
+            }
+
+            if (!res.ok) {
+                // intentar leer error y mapear validaciones
+                const errorData = await res.json().catch(() => ({}));
+                // Revertir cambio optimista
+                setServidores(prev => prev.map(s => s.id === servidorId ? { ...s, [key]: oldValue } : s));
+                setCambios(prev => { const c = { ...prev }; delete c[servidorId]; return c; });
+
+                // Si el backend devolvió campo en conflicto, marcar validationErrors
+                if (errorData && (errorData.field || errorData.error)) {
+                    const ve = {};
+                    if (errorData.field) ve[servidorId] = { [errorData.field]: true };
+                    else ve[servidorId] = { general: errorData.error || 'Error al guardar' };
+                    setValidationErrors(prev => ({ ...(prev || {}), ...ve }));
+                    Swal.fire('Error', errorData.error || 'No se pudo guardar el cambio en la BD.', 'error');
+                } else {
+                    Swal.fire('Error', 'No se pudo guardar el cambio en la BD.', 'error');
+                }
+                cancelEditing();
+                return;
+            }
+
+            // OK -> actualizar la fila con la respuesta del servidor (normalizada)
+            const data = await res.json().catch(() => null);
+            if (data) {
+                const normalized = {
+                    ...data,
+                    servicio_id: data.servicios?.[0]?.id || data.servicio_id || null,
+                    capa_id: data.capas?.[0]?.id || data.capa_id || null,
+                    ambiente_id: data.ambientes?.[0]?.id || data.ambiente_id || null,
+                    dominio_id: data.dominios?.[0]?.id || data.dominio_id || null,
+                    sistema_operativo_id: data.sistemasOperativos?.[0]?.id || data.sistema_operativo_id || null,
+                    ecosistema_id: data.ecosistemas?.[0]?.id || (data.ecosistema && data.ecosistema.id) || data.ecosistema_id || null,
+                    estatus_id: data.estatus?.[0]?.id || data.estatus_id || null,
+                    // aplicaciones: si el backend devuelve aplicacion (obj) usarlo, si devuelve aplicacion_ids/ aplicationes usarlo también
+                    aplicaciones: data.aplicacion ? [data.aplicacion] : (data.aplicaciones || (data.aplicacion_id ? (catalogos.aplicaciones?.find(a => String(a.id) === String(data.aplicacion_id)) ? [catalogos.aplicaciones.find(a => String(a.id) === String(data.aplicacion_id))] : []) : []))
+                };
+                setServidores(prev => prev.map(s => s.id === servidorId ? { ...s, ...normalized } : s));
+            }
+            // quitar cambios pendientes para ese registro
+            setCambios(prev => { const c = { ...prev }; delete c[servidorId]; return c; });
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Cambio guardado en la BD', showConfirmButton: false, timer: 1100 });
+        } catch (err) {
+            // fallo de red: revertir optimista y notificar
+            setServidores(prev => prev.map(s => s.id === servidorId ? { ...s, [key]: oldValue } : s));
+            setCambios(prev => { const c = { ...prev }; delete c[servidorId]; return c; });
+            Swal.fire('Error', 'No se pudo contactar al servidor. El cambio fue revertido.', 'error');
+        } finally {
+            cancelEditing();
+        }
     };
 
     useEffect(() => {
@@ -237,6 +335,8 @@ const EditorMasivo = () => {
                 // Asegurar ecosistema_id (puede venir como lista srv.ecosistemas, objeto srv.ecosistema o campo directo)
                 ecosistema_id: srv.ecosistemas?.[0]?.id || (srv.ecosistema && srv.ecosistema.id) || srv.ecosistema_id || null,
                 estatus_id: srv.estatus?.[0]?.id || srv.estatus_id || null,
+                // APLICACIONES: si el backend devuelve 'aplicacion' -> convertir a array en .aplicaciones
+                aplicaciones: srv.aplicacion ? [srv.aplicacion] : (srv.aplicaciones || []),
             }));
             setServidores(normalizedData);
 
@@ -793,10 +893,10 @@ const EditorMasivo = () => {
                 bValue = bObj ? (colDef.catalog === 'sistemasOperativos' ? `${bObj.nombre} - V${bObj.version}` : bObj.nombre) : '';
             }
 
-            // Caso aplicaciones: comparar por primer nombre disponible
-            if (sortConfig.key === 'aplicaciones') {
-                aValue = (a.aplicaciones && a.aplicaciones[0]) ? a.aplicaciones[0].nombre : (a.aplicacion ? a.aplicacion.nombre : '');
-                bValue = (b.aplicaciones && b.aplicaciones[0]) ? b.aplicaciones[0].nombre : (b.aplicacion ? b.aplicacion.nombre : '');
+            // Caso aplicacion_id: comparar por nombre de la aplicación (si está en .aplicaciones o .aplicacion)
+            if (sortConfig.key === 'aplicacion_id') {
+                aValue = (a.aplicaciones && a.aplicaciones[0]) ? a.aplicaciones[0].nombre : (a.aplicacion ? a.aplicacion.nombre : (a.aplicacion_id ?? ''));
+                bValue = (b.aplicaciones && b.aplicaciones[0]) ? b.aplicaciones[0].nombre : (b.aplicacion ? b.aplicacion.nombre : (b.aplicacion_id ?? ''));
             }
 
             aValue = aValue !== null && aValue !== undefined ? String(aValue) : '';
@@ -906,14 +1006,14 @@ const EditorMasivo = () => {
                                         displayValue = found ? (col.catalog === 'sistemasOperativos' ? `${found.nombre} - V${found.version}` : found.nombre) : 'N/A';
                                     }
 
-                                    // Aplicaciones: manejar arrays
-                                    if (col.key === 'aplicaciones') {
+                                    // Aplicación: mostrar nombre/version desde .aplicaciones o buscando por aplicacion_id en el catálogo
+                                    if (col.key === 'aplicacion_id') {
                                         const apps = servidor.aplicaciones || [];
                                         if (servidor.aplicacion_id && apps.length === 0) {
                                             const appFromCatalog = catalogos.aplicaciones.find(a => String(a.id) === String(servidor.aplicacion_id));
                                             if (appFromCatalog) apps.push(appFromCatalog);
                                         }
-                                        displayValue = apps.length > 0 ? apps.map(a => `${a.nombre} - V${a.version}`).join(', ') : 'N/A';
+                                        displayValue = apps.length > 0 ? apps.map(a => `${a.nombre} - V${a.version}`).join(', ') : (servidor.aplicacion_id ? String(servidor.aplicacion_id) : 'N/A');
                                     }
 
                                     // IPs: mostrar N/A si vacío
@@ -998,7 +1098,7 @@ const EditorMasivo = () => {
         { header: 'IP Mask/25', key: 'ip_mask25' },
         { header: 'Servicio', key: 'servicio_id', catalog: 'servicios' },
         { header: 'Ecosistema', key: 'ecosistema_id', catalog: 'ecosistemas' },
-        { header: 'Aplicacion', key: 'aplicaciones' },
+        { header: 'Aplicacion', key: 'aplicacion_id', catalog: 'aplicaciones' },
         { header: 'Capa', key: 'capa_id', catalog: 'capas' },
         { header: 'Ambiente', key: 'ambiente_id', catalog: 'ambientes' },
         { header: 'Balanceador', key: 'balanceador' },
@@ -1105,6 +1205,30 @@ const EditorMasivo = () => {
         return true;
     };
 
+    // Después de que se carguen los catálogos, sincronizar la propiedad `aplicaciones`
+    // para cada servidor que tenga `aplicacion_id` pero no tenga el objeto en `aplicaciones`.
+    useEffect(() => {
+        // Si no hay catálogos de aplicaciones, no hacemos nada
+        if (!catalogos || !Array.isArray(catalogos.aplicaciones) || catalogos.aplicaciones.length === 0) return;
+
+        setServidores(prev => {
+            let changed = false;
+            const mapped = prev.map(s => {
+                // si ya tiene aplicaciones o no tiene aplicacion_id, no tocar
+                if ((s.aplicaciones && s.aplicaciones.length) || !s.aplicacion_id) return s;
+                // buscar en el catálogo la aplicación correspondiente
+                const found = catalogos.aplicaciones.find(a => String(a.id) === String(s.aplicacion_id));
+                if (found) {
+                    changed = true;
+                    return { ...s, aplicaciones: [found] };
+                }
+                return s;
+            });
+            // solo actualizar el estado si hubo cambios para evitar rerenders innecesarios
+            return changed ? mapped : prev;
+        });
+    }, [catalogos.aplicaciones]);
+
     return (
         <div className="page-container">
 
@@ -1143,7 +1267,7 @@ const EditorMasivo = () => {
                                         {userRole && (
                                             <>
                                                 <button className="btn btn--primary" onClick={() => setIsEditMode(true)} disabled={isEditMode || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}>
-                                                    <Icon name="edit" /> Editar
+                                                    <Icon name="edit" /> Editar Masivo
                                                 </button>
 
                                                 <button

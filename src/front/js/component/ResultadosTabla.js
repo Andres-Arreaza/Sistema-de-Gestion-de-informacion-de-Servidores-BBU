@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import Icon from './Icon';
+import Swal from 'sweetalert2';
 
 const ResultadosTabla = ({
     servidores = [], columnas = [], catalogos = {},
@@ -8,9 +9,84 @@ const ResultadosTabla = ({
     editingCell, setEditingCell, startEditCell = () => { }, applyInlineEdit = () => { }, cancelEditing = () => { },
     validationErrors = {}, abrirModalLink = () => { }
 }) => {
+    const confirmingRef = useRef(false); // <-- evita que onBlur aplique mientras se confirma
+
+    // Helper para detectar si una columna es editable inline
+    const isEditableColumn = (colKey) => {
+        const notEditable = ['link']; // columna no editable inline
+        if (notEditable.includes(colKey)) return false;
+        if (!userRole) return false;
+        return ['GERENTE', 'ESPECIALISTA'].includes(userRole);
+    };
+
+    const sorted = (() => {
+        if (!sortConfig || !sortConfig.key) return servidores;
+        const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+        return [...servidores].sort((a, b) => {
+            const ka = a[sortConfig.key] ?? '';
+            const kb = b[sortConfig.key] ?? '';
+            const sa = String(ka).toLowerCase();
+            const sb = String(kb).toLowerCase();
+            const cmp = collator.compare(sa, sb);
+            return sortConfig.direction === 'asc' ? cmp : -cmp;
+        });
+    })();
+
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentServidores = servidores.slice(indexOfFirstItem, indexOfLastItem);
+    const currentServidores = sorted.slice(indexOfFirstItem, indexOfLastItem);
+
+    const onCellDoubleClick = (servidor, colKey) => {
+        if (!isEditableColumn(colKey)) return;
+        startEditCell(servidor, colKey);
+    };
+
+    const onEditingChange = (value) => {
+        if (!editingCell) return;
+        setEditingCell({ ...editingCell, value });
+    };
+
+    // Maneja el Enter/Escape: muestra modal y aplica solo si confirma.
+    // Marca confirmingRef antes de abrir el modal para que el onBlur no aplique prematuramente.
+    const onEditingKeyDown = (e, servidorId, key) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            confirmingRef.current = true;
+            Swal.fire({
+                title: 'Confirmar cambio',
+                html: `¿Deseas guardar el cambio <strong>${String(editingCell?.value ?? '')}</strong> en el campo <strong>${key}</strong>?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Guardar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: 'var(--color-primario)',
+                cancelButtonColor: 'var(--color-texto-secundario)'
+            }).then(result => {
+                confirmingRef.current = false;
+                if (result.isConfirmed) {
+                    applyInlineEdit(servidorId, key, editingCell?.value);
+                } else {
+                    // si cancela, restaurar editor abierto o cancelar según UX (aquí cerramos)
+                    cancelEditing();
+                }
+            }).catch(() => {
+                confirmingRef.current = false;
+                cancelEditing();
+            });
+        } else if (e.key === 'Escape') {
+            cancelEditing();
+        }
+    };
+
+    // onBlur handler para inputs/selects: ignora el blur si una confirmación está pendiente
+    const handleBlur = (servidorId, key) => {
+        // Si hay una confirmación pendiente (Enter fue presionado y modal aún abierto), no aplicar
+        if (confirmingRef.current) {
+            return;
+        }
+        // En el caso normal de blur, aplicar directamente
+        applyInlineEdit(servidorId, key, editingCell?.value);
+    };
 
     return (
         <table className="table">
@@ -18,12 +94,17 @@ const ResultadosTabla = ({
                 <tr>
                     <th style={{ textAlign: 'center' }}>#</th>
                     {columnas.map(c => (
-                        <th key={c.key} style={{ textAlign: 'center', cursor: c.sortable ? 'pointer' : 'default', userSelect: 'none' }} onClick={() => c.sortable && handleSort(c.key)} title={c.sortable ? (sortConfig.key === c.key ? (sortConfig.direction === 'asc' ? 'Orden ascendente' : 'Orden descendente') : 'Ordenar') : undefined}>
+                        <th
+                            key={c.key}
+                            style={{ textAlign: 'center', cursor: c.sortable ? 'pointer' : 'default', userSelect: 'none' }}
+                            onClick={() => c.sortable && handleSort(c.key)}
+                            title={c.sortable ? (sortConfig?.key === c.key ? (sortConfig.direction === 'asc' ? 'Orden ascendente' : 'Orden descendente') : 'Ordenar') : undefined}
+                        >
                             <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                                 {c.header}
                                 {c.sortable && (
                                     <span style={{ marginLeft: 4, display: 'inline-flex', alignItems: 'center' }}>
-                                        {sortConfig.key === c.key ? (
+                                        {sortConfig?.key === c.key ? (
                                             sortConfig.direction === 'asc' ? <Icon name="arrow-upward" size={16} style={{ color: '#005A9C' }} />
                                                 : <Icon name="arrow-downward" size={16} style={{ color: '#005A9C' }} />
                                         ) : (
@@ -34,43 +115,30 @@ const ResultadosTabla = ({
                             </span>
                         </th>
                     ))}
-                    {userRole && (
-                        <th style={{ textAlign: 'center', width: '140px', minWidth: '120px', maxWidth: '180px' }}>
-                            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                                <span style={{ userSelect: 'none' }}>Eliminar</span>
-                                <input
-                                    type="checkbox"
-                                    className="filter-checkbox"
-                                    checked={currentServidores.length > 0 && currentServidores.every(s => seleccionados.has(s.id))}
-                                    onChange={() => toggleSeleccionarTodosPagina(currentServidores)}
-                                    title="Seleccionar/Deseleccionar todos en esta página"
-                                    style={{ transform: 'scale(0.95)' }}
-                                />
-                            </label>
-                        </th>
-                    )}
+                    {userRole && <th style={{ textAlign: 'center', width: '140px' }}>Eliminar</th>}
                 </tr>
             </thead>
+
             <tbody>
                 {currentServidores.map((servidor, idx) => {
                     const rowIndex = indexOfFirstItem + idx + 1;
-                    const isModified = !!(servidor && servidor.id && servidor.id in ({})); // visual only — keep same class from parent if needed
-                    const errorsInRow = validationErrors[servidor.id] || {};
+                    const rowErrors = validationErrors[servidor.id] || {};
 
                     return (
-                        <tr key={servidor.id} className={isModified ? 'fila-modificada' : ''}>
+                        <tr key={servidor.id} className={rowErrors && Object.keys(rowErrors).length ? 'fila-con-error' : ''}>
                             <td style={{ textAlign: 'center' }}>{rowIndex}</td>
 
                             {columnas.map(col => {
+                                // Link column: keep button behavior
                                 if (col.key === 'link') {
                                     return (
-                                        <td key={`${servidor.id}-link`} style={{ textAlign: 'center', width: '90px', minWidth: '70px', maxWidth: '110px' }}>
+                                        <td key={`${servidor.id}-${col.key}`} style={{ textAlign: 'center' }}>
                                             <button
                                                 className="btn-icon"
                                                 onClick={() => abrirModalLink(servidor)}
                                                 title="Ver detalles y enlace"
                                                 disabled={!servidor.link}
-                                                style={{ width: 34, height: 34, padding: 4, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                                                style={{ width: 34, height: 34 }}
                                             >
                                                 <Icon name="visibility" />
                                             </button>
@@ -78,48 +146,80 @@ const ResultadosTabla = ({
                                     );
                                 }
 
-                                let displayValue = servidor[col.key];
+                                const cellHasError = !!rowErrors[col.key];
+                                const isEditing = editingCell && editingCell.id === servidor.id && editingCell.key === col.key;
 
-                                if (col.catalog) {
-                                    const safeCatalog = Array.isArray(catalogos[col.catalog]) ? catalogos[col.catalog].filter(Boolean) : [];
-                                    const found = safeCatalog.find(c => String(c.id) === String(displayValue));
-                                    displayValue = found ? (col.catalog === 'sistemasOperativos' ? `${found.nombre} - V${found.version}` : found.nombre) : 'N/A';
-                                }
-
-                                if (col.key === 'aplicaciones') {
-                                    const apps = Array.isArray(servidor.aplicaciones) ? servidor.aplicaciones.filter(Boolean) : [];
-                                    if (servidor.aplicacion_id && apps.length === 0) {
-                                        const safeAppsCatalog = Array.isArray(catalogos.aplicaciones) ? catalogos.aplicaciones.filter(Boolean) : [];
-                                        const appFromCatalog = safeAppsCatalog.find(a => String(a.id) === String(servidor.aplicacion_id));
-                                        if (appFromCatalog) apps.push(appFromCatalog);
+                                // If in editing mode for this cell, render editor
+                                if (isEditing) {
+                                    // If column has catalog -> select
+                                    if (col.catalog && Array.isArray(catalogos[col.catalog])) {
+                                        const options = catalogos[col.catalog] || [];
+                                        return (
+                                            <td key={`${servidor.id}-${col.key}`} className={cellHasError ? 'celda-con-error' : ''}>
+                                                <select
+                                                    className="form__input"
+                                                    value={editingCell.value ?? ''}
+                                                    onChange={(e) => onEditingChange(e.target.value)}
+                                                    onBlur={() => handleBlur(servidor.id, col.key)}                // <-- usa handleBlur
+                                                    onKeyDown={(e) => onEditingKeyDown(e, servidor.id, col.key)}   // <-- usa onEditingKeyDown
+                                                    autoFocus
+                                                >
+                                                    <option value="">(sin asignar)</option>
+                                                    {options.map(opt => <option key={opt.id} value={opt.id}>{opt.nombre ?? opt.label ?? String(opt.id)}</option>)}
+                                                </select>
+                                            </td>
+                                        );
                                     }
-                                    displayValue = apps.length > 0 ? apps.map(a => `${a.nombre} - V${a.version}`).join(', ') : 'N/A';
-                                }
 
-                                if (["ip_mgmt", "ip_real", "ip_mask25"].includes(col.key)) {
-                                    displayValue = displayValue || 'N/A';
-                                }
-
-                                const hasError = !!errorsInRow[col.key];
-
-                                if (col.key === 'vlan_mgmt' || col.key === 'vlan_real') {
-                                    const text = String(displayValue || '');
-                                    const parts = text.split(/\s+/).filter(Boolean);
+                                    // Default: text input
                                     return (
-                                        <td key={`${servidor.id}-${col.key}`} title={text} className={hasError ? 'celda-con-error-validacion' : ''} style={{ whiteSpace: 'normal' }}>
-                                            {parts.length > 1 ? parts.map((p, i) => <span key={i}>{p}{i < parts.length - 1 && <br />}</span>) : text}
+                                        <td key={`${servidor.id}-${col.key}`} className={cellHasError ? 'celda-con-error' : ''}>
+                                            <input
+                                                className="form__input"
+                                                type="text"
+                                                value={editingCell.value ?? ''}
+                                                onChange={(e) => onEditingChange(e.target.value)}
+                                                onBlur={() => handleBlur(servidor.id, col.key)}                // <-- usa handleBlur
+                                                onKeyDown={(e) => onEditingKeyDown(e, servidor.id, col.key)}   // <-- usa onEditingKeyDown
+                                                autoFocus
+                                            />
                                         </td>
                                     );
                                 }
 
+                                // Not editing: display text, with double click to start edit when permitted
+                                let displayValue = servidor[col.key];
+                                if (col.catalog) {
+                                    const found = catalogos[col.catalog]?.find(c => String(c.id) === String(displayValue));
+                                    displayValue = found ? (col.catalog === 'sistemasOperativos' ? `${found.nombre} - V${found.version}` : found.nombre) : (displayValue ?? 'N/A');
+                                } else if (col.key === 'aplicaciones') {
+                                    const apps = servidor.aplicaciones || [];
+                                    displayValue = apps.length > 0 ? apps.map(a => `${a.nombre} - V${a.version}`).join(', ') : (servidor.aplicacion_id ? String(servidor.aplicacion_id) : 'N/A');
+                                } else {
+                                    displayValue = displayValue ?? 'N/A';
+                                }
+
                                 return (
-                                    <td key={`${servidor.id}-${col.key}`} title={displayValue} className={hasError ? 'celda-con-error-validacion' : ''} onDoubleClick={() => startEditCell(servidor, col.key)} style={{ cursor: userRole ? 'pointer' : 'default' }}>
+                                    <td
+                                        key={`${servidor.id}-${col.key}`}
+                                        title={typeof displayValue === 'string' ? displayValue : JSON.stringify(displayValue)}
+                                        onDoubleClick={() => onCellDoubleClick(servidor, col.key)}
+                                        className={cellHasError ? 'celda-con-error' : ''}
+                                        style={{ cursor: isEditableColumn(col.key) ? 'pointer' : 'default', whiteSpace: 'normal' }}
+                                        tabIndex={isEditableColumn(col.key) ? 0 : -1}
+                                        onKeyDown={(e) => {
+                                            if ((e.key === 'Enter' || e.key === 'F2') && isEditableColumn(col.key)) {
+                                                startEditCell(servidor, col.key);
+                                            }
+                                        }}
+                                    >
                                         {displayValue}
                                     </td>
                                 );
                             })}
+
                             {userRole && (
-                                <td style={{ textAlign: 'center', width: '140px', minWidth: '120px', maxWidth: '180px' }}>
+                                <td style={{ textAlign: 'center' }}>
                                     <input
                                         type="checkbox"
                                         className="filter-checkbox"
