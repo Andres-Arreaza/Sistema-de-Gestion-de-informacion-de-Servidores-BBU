@@ -5,13 +5,30 @@
 }
 /* Reducir la altura de las celdas en la tabla de previsualización de servidores */
 .table td, .table th {
-  height: 28px;
-  font-size: 0.97em;
+  height: auto !important;      /* permitir que la altura aumente según contenido */
+  white-space: normal !important;
+  overflow: visible !important;
 }
 /* src/front/styles/tables.css */
 
+/* Forzar ancho mínimo mayor en tablas generales para que sean más anchas y muestren valores completos */
+.table {
+  /* mantener width:100% para layout, pero forzar un min-width amplio para provocar scroll si es necesario */
+  width: 100%;
+  min-width: 2400px !important;
+  max-width: none !important;
+  table-layout: auto;
+}
+
+/* Asegurar que el contenedor permita scroll horizontal */
 .table-container {
-  overflow-x: auto;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box;
   border: 1px solid var(--color-borde);
   border-radius: var(--radio-borde);
   background-color: var(--color-superficie);
@@ -128,64 +145,500 @@
   background-color: #fff1f2 !important;
 }
 
-.celda-con-error {
-  color: var(--color-error);
-  font-weight: 600;
+/* Fila con errores: fondo rojo tenue (ya existente para 1 error) */
+.resultados-editor .table tr.fila-con-error {
+  background-color: rgba(255, 230, 230, 0.95) !important; /* rojo muy suave */
 }
 
-.fila-correcta {
-  background-color: #f0fdf4;
+/* Fila con múltiples errores: fondo rojo más marcado y texto en rojo para toda la fila */
+.resultados-editor .table tr.fila-multi-error {
+  background-color: rgba(255, 200, 200, 0.98) !important; /* rojo más intenso */
+  transition: background-color 180ms ease-in-out !important;
 }
 
-.export-dropdown-container {
-  position: relative;
+/* Si hay múltiples errores, forzar color rojo en el texto de las celdas internas */
+.resultados-editor .table tr.fila-multi-error .cell-text,
+.resultados-editor .table tr.fila-multi-error .cell-empty {
+  color: var(--color-error) !important;
+  font-weight: 700 !important;
 }
 
-.export-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  background-color: var(--color-superficie);
-  border-radius: var(--radio-borde);
-  box-shadow: var(--sombra-caja);
+/* Mantener inputs/selects dentro de la fila con múltiples errores sin heredar color rojo */
+.resultados-editor .table tr.fila-multi-error input.form__input,
+.resultados-editor .table tr.fila-multi-error .custom-select__trigger,
+.resultados-editor .table tr.fila-multi-error select,
+.resultados-editor .table tr.fila-multi-error textarea {
+  color: inherit !important;
+}
+
+/* OVERRIDE: eliminar margen externo de todas las tablas y evitar padding lateral del contenedor */
+.table {
+  margin: 0 !important;           /* elimina centrado u otros márgenes aplicados inline */
+  box-sizing: border-box;
+}
+
+/* Evitar padding lateral que hace "espacio fuera de la tabla" */
+.table-container {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--color-borde);
-  padding: var(--espaciado-sm);
-  z-index: 10;
-  width: 200px;
-  opacity: 0;
-  transform: translateY(-10px);
-  animation: menu-fade-in 0.25s ease-in-out forwards;
+  border-radius: var(--radio-borde);
+  background-color: var(--color-superficie);
 }
 
-.export-menu-item {
-  display: flex;
-  align-items: center;
-  gap: var(--espaciado-sm);
-  width: 100%;
-  background: none;
-  border: none;
+/* ===== FIX: layout y legibilidad global de tablas ===== */
+.table-container {
+  padding-left: var(--espaciado-md) !important;
+  padding-right: var(--espaciado-md) !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tabla general: ocupar ancho y permitir que columnas se adapten al contenido */
+.table {
+  margin: 0 auto !important;
+  width: 100% !important;
+  min-width: 1100px !important;
+  max-width: none !important;
+  table-layout: auto !important;
+}
+
+/* Mejorar lectura: left-align, top vertical align y padding consistente */
+.table th,
+.table td {
+  text-align: left !important;
+  vertical-align: top !important;
+  padding: 10px 12px !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow: visible !important;
+}
+
+/* Mantener índice/checkbox compacto y centrado */
+.table th:nth-child(1),
+.table td:nth-child(1) {
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding: 8px 6px !important;
+}
+
+/* Si la tabla se muestra dentro de un modal, asegurar scroll vertical interno */
+.modal__content .table-container,
+.modal__content .table {
+  max-width: 100%;
+}
+
+/* En pantallas pequeñas, reducir min-width para no forzar scroll excesivo */
+@media (max-width: 1024px) {
+  .table {
+    min-width: 900px !important;
+  }
+}
+
+/* OVERRIDE GLOBAL: contenedor permite scroll horizontal y tabla usa su ancho natural */
+.table-container {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  overflow-y: hidden !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-sizing: border-box;
+}
+
+/* La tabla toma el ancho necesario y provoca scroll lateral si es más ancha que el contenedor */
+.table {
+  width: max-content !important;
+  min-width: 100% !important;
+  table-layout: auto !important;
+  white-space: nowrap !important;
+  margin: 0 auto !important;
+}
+
+/* Evitar wrapping en celdas globalmente para facilitar scroll horizontal */
+.table th,
+.table td {
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+/* Si la tabla está dentro de un modal, permitir scroll vertical interno en el modal body */
+.modal__content .modal__body {
+  max-height: calc(75vh) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* OVERRIDE: centrar todos los valores de las tablas (encabezados y celdas) */
+.table th,
+.table td,
+.tabla-servidores th,
+.tabla-servidores td,
+.editor-tabla th,
+.editor-tabla td {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+/* Asegurar centrado en tablas dentro de contenedores (scope) */
+.resultados-editor .table th,
+.resultados-editor .table td {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+/* Evitar que inputs/selects dentro de celdas se vean desalineados */
+.table td .form__input,
+.table td .custom-select__trigger,
+.resultados-editor .table td .form__input,
+.resultados-editor .table td .custom-select__trigger {
+  display: inline-block;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+/* OVERRIDE: reducir tamaño de fuente en tablas para mostrar más información */
+.table,
+.table th,
+.table td,
+.tabla-servidores,
+.tabla-servidores th,
+.tabla-servidores td,
+.editor-tabla,
+.editor-tabla th,
+.editor-tabla td {
+  font-size: 11px !important;       /* reducido desde 12px a 11px */
+  line-height: 1.2 !important;
+}
+
+/* Asegurar que contenidos dentro de celdas (spans, inputs, triggers) hereden tamaño */
+.table td .cell-text,
+.table td .cell-empty,
+.table td input.form__input,
+.table td .custom-select__trigger {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+/* Ajuste de padding vertical para filas más compactas */
+.table th,
+.table td {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+/* Reducir visualmente la columna "Eliminar" (solo en tablas donde se añadió className="col-eliminar") */
+.col-eliminar {
+  font-size: 11px !important;
+  line-height: 1 !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* Asegurar que el header y celdas de la columna queden centradas y compactas */
+th.col-eliminar,
+td.col-eliminar {
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+}
+
+/* Botón dentro de la columna eliminar: más pequeño y compacto */
+td.col-eliminar .btn-icon,
+th.col-eliminar .btn-icon {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+}
+
+/* Icono SVG dentro del botón: ajustar tamaño para que quede centrado en la nueva caja */
+td.col-eliminar .btn-icon svg,
+th.col-eliminar .btn-icon svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* OVERRIDE: hacer que la columna "Eliminar" tenga el mismo tamaño visual que el resto de celdas */
+.table th.col-eliminar,
+.table td.col-eliminar,
+.resultados-editor .table th.col-eliminar,
+.resultados-editor .table td.col-eliminar {
+  font-size: 11px !important;       /* mismo tamaño que tablas compactas */
+  line-height: 1.2 !important;
+  padding: 6px 8px !important;      /* padding coincidente con celdas reducidas */
+  text-align: center !important;
+  vertical-align: middle !important;
+  min-width: 48px !important;
+  width: auto !important;
+}
+
+/* Botón dentro de la columna eliminar: más pequeño y compacto (sobrescribe inline si hace falta) */
+.table td.col-eliminar .btn-icon,
+.table th.col-eliminar .btn-icon,
+.resultados-editor .table td.col-eliminar .btn-icon,
+.resultados-editor .table th.col-eliminar .btn-icon {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  border-radius: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 12px !important;
+}
+
+/* Icono SVG dentro del botón: ajustar tamaño para que quede centrado */
+.table td.col-eliminar .btn-icon svg,
+.table th.col-eliminar .btn-icon svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Checkbox en el header o celdas de eliminar: tamaño acorde (si hay) */
+.table th.col-eliminar input[type="checkbox"],
+.table td.col-eliminar input[type="checkbox"] {
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 !important;
+  vertical-align: middle !important;
+}
+
+/* OVERRIDE: reducir el tamaño del texto "Eliminar" en la columna específica */
+.table th.col-eliminar,
+.table td.col-eliminar,
+.resultados-editor .table th.col-eliminar,
+.resultados-editor .table td.col-eliminar {
+  font-size: 10px !important;      /* más pequeño que el resto de la tabla */
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+/* OVERRIDE: Asegurar que el texto "Eliminar" sea pequeño y que el checkbox/icono no determine el ancho */
+.table th.col-eliminar,
+.table td.col-eliminar,
+.resultados-editor .table th.col-eliminar,
+.resultados-editor .table td.col-eliminar {
+  font-size: 10px !important;        /* texto más pequeño */
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  padding: 6px 6px !important;
+  display: table-cell !important;
+  vertical-align: middle !important;
+}
+
+/* Si el contenido de la cabecera incluye un span/label, aplicarlo también */
+.table th.col-eliminar > span,
+.table th.col-eliminar > label,
+.table th.col-eliminar .col-header-text,
+.table td.col-eliminar > span,
+.table td.col-eliminar > label {
+  font-size: 10px !important;
+  line-height: 1 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
+/* Reducir tamaño del checkbox si está en el header (select all) */
+.table th.col-eliminar input[type="checkbox"],
+.table td.col-eliminar input[type="checkbox"] {
+  width: 14px !important;
+  height: 14px !important;
+  margin: 0 4px 0 0 !important;
+  vertical-align: middle !important;
+  transform: none !important; /* evitar escalados heredados */
+}
+
+/* Forzar que cualquier icono SVG dentro de la cabecera tenga tamaño compacto */
+.table th.col-eliminar .material-symbols-outlined,
+.table th.col-eliminar .btn-icon,
+.table td.col-eliminar .btn-icon,
+.table th.col-eliminar svg,
+.table td.col-eliminar svg {
+  width: 14px !important;
+  height: 14px !important;
+  font-size: 10px !important;
+  vertical-align: middle !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Evitar que el checkbox o el icono afecten el min-width de la columna */
+.table th.col-eliminar,
+.table td.col-eliminar {
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: 120px !important; /* limite razonable para la columna eliminar */
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+/* Si la cabecera contiene un label con checkbox, usar flex para mantener compacto el conjunto */
+.table th.col-eliminar > label,
+.table td.col-eliminar > label {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* ===== Resaltado visual para filas/celdas editadas (EditorMasivo) =====
+   - .fila-editada: aplica fondo y color de texto a toda la fila cuando se confirmó edición (Enter).
+   - .celda-editada: destaca la celda concreta dentro de la fila editada.
+   - scoped a .resultados-editor para no tocar otras tablas.
+*/
+.resultados-editor .table tr.fila-editada {
+  background-color: rgba(255, 243, 205, 0.95) !important; /* amarillo suave */
+  transition: background-color 220ms ease-in-out, color 220ms ease-in-out !important;
+}
+
+.resultados-editor .table tr.fila-editada .cell-text,
+.resultados-editor .table tr.fila-editada .cell-empty {
+  color: #6b3d00 !important;        /* tono oscuro para contraste */
+  font-weight: 700 !important;
+}
+
+/* Antes: .celda-editada aplicaba fondo azul, borde y sombra.
+   Ahora: eliminar fondo/borde/sombra y aplicar únicamente color y peso al texto interno. */
+.resultados-editor .table td.celda-editada,
+.resultados-editor .table th.celda-editada {
+  background-color: transparent !important; /* quitar fondo */
+  color: inherit !important;                 /* no forzar color en toda la celda */
+  font-weight: 700 !important;               /* mantener énfasis en el texto */
+  box-shadow: none !important;               /* quitar sombra */
+  border-left: none !important;              /* quitar borde lateral */
+  transition: none !important;
+}
+
+/* Aplicar el color de resaltado únicamente al contenido textual dentro de la celda */
+/* (mantener este estilo hasta que el usuario guarde y el objeto `cambios` se limpie) */
+.resultados-editor .table td.celda-editada .cell-text,
+.resultados-editor .table td.celda-editada .cell-empty,
+.resultados-editor .table th.celda-editada .cell-text,
+.resultados-editor .table th.celda-editada .cell-empty {
+  color: #ffa200 !important;   /* color de resaltado solicitado */
+  font-weight: 700 !important;
+}
+
+/* Asegurar que inputs/selects dentro de la celda no hereden el color de texto */
+.resultados-editor .table td.celda-editada input.form__input,
+.resultados-editor .table td.celda-editada .custom-select__trigger,
+.resultados-editor .table th.celda-editada input.form__input,
+.resultados-editor .table th.celda-editada .custom-select__trigger {
+  color: inherit !important;
+}
+
+/* Accesibilidad: asegurar contraste aceptable en modo oscuro/claro */
+@media (prefers-contrast: high) {
+  .resultados-editor .table tr.fila-editada {
+    background-color: rgba(255, 230, 120, 1) !important;
+  }
+}
+
+/* PRIORIDAD: si una celda está marcada como error + editada, mostrar ROJO (sobrescribe naranja) */
+.resultados-editor .table td.celda-con-error-validacion.celda-editada .cell-text,
+.resultados-editor .table td.celda-editada.celda-con-error-validacion .cell-text,
+.resultados-editor .table td.celda-con-error-validacion.celda-editada .cell-empty,
+.resultados-editor .table td.celda-editada.celda-con-error-validacion .cell-empty,
+.resultados-editor .table th.celda-con-error-validacion.celda-editada .cell-text,
+.resultados-editor .table th.celda-editada.celda-con-error-validacion .cell-text,
+.resultados-editor .table th.celda-con-error-validacion.celda-editada .cell-empty,
+.resultados-editor .table th.celda-editada.celda-con-error-validacion .cell-empty {
+  color: var(--color-error) !important; /* forzar rojo si hay error */
+  font-weight: 700 !important;
+}
+
+/* APLICAR rojo también a inputs/selects/custom-triggers dentro de una celda con error,
+   para que el texto que el usuario escribió se vea en rojo mientras no esté corregido. */
+.resultados-editor .table td.celda-con-error-validacion input.form__input,
+.resultados-editor .table td.celda-con-error-validacion .custom-select__trigger,
+.resultados-editor .table th.celda-con-error-validacion input.form__input,
+.resultados-editor .table th.celda-con-error-validacion .custom-select__trigger {
+  color: var(--color-error) !important;
+  caret-color: var(--color-error) !important;
+}
+
+/* Evitar que los inputs/selects en edición (doble clic) cambien el layout de la tabla.
+   Cuando una celda tenga la clase .celda-editando, mostramos el input/select como overlay absoluto
+   dentro de la celda (no afecta ancho/alto del flujo de la tabla). */
+.resultados-editor .table td {
+  position: relative; /* contexto para posicionamiento absoluto del input dentro de la celda */
+}
+
+/* Inputs y triggers dentro de la celda en edición: overlay absoluto, ajuste visual */
+.resultados-editor .table td.celda-editando .form__input,
+.resultados-editor .table td.celda-editando .custom-select__trigger {
+  position: absolute !important;
+  left: 8px !important;
+  right: 8px !important;
+  top: 6px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  z-index: 1200 !important;
+  background: var(--color-superficie) !important;
+  border-radius: 6px !important;
+  padding: 6px 10px !important;
+  white-space: normal !important; /* permitir texto dentro del control */
+  overflow: hidden !important;
+}
+
+/* Asegurar que el trigger mantenga su contenido en una sola línea y no empuje layout */
+.resultados-editor .table td.celda-editando .custom-select__trigger {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+/* Panel del custom-select dentro de celda editando: posicionarlo relativo al trigger y con z-index mayor */
+.resultados-editor .table td.celda-editando .custom-select {
+  position: absolute !important;
+  left: 8px !important;
+  right: 8px !important;
+  top: 6px !important; /* el panel se posicionará calc(100% + ...) mediante su regla interna */
+  z-index: 1300 !important;
+}
+
+/* Asegurar que el panel del select se muestre encima y no altere layout */
+.resultados-editor .table td.celda-editando .custom-select__panel {
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  left: 0 !important;
+  min-width: 100% !important;  /* ancho al menos igual al trigger */
+  width: auto !important;
+  z-index: 1400 !important;
+  max-height: 320px !important;
+  overflow: auto !important;
+  box-shadow: var(--sombra-caja) !important;
+}
+
+/* Si hay mensajes de error/tooltip debajo del input, permitir que se superpongan sin cambiar layout */
+.resultados-editor .table td.celda-editando .cell-error-message {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+ /* top: calc(100% + 40px); *//* reducido: aparecer justo debajo del input */
+  z-index: 1400;
+  background: transparent;
+  margin: 0;
+  padding: 4px 6px;       /* padding compacto para no ocupar mucho espacio */
+  font-size: 12px;       /* tamaño pequeño para que no empuje layout */
+  line-height: 1.1;
+  color: var(--color-error) !important; /* asegurar color rojo */
+  white-space: normal;   /* permitir varias líneas si hace falta */
+  box-sizing: border-box;
+  pointer-events: none;  /* evita que el mensaje capture clicks por encima del input */
   text-align: left;
-  padding: 10px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: var(--color-texto-principal);
-  transition: background-color 0.2s ease, color 0.2s ease;
-  margin-top: 3px;
 }
 
-.export-menu-item:hover {
-  background-color: var(--color-secundario);
-  color: var(--color-superficie);
-}
-
-@keyframes menu-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* Si prefieres que el error pueda ser interactivo (copiar, focus), cambia pointer-events a auto */

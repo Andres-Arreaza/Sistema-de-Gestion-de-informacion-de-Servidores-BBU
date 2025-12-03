@@ -8,7 +8,6 @@ import SelectorColumnasEditables from '../component/SelectorColumnasEditables';
 import BulkEditDropdown from '../component/BulkEditDropdown';
 import ItemsPerPageDropdown from '../component/ItemsPerPageDropdown'; // (si se usa directamente en otros componentes)
 import BulkEditControls from '../component/BulkEditControls';
-import ResultadosTabla from '../component/ResultadosTabla';
 // IMPORTS NUEVOS:
 import EditorPagination from '../component/EditorPagination';
 import { exportarCSV, exportarExcel, abrirModalLink } from '../component/ExportHelpers';
@@ -40,6 +39,10 @@ const EditorMasivo = () => {
     const resultadosRef = useRef(null);
     // Estado para ordenamiento
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+
+    // Añadir estado y ref para controlar selects inline personalizados
+    const [openEditorSelectKey, setOpenEditorSelectKey] = useState(null); // forma: `${id}_${key}`
+    const editorSelectRef = useRef(null);
 
     // Helper para auth
     const getAuthHeaders = () => {
@@ -85,21 +88,123 @@ const EditorMasivo = () => {
 
     // Estado y helpers para edición inline en la tabla
     const [editingCell, setEditingCell] = useState(null); // { id, key, value } o null
+    // Añadir ref para evitar closures que lean editingCell cuando es null
+    const editingCellRef = useRef(null);
+    useEffect(() => { editingCellRef.current = editingCell; }, [editingCell]);
 
-    const cancelEditing = () => {
-        setEditingCell(null);
-    };
+    // Snapshot de los servidores tal como vinieron del backend (para comparaciones "original vs edit")
+    const originalSnapshotRef = useRef({});
 
+    // startEditCell: marcar la fila como "editando" y guardar la columna concreta en __editingKey
     const startEditCell = (servidor, key) => {
         if (!userRole || !['GERENTE', 'ESPECIALISTA'].includes(userRole)) return;
         const immutableCols = ['link']; // columnas no editables inline
         if (immutableCols.includes(key)) return;
         const current = servidor && (servidor[key] === null || servidor[key] === undefined) ? '' : String(servidor[key]);
+
+        // Marcar la fila como editando y registrar la columna específica
+        setServidores(prev => prev.map(s => ({
+            ...s,
+            __editing: s.id === servidor.id,
+            __editingKey: s.id === servidor.id ? key : undefined
+        })));
         setEditingCell({ id: servidor.id, key, value: current });
+
+        // Si la columna es select según opcionesColumnas, abrir el panel inline
+        const colDef = opcionesColumnas.find(o => o.value === key);
+        if (colDef && colDef.type === 'select') {
+            setOpenEditorSelectKey(`${servidor.id}_${key}`);
+        } else {
+            setOpenEditorSelectKey(null);
+        }
     };
 
-    // Aplica un cambio inline SOLO en la vista: actualiza `cambios` y `servidores` para la preview
-    const applyInlineEdit = async (servidorId, key, rawValue) => {
+    // cancelEditing: limpiar marca de edición y resetear editingCell (incluye __editingKey)
+    const cancelEditing = () => {
+        setEditingCell(null);
+        setServidores(prev => prev.map(s => ({ ...s, __editing: false, __editingKey: undefined })));
+    };
+
+    // Añadir función para validar un único cambio inline antes de aplicarlo
+    const validateInlineChange = (servidorId, key, rawValue) => {
+        const norm = v => (v === null || v === undefined) ? "" : String(v).trim();
+        const value = rawValue === null || rawValue === undefined ? "" : String(rawValue).trim();
+
+        // Reconstruir snapshot con cambios actuales + el cambio propuesto
+        const merged = servidores.map(s => {
+            const c = cambios[s.id] || {};
+            const copy = { ...s, ...c };
+            if (s.id === servidorId) copy[key] = value === "" ? null : value;
+            return copy;
+        });
+
+        const target = merged.find(m => m.id === servidorId);
+        if (!target) return { [key]: 'Registro no encontrado' };
+
+        const errors = {};
+
+        // Campos requeridos básicos (si el cambio afecta a uno de ellos y lo deja vacío)
+        const requiredFields = ["nombre", "tipo", "servicio_id", "capa_id", "ambiente_id", "dominio_id", "sistema_operativo_id", "estatus_id", "balanceador"];
+        if (requiredFields.includes(key) && !norm(target[key])) {
+            errors[key] = 'Este campo es obligatorio.';
+            return errors;
+        }
+
+        // Validación: al menos una IP presente en el servidor después del cambio
+        const ipMgmt = norm(target.ip_mgmt);
+        const ipReal = norm(target.ip_real);
+        const ipMask = norm(target.ip_mask25);
+        if (!ipMgmt && !ipReal && !ipMask) {
+            errors.ip_mgmt = "Debe ingresar al menos una IP.";
+            errors.ip_real = "Debe ingresar al menos una IP.";
+            errors.ip_mask25 = "Debe ingresar al menos una IP.";
+            return errors;
+        }
+
+        // Duplicados internos entre sus propias IPs
+        const ips = [ipMgmt, ipReal, ipMask].filter(Boolean);
+        const counts = ips.reduce((acc, ip) => (acc[ip] = (acc[ip] || 0) + 1, acc), {});
+        if (ipMgmt && counts[ipMgmt] > 1) errors.ip_mgmt = "IP repetida en otro campo.";
+        if (ipReal && counts[ipReal] > 1) errors.ip_real = "IP repetida en otro campo.";
+        if (ipMask && counts[ipMask] > 1) errors.ip_mask25 = "IP repetida en otro campo.";
+
+        // Unicidad frente a otros servidores (merged) - comprobar solo contra servidores distintos
+        for (const other of merged) {
+            if (other.id === target.id) continue;
+            // Nombre
+            if (norm(other.nombre) && norm(other.nombre).toLowerCase() === norm(target.nombre).toLowerCase()) {
+                errors.nombre = 'Este nombre ya está en uso.';
+            }
+            // Link
+            if (norm(other.link) && norm(other.link) === norm(target.link)) {
+                errors.link = 'Este link ya está en uso.';
+            }
+            // IPs: reglas diferenciadas
+            if (ipMgmt) {
+                if (norm(other.ip_mgmt) === ipMgmt || norm(other.ip_real) === ipMgmt || norm(other.ip_mask25) === ipMgmt) {
+                    errors.ip_mgmt = 'La IP ya está en uso.';
+                }
+            }
+            if (ipReal) {
+                if (norm(other.ip_mgmt) === ipReal || norm(other.ip_real) === ipReal || norm(other.ip_mask25) === ipReal) {
+                    errors.ip_real = 'La IP ya está en uso.';
+                }
+            }
+            if (ipMask) {
+                if (norm(other.ip_mgmt) === ipMask || norm(other.ip_real) === ipMask) {
+                    errors.ip_mask25 = 'La IP ya está en uso.';
+                }
+            }
+        }
+
+        return Object.keys(errors).length ? errors : null;
+    };
+
+    // Modificar applyInlineEdit: eliminar el Swal y dejar solo la marca de error inline
+    const applyInlineEdit = async (servidorId, key, rawValue, options = {}) => {
+        const forceClose = options.forceClose === true;
+        const keepEditing = options.keepEditing === true; // NUEVO: si true, mantener fila/celda en edición tras éxito
+
         // Normalizar según campo (convertir ids a number cuando aplique)
         const normalize = (k, v) => {
             if (v === null || v === undefined) return null;
@@ -114,12 +219,38 @@ const EditorMasivo = () => {
 
         const newValue = normalize(key, rawValue);
 
-        // Local snapshot para rollback si hace falta
-        const servidorActual = servidores.find(s => s.id === servidorId);
-        const oldValue = servidorActual ? (servidorActual[key] ?? null) : null;
-        if (String(oldValue) === String(newValue)) {
+        // Obtener valor original desde snapshot (si existe) para comparar cambios reales
+        const originalRow = originalSnapshotRef.current?.[servidorId] || {};
+        const originalValue = originalRow ? (originalRow[key] ?? null) : null;
+
+        // --- VALIDACIÓN INMEDIATA: si falla, marcar la celda en rojo y permanecer en edición ---
+        const inlineErrors = validateInlineChange(servidorId, key, newValue);
+        if (inlineErrors) {
+            // 1) marcar errores de validación para la fila
+            setValidationErrors(prev => ({ ...(prev || {}), [servidorId]: { ...(prev?.[servidorId] || {}), ...inlineErrors } }));
+            // Conservar el valor intentado
+            const attemptedValue = rawValue === undefined || rawValue === null ? '' : String(rawValue);
+            // Solo registrar en `cambios` / marcar preview si difiere del original
+            if (String(attemptedValue) !== String(originalValue ?? '')) {
+                setCambios(prev => {
+                    const copia = { ...(prev || {}) };
+                    copia[servidorId] = { ...(copia[servidorId] || {}), [key]: attemptedValue };
+                    return copia;
+                });
+                setServidores(prev => prev.map(s => s.id === servidorId ? { ...s, [key]: attemptedValue, __preview: true } : s));
+            }
+            // Mantener el editor abierto con el texto ingresado (no se borra)
+            setEditingCell({ id: servidorId, key, value: attemptedValue });
+            return false; // indicar fallo de validación al llamador
+        }
+
+        // Si pasa la validación, continuar con la lógica previa para aplicar el cambio (optimista)
+        // Si no hay cambio respecto al original, no marcar como editado ni cambiar color
+        if (String(newValue) === String(originalValue ?? '')) {
+            // limpiar errores si existieran y cerrar editor sin marcar preview
+            setValidationErrors(prev => { if (!prev || !prev[servidorId]) return prev; const copy = { ...prev }; delete copy[servidorId]; return copy; });
             cancelEditing();
-            return;
+            return true; // éxito
         }
 
         // Actualizar `cambios` y vista local (optimista)
@@ -132,6 +263,15 @@ const EditorMasivo = () => {
         setServidores(prev => prev.map(s => {
             if (s.id !== servidorId) return s;
             const updated = { ...s, [key]: newValue };
+            // marcar como preview para estilos
+            updated.__preview = true;
+            // marcar la última edición (fila y clave) para resaltar con color llamativo
+            updated.__lastEdited = true;
+            updated.__lastEditedKey = key;
+            // Si keepEditing: mantener flags de edición para permitir cambiar la selección otra vez
+            updated.__editing = !!keepEditing;
+            updated.__editingKey = keepEditing ? key : undefined;
+            // Si aplicacion_id: actualizar representación local de aplicaciones para mostrar nombre/version
             if (key === 'aplicacion_id') {
                 const app = (catalogos.aplicaciones || []).find(a => String(a.id) === String(newValue));
                 updated.aplicaciones = app ? [app] : [];
@@ -139,7 +279,7 @@ const EditorMasivo = () => {
             return updated;
         }));
 
-        // Limpiar errores previos de esa fila
+        // Limpiar errores previos de esa fila (si existían)
         setValidationErrors(prev => {
             if (!prev || !prev[servidorId]) return prev;
             const copy = { ...prev };
@@ -147,107 +287,19 @@ const EditorMasivo = () => {
             return copy;
         });
 
-        // Si no hay token o permisos, solo aplicamos en vista (no persistir)
-        const token = localStorage.getItem('auth_token');
-        if (!token || !userRole || !['GERENTE', 'ESPECIALISTA'].includes(userRole)) {
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Cambio aplicado en vista previa', showConfirmButton: false, timer: 1100 });
-            cancelEditing();
-            return;
+        // Actualizar editingCell con el nuevo valor para que el panel muestre correctamente la selección
+        if (keepEditing) {
+            setEditingCell({ id: servidorId, key, value: String(newValue ?? '') });
         }
 
-        // Construir payload mínimo para el PUT (enviar campos relevantes, rellenando con valores actuales)
-        const servidorOriginal = servidorActual || {};
-        const cambiosParaServidor = { ...(cambios[servidorId] || {}), [key]: newValue };
+        // Mostrar toast informativo
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Cambio aplicado en vista previa', showConfirmButton: false, timer: 1100 });
 
-        const payload = {
-            id: servidorId,
-            nombre: cambiosParaServidor.nombre ?? servidorOriginal.nombre,
-            tipo: cambiosParaServidor.tipo ?? servidorOriginal.tipo,
-            ip_mgmt: Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'ip_mgmt') ? cambiosParaServidor.ip_mgmt : servidorOriginal.ip_mgmt,
-            ip_real: Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'ip_real') ? cambiosParaServidor.ip_real : servidorOriginal.ip_real,
-            ip_mask25: Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'ip_mask25') ? cambiosParaServidor.ip_mask25 : servidorOriginal.ip_mask25,
-            balanceador: cambiosParaServidor.balanceador ?? servidorOriginal.balanceador,
-            vlan_mgmt: Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'vlan_mgmt') ? cambiosParaServidor.vlan_mgmt : servidorOriginal.vlan_mgmt,
-            vlan_real: Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'vlan_real') ? cambiosParaServidor.vlan_real : servidorOriginal.vlan_real,
-            link: cambiosParaServidor.link ?? servidorOriginal.link,
-            descripcion: cambiosParaServidor.descripcion ?? servidorOriginal.descripcion,
-            servicio_id: cambiosParaServidor.servicio_id ?? servidorOriginal.servicio_id,
-            ecosistema_id: cambiosParaServidor.ecosistema_id ?? servidorOriginal.ecosistema_id,
-            capa_id: cambiosParaServidor.capa_id ?? servidorOriginal.capa_id,
-            ambiente_id: cambiosParaServidor.ambiente_id ?? servidorOriginal.ambiente_id,
-            dominio_id: cambiosParaServidor.dominio_id ?? servidorOriginal.dominio_id,
-            sistema_operativo_id: cambiosParaServidor.sistema_operativo_id ?? servidorOriginal.sistema_operativo_id,
-            estatus_id: cambiosParaServidor.estatus_id ?? servidorOriginal.estatus_id,
-            activo: servidorOriginal.activo
-        };
-        if (Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'aplicacion_id')) {
-            payload.aplicacion_ids = cambiosParaServidor.aplicacion_id ? [cambiosParaServidor.aplicacion_id] : [];
-        }
-
-        // Enviar petición al backend
-        try {
-            const res = await fetch(`${process.env.BACKEND_URL}/api/servidores/${servidorId}`, {
-                method: 'PUT',
-                headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
-                body: JSON.stringify(payload)
-            });
-            if (res.status === 401) {
-                // revert local
-                setServidores(prev => prev.map(s => s.id === servidorId ? { ...s, [key]: oldValue } : s));
-                setCambios(prev => { const c = { ...prev }; delete c[servidorId]; return c; });
-                handleAuthExpired();
-                return;
-            }
-
-            if (!res.ok) {
-                // intentar leer error y mapear validaciones
-                const errorData = await res.json().catch(() => ({}));
-                // Revertir cambio optimista
-                setServidores(prev => prev.map(s => s.id === servidorId ? { ...s, [key]: oldValue } : s));
-                setCambios(prev => { const c = { ...prev }; delete c[servidorId]; return c; });
-
-                // Si el backend devolvió campo en conflicto, marcar validationErrors
-                if (errorData && (errorData.field || errorData.error)) {
-                    const ve = {};
-                    if (errorData.field) ve[servidorId] = { [errorData.field]: true };
-                    else ve[servidorId] = { general: errorData.error || 'Error al guardar' };
-                    setValidationErrors(prev => ({ ...(prev || {}), ...ve }));
-                    Swal.fire('Error', errorData.error || 'No se pudo guardar el cambio en la BD.', 'error');
-                } else {
-                    Swal.fire('Error', 'No se pudo guardar el cambio en la BD.', 'error');
-                }
-                cancelEditing();
-                return;
-            }
-
-            // OK -> actualizar la fila con la respuesta del servidor (normalizada)
-            const data = await res.json().catch(() => null);
-            if (data) {
-                const normalized = {
-                    ...data,
-                    servicio_id: data.servicios?.[0]?.id || data.servicio_id || null,
-                    capa_id: data.capas?.[0]?.id || data.capa_id || null,
-                    ambiente_id: data.ambientes?.[0]?.id || data.ambiente_id || null,
-                    dominio_id: data.dominios?.[0]?.id || data.dominio_id || null,
-                    sistema_operativo_id: data.sistemasOperativos?.[0]?.id || data.sistema_operativo_id || null,
-                    ecosistema_id: data.ecosistemas?.[0]?.id || (data.ecosistema && data.ecosistema.id) || data.ecosistema_id || null,
-                    estatus_id: data.estatus?.[0]?.id || data.estatus_id || null,
-                    // aplicaciones: si el backend devuelve aplicacion (obj) usarlo, si devuelve aplicacion_ids/ aplicationes usarlo también
-                    aplicaciones: data.aplicacion ? [data.aplicacion] : (data.aplicaciones || (data.aplicacion_id ? (catalogos.aplicaciones?.find(a => String(a.id) === String(data.aplicacion_id)) ? [catalogos.aplicaciones.find(a => String(a.id) === String(data.aplicacion_id))] : []) : []))
-                };
-                setServidores(prev => prev.map(s => s.id === servidorId ? { ...s, ...normalized } : s));
-            }
-            // quitar cambios pendientes para ese registro
-            setCambios(prev => { const c = { ...prev }; delete c[servidorId]; return c; });
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Cambio guardado en la BD', showConfirmButton: false, timer: 1100 });
-        } catch (err) {
-            // fallo de red: revertir optimista y notificar
-            setServidores(prev => prev.map(s => s.id === servidorId ? { ...s, [key]: oldValue } : s));
-            setCambios(prev => { const c = { ...prev }; delete c[servidorId]; return c; });
-            Swal.fire('Error', 'No se pudo contactar al servidor. El cambio fue revertido.', 'error');
-        } finally {
+        // Cerrar editor sólo si se solicitó explícitamente (forceClose) y no se pidió keepEditing
+        if (forceClose || !keepEditing) {
             cancelEditing();
         }
+        return true; // éxito
     };
 
     useEffect(() => {
@@ -339,7 +391,8 @@ const EditorMasivo = () => {
                 aplicaciones: srv.aplicacion ? [srv.aplicacion] : (srv.aplicaciones || []),
             }));
             setServidores(normalizedData);
-
+            // Guardar snapshot original para comparar cambios reales
+            originalSnapshotRef.current = Object.fromEntries(normalizedData.map(s => [s.id, { ...s }]));
         } catch (error) {
             Swal.fire("Error de Búsqueda", `${error.message}`, "error");
         } finally {
@@ -417,11 +470,16 @@ const EditorMasivo = () => {
         if (result.isConfirmed) {
             let nuevosCambios = { ...cambios };
             const servidoresActualizados = servidores.map(servidor => {
+                const originalVal = originalSnapshotRef.current?.[servidor.id]?.[campo];
+                // Solo aplicar si el valor difiere del original
+                if (String(valor ?? '') === String(originalVal ?? '')) {
+                    return servidor;
+                }
                 const cambiosPrevios = nuevosCambios[servidor.id] || {};
                 nuevosCambios[servidor.id] = { ...cambiosPrevios, [campo]: valor };
 
-                // Actualizar el estado local del servidor para reflejar en la tabla
-                let servidorActualizado = { ...servidor, [campo]: valor };
+                // Actualizar el estado local del servidor para reflejar en la tabla y marcar preview
+                let servidorActualizado = { ...servidor, [campo]: valor, __preview: true };
 
                 if (campo === 'aplicacion_id') {
                     const aplicacionSeleccionada = catalogos.aplicaciones.find(a => String(a.id) === String(valor));
@@ -498,25 +556,23 @@ const EditorMasivo = () => {
         const servidoresActualizados = servidores.map(servidor => {
             const prev = nuevosCambios[servidor.id] || {};
             columnasEditables.forEach(col => {
-                // Sólo aplicar si hay valor definido en bulkEditValues (permite desasignar con null/'' si se desea)
                 if (Object.prototype.hasOwnProperty.call(bulkEditValues, col)) {
-                    prev[col] = bulkEditValues[col];
+                    const originalVal = originalSnapshotRef.current?.[servidor.id]?.[col];
+                    const candidate = bulkEditValues[col];
+                    // Solo aplicar si difiere del original
+                    if (String(candidate ?? '') !== String(originalVal ?? '')) {
+                        prev[col] = candidate;
+                    }
                 }
-                // Si aplicacion_id, actualizar representación local de aplicaciones
                 if (col === 'aplicacion_id') {
                     const app = catalogos.aplicaciones.find(a => String(a.id) === String(prev.aplicacion_id));
                     servidor.aplicaciones = app ? [app] : [];
                 }
             });
             nuevosCambios[servidor.id] = prev;
-
-            // Actualizar la vista previa del servidor
             const servidorActualizado = { ...servidor };
-            columnasEditables.forEach(col => {
-                if (Object.prototype.hasOwnProperty.call(prev, col)) {
-                    servidorActualizado[col] = prev[col];
-                }
-            });
+            Object.keys(prev).forEach(col => { servidorActualizado[col] = prev[col]; });
+            servidorActualizado.__preview = Object.keys(prev).length > 0;
             return servidorActualizado;
         });
 
@@ -863,6 +919,16 @@ const EditorMasivo = () => {
                 });
 
                 setCambios({});
+                // limpiar flags de preview/editing/lastEdited en la vista local
+                setServidores(prev => prev.map(s => {
+                    const copy = { ...s };
+                    delete copy.__preview;
+                    delete copy.__editingKey;
+                    delete copy.__lastEdited;
+                    delete copy.__lastEditedKey;
+                    copy.__editing = false;
+                    return copy;
+                }));
             } catch (error) {
                 // Si detectamos que la causa fue expiración (ya notificada por handleAuthExpired), no mostrar otro modal redundante
                 if (!localStorage.getItem('auth_token')) {
@@ -973,11 +1039,27 @@ const EditorMasivo = () => {
                 <tbody>
                     {currentServidores.map((servidor, idx) => {
                         const rowIndex = indexOfFirstItem + idx + 1;
-                        const isModified = !!cambios[servidor.id];
                         const errorsInRow = validationErrors[servidor.id] || {};
+                        const errorCount = Object.keys(errorsInRow).length; // cantidad de campos con error en la fila
+                        // isModified: hay cambios pendientes que difieren del original snapshot?
+                        const isModified = Boolean(cambios[servidor.id] && Object.keys(cambios[servidor.id]).some(k => {
+                            const orig = originalSnapshotRef.current?.[servidor.id]?.[k];
+                            const pending = cambios[servidor.id][k];
+                            return String(pending ?? '') !== String(orig ?? '');
+                        }));
+                        const rowHasErrors = errorCount > 0;
+
+                        // Construir clases: fila-modificada y/o fila-editada (última edición)
+                        const trClasses = [
+                            isModified ? 'fila-modificada' : '',
+                            servidor.__lastEdited ? 'fila-editada' : '',
+                            servidor.__editing ? 'fila-editando' : '',
+                            errorCount === 1 ? 'fila-con-error' : '',
+                            errorCount > 1 ? 'fila-multi-error' : ''
+                        ].filter(Boolean).join(' ');
 
                         return (
-                            <tr key={servidor.id} className={isModified ? 'fila-modificada' : ''}>
+                            <tr key={servidor.id} className={trClasses}>
                                 <td style={{ textAlign: 'center' }}>{rowIndex}</td>
 
                                 {columnas.map(col => {
@@ -1023,20 +1105,231 @@ const EditorMasivo = () => {
 
                                     const hasError = !!errorsInRow[col.key];
 
+                                    // Determinar clases de celda: error / preview / celda-editada (última clave)
+                                    // pendingChanges solo si hay cambio pendiente y difiere del valor original
+                                    const pendingChanges = Boolean(cambios[servidor.id] && Object.prototype.hasOwnProperty.call(cambios[servidor.id], col.key) &&
+                                        (String(cambios[servidor.id][col.key] ?? '') !== String(originalSnapshotRef.current?.[servidor.id]?.[col.key] ?? '')));
+                                    const tdClasses = [
+                                        hasError ? 'celda-con-error-validacion' : '',
+                                        servidor.__preview ? 'celda-preview' : '',
+                                        (servidor.__lastEditedKey === col.key || pendingChanges) ? 'celda-editada' : '',
+                                        (servidor.__editingKey === col.key) ? 'celda-editando' : ''
+                                    ].filter(Boolean).join(' ');
+
+                                    // Determinar si esta celda está en edición
+                                    const isEditingThisCell = editingCell && editingCell.id === servidor.id && editingCell.key === col.key;
+
                                     // VLAN: dividir por espacios para mostrar en varias líneas si aplica
                                     if (col.key === 'vlan_mgmt' || col.key === 'vlan_real') {
                                         const text = String(displayValue || '');
                                         const parts = text.split(/\s+/).filter(Boolean);
                                         return (
-                                            <td key={`${servidor.id}-${col.key}`} title={text} className={hasError ? 'celda-con-error-validacion' : ''} style={{ whiteSpace: 'normal' }}>
-                                                {parts.length > 1 ? parts.map((p, i) => <span key={i}>{p}{i < parts.length - 1 && <br />}</span>) : text}
+                                            <td
+                                                key={`${servidor.id}-${col.key}`}
+                                                title={text}
+                                                className={tdClasses}
+                                                style={{ whiteSpace: 'normal' }}
+                                                onDoubleClick={() => startEditCell(servidor, col.key)}
+                                            >
+                                                <div className="cell-value cell-vlan">
+                                                    {isEditingThisCell ? (
+                                                        <>
+                                                            <input
+                                                                autoFocus
+                                                                className={`form__input ${errorsInRow[col.key] ? 'form__input--error' : ''}`}
+                                                                style={{ width: '100%' }}
+                                                                value={editingCell?.value ?? ''}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    setEditingCell(prev => prev ? { ...prev, value: val } : { id: servidor.id, key: col.key, value: val });
+                                                                }}
+                                                                onBlur={(e) => {
+                                                                    const val = e && e.target ? e.target.value : editingCellRef.current?.value ?? '';
+                                                                    applyInlineEdit(servidor.id, col.key, val);
+                                                                }}
+                                                                onKeyDown={(e) => {
+                                                                    const val = e && e.target ? e.target.value : editingCellRef.current?.value ?? '';
+                                                                    if (e.key === 'Escape') { e.preventDefault(); cancelEditing(); }
+                                                                    if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); applyInlineEdit(servidor.id, col.key, val); }
+                                                                }}
+                                                            />
+                                                            {errorsInRow[col.key] && (
+                                                                <div className="cell-error-message" role="alert" aria-live="polite">{errorsInRow[col.key]}</div>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            {parts.length === 0 ? <span className="cell-empty">N/A</span> : parts.map((p, i) => <div key={i} className="cell-text">{p}</div>)}
+                                                            {errorsInRow[col.key] && (
+                                                                <div className="cell-error-message" role="alert" aria-live="polite">{errorsInRow[col.key]}</div>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
                                             </td>
                                         );
                                     }
 
                                     return (
-                                        <td key={`${servidor.id}-${col.key}`} title={displayValue} className={hasError ? 'celda-con-error-validacion' : ''}>
-                                            {displayValue}
+                                        <td
+                                            key={`${servidor.id}-${col.key}`}
+                                            title={displayValue}
+                                            className={tdClasses}
+                                            onDoubleClick={() => startEditCell(servidor, col.key)}
+                                        >
+                                            <div className="cell-value">
+                                                {isEditingThisCell ? (
+                                                    <>
+                                                        {/* Si la columna es de tipo select (tiene catálogo) o es 'tipo', renderizar <select> */}
+                                                        {(col.catalog || col.key === 'tipo') ? (
+                                                            (() => {
+                                                                // construir opciones como antes
+                                                                let options = [];
+                                                                if (col.key === 'tipo') {
+                                                                    const tipoDef = opcionesColumnas.find(o => o.value === 'tipo');
+                                                                    options = tipoDef?.options?.map(opt => ({ id: opt.id, label: opt.nombre || opt.id })) || [
+                                                                        { id: 'VIRTUAL', label: 'Virtual' },
+                                                                        { id: 'FISICO', label: 'Físico' }
+                                                                    ];
+                                                                } else {
+                                                                    const catalog = catalogos[col.catalog] || [];
+                                                                    options = catalog.map(item => {
+                                                                        if (col.catalog === 'sistemasOperativos' || col.catalog === 'aplicaciones') {
+                                                                            const label = item.version ? `${item.nombre} - V${item.version}` : item.nombre;
+                                                                            return { id: item.id, label };
+                                                                        }
+                                                                        return { id: item.id, label: item.nombre };
+                                                                    });
+                                                                }
+
+                                                                const keyId = `${servidor.id}_${col.key}`;
+                                                                const isOpen = openEditorSelectKey === keyId;
+
+                                                                return (
+                                                                    <div className="custom-select" ref={editorSelectRef} style={{ width: '100%' }}>
+                                                                        <button
+                                                                            type="button"
+                                                                            className={`form__input custom-select__trigger ${errorsInRow[col.key] ? 'form__input--error' : ''}`}
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                // Garantizar que editingCell refleje el valor actual antes de abrir el panel
+                                                                                if (!(editingCell && editingCell.id === servidor.id && editingCell.key === col.key)) {
+                                                                                    const currentVal = servidor[col.key] !== undefined && servidor[col.key] !== null ? String(servidor[col.key]) : '';
+                                                                                    // marcar fila como editando y fijar la key
+                                                                                    setServidores(prev => prev.map(s => ({
+                                                                                        ...s,
+                                                                                        __editing: s.id === servidor.id,
+                                                                                        __editingKey: s.id === servidor.id ? col.key : undefined
+                                                                                    })));
+                                                                                    setEditingCell({ id: servidor.id, key: col.key, value: currentVal });
+                                                                                }
+                                                                                setOpenEditorSelectKey(prev => prev === keyId ? null : keyId);
+                                                                            }}
+                                                                        >
+                                                                            <span>
+                                                                                {editingCell?.value ? (
+                                                                                    // mostrar etiqueta humana si es posible
+                                                                                    (options.find(o => String(o.id) === String(editingCell.value)) || { label: String(editingCell.value) }).label
+                                                                                ) : '--'}
+                                                                            </span>
+                                                                            <div className={`chevron ${isOpen ? "open" : ""}`}></div>
+                                                                        </button>
+
+                                                                        <div className={`custom-select__panel ${isOpen ? "open" : ""}`} style={{ width: '100%' }}>
+                                                                            {/* opción vacía para desasignar */}
+                                                                            <div
+                                                                                className="custom-select__option"
+                                                                                role="button"
+                                                                                tabIndex={0}
+                                                                                onClick={async (e) => {
+                                                                                    e.stopPropagation();
+                                                                                    const ok = await applyInlineEdit(servidor.id, col.key, null, { keepEditing: true });
+                                                                                    const keyId = `${servidor.id}_${col.key}`;
+                                                                                    if (!ok) setOpenEditorSelectKey(keyId);
+                                                                                }}
+                                                                                onKeyDown={async (e) => {
+                                                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                                                        e.preventDefault();
+                                                                                        e.stopPropagation();
+                                                                                        const ok = await applyInlineEdit(servidor.id, col.key, null, { keepEditing: true });
+                                                                                        const keyId = `${servidor.id}_${col.key}`;
+                                                                                        if (!ok) setOpenEditorSelectKey(keyId);
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                <span>--</span>
+                                                                            </div>
+
+                                                                            {options.map(opt => (
+                                                                                <div
+                                                                                    key={String(opt.id)}
+                                                                                    className={`custom-select__option ${String(editingCell?.value) === String(opt.id) ? 'selected' : ''}`}
+                                                                                    role="button"
+                                                                                    tabIndex={0}
+                                                                                    onClick={async (e) => {
+                                                                                        e.stopPropagation();
+                                                                                        const ok = await applyInlineEdit(servidor.id, col.key, opt.id, { keepEditing: true });
+                                                                                        const keyId = `${servidor.id}_${col.key}`;
+                                                                                        if (!ok) {
+                                                                                            setOpenEditorSelectKey(keyId);
+                                                                                        }
+                                                                                    }}
+                                                                                    onKeyDown={async (e) => {
+                                                                                        if (e.key === 'Enter' || e.key === ' ') {
+                                                                                            e.preventDefault();
+                                                                                            e.stopPropagation();
+                                                                                            const ok = await applyInlineEdit(servidor.id, col.key, opt.id, { keepEditing: true });
+                                                                                            const keyId = `${servidor.id}_${col.key}`;
+                                                                                            if (!ok) setOpenEditorSelectKey(keyId);
+                                                                                        }
+                                                                                    }}
+                                                                                >
+                                                                                    <span>{opt.label}</span>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })()
+                                                        ) : (
+                                                            /* fallback: input de texto para columnas no-select (se mantiene comportamiento previo) */
+                                                            <input
+                                                                autoFocus
+                                                                className={`form__input ${errorsInRow[col.key] ? 'form__input--error' : ''}`}
+                                                                style={{ width: '100%' }}
+                                                                value={editingCell?.value ?? ''}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    setEditingCell(prev => prev ? { ...prev, value: val } : { id: servidor.id, key: col.key, value: val });
+                                                                }}
+                                                                onBlur={(e) => {
+                                                                    const val = e && e.target ? e.target.value : editingCellRef.current?.value ?? '';
+                                                                    applyInlineEdit(servidor.id, col.key, val);
+                                                                }}
+                                                                onKeyDown={(e) => {
+                                                                    const val = e && e.target ? e.target.value : editingCellRef.current?.value ?? '';
+                                                                    if (e.key === 'Escape') { e.preventDefault(); cancelEditing(); }
+                                                                    if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); applyInlineEdit(servidor.id, col.key, val); }
+                                                                }}
+                                                            />
+                                                        )}
+                                                        {/* mensaje de error inline (si existe) */}
+                                                        {errorsInRow[col.key] && (
+                                                            <div className="cell-error-message" role="alert" aria-live="polite">{errorsInRow[col.key]}</div>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        {(displayValue === null || displayValue === undefined || String(displayValue).trim() === '')
+                                                            ? <span className="cell-empty">N/A</span>
+                                                            : <span className="cell-text">{displayValue}</span>
+                                                        }
+                                                        {errorsInRow[col.key] && (
+                                                            <div className="cell-error-message" role="alert" aria-live="polite">{errorsInRow[col.key]}</div>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
                                     );
                                 })}
@@ -1172,18 +1465,18 @@ const EditorMasivo = () => {
                 // ip_mgmt / ip_real (debemos evitar que coincidan con cualquier ip en otro servidor)
                 if (ipMgmt) {
                     if (norm(other.ip_mgmt) === ipMgmt || norm(other.ip_real) === ipMgmt || norm(other.ip_mask25) === ipMgmt) {
-                        serverErrors.ip_mgmt = 'La IP ya está en uso en otro servidor.';
+                        serverErrors.ip_mgmt = 'La IP ya está en uso.';
                     }
                 }
                 if (ipReal) {
                     if (norm(other.ip_mgmt) === ipReal || norm(other.ip_real) === ipReal || norm(other.ip_mask25) === ipReal) {
-                        serverErrors.ip_real = 'La IP ya está en uso en otro servidor.';
+                        serverErrors.ip_real = 'La IP ya está en uso.';
                     }
                 }
                 // ip_mask25 sólo debe ser única respecto ip_mgmt/ip_real en otros servidores
                 if (ipMask) {
                     if (norm(other.ip_mgmt) === ipMask || norm(other.ip_real) === ipMask) {
-                        serverErrors.ip_mask25 = 'La IP ya está en uso en otro servidor.';
+                        serverErrors.ip_mask25 = 'La IP ya está en uso.';
                     }
                 }
             }
@@ -1218,6 +1511,7 @@ const EditorMasivo = () => {
                 if ((s.aplicaciones && s.aplicaciones.length) || !s.aplicacion_id) return s;
                 // buscar en el catálogo la aplicación correspondiente
                 const found = catalogos.aplicaciones.find(a => String(a.id) === String(s.aplicacion_id));
+
                 if (found) {
                     changed = true;
                     return { ...s, aplicaciones: [found] };
@@ -1228,6 +1522,34 @@ const EditorMasivo = () => {
             return changed ? mapped : prev;
         });
     }, [catalogos.aplicaciones]);
+
+    // Efecto para capturar Enter/Escape mientras hay una celda en edición.
+    // Leer editingCell desde editingCellRef.current para evitar leer .value de null.
+    useEffect(() => {
+        if (!editingCell) return;
+
+        const handleKeyDown = (e) => {
+            const ec = editingCellRef.current;
+            if (!ec) return;
+
+            if (e.key === 'Enter') {
+                try { e.preventDefault(); } catch (err) { /* ignore */ }
+                try { e.stopPropagation(); } catch (err) { /* ignore */ }
+                try { if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation(); } catch (err) { /* ignore */ }
+
+                // Usar el snapshot seguro desde ref
+                applyInlineEdit(ec.id, ec.key, ec.value);
+                return false;
+            } else if (e.key === 'Escape') {
+                try { e.preventDefault(); } catch (err) { /* ignore */ }
+                try { e.stopPropagation(); } catch (err) { /* ignore */ }
+                cancelEditing();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown, true);
+        return () => document.removeEventListener('keydown', handleKeyDown, true);
+    }, [applyInlineEdit, cancelEditing]); // editingCell no en deps para evitar closure stale (usamos ref)
 
     return (
         <div className="page-container">
@@ -1319,43 +1641,44 @@ const EditorMasivo = () => {
                                         </div>
                                     )}
 
-                                    {/* BARRA DE PAGINACIÓN / DESCARGA / MOSTRAR / CONTADOR:
-                                        ahora aparece encima de la tabla para coincidir con la maqueta. */}
-                                    <EditorPagination
-                                        servidores={servidores}
-                                        itemsPerPage={itemsPerPage}
-                                        setItemsPerPage={setItemsPerPage}
-                                        currentPage={currentPage}
-                                        setCurrentPage={setCurrentPage}
-                                        isExportMenuOpen={isExportMenuOpen}
-                                        setIsExportMenuOpen={setIsExportMenuOpen}
-                                        isExportMenuOpenRef={exportMenuRef}
-                                        exportarCSV={exportarCSV}
-                                        exportarExcel={exportarExcel}
-                                        userRole={userRole}
-                                    />
+                                    {/* BARRA: paginación + contador + botón Guardar Cambios */}
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '.75rem' }}>
+                                        {/* Barra izquierda: paginación/descarga (componente existente) */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+                                            <EditorPagination
+                                                servidores={servidores}
+                                                itemsPerPage={itemsPerPage}
+                                                setItemsPerPage={setItemsPerPage}
+                                                currentPage={currentPage}
+                                                setCurrentPage={setCurrentPage}
+                                                isExportMenuOpen={isExportMenuOpen}
+                                                setIsExportMenuOpen={setIsExportMenuOpen}
+                                                isExportMenuOpenRef={exportMenuRef}
+                                                exportarCSV={exportarCSV}
+                                                exportarExcel={exportarExcel}
+                                                userRole={userRole}
+                                            />
+                                        </div>
+
+                                        {/* Barra derecha: contador y botón Guardar Cambios */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+
+                                            {userRole && (
+                                                <button
+                                                    className="btn btn--primary"
+                                                    onClick={handleGuardarCambios}
+                                                    disabled={Object.keys(cambios).length === 0 || cargando || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}
+                                                    title={Object.keys(cambios).length === 0 ? "No hay cambios para guardar" : "Guardar cambios en la BD"}
+
+                                                >
+                                                    Guardar Cambios
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
 
                                     <div className="table-container">
-                                        <ResultadosTabla
-                                            servidores={servidores}
-                                            columnas={columnas}
-                                            catalogos={catalogos}
-                                            currentPage={currentPage}
-                                            itemsPerPage={itemsPerPage}
-                                            sortConfig={sortConfig}
-                                            handleSort={handleSort}
-                                            userRole={userRole}
-                                            seleccionados={seleccionados}
-                                            toggleSeleccionado={toggleSeleccionado}
-                                            toggleSeleccionarTodosPagina={toggleSeleccionarTodosPagina}
-                                            editingCell={editingCell}
-                                            setEditingCell={setEditingCell}
-                                            startEditCell={startEditCell}
-                                            applyInlineEdit={applyInlineEdit}
-                                            cancelEditing={cancelEditing}
-                                            validationErrors={validationErrors}
-                                            abrirModalLink={abrirModalLink}
-                                        />
+                                        {renderResultadosTabla()}
                                     </div>
                                 </>
                             ) : (

@@ -963,120 +963,33 @@
   word-break: break-word !important;/* romper palabras largas si es necesario */
 }
 
-/* Anular reglas específicas que forzaban nowrap/ellipsis en columnas concretas */
-.resultados-editor .table th:nth-child(20),
-.resultados-editor .table td:nth-child(20),
-.resultados-editor .table th:nth-child(6),
-.resultados-editor .table td:nth-child(6),
-.resultados-editor .table th:nth-child(8),
-.resultados-editor .table td:nth-child(8),
-.resultados-editor .table th:nth-child(18),
-.resultados-editor .table td:nth-child(18),
-.resultados-editor .table th:nth-child(4),
-.resultados-editor .table td:nth-child(4),
-.resultados-editor .table th:nth-child(n+3),
-.resultados-editor .table td:nth-child(n+3) {
-  white-space: normal !important;
+/* OVERRIDES: permitir que cada columna tome el ancho necesario según su contenido */
+.resultados-editor .table {
+  table-layout: auto !important; /* columnas calculadas por contenido */
+  width: auto !important;        /* no forzar 100% */
+}
+
+/* Celdas: no imponer wrapping por defecto, ancho ajustado al texto */
+.resultados-editor .table th,
+.resultados-editor .table td {
+  white-space: nowrap !important;   /* evitar saltos de línea que cambien la altura */
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
   overflow: visible !important;
   text-overflow: clip !important;
-  word-break: break-word !important;
+  word-break: normal !important;
 }
 
-/* Si deseas que ciertos botones/íconos sigan centrados, mantenemos sus estilos de layout,
-   pero permitimos al texto escalar verticalmente. */
-.resultados-editor .table td .btn-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Ajustes responsivos: mantener wrapping en pantallas pequeñas */
-@media (max-width: 800px) {
-  .resultados-editor .table th,
-  .resultados-editor .table td {
-    white-space: normal !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
-  }
-}
-
-/* Hacer la columna "Nombre" (segunda columna) más ancha y permitir wrapping */
+/* Anular reglas específicas que fijaban min/max-width por columna */
+.resultados-editor .table th:nth-child(n+1),
+.resultados-editor .table td:nth-child(n+1),
 .resultados-editor .table th:nth-child(2),
-.resultados-editor .table td:nth-child(2) {
-  min-width: 105px;      /* reducido desde 220px */
-  max-width: 360px;      /* reducido desde 500px */
-  width: 22%;            /* reducido desde 28% */
-  text-align: left;
-  white-space: normal !important;
-  overflow: visible !important;
-  word-break: break-word !important;
-}
-
-/* Ajuste responsivo: menor ancho en pantallas pequeñas */
-@media (max-width: 800px) {
-  .resultados-editor .table th:nth-child(2),
-  .resultados-editor .table td:nth-child(2) {
-    min-width: 120px;    /* reducido desde 150px */
-    max-width: 100%;
-    width: auto;
-  }
-}
-
-/* Reducir ancho de la columna "Tipo" (tercera columna: #, Nombre, Tipo) */
+.resultados-editor .table td:nth-child(2),
 .resultados-editor .table th:nth-child(3),
-.resultados-editor .table td:nth-child(3) {
-  min-width: 70px;    /* ancho mínimo más pequeño */
-  max-width: 110px;   /* ancho máximo reducido */
-  width: 10%;         /* ocupar poca proporción del ancho total */
-  text-align: center; /* mantener centrado */
-  white-space: normal !important;
-  overflow: visible !important;
-  word-break: break-word !important;
-}
-
-/* Ajuste responsivo: asegurar legibilidad en móviles */
-@media (max-width: 800px) {
-  .resultados-editor .table th:nth-child(3),
-  .resultados-editor .table td:nth-child(3) {
-    min-width: 60px;
-    max-width: 120px;
-    width: auto;
-  }
-}
-
-/* Ajuste: reducir anchura de las columnas de IP (IP MGMT nth-child(4), IP Real nth-child(6), IP Mask/25 nth-child(8)) */
+.resultados-editor .table td:nth-child(3),
 .resultados-editor .table th:nth-child(4),
 .resultados-editor .table td:nth-child(4),
-.resultados-editor .table th:nth-child(6),
-.resultados-editor .table td:nth-child(6),
-.resultados-editor .table th:nth-child(8),
-.resultados-editor .table td:nth-child(8) {
-  min-width: 180px !important;   /* reducido desde 220px */
-  max-width: 320px !important;   /* reducido desde 420px */
-  width: 12% !important;         /* reducido desde 14% */
-  text-align: center !important;
-  white-space: normal !important;
-  overflow: visible !important;
-  word-break: break-word !important;
-}
-
-/* Responsivo: mantener menor ancho en móviles */
-@media (max-width: 800px) {
-  .resultados-editor .table th:nth-child(4),
-  .resultados-editor .table td:nth-child(4),
-  .resultados-editor .table th:nth-child(6),
-  .resultados-editor .table td:nth-child(6),
-  .resultados-editor .table th:nth-child(8),
-  .resultados-editor .table td:nth-child(8) {
-    min-width: 100px !important;  /* reducido desde 120px */
-    max-width: 200px !important;  /* reducido desde 240px */
-    width: auto !important;
-    text-align: center !important;
-  }
-}
-
-/* OVERRIDE FINAL: permitir que las VLANs se muestren en varias líneas sin cortar palabras.
-   Preferir salto en espacios; solo romper palabras largas si es necesario para evitar overflow. */
 .resultados-editor .table th:nth-child(5),
 .resultados-editor .table td:nth-child(5),
 .resultados-editor .table th:nth-child(6),
@@ -1084,355 +997,549 @@
 .resultados-editor .table th:nth-child(7),
 .resultados-editor .table td:nth-child(7),
 .resultados-editor .table th:nth-child(8),
-.resultados-editor .table td:nth-child(8) {
-  min-width: 50px !important;
-  max-width: 120px !important;       /* permitir algo más de ancho pero controlado */
+.resultados-editor .table td:nth-child(8),
+.resultados-editor .table th:nth-child(18),
+.resultados-editor .table td:nth-child(18),
+.resultados-editor .table th:nth-child(20),
+.resultados-editor .table td:nth-child(20) {
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* Ajustes: hacer la tabla más ancha y ocupar todo el ancho disponible */
+.resultados-editor .table-container {
+  max-width: none !important;    /* permitir que el contenedor crezca */
+  width: 100% !important;
+  padding-left: 8px;
+  padding-right: 8px;
+  overflow-x: auto !important;   /* mantener scroll horizontal si no cabe */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Forzar la tabla a ser más ancha (ajusta min-width según necesites) */
+.resultados-editor .table {
+  width: 100% !important;
+  min-width: 2600px !important;  /* aumentado: tabla aún más ancha para mostrar más columnas */
+  max-width: none !important;
+  table-layout: auto !important;  /* dejar que el contenido determine anchura de columnas */
+}
+
+/* En pantallas muy grandes permitir aún mayor anchura */
+@media (min-width: 1600px) {
+  .resultados-editor .table {
+    min-width: 3200px !important; /* aún mayor para pantallas muy grandes */
+  }
+}
+
+/* Elementos internos (texto/inputs) se aseguran inline para que el ancho siga al contenido */
+.resultados-editor .table td .cell-text,
+.resultados-editor .table td .cell-empty,
+.resultados-editor .table td input.form__input,
+.resultados-editor .table td .custom-select__trigger {
+  display: inline-block;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Si quieres permitir wrapping en textos muy largos sin cambiar el ancho de columna,
+   elimina la regla `white-space: nowrap` arriba y usa estas reglas en su lugar:
+   .resultados-editor .table th, .resultados-editor .table td { white-space: normal; } */
+
+/* ===== Responsive: mejoras para pantallas de PC (>=1024px) ===== */
+@media (min-width: 1024px) {
+  /* Centrar la tabla y limitar su ancho máximo para pantallas grandes */
+  .resultados-editor .table-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 12px;
+    overflow-x: auto; /* permitir scroll horizontal si es necesario */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Table: usar cálculo por contenido pero asegurar distribución cómoda */
+  .resultados-editor .table {
+    width: 100%;
+    table-layout: auto !important;
+    border-collapse: collapse;
+  }
+
+  /* Cabeceras sticky para mejorar usabilidad en tablas largas */
+  .resultados-editor .table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--color-superficie);
+  }
+
+  /* Celdas: permitir wrapping controlado y padding consistente */
+  .resultados-editor .table th,
+  .resultados-editor .table td {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    padding: 10px 12px;
+    vertical-align: middle;
+  }
+
+  /* Texto dentro de celdas: limitar visual para evitar columnas demasiado anchas,
+     pero permitir ver full text en tooltip/title si es necesario */
+  .resultados-editor .table td .cell-text,
+  .resultados-editor .table td .cell-empty {
+    display: inline-block;
+    max-width: 420px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  /* Inputs / triggers dentro de celdas mantienen tamaño estable pero son fluidos */
+  .resultados-editor .table td input.form__input,
+  .resultados-editor .table td .custom-select__trigger {
+    min-width: 140px;
+    max-width: 520px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Column sizing por prioridad: Nombre más ancho, Tipo pequeño, resto flexibles */
+  .resultados-editor .table th:nth-child(2),
+  .resultados-editor .table td:nth-child(2) {
+    width: 28%;
+  }
+  .resultados-editor .table th:nth-child(3),
+  .resultados-editor .table td:nth-child(3) {
+    width: 8%;
+    min-width: 80px;
+    text-align: center;
+  }
+  /* Dejar resto con width auto para que se adapten al contenido */
+  .resultados-editor .table th:nth-child(n+4),
+  .resultados-editor .table td:nth-child(n+4) {
+    width: auto;
+  }
+
+  /* Asegurar que los selects desplegables no empujen la tabla (panel absolute ya definido),
+     y que su trigger mantenga la misma caja al abrir */
+  .resultados-editor .table .custom-select {
+    position: relative;
+  }
+  .resultados-editor .table .custom-select__panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 260px;
+    max-width: 640px;
+    z-index: 2400;
+  }
+
+  /* Botón de link y checks: no crecer para mantener filas alineadas */
+  .resultados-editor .table td .btn-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .resultados-editor .table td .filter-checkbox {
+    transform: scale(0.95);
+  }
+}
+
+/* === Forzar que la tabla ocupe todo el ancho y mostrar todas las columnas sin scroll lateral === */
+/* Aplicar comportamiento responsive para escritorio y pantallas grandes */
+@media (min-width: 1024px) {
+  /* Evitar scroll horizontal en el contenedor principal (permitimos wrapping en las celdas)
+     <-- REEMPLAZADO: ahora permitimos scroll horizontal para que la tabla pueda desplazarse -->
+  .resultados-editor .table-container {
+    overflow-x: auto !important;
+    padding-right: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Forzar la tabla a ocupar 100% del espacio disponible.
+     Usamos table-layout: fixed para repartir equitativamente el ancho entre columnas
+     y confiar en el wrapping para mostrar el contenido en varias líneas si hace falta. */
+  .resultados-editor .table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse;
+    font-size: 12px; /* fuente más compacta para que quepan más columnas */
+  }
+
+  /* Cabeceras: mantener en una sola línea para legibilidad */
+  .resultados-editor .table thead th {
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 8px 10px !important;
+  }
+
+  /* Celdas: permitir wrapping, reducir padding y controlar el comportamiento de corte */
+  .resultados-editor .table td,
+  .resultados-editor .table th {
+    white-space: normal !important;        /* permitir varias líneas dentro de la celda */
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    padding: 6px 8px !important;          /* padding menor para ahorrar espacio horizontal */
+    vertical-align: middle !important;
+    text-overflow: clip !important;
+  }
+
+  /* Mostrar el contenido de la celda en bloque para que haga wrap cómodamente */
+  .resultados-editor .table td .cell-text,
+  .resultados-editor .table td .cell-empty {
+    display: block;
+    max-width: 100%;
+  }
+
+  /* Inputs/triggers en celdas serán compactos pero fluidos */
+  .resultados-editor .table td input.form__input,
+  .resultados-editor .table td .custom-select__trigger {
+    font-size: 12px !important;
+    padding: 6px 8px !important;
+    height: auto !important;
+    line-height: 1.1;
+  }
+
+  /* Column sizing por prioridad: Nombre más ancho, Tipo pequeño, resto flexibles */
+  .resultados-editor .table th:nth-child(2),
+  .resultados-editor .table td:nth-child(2) {
+    width: 28%;
+  }
+  .resultados-editor .table th:nth-child(3),
+  .resultados-editor .table td:nth-child(3) {
+    width: 8%;
+    min-width: 80px;
+    text-align: center;
+  }
+  /* Dejar resto con width auto para que se adapten al contenido */
+  .resultados-editor .table th:nth-child(n+4),
+  .resultados-editor .table td:nth-child(n+4) {
+    width: auto;
+  }
+
+  /* Asegurar que los selects desplegables no empujen la tabla (panel absolute ya definido),
+     y que su trigger mantenga la misma caja al abrir */
+  .resultados-editor .table .custom-select {
+    position: relative;
+  }
+  .resultados-editor .table .custom-select__panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 260px;
+    max-width: 640px;
+    z-index: 2400;
+  }
+
+  /* Botón de link y checks: no crecer para mantener filas alineadas */
+  .resultados-editor .table td .btn-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .resultados-editor .table td .filter-checkbox {
+    transform: scale(0.95);
+  }
+}
+
+/* === OVERRIDE GLOBAL: permitir que las columnas se adapten al contenido y las celdas muestren todo === */
+/* Contenedor: permitir siempre scroll horizontal si hace falta */
+.resultados-editor .table-container {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tabla: que el navegador calcule anchuras según contenido */
+.resultados-editor .table {
+  table-layout: auto !important;
   width: auto !important;
-  text-align: center !important;
+  min-width: 0 !important; /* anula min-width rígidos previos */
+}
 
-  /* Allow wrapping at word boundaries (spaces) and avoid breaking words unnecessarily */
+/* Celdas: permitir wrap y altura automática para mostrar valores completos */
+.resultados-editor .table th,
+.resultados-editor .table td {
+  white-space: normal !important;     /* permitir varias líneas */
+  overflow: visible !important;
+  text-overflow: clip !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* Spans / contenidos internos: mostrar en bloque para que hagan wrap y se muestren completos */
+.resultados-editor .table td .cell-text,
+.resultados-editor .table td .cell-empty,
+.resultados-editor .table td input.form__input,
+.resultados-editor .table td .custom-select__trigger {
+  display: block;
+  width: auto !important;
+  max-width: none !important;
   white-space: normal !important;
-  word-break: normal !important;           /* don't break words arbitrarily */
-  overflow-wrap: break-word !important;    /* only break long words if necessary to avoid overflow */
+  overflow: visible !important;
+  box-sizing: border-box;
+}
 
-  /* Mostrar todo el contenido en varias líneas si hace falta */
+/* Neutralizar anchos forzados por columnas específicas (Índice, Tipo, IPs, Link, VLANs...) */
+.resultados-editor .table th:nth-child(1),
+.resultados-editor .table td:nth-child(1),
+.resultados-editor .table th:nth-child(2),
+.resultados-editor .table td:nth-child(2),
+.resultados-editor .table th:nth-child(3),
+.resultados-editor .table td:nth-child(3),
+.resultados-editor .table th:nth-child(4),
+.resultados-editor .table td:nth-child(4),
+.resultados-editor .table th:nth-child(5),
+.resultados-editor .table td:nth-child(5),
+.resultados-editor .table th:nth-child(6),
+.resultados-editor .table td:nth-child(6),
+.resultados-editor .table th:nth-child(7),
+.resultados-editor .table td:nth-child(7),
+.resultados-editor .table th:nth-child(8),
+.resultados-editor .table td:nth-child(8),
+.resultados-editor .table th:nth-child(17),
+.resultados-editor .table td:nth-child(17),
+.resultados-editor .table th:nth-child(18),
+.resultados-editor .table td:nth-child(18),
+.resultados-editor .table th:nth-child(20),
+.resultados-editor .table td:nth-child(20) {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* Anular reglas globales en .table que pudieran imponer truncado o tamaños rígidos */
+.table th,
+.table td {
+  white-space: normal !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+}
+
+/* Si se quiere forzar un comportamiento: permitir que el usuario despliegue horizontalmente
+   en pantallas pequeñas pero que en escritorio las celdas se ajusten. */
+@media (min-width: 1024px) {
+  .resultados-editor .table-container {
+    overflow-x: auto !important;
+  }
+}
+
+/* OVERRIDE: eliminar márgenes/padding fuera de la tabla dentro de resultados-editor */
+.resultados-editor .table,
+.resultados-editor .table th,
+.resultados-editor .table td {
+  margin: 0 !important;
+  box-sizing: border-box;
+}
+
+.resultados-editor .table-container {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin: 0 !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ===== FIX: layout y legibilidad de tablas (overrides finales) ===== */
+/* Contenedor: quitar padding extremo y mantener scroll horizontal cuando haga falta */
+.resultados-editor .table-container {
+  padding-left: var(--espaciado-md) !important;
+  padding-right: var(--espaciado-md) !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tabla: ocupar el ancho disponible y permitir que columnas se dimensionen por contenido.
+   Evita min-width gigantes; ajustar para escritorio y móvil con media queries. */
+.resultados-editor .table {
+  margin: 0 auto !important;
+  width: 100% !important;
+  min-width: 1100px !important;    /* razonable para mostrar varias columnas; ajustar si deseas */
+  max-width: none !important;
+  table-layout: auto !important;
+}
+
+/* Celdas y encabezados: mejorar lectura (alineado a la izquierda, padding cómodo, alto automático) */
+.resultados-editor .table thead th,
+.resultados-editor .table th,
+.resultados-editor .table td {
+  text-align: left !important;
+  vertical-align: top !important;
+  padding: 10px 12px !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  word-break: break-word !important;
+}
+
+/* Cabeceras sticky con fondo consistente y z-index suficiente */
+.resultados-editor .table thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 60 !important;
+  background: var(--color-superficie) !important;
+}
+
+/* Primera columna (índice / checkbox) compacta pero alineada a la izquierda para legibilidad */
+.resultados-editor .table th:nth-child(1),
+.resultados-editor .table td:nth-child(1) {
+  text-align: center !important; /* mantener índice centrado visualmente */
+  vertical-align: middle !important;
+  padding: 8px 6px !important;
+}
+
+/* En móviles reducir el min-width para evitar scroll excesivo y mantener lectura */
+@media (max-width: 1024px) {
+  .resultados-editor .table {
+    min-width: 900px !important;
+  }
+}
+
+/* Si prefieres que la tabla no fuerce min-width en absoluto (mostrarla adaptada), cambia min-width arriba a 0 */
+
+/* ===== OVERRIDE FINAL: Mejorar scroll/visualización de tablas y modales ===== */
+/* Contenedores de tabla: permitir scroll horizontal y vertical si hace falta */
+.table-container,
+.resultados-editor .table-container {
+  overflow-x: auto !important;   /* scroll horizontal si la tabla es ancha */
+  overflow-y: hidden !important; /* evitar doble scroll vertical en la página */
+  -webkit-overflow-scrolling: touch;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+}
+
+/* Forzar que la tabla use su ancho natural y permita el scroll del contenedor */
+.resultados-editor .table,
+.table {
+  width: auto !important;        /* no forzar 100% que puede colapsar visualmente */
+  min-width: 1100px !important;  /* ajustar según cuántas columnas necesites ver */
+  max-width: none !important;
+  table-layout: auto !important;
+}
+
+/* Si quieres que la tabla se ajuste más al viewport, baja min-width (ej. 900px) */
+
+/* Modales: limitar altura y permitir scroll interno para ver contenido largo (tablas) */
+.modal__content .modal__body,
+.modal-content-preview .modal__body,
+.modal-content-servidor .modal__body {
+  max-height: calc(75vh) !important; /* dejar espacio para header/footer del modal */
+  overflow-y: auto !important;       /* scroll vertical dentro del modal */
+  -webkit-overflow-scrolling: touch;
+  padding-right: 8px;                /* evitar que el contenido toque el borde */
+  box-sizing: border-box;
+}
+
+/* Mejor experiencia visual: mostrar scrollbar solo cuando hace falta */
+.table-container::-webkit-scrollbar,
+.resultados-editor .table-container::-webkit-scrollbar,
+.modal__content .modal__body::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+.table-container::-webkit-scrollbar-thumb,
+.resultados-editor .table-container::-webkit-scrollbar-thumb,
+.modal__content .modal__body::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.08);
+  border-radius: 8px;
+}
+
+/* Asegurar que las celdas no aumenten el contenedor por márgenes inesperados */
+.resultados-editor .table th,
+.resultados-editor .table td,
+.table th,
+.table td {
+  box-sizing: border-box;
+  margin: 0 !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+/* OVERRIDE: forzar scroll horizontal y ancho natural de la tabla en resultados-editor */
+.resultados-editor .table-container {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  overflow-y: hidden !important; /* evita doble scroll vertical */
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-sizing: border-box;
+}
+
+/* Permitir que la tabla ocupe su ancho real y provoque scroll lateral en el contenedor */
+.resultados-editor .table {
+  width: max-content !important;    /* usa ancho necesario para mostrar todas las columnas */
+  min-width: 100% !important;      /* al menos ocupar el ancho del contenedor si cabe */
+  table-layout: auto !important;
+  white-space: nowrap !important;   /* mantener celdas en una línea para permitir scroll lateral */
+}
+
+/* Evitar wrapping en celdas del scope para que el scroll lateral muestre toda la información */
+.resultados-editor .table th,
+.resultados-editor .table td {
+  white-space: nowrap !important;
   overflow: visible !important;
   text-overflow: clip !important;
 }
 
-/* Ajuste responsivo: mantener comportamiento de wrapping en móviles */
+/* Si se desea scroll vertical dentro del modal donde aparece la tabla, limitar alto del body del modal */
+.modal-content-preview .modal__body,
+.modal-content-servidor .modal__body {
+  max-height: calc(75vh) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* OVERRIDE FINAL: asegurar centrado de tablas dentro de resultados-editor y vistas específicas */
+.resultados-editor .table th,
+.resultados-editor .table td,
+.resultados-editor .table thead th,
+.resultados-editor .table tbody td {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+/* Asegurar centrado también para otras tablas que usen la clase .table */
+.table th,
+.table td {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+/* Mantener títulos/headers de sección alineados a la izquierda (no tocar) */
+
+/* OVERRIDE: tamaño de fuente más compacto específicamente para tablas dentro de resultados-editor */
+.resultados-editor .table,
+.resultados-editor .table th,
+.resultados-editor .table td {
+  font-size: 11px !important;      /* reducido desde 12px a 11px */
+  line-height: 1.2 !important;
+}
+
+/* Forzar que los elementos internos hereden el tamaño (inputs/selects dentro de celdas) */
+.resultados-editor .table td .cell-text,
+.resultados-editor .table td .cell-empty,
+.resultados-editor .table td input.form__input,
+.resultados-editor .table td .custom-select__trigger {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+/* Reducir padding vertical en este scope para una apariencia más compacta */
+.resultados-editor .table th,
+.resultados-editor .table td {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+/* Si quieres distinto tamaño según pantalla, descomenta/ajusta estas media queries */
+/*
 @media (max-width: 800px) {
-  .resultados-editor .table th:nth-child(5),
-  .resultados-editor .table td:nth-child(5),
-  .resultados-editor .table th:nth-child(6),
-  .resultados-editor .table td:nth-child(6),
-  .resultados-editor .table th:nth-child(7),
-  .resultados-editor .table td:nth-child(7),
-  .resultados-editor .table th:nth-child(8),
-  .resultados-editor .table td:nth-child(8) {
-    min-width: 40px !important;
-    max-width: 100px !important;
-    width: auto !important;
-    white-space: normal !important;
-    word-break: normal !important;
-    overflow-wrap: break-word !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
-  }
+  .table, .resultados-editor .table { font-size: 11px !important; }
 }
-
-/* Scoped override: alinear los checkboxes y opciones a la izquierda DENTRO del panel de edición
-   Esto afecta sólo a la UI que aparece al pulsar "Editar" en Resultados, sin modificar el resto. */
-.resultados-editor .editor-panel .bulk-edit-field,
-.resultados-editor .editor-panel .selector-columnas-container,
-.resultados-editor .editor-panel .custom-select,
-.resultados-editor .editor-panel .custom-select__panel {
-  justify-content: flex-start !important;  /* forzar alineación izquierda del layout flex */
-  text-align: left !important;             /* asegurar texto a la izquierda dentro del scope */
-}
-
-/* Asegurar que cada opción muestre checkbox + label alineados a la izquierda */
-.resultados-editor .editor-panel .custom-select__panel .custom-select__option,
-.resultados-editor .editor-panel .custom-select__option {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  gap: 0.6rem !important;
-  white-space: normal !important;
-  padding-left: 0.25rem !important;
-}
-
-/* Mantener tamaño y espaciado correcto del checkbox dentro del panel de edición */
-.resultados-editor .editor-panel .custom-select__option input[type="checkbox"],
-.resultados-editor .editor-panel .custom-select__panel input[type="checkbox"] {
-  width: 18px !important;
-  height: 18px !important;
-  margin: 0 0.5rem 0 0 !important;
-  flex: 0 0 auto !important;
-}
-
-/* Si hay campos con label + checkbox dentro de bulk-edit-field, no centrar el grupo */
-.resultados-editor .editor-panel .bulk-edit-field {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  gap: var(--espaciado-md) !important;
-}
-
-/* Mantener los triggers y panels del selector de columnas comportándose (pero alineados a la izquierda en el editor) */
-.resultados-editor .editor-panel .selector-columnas-container .custom-select__trigger,
-.resultados-editor .editor-panel .selector-columnas-container .custom-select__panel {
-  text-align: left !important;
-}
-
-/* FORCE: Alinear TODO lo relacionado con edición (panel) a la IZQUIERDA.
-   Esto se aplica sólo dentro de .resultados-editor .editor-panel para no afectar otras áreas. */
-.resultados-editor .editor-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start !important;   /* forzar alineación izquierda del contenedor */
-  text-align: left !important;
-  gap: var(--espaciado-lg) !important;
-}
-
-/* Selector "Columnas a editar" y su trigger: texto y opciones a la izquierda */
-.resultados-editor .editor-panel .selector-columnas-container,
-.resultados-editor .editor-panel .selector-columnas-container .custom-select {
-  width: 100%;
-  align-self: stretch;
-  justify-content: flex-start !important;
-  text-align: left !important;
-}
-
-.resultados-editor .editor-panel .selector-columnas-container .custom-select__trigger {
-  justify-content: flex-start !important;
-  text-align: left !important;
-  padding-left: 0.5rem !important;
-}
-
-/* Alinear las opciones del panel (checkbox + label) a la izquierda */
-.resultados-editor .editor-panel .selector-columnas-container .custom-select__panel .custom-select__option,
-.resultados-editor .editor-panel .custom-select__panel .custom-select__option {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  gap: 0.5rem !important;
-  padding: 0.4rem 0.5rem !important;
-}
-
-/* Bulk edit: forzar que los campos y botones estén alineados a la izquierda */
-.resultados-editor .editor-panel .bulk-edit-controls {
-  width: 100%;
-  align-self: stretch;
-  justify-items: start !important;
-}
-
-.resultados-editor .editor-panel .bulk-edit-field {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  gap: var(--espaciado-md) !important;
-  width: 100%;
-}
-
-/* Asegurar inputs/triggers dentro del bulk-edit ocupen el espacio y el texto quede a la izquierda */
-.resultados-editor .editor-panel .bulk-edit-field .form__input,
-.resultados-editor .editor-panel .bulk-edit-field .custom-select__trigger {
-  width: auto;
-  min-width: 160px;
-  flex: 1 1 auto;
-  text-align: left !important;
-  justify-content: flex-start !important;
-}
-
-/* Botones de acciones del editor también a la izquierda (si se desea) */
-.resultados-editor .editor-panel .editor-panel__actions {
-  width: 100%;
-  display: flex !important;
-  justify-content: flex-start !important; /* mover botones a la izquierda */
-  gap: var(--espaciado-md) !important;
-  padding-top: var(--espaciado-sm) !important;
-}
-
-/* Asegurar tamaño y posicionamiento correcto de checkboxes dentro del panel de edición */
-.resultados-editor .editor-panel input[type="checkbox"],
-.resultados-editor .editor-panel input[type="radio"] {
-  margin-right: 0.5rem !important;
-  margin-left: 0 !important;
-  width: 18px !important;
-  height: 18px !important;
-}
-
-/* Mantener paneles desplegables encima del layout y alineados al trigger */
-.resultados-editor .editor-panel .custom-select__panel {
-  left: 0 !important;
-  right: auto !important;
-  width: auto !important;
-  min-width: 220px !important;
-}
-
-/* REEMPLAZAR: evitar que los radios entren en la regla de width:100% para triggers/inputs */
-/* Antes: .form__input, .custom-select__trigger, .custom-select__panel .custom-select__option input[type="radio"], .custom-select__panel .custom-select__option input[type="checkbox"] { ... } */
-
-/* NUEVO: radios en panels y select options — tamaño pequeño, margen y comportamiento consistente */
-.custom-select__panel .custom-select__option input[type="radio"],
-.selector-columnas-container .custom-select__panel .custom-select__option input[type="radio"],
-.resultados-editor .custom-select__panel .custom-select__option input[type="radio"] {
-  width: 14px;
-  height: 14px;
-  margin: 0 0.5rem 0 0;
-  vertical-align: middle;
-  cursor: pointer;
-  flex: 0 0 auto;
-  /* evitar herencias inesperadas */
-  padding: 0;
-  box-sizing: border-box;
-}
-
-/* OVERRIDE: radios dentro del panel de edición deben ser pequeños también */
-.resultados-editor .editor-panel input[type="radio"] {
-  width: 14px !important;
-  height: 14px !important;
-  margin-right: 0.5rem !important;
-  margin-left: 0 !important;
-}
-
-/* Botón "Aplicar Cambios" - forzar estilo primario (AZUL) dentro del panel de edición */
-.resultados-editor .editor-panel .btn--apply-all {
-  background-color: var(--color-secundario); /* azul */
-  color: #fff;
-  border: 1px solid rgba(0,0,0,0.06);
-  padding: 8px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.12s ease, transform 0.08s ease;
-}
-
-.resultados-editor .editor-panel .btn--apply-all:hover:not(:disabled) {
-  background-color: #003355;
-  transform: translateY(-1px);
-}
-
-.resultados-editor .editor-panel .btn--apply-all:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Asegurar que el label del selector de columnas en el editor esté a la izquierda */
-.resultados-editor .editor-panel .selector-columnas-container .form__label {
-  text-align: left !important;
-  width: 100%;
-  display: block;
-  align-self: flex-start;
-  margin-bottom: 0.5rem; /* pequeño espacio entre "Columnas a editar:" y el input/select */
-}
-
-/* Opcional: si el icon está dentro del label, mantenerlo alineado con el texto */
-.resultados-editor .editor-panel .selector-columnas-container .form__label svg,
-.resultados-editor .editor-panel .selector-columnas-container .form__label i {
-  margin-right: 0.5rem;
-  vertical-align: middle;
-}
-
-/* Hacer el selector de columnas menos ancho dentro del panel de edición */
-.resultados-editor .editor-panel .selector-columnas-container .custom-select {
-  width: auto !important;        /* no forzar 100% del contenedor */
-  max-width: 220px !important;   /* menos ancho (ajustado desde 300px) */
-  min-width: 120px !important;   /* mantener mínimo razonable para legibilidad */
-}
-
-/* Asegurar que el trigger use el ancho disponible del custom-select (hasta max-width) */
-.resultados-editor .editor-panel .selector-columnas-container .custom-select__trigger {
-  width: 100% !important;
-  box-sizing: border-box;
-}
-
-/* Posicionar la chevron del selector "Columnas a editar" más a la derecha sin tocar el campo
-   y aplicar la animación de rotación (igual que en BusquedaFiltro) */
-.resultados-editor .editor-panel .selector-columnas-container .custom-select__trigger {
-  position: relative !important; /* permitir posicionamiento absoluto del icono */
-}
-
-/* Estilo base para la chevron (triángulo simple hecho con borders) */
-.resultados-editor .editor-panel .selector-columnas-container .custom-select__trigger .chevron {
-  position: absolute !important;
-  right: 12px !important;               /* pequeño ajuste para centrar con nuevo grosor */
-  top: 50% !important;
-  width: 8px;                            /* mantiene tamaño compacto */
-  height: 8px;
-  box-sizing: border-box;
-  /* menos grueso y color gris */
-  border-right: 1.6px solid #6b7280;     /* antes 2.8px solid currentColor */
-  border-bottom: 1.6px solid #6b7280;    /* antes 2.8px solid currentColor */
-  transform: translateY(-50%) rotate(45deg) !important; /* estado cerrado */
-  transform-origin: center;
-  transition: transform 0.18s ease, opacity 0.10s ease;
-  margin-left: 0 !important;
-  opacity: 0.95;
-}
-
-/* Estado "open" — misma animación (rotación) que en BusquedaFiltro */
-.resultados-editor .editor-panel .selector-columnas-container .custom-select__trigger .chevron.open {
-  transform: translateY(-50%) rotate(-135deg) !important;
-}
-
-/* Correcciones específicas para SelectorColumnasEditables:
-   - colocar label encima del trigger
-   - evitar overlapping mediante margin/padding y z-index controlado
 */
-.selector-columnas-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.35rem;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Label claramente separado, en bloque y encima del control */
-.selector-columnas-container .form__label {
-  display: block;
-  margin: 0 0 0.35rem 0; /* separación clara entre label y trigger */
-  padding: 0;
-  width: 100%;
-  text-align: left;
-  z-index: 2; /* sitúa label por encima del trigger si hubiera solapamiento */
-  pointer-events: auto;
-}
-
-/* Asegurar que el select/custom-trigger no se solape: ocupa 100% debajo del label */
-.selector-columnas-container .custom-select {
-  width: 100%;
-  position: relative;
-  margin-top: 0;
-  z-index: 1;
-  box-sizing: border-box;
-}
-
-/* Trigger con altura mínima y padding para evitar que el texto quede encima de la label */
-.selector-columnas-container .custom-select__trigger,
-.selector-columnas-container .form__input {
-  position: relative; /* necesario para el chevron absoluto */
-  min-height: 40px;
-  height: auto;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  box-sizing: border-box;
-  width: 100%;
-  background: var(--color-fondo);
-}
-
-/* Chevron posicionado respecto al trigger, sin romper el flujo ni provocar overlap */
-.selector-columnas-container .custom-select__trigger .chevron {
-  right: 12px !important;
-  top: 50% !important;
-  transform: translateY(-50%) rotate(45deg) !important;
-  position: absolute !important;
-  margin-left: 0 !important;
-}
-
-/* Panel del dropdown: separado del trigger (no tocar label) */
-.selector-columnas-container .custom-select__panel {
-  top: calc(100% + 8px) !important;
-  left: 0 !important;
-  right: auto !important;
-  min-width: 220px !important;
-  z-index: 1200 !important;
-}
-
-/* Responsive: en pantallas muy pequeñas mantener la label y el trigger apilados correctamente */
-@media (max-width: 560px) {
-  .selector-columnas-container {
-    gap: 0.25rem;
-  }
-  .selector-columnas-container .form__label {
-    font-size: 0.92rem;
-  }
-  .selector-columnas-container .custom-select__trigger {
-    min-height: 44px;
-    padding: 10px 12px;
-  }
-}

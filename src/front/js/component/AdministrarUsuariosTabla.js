@@ -211,7 +211,7 @@ const AdministrarUsuariosTabla = () => {
                                                 <th style={{ textAlign: 'center' }}>Email</th>
                                                 <th style={{ textAlign: 'center' }}>Rol</th>
                                                 <th style={{ textAlign: 'center' }}>Creado</th>
-                                                <th style={{ textAlign: 'center', width: 110 }}>Eliminar</th>
+                                                <th className="col-eliminar" style={{ textAlign: 'center', width: 110 }}>Eliminar</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -223,7 +223,7 @@ const AdministrarUsuariosTabla = () => {
                                                     <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{u.role ?? (u.role && u.role.value) ?? '—'}</td>
                                                     <td style={{ textAlign: 'center', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>{u.fecha_creacion ? new Date(u.fecha_creacion).toLocaleString() : '—'}</td>
                                                     {/* Celda alineada como table-cell para mantener altura consistente con otras celdas */}
-                                                    <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: '10px 0' }}>
+                                                    <td className="col-eliminar" style={{ textAlign: 'center', verticalAlign: 'middle', padding: '6px 0' }}>
                                                         <button
                                                             type="button"
                                                             className="btn-icon"
@@ -231,8 +231,8 @@ const AdministrarUsuariosTabla = () => {
                                                             onClick={() => handleDeleteUser(u.id, u.username)}
                                                             aria-label={`Eliminar ${u.username || ''}`}
                                                             style={{
-                                                                width: 36,
-                                                                height: 36,
+                                                                width: 28,
+                                                                height: 28,
                                                                 padding: 0,
                                                                 borderRadius: 6,
                                                                 display: 'inline-flex',
@@ -246,7 +246,7 @@ const AdministrarUsuariosTabla = () => {
                                                                 color: '#fff'
                                                             }}
                                                         >
-                                                            <Icon name="trash" size={18} />
+                                                            <Icon name="trash" size={14} />
                                                         </button>
                                                     </td>
                                                 </tr>
