@@ -1543,3 +1543,153 @@
   .table, .resultados-editor .table { font-size: 11px !important; }
 }
 */
+/* ===== Estilos para el dropdown de "Descargar" (Exportar CSV / Excel) ===== */
+.export-dropdown-container {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* El botón que abre el menú debe mantenerse en el flujo y encima del panel */
+.export-dropdown-container .btn {
+  position: relative;
+  z-index: 10;
+}
+
+/* Panel desplegable: absoluto, debajo del trigger, sombra y transición */
+.export-dropdown-container .export-menu {
+  right: 0;
+  margin-top: 6px;
+  min-width: 120px !important;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.12);
+  z-index: 1400;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: fadeInMenu 140ms ease-out;
+}
+
+/* Ítem del menú: botón full-width, alineado a la izquierda con icono */
+.export-dropdown-container .export-menu-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  color: var(--color-texto-principal);
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.06s ease;
+}
+
+/* Hover / focus states para accesibilidad */
+.export-dropdown-container .export-menu-item:hover,
+.export-dropdown-container .export-menu-item:focus {
+  background: var(--color-primario);
+  color: var(--color-superficie);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+/* Iconos dentro de los ítems (SVG) */
+.export-dropdown-container .export-menu-item svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: inherit;
+}
+
+/* Pequeño ajuste para evitar que el panel crezca demasiado en móviles */
+@media (max-width: 480px) {
+  .export-dropdown-container .export-menu {
+    right: 8px;
+    left: 8px;
+    min-width: auto;
+  }
+}
+
+/* Centerar los contenedores que incluyen el botón "Descargar" y ajustar tipografía */
+.pagination-controls {
+  align-items: center; /* asegurar alineación vertical */
+}
+
+/* Centrar el bloque izquierdo (selector + descargar) visualmente */
+.pagination-controls > .pagination__items-per-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  justify-self: center; /* centrar en la grid */
+  justify-content: center; /* centrar su contenido */
+}
+
+/* Cuando se usa .table-controls (componente BusquedaTabla), centrar también su contenido */
+.table-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  justify-content: center; /* centrar el botón descargar dentro de su contenedor */
+}
+
+/* Ajustes de tamaño de fuente para que coincida con la tabla de resultados (11px) */
+.export-dropdown-container,
+.export-dropdown-container .export-menu,
+.export-dropdown-container .export-menu-item,
+.export-dropdown-container .btn {
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+/* Reducir padding del trigger para mantener proporción con la fuente */
+.export-dropdown-container .btn,
+.pagination-select .custom-select__trigger {
+  padding: 6px 10px !important;
+}
+
+/* Ajustes visuales para ítems del menú export (compactos) */
+.export-dropdown-container .export-menu {
+  min-width: 200px;
+  padding: 6px !important;
+  gap: 4px;
+}
+
+.export-dropdown-container .export-menu-item {
+  padding: 6px 10px !important;
+  border-radius: 6px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Asegurar que el dropdown no sea cortado en contenedores con overflow */
+.export-dropdown-container {
+  position: relative; /* ya definido, reafirmar */
+  z-index: 1400;
+}
+
+/* Small screens: mantener centrado y panel full-width con margenes */
+@media (max-width: 480px) {
+  .pagination-controls > .pagination__items-per-page {
+    justify-self: center;
+  }
+  .export-dropdown-container .export-menu {
+    left: 8px !important;
+    right: 8px !important;
+    top: calc(100% + 8px) !important;
+    min-width: auto !important;
+  }
+}
+
+/* Reusar animación definida anteriormente si existe */
+@keyframes fadeInMenu {
+  from { opacity: 0; transform: translateY(-6px) scale(0.995); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
