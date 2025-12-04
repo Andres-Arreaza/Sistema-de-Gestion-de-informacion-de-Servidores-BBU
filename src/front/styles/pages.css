@@ -1558,9 +1558,10 @@
 
 /* Panel desplegable: absoluto, debajo del trigger, sombra y transición */
 .export-dropdown-container .export-menu {
+  position: absolute;
   right: 0;
   margin-top: 6px;
-  min-width: 120px !important;
+  min-width: 158.6px !important;
   background: var(--color-superficie);
   border: 1px solid var(--color-borde);
   border-radius: 8px;
@@ -1693,3 +1694,73 @@
   from { opacity: 0; transform: translateY(-6px) scale(0.995); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* Barra superior de resultados/editor: distribuir grupos LEFT / CENTER / RIGHT */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Cada grupo mantiene su alineamiento interno */
+.editor-toolbar .toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* El grupo central ocupa el espacio restante para centrar badge + paginación */
+.editor-toolbar .toolbar-center {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+/* Grupos extremos no crecen */
+.editor-toolbar .toolbar-left,
+.editor-toolbar .toolbar-right {
+  flex: 0 0 auto;
+}
+
+/* Ajustes para la paginación inline dentro de la toolbar */
+.pagination-controls-inline .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+/* Badge con tamaño fijo y centrado en toolbar */
+.editor-toolbar .badge {
+  min-width: 160px;
+  text-align: center;
+  padding: 6px 12px;
+  border-radius: 9999px;
+}
+
+/* Responsivo: en pantallas pequeñas apilar verticalmente y centrar */
+@media (max-width: 800px) {
+  .editor-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+  .editor-toolbar .toolbar-center {
+    order: 2;
+  }
+  .editor-toolbar .toolbar-left,
+  .editor-toolbar .toolbar-right {
+    order: 1;
+    justify-content: center;
+  }
+}
+
+/* Asegurar que el export dropdown permanezca como overlay y no afecte layout */
+.export-dropdown-container { position: relative; }
+.export-dropdown-container .export-menu { position: absolute; right: 0; top: calc(100% + 6px); }

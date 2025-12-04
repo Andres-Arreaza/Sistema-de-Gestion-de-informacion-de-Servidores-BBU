@@ -1642,36 +1642,54 @@ const EditorMasivo = () => {
                                     )}
 
                                     {/* BARRA: paginación + contador + botón Guardar Cambios */}
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '.75rem' }}>
-                                        {/* Barra izquierda: paginación/descarga (componente existente) */}
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
-                                            <EditorPagination
-                                                servidores={servidores}
-                                                itemsPerPage={itemsPerPage}
-                                                setItemsPerPage={setItemsPerPage}
-                                                currentPage={currentPage}
-                                                setCurrentPage={setCurrentPage}
-                                                isExportMenuOpen={isExportMenuOpen}
-                                                setIsExportMenuOpen={setIsExportMenuOpen}
-                                                isExportMenuOpenRef={exportMenuRef}
-                                                exportarCSV={exportarCSV}
-                                                exportarExcel={exportarExcel}
-                                                userRole={userRole}
-                                            />
+                                    <div className="editor-toolbar" style={{ marginBottom: '.75rem' }}>
+                                        {/* LEFT: Mostrar + selector + Descargar */}
+                                        <div className="toolbar-group toolbar-left" style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
+                                            <label style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Mostrar:</label>
+                                            <ItemsPerPageDropdown value={itemsPerPage} onChange={(v) => { setItemsPerPage(v); setCurrentPage(1); }} />
+
+                                            <div className="export-dropdown-container" ref={exportMenuRef} style={{ position: 'relative' }}>
+                                                <button className="btn btn--primary" onClick={() => setIsExportMenuOpen(!isExportMenuOpen)} aria-haspopup="true" aria-expanded={isExportMenuOpen}>
+                                                    <Icon name="upload" /> Descargar
+                                                </button>
+                                                {isExportMenuOpen && (
+                                                    <div className="export-menu" style={{ position: 'absolute', right: 0 }}>
+                                                        <button className="export-menu-item" onClick={() => { exportarCSV(servidores); setIsExportMenuOpen(false); }}>
+                                                            <Icon name="csv" size={16} /> Exportar como CSV
+                                                        </button>
+                                                        <button className="export-menu-item" onClick={() => { exportarExcel(servidores); setIsExportMenuOpen(false); }}>
+                                                            <Icon name="file-excel" size={16} /> Exportar como Excel
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
-                                        {/* Barra derecha: contador y botón Guardar Cambios */}
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                        {/* CENTER: badge + paginación (ocupa el espacio disponible para centrar) */}
+                                        <div className="toolbar-group toolbar-center" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', flex: 1 }}>
+                                            <span className="badge" style={{ minWidth: 170, textAlign: 'center' }}>{servidores.length} servidores encontrados</span>
 
+                                            <div className="pagination-controls-inline" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                                <button className="btn-icon" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1} title="Página Anterior">
+                                                    <Icon name="chevron-left" />
+                                                </button>
+                                                <span>Página <strong className="page-number">{currentPage}</strong> de <strong className="page-number">{Math.max(1, Math.ceil(servidores.length / itemsPerPage))}</strong></span>
+                                                <button className="btn-icon" onClick={() => setCurrentPage(Math.min(Math.max(1, Math.ceil(servidores.length / itemsPerPage)), currentPage + 1))} disabled={currentPage >= Math.ceil(servidores.length / itemsPerPage)} title="Página Siguiente">
+                                                    <Icon name="chevron-right" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* RIGHT: Guardar Cambios */}
+                                        <div className="toolbar-group toolbar-right" style={{ display: 'flex', alignItems: 'center', gap: '.6rem', justifyContent: 'flex-end' }}>
                                             {userRole && (
                                                 <button
                                                     className="btn btn--primary"
                                                     onClick={handleGuardarCambios}
                                                     disabled={Object.keys(cambios).length === 0 || cargando || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}
                                                     title={Object.keys(cambios).length === 0 ? "No hay cambios para guardar" : "Guardar cambios en la BD"}
-
                                                 >
-                                                    Guardar Cambios
+                                                    <Icon name="save" /> Guardar Cambios
                                                 </button>
                                             )}
                                         </div>
