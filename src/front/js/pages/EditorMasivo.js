@@ -37,6 +37,31 @@ const EditorMasivo = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const exportMenuRef = useRef(null);
     const resultadosRef = useRef(null);
+
+    // Cerrar el menú de exportación cuando se haga clic fuera o se presione Escape
+    useEffect(() => {
+        const handleOutsideClick = (e) => {
+            if (!isExportMenuOpen) return;
+            const el = exportMenuRef.current;
+            if (el && !el.contains(e.target)) {
+                setIsExportMenuOpen(false);
+            }
+        };
+        const handleKey = (e) => {
+            if (e.key === 'Escape' && isExportMenuOpen) {
+                setIsExportMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleOutsideClick);
+        document.addEventListener('touchstart', handleOutsideClick);
+        document.addEventListener('keydown', handleKey);
+        return () => {
+            document.removeEventListener('mousedown', handleOutsideClick);
+            document.removeEventListener('touchstart', handleOutsideClick);
+            document.removeEventListener('keydown', handleKey);
+        };
+    }, [isExportMenuOpen, exportMenuRef]);
+
     // Estado para ordenamiento
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
@@ -224,25 +249,35 @@ const EditorMasivo = () => {
         const originalValue = originalRow ? (originalRow[key] ?? null) : null;
 
         // --- VALIDACIÓN INMEDIATA: si falla, marcar la celda en rojo y permanecer en edición ---
-        const inlineErrors = validateInlineChange(servidorId, key, newValue);
-        if (inlineErrors) {
-            // 1) marcar errores de validación para la fila
-            setValidationErrors(prev => ({ ...(prev || {}), [servidorId]: { ...(prev?.[servidorId] || {}), ...inlineErrors } }));
-            // Conservar el valor intentado
-            const attemptedValue = rawValue === undefined || rawValue === null ? '' : String(rawValue);
-            // Solo registrar en `cambios` / marcar preview si difiere del original
-            if (String(attemptedValue) !== String(originalValue ?? '')) {
-                setCambios(prev => {
-                    const copia = { ...(prev || {}) };
-                    copia[servidorId] = { ...(copia[servidorId] || {}), [key]: attemptedValue };
-                    return copia;
-                });
-                setServidores(prev => prev.map(s => s.id === servidorId ? { ...s, [key]: attemptedValue, __preview: true } : s));
-            }
-            // Mantener el editor abierto con el texto ingresado (no se borra)
-            setEditingCell({ id: servidorId, key, value: attemptedValue });
-            return false; // indicar fallo de validación al llamador
-        }
+        // const inlineErrors = validateInlineChange(servidorId, key, newValue);
+        // if (inlineErrors) {
+        //     // 1) marcar errores de validación para la fila
+        //     setValidationErrors(prev => ({ ...(prev || {}), [servidorId]: { ...(prev?.[servidorId] || {}), ...inlineErrors } }));
+        //     // Conservar el valor intentado
+        //     const attemptedValue = rawValue === undefined || rawValue === null ? '' : String(rawValue);
+        //     // Solo registrar en `cambios` / marcar preview si difiere del original
+        //     if (String(attemptedValue) !== String(originalValue ?? '')) {
+        //         setCambios(prev => {
+        //             const copia = { ...(prev || {}) };
+        //             copia[servidorId] = { ...(copia[servidorId] || {}), [key]: attemptedValue };
+        //             return copia;
+        //         });
+        //         setServidores(prev => prev.map(s => s.id === servidorId ? { ...s, [key]: attemptedValue, __preview: true } : s));
+        //     }
+        //     // Mantener el editor abierto con el texto ingresado (no se borra)
+        //     setEditingCell({ id: servidorId, key, value: attemptedValue });
+        //     return false; // indicar fallo de validación al llamador
+        // }
+
+        // NOTA: validación completa se realizará al guardar (handleGuardarCambios).
+        // Aquí aplicamos los cambios localmente sin bloquear al usuario.
+        // Limpiar errores previos de esta fila para que no queden marcas antiguas.
+        setValidationErrors(prev => {
+            if (!prev || !prev[servidorId]) return prev;
+            const copy = { ...prev };
+            delete copy[servidorId];
+            return copy;
+        });
 
         // Si pasa la validación, continuar con la lógica previa para aplicar el cambio (optimista)
         // Si no hay cambio respecto al original, no marcar como editado ni cambiar color
@@ -1441,8 +1476,10 @@ const EditorMasivo = () => {
                 serverErrors.ip_mgmt = "Debe ingresar al menos una IP.";
                 serverErrors.ip_real = "Debe ingresar al menos una IP.";
                 serverErrors.ip_mask25 = "Debe ingresar al menos una IP.";
+
             } else {
                 // 3) Duplicados internos entre sus propias IPs
+
                 const ips = [ipMgmt, ipReal, ipMask].filter(Boolean);
                 const counts = ips.reduce((acc, ip) => (acc[ip] = (acc[ip] || 0) + 1, acc), {});
                 if (ipMgmt && counts[ipMgmt] > 1) serverErrors.ip_mgmt = "IP repetida en otro campo.";
@@ -1588,18 +1625,11 @@ const EditorMasivo = () => {
                                         {/* Mostrar acciones de edición/elim solo si hay sesión iniciada */}
                                         {userRole && (
                                             <>
-                                                <button className="btn btn--primary" onClick={() => setIsEditMode(true)} disabled={isEditMode || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}>
+                                                <button className="btn btn--primary btn--compact" onClick={() => setIsEditMode(true)} disabled={isEditMode || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}>
                                                     <Icon name="edit" /> Editar Masivo
                                                 </button>
 
-                                                <button
-                                                    className="btn btn--danger"
-                                                    onClick={handleEliminarResultados}
-                                                    disabled={cargando || seleccionados.size === 0 || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}
-                                                    title="Eliminar servidores seleccionados"
-                                                >
-                                                    <Icon name="trash" /> Eliminar Selecionados
-                                                </button>
+                                                {/* Eliminado: botón "Eliminar Selecionados" movido a la toolbar derecha */}
                                             </>
                                         )}
                                     </div>
@@ -1634,7 +1664,7 @@ const EditorMasivo = () => {
                                                     Aplicar Cambios
                                                 </button>
 
-                                                <button className="btn btn--primary" onClick={handleGuardarCambios} disabled={Object.keys(cambios).length === 0}>
+                                                <button className="btn btn--primary btn--compact" onClick={handleGuardarCambios} disabled={Object.keys(cambios).length === 0}>
                                                     <Icon name="save" /> Guardar Cambios
                                                 </button>
                                             </div>
@@ -1683,14 +1713,26 @@ const EditorMasivo = () => {
                                         {/* RIGHT: Guardar Cambios */}
                                         <div className="toolbar-group toolbar-right" style={{ display: 'flex', alignItems: 'center', gap: '.6rem', justifyContent: 'flex-end' }}>
                                             {userRole && (
-                                                <button
-                                                    className="btn btn--primary"
-                                                    onClick={handleGuardarCambios}
-                                                    disabled={Object.keys(cambios).length === 0 || cargando || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}
-                                                    title={Object.keys(cambios).length === 0 ? "No hay cambios para guardar" : "Guardar cambios en la BD"}
-                                                >
-                                                    <Icon name="save" /> Guardar Cambios
-                                                </button>
+                                                <>
+                                                    {/* NUEVO: botón "Eliminar Seleccionados" a la izquierda de Guardar */}
+                                                    <button
+                                                        className="btn btn--danger btn--compact"
+                                                        onClick={handleEliminarResultados}
+                                                        disabled={cargando || seleccionados.size === 0 || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}
+                                                        title="Eliminar servidores seleccionados"
+                                                    >
+                                                        <Icon name="trash" /> Eliminar Seleccionados
+                                                    </button>
+
+                                                    <button
+                                                        className="btn btn--primary btn--compact"
+                                                        onClick={handleGuardarCambios}
+                                                        disabled={Object.keys(cambios).length === 0 || cargando || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}
+                                                        title={Object.keys(cambios).length === 0 ? "No hay cambios para guardar" : "Guardar cambios en la BD"}
+                                                    >
+                                                        <Icon name="save" /> Guardar Cambios
+                                                    </button>
+                                                </>
                                             )}
                                         </div>
                                     </div>

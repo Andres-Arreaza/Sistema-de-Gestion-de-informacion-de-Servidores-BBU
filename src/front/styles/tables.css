@@ -642,3 +642,17 @@ th.col-eliminar .btn-icon svg {
 }
 
 /* Si prefieres que el error pueda ser interactivo (copiar, focus), cambia pointer-events a auto */
+
+/* Asegurar que las tablas queden por debajo de overlays (dropdowns, modales, tooltips) */
+.table-container,
+.resultados-editor .table-container {
+  position: relative;
+  z-index: 0 !important;
+}
+
+/* Refuerzo: tabla en capa baja */
+.table,
+.resultados-editor .table {
+  position: relative;
+  z-index: 0 !important;
+}

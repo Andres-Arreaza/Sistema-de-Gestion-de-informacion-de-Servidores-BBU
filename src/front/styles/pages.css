@@ -1556,6 +1556,14 @@
   z-index: 10;
 }
 
+/* Ajuste: subir ligeramente el botón "Descargar" para alinearlo mejor con los controles adyacentes */
+.export-dropdown-container .btn {
+  position: relative;    /* mantener en flujo pero permitir desplazamiento visual */
+  top: -4.5px;             /* subir 6px; ajusta este valor si quieres más/menos */
+  transition: top 140ms ease, transform 120ms ease; /* suavizar cambio y conservar transform-hover */
+  z-index: 15;           /* asegurar que el botón quede por encima de elementos cercanos */
+}
+
 /* Panel desplegable: absoluto, debajo del trigger, sombra y transición */
 .export-dropdown-container .export-menu {
   position: absolute;
@@ -1764,3 +1772,173 @@
 /* Asegurar que el export dropdown permanezca como overlay y no afecte layout */
 .export-dropdown-container { position: relative; }
 .export-dropdown-container .export-menu { position: absolute; right: 0; top: calc(100% + 6px); }
+
+/* ===== Uniformizar tamaño de texto de la UI relacionada con RESULTADOS / EDITOR =====
+   Hacemos que toolbar, paneles, controles, dropdowns y botones en el scope de
+   resultados-editor usen el mismo tamaño de texto que la tabla (11px). Esto evita
+   diferencias visuales entre la tabla y sus controles adyacentes. */
+
+.resultados-editor,
+.resultados-editor * {
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+/* Asegurar también que los paneles y controles de edición / toolbar / bulk-edit compartan tamaño */
+.editor-toolbar,
+.editor-toolbar *,
+.editor-panel,
+.editor-panel * ,
+.bulk-edit-controls,
+.bulk-edit-controls * ,
+.bulk-edit-field,
+.bulk-edit-field * ,
+.table-controls,
+.table-controls * {
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+/* Export/pagination controls */
+.export-dropdown-container,
+.export-dropdown-container *,
+.pagination-controls,
+.pagination-controls *,
+.pagination-controls .servers-found--center,
+.pagination-controls .servers-found--center * {
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+/* Formularios y triggers dentro de resultados-editor: inputs, selects y triggers */
+.resultados-editor .form__input,
+.resultados-editor .custom-select__trigger,
+.resultados-editor .custom-select__panel,
+.resultados-editor .custom-select__option {
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+/* Botones y botones-ícono en el scope de resultados/editor */
+.resultados-editor .btn,
+.resultados-editor .btn-icon,
+.editor-toolbar .btn,
+.editor-panel .btn,
+.export-dropdown-container .btn,
+.pagination-controls .btn,
+.table-controls .btn {
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+/* Badge y paginación inline */
+.editor-toolbar .badge,
+.pagination-controls-inline,
+.pagination-controls-inline * {
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+/* Evitar que el ajuste de fuente reduzca excesivamente la altura visual de los triggers */
+.resultados-editor .form__input,
+.resultados-editor .custom-select__trigger {
+  min-height: 34px; /* mantener buena area clicable aun con texto más pequeño */
+}
+
+/* Mobile: preservar legibilidad sin cambiar la intención visual */
+@media (max-width: 480px) {
+  .resultados-editor,
+  .editor-toolbar,
+  .editor-panel,
+  .bulk-edit-controls,
+  .export-dropdown-container {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+  }
+}
+
+/* Forzar que la tabla y su contenedor estén por debajo de otras capas (dropdowns, modales, menús) */
+.resultados-editor .table-container,
+.table-container {
+  position: relative; /* contexto para z-index sin afectar el layout */
+  z-index: 0 !important; /* quedar por debajo de overlays con z-index mayor */
+}
+
+/* Mantener la tabla en una capa baja frente al resto de la UI */
+.resultados-editor .table,
+.table {
+  position: relative; /* necesario para que z-index tenga efecto en algunos navegadores */
+  z-index: 0 !important;
+}
+
+/* Override final: situar el botón de "Descargar" y su panel por encima de la tabla (z-index:0)
+   pero por debajo de overlays importantes (modales, menús globales con z-index muy alto). */
+.export-dropdown-container,
+.resultados-editor .export-dropdown-container {
+  /* mantener contexto y estar por encima de la tabla (tabla usa z-index:0) */
+  position: relative !important;
+  z-index: 12 !important; /* > tabla (0), < modales/menus (p.ej. 1400) */
+}
+
+/* Botón trigger: ligeramente por encima del contenedor para evitar ser tapado por el panel */
+.export-dropdown-container .btn,
+.resultados-editor .export-dropdown-container .btn {
+  z-index: 14 !important;
+  position: relative !important;
+}
+
+/* Panel desplegable: encima del botón pero aún en capa baja frente a modales */
+.export-dropdown-container .export-menu,
+.resultados-editor .export-dropdown-container .export-menu {
+  z-index: 20 !important; /* suficientemente alto para mostrarse sobre la tabla pero bajo overlays globales */
+  position: absolute !important; /* reafirmar posición para que z-index se aplique localmente */
+}
+
+/* Aumentar tamaño del título "Resultados de la Búsqueda" */
+.resultados-header .resultados-titulo {
+  font-size: 2rem !important;      /* más grande para destacar */
+  font-weight: 800 !important;     /* más énfasis */
+  line-height: 1.08 !important;
+  margin: 0 0 0.4rem 0 !important;
+}
+
+/* Ajuste responsivo para pantallas pequeñas */
+@media (max-width: 800px) {
+  .resultados-header .resultados-titulo {
+    font-size: 1.4rem !important;  /* tamaño más contenido en móvil */
+    font-weight: 700 !important;
+  }
+}
+
+/* Botones compactos para EditorMasivo: reducir ancho/alto sin tocar estilos globales */
+.editor-toolbar .btn--compact,
+.editor-panel .btn--compact,
+.resultados-editor .btn--compact {
+  padding: 6px 8px !important;       /* más compacto horizontalmente */
+  min-width: 92px !important;        /* ancho mínimo reducido */
+  height: 32px !important;           /* altura reducida */
+  font-size: 12px !important;
+  line-height: 1 !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+
+/* Íconos dentro de botones compactos: ajustar tamaño para centrar visualmente */
+.btn--compact svg,
+.btn--compact i {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Hover states conservados (ligera elevación) */
+.btn--compact:hover {
+  transform: translateY(-1px);
+}
+
+/* Si quieres que el botón compacto destaque menos visualmente, se puede reducir box-shadow */
+.btn--compact {
+  box-shadow: none !important;
+}
