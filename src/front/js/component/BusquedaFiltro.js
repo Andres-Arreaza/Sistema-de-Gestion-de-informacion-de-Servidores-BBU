@@ -155,22 +155,11 @@ export const BusquedaFiltro = ({ filtro, setFiltro, buscarServidores, servicios,
             </div>
 
             <div className="form__grid">
-                <div className="form__group" style={{ gridColumn: '1 / -1', marginBottom: '0.2em', alignItems: 'flex-start' }}>
-                    <label className="checkbox-exacta" htmlFor="busqueda-exacta">
-                        <input
-                            id="busqueda-exacta"
-                            type="checkbox"
-                            checked={filtro.busquedaExacta || false}
-                            onChange={e => setFiltro({ ...filtro, busquedaExacta: e.target.checked })}
-                        />
-                        <span style={{ userSelect: 'none' }}>Coincidencia exacta</span>
-                    </label>
-                </div>
                 {formFields.map(renderField)}
             </div>
 
             <div className="form__actions">
-                <button className="btn btn--primary" type="submit" disabled={cargando}>
+                <button className="btn btn--primary btn--compact" type="submit" disabled={cargando}>
                     <Icon name="search" />
                     <span>{cargando ? "Buscando..." : "Buscar Servidores"}</span>
                 </button>

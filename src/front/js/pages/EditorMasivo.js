@@ -1264,7 +1264,7 @@ const EditorMasivo = () => {
                                                                             <span>
                                                                                 {editingCell?.value ? (
                                                                                     // mostrar etiqueta humana si es posible
-                                                                                    (options.find(o => String(o.id) === String(editingCell.value)) || { label: String(editingCell.value) }).label
+                                                                                    (options.find(o => String(o.id) === String(editandoCell.value)) || { label: String(editandoCell.value) }).label
                                                                                 ) : '--'}
                                                                             </span>
                                                                             <div className={`chevron ${isOpen ? "open" : ""}`}></div>
@@ -1298,7 +1298,7 @@ const EditorMasivo = () => {
                                                                             {options.map(opt => (
                                                                                 <div
                                                                                     key={String(opt.id)}
-                                                                                    className={`custom-select__option ${String(editingCell?.value) === String(opt.id) ? 'selected' : ''}`}
+                                                                                    className={`custom-select__option ${String(editandoCell?.value) === String(opt.id) ? 'selected' : ''}`}
                                                                                     role="button"
                                                                                     tabIndex={0}
                                                                                     onClick={async (e) => {
@@ -1480,6 +1480,11 @@ const EditorMasivo = () => {
             } else {
                 // 3) Duplicados internos entre sus propias IPs
 
+
+
+
+
+
                 const ips = [ipMgmt, ipReal, ipMask].filter(Boolean);
                 const counts = ips.reduce((acc, ip) => (acc[ip] = (acc[ip] || 0) + 1, acc), {});
                 if (ipMgmt && counts[ipMgmt] > 1) serverErrors.ip_mgmt = "IP repetida en otro campo.";
@@ -1618,66 +1623,24 @@ const EditorMasivo = () => {
                             {servidores.length > 0 ? (
                                 <>
                                     <div className="editor-top-actions">
-                                        {/* (Se removió el menú de descarga aquí para evitar duplicado).
-                                            La barra de descarga / mostrar / contador / paginación
-                                            se renderiza encima de la tabla mediante <EditorPagination />. */}
-
-                                        {/* Mostrar acciones de edición/elim solo si hay sesión iniciada */}
-                                        {userRole && (
-                                            <>
-                                                <button className="btn btn--primary btn--compact" onClick={() => setIsEditMode(true)} disabled={isEditMode || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}>
-                                                    <Icon name="edit" /> Editar Masivo
-                                                </button>
-
-                                                {/* Eliminado: botón "Eliminar Selecionados" movido a la toolbar derecha */}
-                                            </>
-                                        )}
+                                        {/* (Barra superior: reservada para acciones contextuales; 'Editar Masivo' fue movido a la toolbar junto a Descargar) */}
                                     </div>
-
-                                    {isEditMode && (
-                                        <div className="editor-panel">
-                                            <SelectorColumnasEditables
-                                                opciones={opcionesColumnas}
-                                                seleccionadas={columnasEditables}
-                                                onChange={setColumnasEditables}
-                                            />
-                                            {columnasEditables.length > 0 && <BulkEditControls
-                                                columnasEditables={columnasEditables}
-                                                opcionesColumnas={opcionesColumnas}
-                                                bulkEditValues={bulkEditValues}
-                                                handleBulkEditChange={handleBulkEditChange}
-                                                catalogos={catalogos}
-                                                handleApplyBulkEdit={handleApplyBulkEdit}
-                                            />}
-                                            <div className="editor-panel__actions">
-                                                <button className="btn btn--secondary" onClick={() => setIsEditMode(false)}>
-                                                    Cancelar
-                                                </button>
-
-                                                {/* NUEVO: botón para aplicar todos los cambios seleccionados en un solo paso */}
-                                                <button
-                                                    className="btn btn--primary btn--apply-all"
-                                                    onClick={handleApplyAllBulkEdits}
-                                                    disabled={columnasEditables.length === 0}
-                                                    title={columnasEditables.length === 0 ? "Selecciona columnas para aplicar" : "Aplicar cambios seleccionados a todos los servidores"}
-                                                >
-                                                    Aplicar Cambios
-                                                </button>
-
-                                                <button className="btn btn--primary btn--compact" onClick={handleGuardarCambios} disabled={Object.keys(cambios).length === 0}>
-                                                    <Icon name="save" /> Guardar Cambios
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
 
                                     {/* BARRA: paginación + contador + botón Guardar Cambios */}
                                     <div className="editor-toolbar" style={{ marginBottom: '.75rem' }}>
                                         {/* LEFT: Mostrar + selector + Descargar */}
                                         <div className="toolbar-group toolbar-left" style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
-                                            <label style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Mostrar:</label>
-                                            <ItemsPerPageDropdown value={itemsPerPage} onChange={(v) => { setItemsPerPage(v); setCurrentPage(1); }} />
-
+                                            {/* MOVER: botón "Editar Masivo" a la izquierda de Descargar */}
+                                            {userRole && (
+                                                <button
+                                                    className="btn btn--primary btn--compact"
+                                                    onClick={() => setIsEditMode(true)}
+                                                    disabled={isEditMode || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}
+                                                    title="Editar masivo"
+                                                >
+                                                    <Icon name="edit" /> Editar Masivo
+                                                </button>
+                                            )}
                                             <div className="export-dropdown-container" ref={exportMenuRef} style={{ position: 'relative' }}>
                                                 <button className="btn btn--primary" onClick={() => setIsExportMenuOpen(!isExportMenuOpen)} aria-haspopup="true" aria-expanded={isExportMenuOpen}>
                                                     <Icon name="upload" /> Descargar
@@ -1698,6 +1661,12 @@ const EditorMasivo = () => {
                                         {/* CENTER: badge + paginación (ocupa el espacio disponible para centrar) */}
                                         <div className="toolbar-group toolbar-center" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', flex: 1 }}>
                                             <span className="badge" style={{ minWidth: 170, textAlign: 'center' }}>{servidores.length} servidores encontrados</span>
+
+                                            {/* MOVIDO: "Mostrar" + selector junto al badge */}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                                                <label style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Mostrar:</label>
+                                                <ItemsPerPageDropdown value={itemsPerPage} onChange={(v) => { setItemsPerPage(v); setCurrentPage(1); }} />
+                                            </div>
 
                                             <div className="pagination-controls-inline" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                                                 <button className="btn-icon" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1} title="Página Anterior">
@@ -1737,6 +1706,41 @@ const EditorMasivo = () => {
                                         </div>
                                     </div>
 
+                                    {/* editor-panel moved below so it appears directly above the table */}
+                                    {isEditMode && (
+                                        <div className="editor-panel" style={{ marginBottom: '0.75rem' }}>
+                                            <SelectorColumnasEditables
+                                                opciones={opcionesColumnas}
+                                                seleccionadas={columnasEditables}
+                                                onChange={setColumnasEditables}
+                                            />
+                                            {columnasEditables.length > 0 && <BulkEditControls
+                                                columnasEditables={columnasEditables}
+                                                opcionesColumnas={opcionesColumnas}
+                                                bulkEditValues={bulkEditValues}
+                                                handleBulkEditChange={handleBulkEditChange}
+                                                catalogos={catalogos}
+                                                handleApplyBulkEdit={handleApplyBulkEdit}
+                                            />}
+                                            <div className="editor-panel__actions">
+                                                <button className="btn btn--secondary" onClick={() => setIsEditMode(false)}>
+                                                    Cancelar
+                                                </button>
+
+                                                <button
+                                                    className="btn btn--primary btn--apply-all"
+                                                    onClick={handleApplyAllBulkEdits}
+                                                    disabled={columnasEditables.length === 0}
+                                                    title={columnasEditables.length === 0 ? "Selecciona columnas para aplicar" : "Aplicar cambios seleccionados a todos los servidores"}
+                                                >
+                                                    Aplicar Cambios
+                                                </button>
+
+                                                {/* "Guardar Cambios" removido de aquí según solicitud (se mantiene el botón en la toolbar derecha) */}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="table-container">
                                         {renderResultadosTabla()}
                                     </div>
@@ -1747,7 +1751,7 @@ const EditorMasivo = () => {
                         </>
                     )}
                     {!cargando && !busquedaRealizada && (
-                        <div className="no-results-message"><p>Realiza una búsqueda para empezar a editar.</p></div>
+                        <div className="no-results-message"><p>Realiza una búsqueda.</p></div>
                     )}
                 </div>
             </div>

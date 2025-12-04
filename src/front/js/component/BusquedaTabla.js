@@ -216,11 +216,6 @@ export const BusquedaTabla = ({ servidores, onClose, catalogos }) => {
             ) : (
                 <>
                     <div className="pagination-controls">
-                        <div className="pagination__items-per-page">
-                            <label>Mostrar:</label>
-                            <ItemsPerPageDropdown value={servidoresPorPagina} onChange={setServidoresPorPagina} />
-                        </div>
-
                         <div className="pagination__navigation">
                             <button className="btn-icon" onClick={() => setPaginaActual(Math.max(1, paginaActual - 1))} disabled={paginaActual === 1} title="Página Anterior">
                                 <Icon name="chevron-left" />
@@ -231,8 +226,15 @@ export const BusquedaTabla = ({ servidores, onClose, catalogos }) => {
                             </button>
                         </div>
 
-                        <div className="table-controls">
+                        <div className="table-controls" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                             <span className="badge">{servidores.length} servidores encontrados</span>
+
+                            {/* MOVIDO: Mostrar + selector colocado al lado derecho del contador (badge) */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                                <label style={{ fontWeight: 600 }}>Mostrar:</label>
+                                <ItemsPerPageDropdown value={servidoresPorPagina} onChange={(v) => { setServidoresPorPagina(v); setPaginaActual(1); }} />
+                            </div>
+
                             <div className="export-dropdown-container" ref={exportMenuRef}>
                                 <button className="btn btn--primary" onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}>
                                     <Icon name="upload" /> Descargar

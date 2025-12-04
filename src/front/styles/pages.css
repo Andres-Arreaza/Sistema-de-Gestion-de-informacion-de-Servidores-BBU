@@ -1559,7 +1559,7 @@
 /* Ajuste: subir ligeramente el botón "Descargar" para alinearlo mejor con los controles adyacentes */
 .export-dropdown-container .btn {
   position: relative;    /* mantener en flujo pero permitir desplazamiento visual */
-  top: -4.5px;             /* subir 6px; ajusta este valor si quieres más/menos */
+  top: -2px;              /* menos negativo -> baja un poco respecto a antes */
   transition: top 140ms ease, transform 120ms ease; /* suavizar cambio y conservar transform-hover */
   z-index: 15;           /* asegurar que el botón quede por encima de elementos cercanos */
 }
@@ -1941,4 +1941,148 @@
 /* Si quieres que el botón compacto destaque menos visualmente, se puede reducir box-shadow */
 .btn--compact {
   box-shadow: none !important;
+}
+
+/* Reducir tamaño y espaciado específico para el formulario de filtros */
+.filter-form {
+  font-size: 12px !important;              /* base compacta */
+  line-height: 1.15 !important;
+}
+
+/* Labels más pequeños y compactos */
+.filter-form .form__label {
+  font-size: 0.85rem !important;           /* ~13.6px si base 16px */
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Iconos/ svgs dentro de labels más pequeños */
+.filter-form .form__label svg,
+.filter-form .form__label .material-symbols-outlined {
+  width: 14px !important;
+  height: 14px !important;
+  font-size: 14px !important;
+  flex: 0 0 auto;
+}
+
+/* Inputs y triggers compactos: menor padding y altura */
+.filter-form .form__input,
+.filter-form .custom-select__trigger {
+  font-size: 0.85rem !important;
+  padding: 6px 8px !important;
+  min-height: 34px !important;   /* mantener área clicable */
+  height: 34px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+}
+
+/* Panel de opciones y cada opción más compacto */
+.filter-form .custom-select__panel .custom-select__option {
+  font-size: 0.85rem !important;
+  padding: 6px 8px !important;
+  gap: 0.45rem !important;
+}
+
+/* Checkbox más pequeño en los panels del filtro */
+.filter-form .custom-select__option input[type="checkbox"],
+.filter-form input[type="checkbox"]:not(.filter-checkbox) {
+  width: 14px !important;
+  height: 14px !important;
+  margin-right: 0.45rem !important;
+}
+
+/* Reducir gap entre elementos del grid del filtro */
+.filter-form .form__grid {
+  gap: 0.5rem !important;
+}
+
+/* Grupos del filtro un poco más compactos en ancho mínimo para permitir más columnas en pantallas grandes */
+.filter-form .form__group {
+  min-width: 180px !important;
+}
+
+/* Chevron más pequeño dentro de triggers para mantener proporción */
+.filter-form .custom-select__trigger .chevron,
+.filter-form .chevron {
+  width: 8px !important;
+  height: 8px !important;
+  margin-left: 0.4rem !important;
+}
+
+/* Ajustes responsivos: en móviles reducir aún más tamaños pero conservar accesibilidad */
+@media (max-width: 560px) {
+  .filter-form {
+    font-size: 11px !important;
+  }
+  .filter-form .form__label {
+    font-size: 0.82rem !important;
+  }
+  .filter-form .form__input,
+  .filter-form .custom-select__trigger {
+    font-size: 0.82rem !important;
+    padding: 8px 10px !important; /* mantener tamaño táctil confortable */
+    min-height: 40px !important;
+    height: 40px !important;
+  }
+  .filter-form .form__group {
+    min-width: 0 !important;
+  }
+}
+
+/* Botón compacto específico para .filter-form (Buscar Servidores y similares) */
+.filter-form .btn--compact,
+.filter-form .form__actions .btn--compact {
+  padding: 6px 10px !important;
+  height: 34px !important;
+  min-width: 110px !important;
+  font-size: 0.85rem !important;
+  line-height: 1 !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+
+/* Ajuste del icono dentro del botón compacto en filtros */
+.filter-form .btn--compact svg,
+.filter-form .btn--compact i {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Evitar margen vertical no deseado para el botón "Buscar Servidores" en el formulario de filtros */
+.filter-form .form__actions {
+  margin: 0 !important;           /* quitar margen externo del contenedor de acciones */
+  padding: 0 !important;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-start;    /* ajustar según el layout que prefieras */
+  align-items: center;
+}
+
+/* Forzar que el botón de búsqueda no tenga margin abajo/arriba */
+.filter-form .form__actions .btn,
+.filter-form .form__actions .btn--compact {
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+  margin-top: 0 !important;
+  align-self: center !important;
+  display: inline-flex !important;
+}
+
+/* Si hay reglas específicas en mobile que añadan espacio, anularlas aquí */
+@media (max-width: 560px) {
+  .filter-form .form__actions {
+    justify-content: center; /* opcional: centrar en móviles */
+    gap: 0.4rem;
+  }
+  .filter-form .form__actions .btn,
+  .filter-form .form__actions .btn--compact {
+    min-width: 96px !important; /* opcional, evita que el botón quebrante demasiado */
+  }
 }

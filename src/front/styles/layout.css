@@ -607,3 +607,11 @@
   background-color: var(--color-secundario) !important; /* hover mantiene azul para los seleccionados */
   color: var(--color-superficie) !important;
 }
+
+/* Ajuste: subir ligeramente el botón "Descargar" para alinearlo mejor con los controles adyacentes */
+.export-dropdown-container .btn {
+  position: relative;    /* mantener en flujo pero permitir desplazamiento visual */
+  top: 0px !important;              /* menos negativo -> baja un poco respecto a antes */
+  transition: top 140ms ease, transform 120ms ease; /* suavizar cambio y conservar transform-hover */
+  z-index: 15;           /* asegurar que el botón quede por encima de elementos cercanos */
+}
