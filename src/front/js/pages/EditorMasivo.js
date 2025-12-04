@@ -617,11 +617,21 @@ const EditorMasivo = () => {
         Swal.fire("Aplicado", "Los cambios han sido aplicados en la vista previa.", "success");
     };
 
-    // Renderiza los controles de edición masiva para las columnas seleccionadas
+    // Renderiza los controles de edición masiva para las columnas seleccionadas (distribución uniforme)
     const renderBulkEditControls = () => {
         if (!columnasEditables || columnasEditables.length === 0) return null;
+        // Usar flex-wrap para permitir varias filas y flex en cada campo para que se repartan el espacio disponible.
         return (
-            <div className="bulk-edit-controls" style={{ gap: '0.9rem', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+            <div
+                className="bulk-edit-controls"
+                style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '0.9rem',
+                    alignItems: 'stretch',
+                    width: '100%'
+                }}
+            >
                 {columnasEditables.map(colKey => {
                     const colDef = opcionesColumnas.find(c => c.value === colKey) || { value: colKey, label: colKey, type: 'input' };
                     const val = bulkEditValues[colKey] ?? '';
@@ -630,39 +640,39 @@ const EditorMasivo = () => {
                             key={colKey}
                             className="bulk-edit-field"
                             style={{
+                                flex: '1 1 240px',     // crecer igualmente, base de 240px
+                                minWidth: 160,
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.35rem',         // espacio reducido entre label y control
-                                minWidth: 260,         // campo algo más compacto
-                                maxWidth: 440,
-                                flex: '0 0 auto',
-                                padding: '4px 6px',    // padding reducido
+                                gap: '0.6rem',
+                                padding: '6px 8px',
                                 boxSizing: 'border-box',
                                 borderRadius: 6,
                                 background: 'transparent'
                             }}
                         >
-                            <label style={{ minWidth: 120, fontWeight: 600, whiteSpace: 'nowrap' }}>{colDef.label}</label>
+                            <label style={{ width: 140, fontWeight: 600, whiteSpace: 'nowrap', flex: '0 0 auto' }}>{colDef.label}</label>
                             {colDef.type === 'select' ? (
-                                <div style={{ flex: '1 1 auto', minWidth: 220, maxWidth: 360 }}>
+                                <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+                                    {/* asegurar que el dropdown ocupe todo el espacio disponible */}
                                     <BulkEditDropdown
                                         value={val}
                                         onChange={(v) => handleBulkEditChange(colKey, v)}
                                         options={colDef.options}
                                         catalog={colDef.catalog}
                                         catalogos={catalogos}
+                                        style={{ width: '100%' }}
                                     />
                                 </div>
                             ) : (
                                 <input
                                     className="form__input"
-                                    style={{ minWidth: 160, maxWidth: 360, flex: '1 1 auto' }}
+                                    style={{ width: '100%', flex: '1 1 auto', minWidth: 0 }}
                                     value={val}
                                     onChange={(e) => handleBulkEditChange(colKey, e.target.value)}
                                     placeholder={colDef.label}
                                 />
                             )}
-                            {/* La aplicación de cambios sigue siendo con el botón global "Aplicar Cambios" */}
                         </div>
                     );
                 })}
@@ -1270,7 +1280,7 @@ const EditorMasivo = () => {
                                                                             <div className={`chevron ${isOpen ? "open" : ""}`}></div>
                                                                         </button>
 
-                                                                        <div className={`custom-select__panel ${isOpen ? "open" : ""}`} style={{ width: '100%' }}>
+                                                                        <div className={`custom-select__panel {  ${isOpen ? "open" : ""}`} style={{ width: '100%' }}>
                                                                             {/* opción vacía para desasignar */}
                                                                             <div
                                                                                 className="custom-select__option"
@@ -1479,9 +1489,6 @@ const EditorMasivo = () => {
 
             } else {
                 // 3) Duplicados internos entre sus propias IPs
-
-
-
 
 
 
@@ -1736,7 +1743,7 @@ const EditorMasivo = () => {
                                                     Aplicar Cambios
                                                 </button>
 
-                                                {/* "Guardar Cambios" removido de aquí según solicitud (se mantiene el botón en la toolbar derecha) */}
+
                                             </div>
                                         </div>
                                     )}

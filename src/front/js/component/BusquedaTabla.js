@@ -206,8 +206,9 @@ export const BusquedaTabla = ({ servidores, onClose, catalogos }) => {
 
     return (
         <div className="table-view-container">
-            <header className="resultados-header">
-                <h2 className="resultados-titulo">Resultados de la Búsqueda</h2>
+            <header className="resultados-header form__header">
+                <Icon name="filter" size={24} />
+                <h2 className="form__title">Resultados de la Búsqueda</h2>
                 <button onClick={onClose} className="btn-close" />
             </header>
 

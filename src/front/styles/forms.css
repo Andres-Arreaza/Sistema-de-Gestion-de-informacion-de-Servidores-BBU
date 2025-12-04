@@ -135,6 +135,8 @@
   align-items: center;
   cursor: pointer;
   text-align: left;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .chevron {
@@ -157,24 +159,27 @@
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  width: 100%;
-  max-height: 250px;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  max-height: 360px !important;
   overflow-y: auto;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio-borde);
-  box-shadow: var(--sombra-caja);
-  z-index: 20;
+  z-index: 2400 !important;
   padding: var(--espaciado-sm);
   opacity: 0;
   transform: scale(0.98) translateY(-10px);
   pointer-events: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra-caja); 
 }
+
 
 .custom-select__panel.open {
   opacity: 1;
-  transform: scale(1) translateY(0);
+  transform: translateY(0);
   pointer-events: auto;
 }
 

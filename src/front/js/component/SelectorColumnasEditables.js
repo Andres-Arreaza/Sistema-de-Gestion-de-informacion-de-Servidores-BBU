@@ -32,7 +32,7 @@ const SelectorColumnasEditables = ({ opciones = [], seleccionadas = [], onChange
                 Columnas a editar:
             </label>
             <div className="custom-select">
-                <button type="button" className="form__input custom-select__trigger" onClick={() => setIsOpen(!isOpen)}>
+                <button type="button" className="form__input custom-select__trigger trigger_editor" onClick={() => setIsOpen(!isOpen)}>
                     <span>{seleccionadas.length > 0 ? `${seleccionadas.length} seleccionada(s)` : "Ninguna"}</span>
                     <div className={`chevron ${isOpen ? "open" : ""}`}></div>
                 </button>
