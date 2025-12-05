@@ -1274,13 +1274,13 @@ const EditorMasivo = () => {
                                                                             <span>
                                                                                 {editingCell?.value ? (
                                                                                     // mostrar etiqueta humana si es posible
-                                                                                    (options.find(o => String(o.id) === String(editandoCell.value)) || { label: String(editandoCell.value) }).label
+                                                                                    (options.find(o => String(o.id) === String(editingCell.value)) || { label: String(editandoCell.value) }).label
                                                                                 ) : '--'}
                                                                             </span>
                                                                             <div className={`chevron ${isOpen ? "open" : ""}`}></div>
                                                                         </button>
 
-                                                                        <div className={`custom-select__panel {  ${isOpen ? "open" : ""}`} style={{ width: '100%' }}>
+                                                                        <div className={`custom-select__panel ${isOpen ? "open" : ""}`} style={{ width: '100%' }}>
                                                                             {/* opción vacía para desasignar */}
                                                                             <div
                                                                                 className="custom-select__option"
@@ -1308,7 +1308,7 @@ const EditorMasivo = () => {
                                                                             {options.map(opt => (
                                                                                 <div
                                                                                     key={String(opt.id)}
-                                                                                    className={`custom-select__option ${String(editandoCell?.value) === String(opt.id) ? 'selected' : ''}`}
+                                                                                    className={`custom-select__option ${String(editingCell?.value) === String(opt.id) ? 'selected' : ''}`}
                                                                                     role="button"
                                                                                     tabIndex={0}
                                                                                     onClick={async (e) => {
