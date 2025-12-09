@@ -251,6 +251,11 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
     var [editModal, setEditModal] = useState({ open: false, data: null, rowIndex: null });
     var [catalogos, setCatalogos] = useState({});
     var [servidoresExistentes, setServidoresExistentes] = useState([]);
+    const [file, setFile] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const inputRef = useRef(null);
+    const backend = process.env.BACKEND_URL || '';
+
     // --- Función para exportar CSV ---
     function exportarCSV() {
         if (!datosCSV.length) return;
@@ -863,6 +868,47 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
             </div>, document.body);
     };
 
+    const handleUpload = async () => {
+        if (!file) {
+            Swal.fire('Archivo requerido', 'Selecciona un archivo CSV para subir.', 'warning');
+            return;
+        }
+        setLoading(true);
+        try {
+            const form = new FormData();
+            form.append('file', file);
+
+            // Nota: no establecer 'Content-Type' porque el browser lo establece con boundary
+            const res = await fetch(`${backend}/api/servidores/bulk-upload`, {
+                method: 'POST',
+                headers: { ...getAuthHeaders() },
+                body: form
+            });
+
+            if (res.status === 401) {
+                Swal.fire('No autorizado', 'Tu sesión expiró o no tienes permiso. Inicia sesión.', 'warning');
+                return;
+            }
+
+            const contentType = res.headers.get('content-type') || '';
+            const data = contentType.includes('application/json') ? await res.json() : null;
+
+            if (!res.ok) {
+                const msg = data?.error || data?.message || `Error ${res.status}`;
+                throw new Error(msg);
+            }
+
+            Swal.fire({ icon: 'success', title: 'Carga realizada', text: 'La carga masiva finalizó correctamente.', timer: 1500, showConfirmButton: false });
+            if (actualizarServidores) actualizarServidores(data);
+            onClose();
+        } catch (err) {
+            console.error('Error upload:', err);
+            Swal.fire('Error', err.message || 'No se pudo subir el archivo.', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1em' }}>
@@ -919,6 +965,26 @@ const ServidorCargaMasiva = function ({ onClose, actualizarServidores }) {
                 initialData={editModal.data}
                 onSave={function (updatedData) { handleUpdateRow(updatedData, editModal.rowIndex); }}
             />
+            <div className="modal__overlay" onClick={onClose}>
+                <div className="modal__content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 640 }}>
+                    <div className="modal__header">
+                        <h2 className="modal__title">Carga Masiva de Servidores</h2>
+                        <button className="btn-close" onClick={onClose} />
+                    </div>
+                    <div className="modal__body">
+                        <p>Sube un archivo CSV con los servidores. El backend procesará y creará/actualizará según corresponda.</p>
+                        <div style={{ margin: '1rem 0' }}>
+                            <input ref={inputRef} type="file" accept=".csv,text/csv" onChange={handleFileChange} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                            <button className="btn btn--secondary" onClick={onClose} disabled={loading}>Cancelar</button>
+                            <button className="btn btn--primary" onClick={handleUpload} disabled={loading || !file}>
+                                {loading ? 'Subiendo...' : 'Subir CSV'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </>
     );
 };

@@ -703,8 +703,16 @@ const EditorMasivo = () => {
                     method: 'DELETE',
                     headers: getAuthHeaders()
                 });
+
+                // Manejo explícito de 401: forzar logout / re-login
+                if (response.status === 401) {
+                    handleAuthExpired();
+                    return;
+                }
+
                 if (!response.ok) {
-                    const errorData = await response.json();
+                    const contentType = response.headers.get('content-type') || '';
+                    const errorData = contentType.includes('application/json') ? await response.json() : { error: await response.text() };
                     throw new Error(errorData.msg || errorData.error || 'Error al eliminar');
                 }
 
@@ -712,6 +720,8 @@ const EditorMasivo = () => {
                 setServidores(prev => prev.filter(s => s.id !== servidorParaEliminar.id));
                 setCambios(prev => { const newCambios = { ...prev }; delete newCambios[servidorParaEliminar.id]; return newCambios; });
             } catch (error) {
+                // Si handleAuthExpired ya limpió token, evitar mostrar otro modal redundante
+                if (!localStorage.getItem('auth_token')) return;
                 Swal.fire('Error', `Ocurrió un problema: ${error.message}`, 'error');
             }
         }
@@ -749,7 +759,15 @@ const EditorMasivo = () => {
                 headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
                 body: JSON.stringify({ ids })
             });
-            const contentType = response.headers.get('content-type');
+
+            // Manejo explícito de 401: forzar logout / re-login
+            if (response.status === 401) {
+                Swal.close();
+                handleAuthExpired();
+                return;
+            }
+
+            const contentType = response.headers.get('content-type') || '';
             let data = null;
             if (contentType && contentType.includes('application/json')) data = await response.json();
 
@@ -769,6 +787,8 @@ const EditorMasivo = () => {
         } catch (err) {
             Swal.close();
             console.error('Error en eliminación masiva:', err);
+            // Si no hay token (posible expiración manejada en handleAuthExpired) no duplicar el aviso
+            if (!localStorage.getItem('auth_token')) return;
             Swal.fire('Error', 'Ocurrió un error al eliminar los servidores.', 'error');
         }
     };
@@ -1274,7 +1294,7 @@ const EditorMasivo = () => {
                                                                             <span>
                                                                                 {editingCell?.value ? (
                                                                                     // mostrar etiqueta humana si es posible
-                                                                                    (options.find(o => String(o.id) === String(editingCell.value)) || { label: String(editandoCell.value) }).label
+                                                                                    (options.find(o => String(o.id) === String(editandoCell.value)) || { label: String(editandoCell.value) }).label
                                                                                 ) : '--'}
                                                                             </span>
                                                                             <div className={`chevron ${isOpen ? "open" : ""}`}></div>

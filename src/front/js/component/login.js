@@ -72,18 +72,31 @@ const Login = ({ open, onClose }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Credenciales inválidas');
-            // almacenar token y role
-            localStorage.setItem('auth_token', data.token);
-            localStorage.setItem('auth_role', data.role);
-            localStorage.setItem('auth_user', JSON.stringify(data.user || { username }));
+            const contentType = res.headers.get('content-type') || '';
+            let data = null;
+            if (contentType.includes('application/json')) data = await res.json();
+            else data = null;
+
+            if (!res.ok) {
+                const msg = data?.error || data?.message || `Error ${res.status}`;
+                throw new Error(msg);
+            }
+
+            // Guardar credenciales en localStorage con las claves esperadas por la app
+            if (data.token) {
+                localStorage.setItem('auth_token', data.token);
+            }
+            if (data.role) {
+                localStorage.setItem('auth_role', data.role);
+            }
+            if (data.user) {
+                try { localStorage.setItem('auth_user', JSON.stringify(data.user)); } catch (err) { console.warn('No se pudo serializar user', err); }
+            }
+            // Notificar al resto de la app
             window.dispatchEvent(new Event('authChanged'));
-            setUsername('');
-            setPassword('');
-            setLoading(false);
-            onClose && onClose();
-            Swal.fire('Bienvenido', `Sesión iniciada como ${data.role}`, 'success');
+
+            Swal.fire({ icon: 'success', title: 'Login correcto', toast: true, position: 'top-end', showConfirmButton: false, timer: 1200 });
+            onClose();
         } catch (err) {
             setLoading(false);
             Swal.fire('Error', err.message || 'Error en login', 'error');
@@ -134,49 +147,11 @@ const Login = ({ open, onClose }) => {
                     <form onSubmit={handleLogin}>
                         <div className="form__group">
                             <label className="form__label">Usuario</label>
-                            <input className="form__input" value={username} onChange={(e) => setUsername(e.target.value)} />
+                            <input className="form__input" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" />
                         </div>
                         <div className="form__group">
                             <label className="form__label">Contraseña</label>
-                            <div style={{ position: 'relative', width: '100%' }}>
-                                <input
-                                    className="form__input"
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    onFocus={() => setPasswordFocused(true)}
-                                    onBlur={() => setPasswordFocused(false)}
-                                    aria-label="Contraseña"
-                                    style={{ paddingRight: 44 }}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(prev => !prev)}
-                                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                                    title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                                    style={{
-                                        position: 'absolute',
-                                        right: 8,
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        background: 'transparent',
-                                        border: 'none',
-                                        padding: 6,
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer',
-                                        color: passwordFocused ? 'var(--color-primario)' : 'var(--color-texto-secundario)',
-                                        lineHeight: 1
-                                    }}
-                                >
-                                    <Icon
-                                        name={showPassword ? 'visibility_off' : 'visibility'}
-                                        size={20}
-                                        style={{ color: passwordFocused ? 'var(--color-primario)' : 'var(--color-texto-secundario)', lineHeight: 1 }}
-                                    />
-                                </button>
-                            </div>
+                            <input className="form__input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
                         </div>
                         {/* Separación superior entre campos y botones; botones centrados */}
                         <div className="form__actions" style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', borderTop: 'none', marginTop: '1rem', paddingTop: '0.5rem' }}>
