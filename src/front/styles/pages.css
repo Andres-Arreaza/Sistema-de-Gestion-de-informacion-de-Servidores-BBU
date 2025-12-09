@@ -897,10 +897,6 @@
   height: 40px;
   padding: 8px 10px;
   box-sizing: border-box;
-  display: flex;
-  align-items: center; /* centrar verticalmente el texto y chevron */
-  justify-content: flex-start;
-  gap: 0.5rem;
 }
 
 /* Garantizar que el texto del trigger use todo el espacio disponible y trunque correctamente */
@@ -2085,4 +2081,61 @@
   .filter-form .form__actions .btn--compact {
     min-width: 96px !important; /* opcional, evita que el botón quebrante demasiado */
   }
+}
+
+/* Scoped: cuando una celda está en modo edición por doble-clic, agrandar el trigger y el panel */
+.editor-masivo-container .table td.celda-editando {
+  /* contexto para centrar el trigger/panel si necesitamos */
+  position: relative;
+}
+
+/* Centrar y ampliar el trigger (input/select) en edición sin alterar el flujo de la tabla */
+.editor-masivo-container .table td.celda-editando .custom-select__trigger,
+.editor-masivo-container .table td.celda-editando .form__input {
+  /* colocamos el trigger en el centro visual de la celda y le damos más ancho */
+  position: absolute !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  min-width: 520px !important;   /* ancho mínimo ampliado para editar cómodamente */
+  max-width: 90vw !important;    /* adaptarse a pantallas pequeñas */
+  width: auto !important;
+  box-sizing: border-box !important;
+  z-index: 1250 !important;
+}
+
+/* Panel desplegable: más ancho que la celda, centrado respecto al trigger y con scroll interno */
+.editor-masivo-container .table td.celda-editando .custom-select__panel {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important; /* centrar el panel sobre la celda en edición */
+  min-width: 520px !important;            /* panel más ancho para visualizar opciones completas */
+  max-width: 90vw !important;             /* no salirse del viewport en móviles */
+  width: auto !important;
+  max-height: 360px !important;           /* permitir scroll interno si hay muchas opciones */
+  overflow-y: auto !important; /* conservar scroll funcional, pero ocultar la barra visualmente */
+  box-shadow: 0 12px 40px rgba(2,6,23,0.18) !important;
+  border-radius: 10px !important;
+  z-index: 1400 !important;                /* estar por encima de la tabla pero por debajo de modales globales */
+}
+
+/* Opciones del panel: mostrar en columna y ocupar el ancho necesario (texto no truncado) */
+.editor-masivo-container .table td.celda-editando .custom-select__panel .custom-select__option {
+  display: flex;
+  align-items: center;
+  width: 100%;            /* que cada opción use todo el ancho del panel para legibilidad */
+  white-space: nowrap;    /* evitar quiebre dentro de la opción; usar scroll si hace falta */
+  padding: 8px 12px;
+  box-sizing: border-box;
+}
+
+/* --- NUEVO: ocultar barras de scroll visibles en el panel solo dentro del editor --- */
+.editor-masivo-container .table td.celda-editando .custom-select__panel {
+  -ms-overflow-style: none;  /* IE 10+ */
+  scrollbar-width: none;     /* Firefox */
+}
+.editor-masivo-container .table td.celda-editando .custom-select__panel::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }

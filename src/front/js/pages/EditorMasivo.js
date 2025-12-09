@@ -1294,7 +1294,7 @@ const EditorMasivo = () => {
                                                                             <span>
                                                                                 {editingCell?.value ? (
                                                                                     // mostrar etiqueta humana si es posible
-                                                                                    (options.find(o => String(o.id) === String(editandoCell.value)) || { label: String(editandoCell.value) }).label
+                                                                                    (options.find(o => String(o.id) === String(editingCell.value)) || { label: String(editingCell.value) }).label
                                                                                 ) : '--'}
                                                                             </span>
                                                                             <div className={`chevron ${isOpen ? "open" : ""}`}></div>
