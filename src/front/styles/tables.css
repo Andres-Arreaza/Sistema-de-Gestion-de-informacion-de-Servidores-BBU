@@ -579,18 +579,21 @@ th.col-eliminar .btn-icon svg {
 .resultados-editor .table td.celda-editando .form__input,
 .resultados-editor .table td.celda-editando .custom-select__trigger {
   position: absolute !important;
-  left: 8px !important;
-  right: 8px !important;
-  top: 6px !important;
+  left: 4px !important;
+  right: 4px !important;
+  top: 4px !important;
   width: auto !important;
   min-width: 0 !important;
   box-sizing: border-box !important;
   z-index: 1200 !important;
   background: var(--color-superficie) !important;
   border-radius: 6px !important;
-  padding: 6px 10px !important;
-  white-space: normal !important; /* permitir texto dentro del control */
-  overflow: hidden !important;
+  /* reducir padding lateral para evitar doble espacio interno */
+  padding: 6px 6px !important;
+  /* permitir desplazamiento horizontal dentro del input/trigger para leer valores largos */
+  white-space: nowrap !important;
+  overflow-x: auto !important;
+  text-overflow: clip !important;
 }
 
 /* Asegurar que el trigger mantenga su contenido en una sola línea y no empuje layout */
@@ -603,9 +606,9 @@ th.col-eliminar .btn-icon svg {
 /* Panel del custom-select dentro de celda editando: posicionarlo relativo al trigger y con z-index mayor */
 .resultados-editor .table td.celda-editando .custom-select {
   position: absolute !important;
-  left: 8px !important;
-  right: 8px !important;
-  top: 6px !important; /* el panel se posicionará calc(100% + ...) mediante su regla interna */
+  left: 4px !important;
+  right: 4px !important;
+  top: 4px !important; /* el panel se posicionará calc(100% + ...) mediante su regla interna */
   z-index: 1300 !important;
 }
 

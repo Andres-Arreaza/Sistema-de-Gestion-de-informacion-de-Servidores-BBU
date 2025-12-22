@@ -843,8 +843,8 @@
 }
 .filter-form .custom-select__panel {
   position: absolute;
-  left: 0;
   top: calc(100% + 6px);
+  left: 0;
   width: 100%;
   box-sizing: border-box;
   z-index: 1300;
@@ -2085,57 +2085,57 @@
 
 /* Scoped: cuando una celda está en modo edición por doble-clic, agrandar el trigger y el panel */
 .editor-masivo-container .table td.celda-editando {
-  /* contexto para centrar el trigger/panel si necesitamos */
+  /* contexto para posicionar overlays dentro de la celda */
   position: relative;
 }
 
-/* Centrar y ampliar el trigger (input/select) en edición sin alterar el flujo de la tabla */
+/* Reemplazo: anclar el trigger/entrada al interior de la celda (izquierda/derecha),
+   quitar transform/translate y desactivar transiciones para evitar movimiento lateral */
 .editor-masivo-container .table td.celda-editando .custom-select__trigger,
 .editor-masivo-container .table td.celda-editando .form__input {
-  /* colocamos el trigger en el centro visual de la celda y le damos más ancho */
   position: absolute !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  min-width: 520px !important;   /* ancho mínimo ampliado para editar cómodamente */
-  max-width: 90vw !important;    /* adaptarse a pantallas pequeñas */
+  left: 4px !important;
+  right: 4px !important;
+  top: 4px !important;
+  transform: none !important;
+ 
+  max-width: calc(100% - 16px) !important;  /* respetar la celda y evitar overflow inesperado */
   width: auto !important;
   box-sizing: border-box !important;
   z-index: 1250 !important;
+  transition: none !important;              /* desactivar transición para evitar desplazamiento */
+  /* mantener estilos visuales de input/trigger */
+  background: var(--color-superficie) !important;
+  border-radius: 6px !important;
+  padding: 6px 10px !important;
 }
 
-/* Panel desplegable: más ancho que la celda, centrado respecto al trigger y con scroll interno */
+/* Panel desplegable: anclado a la misma caja del trigger (no centrado), sin transform ni transición */
 .editor-masivo-container .table td.celda-editando .custom-select__panel {
   position: absolute !important;
-  top: calc(100% + 8px) !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important; /* centrar el panel sobre la celda en edición */
-  min-width: 520px !important;            /* panel más ancho para visualizar opciones completas */
-  max-width: 90vw !important;             /* no salirse del viewport en móviles */
+  top: calc(100% + 6px) !important;
+  left: 8px !important;
+  right: 8px !important;
+  transform: none !important;
+  min-width: 320px !important;              /* suficiente para ver opciones claramente */
+  max-width: 90vw !important;
   width: auto !important;
-  max-height: 360px !important;           /* permitir scroll interno si hay muchas opciones */
-  overflow-y: auto !important; /* conservar scroll funcional, pero ocultar la barra visualmente */
+  max-height: 380px !important;
+  overflow-y: auto !important;              /* scroll funcional si hay muchas opciones */
+  -ms-overflow-style: none;  /* ocultar scrollbar visual en IE/Edge si se desea */
+  scrollbar-width: thin;     /* Firefox: mantener fino (opcional) */
   box-shadow: 0 12px 40px rgba(2,6,23,0.18) !important;
   border-radius: 10px !important;
-  z-index: 1400 !important;                /* estar por encima de la tabla pero por debajo de modales globales */
+  z-index: 1400 !important;
+  transition: none !important;/* desactivar transición para que no se mueva lateralmente */
 }
 
-/* Opciones del panel: mostrar en columna y ocupar el ancho necesario (texto no truncado) */
+/* Mantener opciones con ancho completo del panel para legibilidad */
 .editor-masivo-container .table td.celda-editando .custom-select__panel .custom-select__option {
   display: flex;
   align-items: center;
-  width: 100%;            /* que cada opción use todo el ancho del panel para legibilidad */
-  white-space: nowrap;    /* evitar quiebre dentro de la opción; usar scroll si hace falta */
+  width: 100%;
+  white-space: nowrap;
   padding: 8px 12px;
   box-sizing: border-box;
-}
-
-/* --- NUEVO: ocultar barras de scroll visibles en el panel solo dentro del editor --- */
-.editor-masivo-container .table td.celda-editando .custom-select__panel {
-  -ms-overflow-style: none;  /* IE 10+ */
-  scrollbar-width: none;     /* Firefox */
-}
-.editor-masivo-container .table td.celda-editando .custom-select__panel::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
 }
