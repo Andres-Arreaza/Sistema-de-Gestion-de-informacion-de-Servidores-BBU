@@ -834,47 +834,154 @@ const EditorMasivo = () => {
         }
     };
 
-    const handleGuardarCambios = async () => {
+    // NUEVO: función que ejecuta realmente el envio de `cambios` al backend (PUTs)
+    const performSaveChanges = async () => {
+        setCargando(true);
+        // Comprobar token local antes de intentar enviar PUTs
+        if (!localStorage.getItem('auth_token')) {
+            setCargando(false);
+            Swal.fire('No autorizado', 'Debes iniciar sesión para guardar cambios.', 'error');
+            return false;
+        }
+        const promesas = Object.keys(cambios).map(async id => {
+            const servidorOriginal = servidores.find(s => s.id === parseInt(id, 10));
+            const cambiosParaServidor = cambios[id];
+            const payload = {
+                id: servidorOriginal.id,
+                nombre: cambiosParaServidor.nombre ?? servidorOriginal.nombre,
+                tipo: cambiosParaServidor.tipo ?? servidorOriginal.tipo,
+                ip_mgmt: cambiosParaServidor.hasOwnProperty('ip_mgmt') ? cambiosParaServidor.ip_mgmt : servidorOriginal.ip_mgmt,
+                ip_real: cambiosParaServidor.hasOwnProperty('ip_real') ? cambiosParaServidor.ip_real : servidorOriginal.ip_real,
+                ip_mask25: cambiosParaServidor.hasOwnProperty('ip_mask25') ? cambiosParaServidor.ip_mask25 : servidorOriginal.ip_mask25,
+                balanceador: cambiosParaServidor.balanceador ?? servidorOriginal.balanceador,
+                vlan_mgmt: cambiosParaServidor.hasOwnProperty('vlan_mgmt') ? cambiosParaServidor.vlan_mgmt : servidorOriginal.vlan_mgmt,
+                vlan_real: cambiosParaServidor.hasOwnProperty('vlan_real') ? cambiosParaServidor.vlan_real : servidorOriginal.vlan_real,
+                link: cambiosParaServidor.link ?? servidorOriginal.link,
+                descripcion: cambiosParaServidor.descripcion ?? servidorOriginal.descripcion,
+                servicio_id: cambiosParaServidor.servicio_id ?? servidorOriginal.servicio_id,
+                ecosistema_id: cambiosParaServidor.ecosistema_id ?? servidorOriginal.ecosistema_id,
+                capa_id: cambiosParaServidor.capa_id ?? servidorOriginal.capa_id,
+                ambiente_id: cambiosParaServidor.ambiente_id ?? servidorOriginal.ambiente_id,
+                dominio_id: cambiosParaServidor.dominio_id ?? servidorOriginal.dominio_id,
+                sistema_operativo_id: cambiosParaServidor.sistema_operativo_id ?? servidorOriginal.sistema_operativo_id,
+                estatus_id: cambiosParaServidor.estatus_id ?? servidorOriginal.estatus_id,
+                activo: servidorOriginal.activo,
+            };
+            if (Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'aplicacion_id')) {
+                payload.aplicacion_ids = cambiosParaServidor.aplicacion_id ? [cambiosParaServidor.aplicacion_id] : [];
+            }
+            try {
+                const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/${id}`, {
+                    method: 'PUT',
+                    headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
+                    body: JSON.stringify(payload)
+                });
+                if (response.status === 401) {
+                    handleAuthExpired();
+                    return false;
+                }
+                return response.ok;
+            } catch (err) {
+                return false;
+            }
+        });
+        try {
+            const results = await Promise.all(promesas);
+            const errores = results.filter(ok => !ok);
+            if (errores.length > 0) throw new Error(`${errores.length} servidor(es) no se pudieron actualizar.`);
+
+            // --- Cambios para evitar salto de estilo al guardar ---
+            // 1) Actualizar snapshot original con los valores guardados (fusionar cambios)
+            const newSnapshot = { ...(originalSnapshotRef.current || {}) };
+            Object.keys(cambios).forEach(id => {
+                const orig = originalSnapshotRef.current?.[id] || {};
+                const cambiosParaServidor = cambios[id] || {};
+                // crear objeto actualizado combinando original + cambios locales
+                newSnapshot[id] = { ...orig, ...cambiosParaServidor };
+            });
+            originalSnapshotRef.current = newSnapshot;
+
+            // 2) Limpiar `cambios` pero conservar una marca visual temporal '__lastSaved'
+            const savedIds = Object.keys(cambios).map(id => parseInt(id, 10));
+            setCambios({});
+            // Marcar las filas en la UI como "guardadas" para mantener estilos estables
+            setServidores(prev => prev.map(s => {
+                if (savedIds.includes(s.id)) {
+                    const merged = { ...(s || {}), ...(newSnapshot[s.id] || {}) };
+                    // preservar preview mientras mostramos confirmación y evitar reflow brusco
+                    merged.__lastSaved = true;
+                    merged.__lastEdited = false; // opcional: evitar que se mezcle con "editado"
+                    merged.__preview = false;     // quitar preview para que el contenido corresponda al snapshot
+                    // actualizar aplicaciones si aplica
+                    if (merged.aplicacion_id && catalogos.aplicaciones) {
+                        const app = catalogos.aplicaciones.find(a => String(a.id) === String(merged.aplicacion_id));
+                        if (app) merged.aplicaciones = [app];
+                    }
+                    return merged;
+                }
+                return s;
+            }));
+
+            Swal.fire({ icon: 'success', title: `¡${savedIds.length} servidor(es) actualizados!` });
+
+            // 3) Después de un breve tiempo quitar las marcas visuales '__lastSaved' para restablecer estilos
+            setTimeout(() => {
+                setServidores(prev => prev.map(s => {
+                    if (s.__lastSaved) {
+                        const copy = { ...s };
+                        delete copy.__lastSaved;
+                        delete copy.__lastEditedKey;
+                        delete copy.__lastEdited;
+                        copy.__editing = false;
+                        return copy;
+                    }
+                    return s;
+                }));
+            }, 1800); // 1.8s para que la transición/confirmación sea visible al usuario
+
+            return true;
+        } catch (error) {
+            if (!localStorage.getItem('auth_token')) {
+                // expiración manejada en handleAuthExpired
+            } else {
+                Swal.fire('Error', `Ocurrió un problema: ${error.message}`, 'error');
+            }
+            return false;
+        } finally {
+            setCargando(false);
+        }
+    };
+
+    // NUEVO: guardar directamente (sin confirmación modal) -> valida y llama a performSaveChanges
+    const saveChangesDirect = async () => {
         if (!userRole || !['GERENTE', 'ESPECIALISTA'].includes(userRole)) {
             return Swal.fire('Permiso denegado', 'Debes iniciar sesión con un rol que tenga permisos para guardar cambios.', 'error');
         }
-
         setValidationErrors({});
         const numCambios = Object.keys(cambios).length;
         if (numCambios === 0) {
-            Swal.fire("Sin cambios", "No se ha modificado ningún servidor.", "info");
-            return;
+            return Swal.fire("Sin cambios", "No se ha modificado ningún servidor.", "info");
         }
-
-        // NUEVO: validaciones client-side similares a ServidorFormulario antes de pedir validación al backend
+        // Validaciones client-side
         const validLocal = validateEditChanges();
-        if (!validLocal) return; // si hay errores, se muestran y se aborta
-
-        // 1. Validar que al menos una IP esté presente por servidor modificado
+        if (!validLocal) return;
+        // Validar que al menos una IP esté presente por servidor modificado
         const servidoresSinIp = [];
         for (const id in cambios) {
             const servidorOriginal = servidores.find(s => s.id === parseInt(id, 10));
             const cambiosParaServidor = cambios[id] || {};
-
             const ip_mgmt = cambiosParaServidor.ip_mgmt ?? servidorOriginal.ip_mgmt;
             const ip_real = cambiosParaServidor.ip_real ?? servidorOriginal.ip_real;
             const ip_mask25 = cambiosParaServidor.ip_mask25 ?? servidorOriginal.ip_mask25;
-
             if (!ip_mgmt && !ip_real && !ip_mask25) {
                 servidoresSinIp.push(servidorOriginal.nombre);
             }
         }
-
         if (servidoresSinIp.length > 0) {
-            Swal.fire(
-                "Validación fallida",
-                `Los siguientes servidores deben tener al menos una IP: ${servidoresSinIp.join(", ")}`,
-                "error"
-            );
-            return;
+            return Swal.fire("Validación fallida", `Los siguientes servidores deben tener al menos una IP: ${servidoresSinIp.join(", ")}`, "error");
         }
-
-        // 2. Validar unicidad de campos en el backend
+        // Validaciones backend de unicidad (opcionalmente mantener, aquí reusar la ruta ya existente)
+        // Construir payload de validación como en handleGuardarCambios
         const validaciones = [];
         for (const id in cambios) {
             const cambio = cambios[id];
@@ -889,32 +996,21 @@ const EditorMasivo = () => {
                 });
             }
         }
-
         if (validaciones.length > 0) {
             try {
-                // Añadir headers de autenticación a la validación (requiere sesion)
                 const res = await fetch(`${process.env.BACKEND_URL}/api/servidores/validar-actualizaciones`, {
                     method: 'POST',
                     headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
                     body: JSON.stringify({ validaciones }),
                 });
-                if (res.status === 401) {
-                    handleAuthExpired();
-                    return;
-                }
+                if (res.status === 401) { handleAuthExpired(); return; }
                 if (!res.ok) {
                     const errorData = await res.json();
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error de Validación',
-                        text: 'Por favor, revise los campos marcados en rojo. Hay datos duplicados.',
-                    });
                     const errorsMap = {};
-                    errorData.detalles.forEach(detail => {
+                    (errorData.detalles || []).forEach(detail => {
                         const valorEnConflictoMatch = detail.match(/'([^']+)'/);
                         if (!valorEnConflictoMatch) return;
                         const valorEnConflicto = valorEnConflictoMatch[1];
-
                         const servidorConError = servidores.find(srv => {
                             const srvCambios = cambios[srv.id] || {};
                             return (srvCambios.nombre ?? srv.nombre) === valorEnConflicto ||
@@ -923,11 +1019,8 @@ const EditorMasivo = () => {
                                 (srvCambios.ip_mask25 ?? srv.ip_mask25) === valorEnConflicto ||
                                 (srvCambios.link ?? srv.link) === valorEnConflicto;
                         });
-
                         if (servidorConError) {
-                            if (!errorsMap[servidorConError.id]) {
-                                errorsMap[servidorConError.id] = {};
-                            }
+                            if (!errorsMap[servidorConError.id]) errorsMap[servidorConError.id] = {};
                             if (detail.includes('nombre')) errorsMap[servidorConError.id].nombre = true;
                             if (detail.includes('IP MGMT')) errorsMap[servidorConError.id].ip_mgmt = true;
                             if (detail.includes('IP Real')) errorsMap[servidorConError.id].ip_real = true;
@@ -936,116 +1029,17 @@ const EditorMasivo = () => {
                         }
                     });
                     setValidationErrors(errorsMap);
+                    Swal.fire({ icon: 'error', title: 'Error de Validación', text: 'Por favor, revise los campos marcados en rojo. Hay datos duplicados.' });
                     return;
                 }
-            } catch (error) {
-                // Si se obtiene 401 desde la capa de conexión o cualquier otro error, intentar manejar expiración
-                if (error && error.message && error.message.toLowerCase().includes('401')) {
-                    handleAuthExpired();
-                    return;
-                }
+            } catch (err) {
+                if (err && err.message && err.message.toLowerCase().includes('401')) { handleAuthExpired(); return; }
                 Swal.fire('Error de Conexión', 'No se pudo contactar al servidor para validar los datos.', 'error');
                 return;
             }
         }
-
-        const result = await Swal.fire({
-            title: `¿Guardar cambios en la BD?`,
-            text: `Se actualizarán ${numCambios} servidor(es) permanentemente.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: 'var(--color-primario)', cancelButtonColor: 'var(--color-texto-secundario)',
-            confirmButtonText: 'Sí, guardar', cancelButtonText: 'Cancelar'
-        });
-
-        if (result.isConfirmed) {
-            setCargando(true);
-            // Comprobar token local antes de intentar enviar PUTs
-            if (!localStorage.getItem('auth_token')) {
-                setCargando(false);
-                return Swal.fire('No autorizado', 'Debes iniciar sesión para guardar cambios.', 'error');
-            }
-            const promesas = Object.keys(cambios).map(async id => {
-                const servidorOriginal = servidores.find(s => s.id === parseInt(id, 10));
-                const cambiosParaServidor = cambios[id];
-                // Solo enviar los campos editables y requeridos
-                const payload = {
-                    id: servidorOriginal.id,
-                    nombre: cambiosParaServidor.nombre ?? servidorOriginal.nombre,
-                    tipo: cambiosParaServidor.tipo ?? servidorOriginal.tipo,
-                    ip_mgmt: cambiosParaServidor.hasOwnProperty('ip_mgmt') ? cambiosParaServidor.ip_mgmt : servidorOriginal.ip_mgmt,
-                    ip_real: cambiosParaServidor.hasOwnProperty('ip_real') ? cambiosParaServidor.ip_real : servidorOriginal.ip_real,
-                    ip_mask25: cambiosParaServidor.hasOwnProperty('ip_mask25') ? cambiosParaServidor.ip_mask25 : servidorOriginal.ip_mask25,
-                    balanceador: cambiosParaServidor.balanceador ?? servidorOriginal.balanceador,
-                    vlan_mgmt: cambiosParaServidor.hasOwnProperty('vlan_mgmt') ? cambiosParaServidor.vlan_mgmt : servidorOriginal.vlan_mgmt,
-                    vlan_real: cambiosParaServidor.hasOwnProperty('vlan_real') ? cambiosParaServidor.vlan_real : servidorOriginal.vlan_real,
-                    link: cambiosParaServidor.link ?? servidorOriginal.link,
-                    descripcion: cambiosParaServidor.descripcion ?? servidorOriginal.descripcion,
-                    servicio_id: cambiosParaServidor.servicio_id ?? servidorOriginal.servicio_id,
-                    ecosistema_id: cambiosParaServidor.ecosistema_id ?? servidorOriginal.ecosistema_id,
-                    capa_id: cambiosParaServidor.capa_id ?? servidorOriginal.capa_id,
-                    ambiente_id: cambiosParaServidor.ambiente_id ?? servidorOriginal.ambiente_id,
-                    dominio_id: cambiosParaServidor.dominio_id ?? servidorOriginal.dominio_id,
-                    sistema_operativo_id: cambiosParaServidor.sistema_operativo_id ?? servidorOriginal.sistema_operativo_id,
-                    estatus_id: cambiosParaServidor.estatus_id ?? servidorOriginal.estatus_id,
-                    activo: servidorOriginal.activo,
-                };
-
-                // Incluir aplicacion_ids únicamente si el usuario modificó la aplicación
-                if (Object.prototype.hasOwnProperty.call(cambiosParaServidor, 'aplicacion_id')) {
-                    // Si el valor es nulo/vacío se envía array vacío para desasignar; si tiene valor, enviar como array con el id
-                    payload.aplicacion_ids = cambiosParaServidor.aplicacion_id ? [cambiosParaServidor.aplicacion_id] : [];
-                }
-
-                try {
-                    const response = await fetch(`${process.env.BACKEND_URL}/api/servidores/${id}`, {
-                        method: 'PUT',
-                        headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
-                        body: JSON.stringify(payload)
-                    });
-                    if (response.status === 401) {
-                        // manejar expiración y detener el proceso
-                        handleAuthExpired();
-                        return false;
-                    }
-                    return response.ok;
-                } catch (err) {
-                    // si falla por red/otros, retornamos false para que el catch global lo reporte
-                    return false;
-                }
-            });
-            try {
-                const results = await Promise.all(promesas);
-                const errores = results.filter(ok => !ok);
-                if (errores.length > 0) throw new Error(`${errores.length} servidor(es) no se pudieron actualizar.`);
-
-                Swal.fire({
-                    icon: 'success',
-                    title: `¡${numCambios} servidor(es) actualizados!`,
-                });
-
-                setCambios({});
-                // limpiar flags de preview/editing/lastEdited en la vista local
-                setServidores(prev => prev.map(s => {
-                    const copy = { ...s };
-                    delete copy.__preview;
-                    delete copy.__editingKey;
-                    delete copy.__lastEdited;
-                    delete copy.__lastEditedKey;
-                    copy.__editing = false;
-                    return copy;
-                }));
-            } catch (error) {
-                // Si detectamos que la causa fue expiración (ya notificada por handleAuthExpired), no mostrar otro modal redundante
-                if (!localStorage.getItem('auth_token')) {
-                    // ya se manejó en handleAuthExpired
-                } else {
-                    Swal.fire('Error', `Ocurrió un problema: ${error.message}`, 'error');
-                }
-            } finally {
-                setCargando(false);
-            }
-        }
+        // Si todo ok, ejecutar guardado directo
+        await performSaveChanges();
     };
 
     // --- FUNCION: ordenar servidores según sortConfig (reinserción para evitar ReferenceError) ---
@@ -1748,7 +1742,7 @@ const EditorMasivo = () => {
 
                                                     <button
                                                         className="btn btn--primary btn--compact"
-                                                        onClick={handleGuardarCambios}
+                                                        onClick={saveChangesDirect}
                                                         disabled={Object.keys(cambios).length === 0 || cargando || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}
                                                         title={Object.keys(cambios).length === 0 ? "No hay cambios para guardar" : "Guardar cambios en la BD"}
                                                     >
