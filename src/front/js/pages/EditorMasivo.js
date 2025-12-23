@@ -282,10 +282,51 @@ const EditorMasivo = () => {
         // Si pasa la validación, continuar con la lógica previa para aplicar el cambio (optimista)
         // Si no hay cambio respecto al original, no marcar como editado ni cambiar color
         if (String(newValue) === String(originalValue ?? '')) {
-            // limpiar errores si existieran y cerrar editor sin marcar preview
+            // eliminar cualquier cambio pendiente para ese campo
+            setCambios(prev => {
+                const copia = { ...(prev || {}) };
+                if (copia[servidorId]) {
+                    // borrar la clave editada
+                    const fila = { ...copia[servidorId] };
+                    delete fila[key];
+                    if (Object.keys(fila).length === 0) {
+                        delete copia[servidorId];
+                    } else {
+                        copia[servidorId] = fila;
+                    }
+                }
+                return copia;
+            });
+
+            // Restaurar estado visual de la fila (quitar preview/lastEdited) y mantener edición si se pidió keepEditing
+            setServidores(prev => prev.map(s => {
+                if (s.id !== servidorId) return s;
+                const copy = { ...s, [key]: originalValue };
+                delete copy.__preview;
+                delete copy.__lastEdited;
+                delete copy.__lastEditedKey;
+                if (keepEditing) {
+                    copy.__editing = true;
+                    copy.__editingKey = key;
+                } else {
+                    copy.__editing = false;
+                    copy.__editingKey = undefined;
+                }
+                return copy;
+            }));
+
+            // Actualizar editingCell para que el trigger muestre correctamente el valor y el panel pueda seguir abierto
+            if (keepEditing) {
+                setEditingCell({ id: servidorId, key, value: String(originalValue ?? '') });
+            } else {
+                // cerrar editor si NO se pidió mantener edición
+                cancelEditing();
+            }
+
+            // limpiar errores si existieran
             setValidationErrors(prev => { if (!prev || !prev[servidorId]) return prev; const copy = { ...prev }; delete copy[servidorId]; return copy; });
-            cancelEditing();
-            return true; // éxito
+
+            return true; // éxito (sin cambios a enviar)
         }
 
         // Actualizar `cambios` y vista local (optimista)
@@ -1301,30 +1342,6 @@ const EditorMasivo = () => {
                                                                         </button>
 
                                                                         <div className={`custom-select__panel ${isOpen ? "open" : ""}`} style={{ width: '100%' }}>
-                                                                            {/* opción vacía para desasignar */}
-                                                                            <div
-                                                                                className="custom-select__option"
-                                                                                role="button"
-                                                                                tabIndex={0}
-                                                                                onClick={async (e) => {
-                                                                                    e.stopPropagation();
-                                                                                    const ok = await applyInlineEdit(servidor.id, col.key, null, { keepEditing: true });
-                                                                                    const keyId = `${servidor.id}_${col.key}`;
-                                                                                    if (!ok) setOpenEditorSelectKey(keyId);
-                                                                                }}
-                                                                                onKeyDown={async (e) => {
-                                                                                    if (e.key === 'Enter' || e.key === ' ') {
-                                                                                        e.preventDefault();
-                                                                                        e.stopPropagation();
-                                                                                        const ok = await applyInlineEdit(servidor.id, col.key, null, { keepEditing: true });
-                                                                                        const keyId = `${servidor.id}_${col.key}`;
-                                                                                        if (!ok) setOpenEditorSelectKey(keyId);
-                                                                                    }
-                                                                                }}
-                                                                            >
-                                                                                <span>--</span>
-                                                                            </div>
-
                                                                             {options.map(opt => (
                                                                                 <div
                                                                                     key={String(opt.id)}
@@ -1333,19 +1350,28 @@ const EditorMasivo = () => {
                                                                                     tabIndex={0}
                                                                                     onClick={async (e) => {
                                                                                         e.stopPropagation();
-                                                                                        const ok = await applyInlineEdit(servidor.id, col.key, opt.id, { keepEditing: true });
+
                                                                                         const keyId = `${servidor.id}_${col.key}`;
-                                                                                        if (!ok) {
-                                                                                            setOpenEditorSelectKey(keyId);
-                                                                                        }
+                                                                                        const ok = await applyInlineEdit(servidor.id, col.key, opt.id, { keepEditing: true });
+                                                                                        setOpenEditorSelectKey(keyId);
+                                                                                        try {
+                                                                                            const container = e.currentTarget.closest('.custom-select');
+                                                                                            const trigger = container && container.querySelector('.custom-select__trigger');
+                                                                                            if (trigger && typeof trigger.focus === 'function') trigger.focus();
+                                                                                        } catch (err) { /* ignore */ }
                                                                                     }}
                                                                                     onKeyDown={async (e) => {
                                                                                         if (e.key === 'Enter' || e.key === ' ') {
                                                                                             e.preventDefault();
                                                                                             e.stopPropagation();
-                                                                                            const ok = await applyInlineEdit(servidor.id, col.key, opt.id, { keepEditing: true });
                                                                                             const keyId = `${servidor.id}_${col.key}`;
-                                                                                            if (!ok) setOpenEditorSelectKey(keyId);
+                                                                                            const ok = await applyInlineEdit(servidor.id, col.key, opt.id, { keepEditing: true });
+                                                                                            setOpenEditorSelectKey(keyId);
+                                                                                            try {
+                                                                                                const container = e.currentTarget.closest('.custom-select');
+                                                                                                const trigger = container && container.querySelector('.custom-select__trigger');
+                                                                                                if (trigger && typeof trigger.focus === 'function') trigger.focus();
+                                                                                            } catch (err) { /* ignore */ }
                                                                                         }
                                                                                     }}
                                                                                 >
