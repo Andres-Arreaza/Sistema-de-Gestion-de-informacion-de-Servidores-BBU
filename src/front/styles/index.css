@@ -119,3 +119,44 @@ h3 {
 .input-locked .locked-icon { 
   color: #0b2a1f;
 }
+
+/* ===== OVERRIDE: mostrar siempre el icono de visibilidad dentro de modales (no tocar comportamiento global) ===== */
+.modal__content .input-locked .locked-icon,
+.modal-content .input-locked .locked-icon,
+.modal .input-locked .locked-icon,
+.modal-dialog .input-locked .locked-icon {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  /* bajar un poco más para alinear mejor con el campo de entrada */
+  top: 58% !important;
+  transform: translateY(-50%) scale(1) !important;
+  background: rgba(255,255,255,0.96) !important;
+  border: none !important;
+  box-shadow: none !important;
+  z-index: 2200 !important;
+}
+
+/* Asegurar tamaño y centrado del icono dentro del botón (modal) */
+.modal__content .input-locked .locked-icon svg,
+.modal__content .input-locked .locked-icon .material-symbols-outlined,
+.modal-content .input-locked .locked-icon svg,
+.modal-content .input-locked .locked-icon .material-symbols-outlined {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--color-primario) !important;
+}
+
+/* Opcional: reducir margen derecho del input en modales para que el botón no oculte texto largo */
+.modal__content .input-locked .form__input,
+.modal-content .input-locked .form__input,
+.modal .input-locked .form__input {
+  padding-right: 44px; /* deja espacio para el botón absolute (ajusta si tu diseño usa otro ancho) */
+}
+
+/* Mantener comportamiento hover/focus coherente dentro del modal */
+.modal__content .input-locked:hover .locked-icon,
+.modal__content .input-locked:focus-within .locked-icon {
+  transform: translateY(-50%) scale(1.02) !important;
+  opacity: 1 !important;
+}

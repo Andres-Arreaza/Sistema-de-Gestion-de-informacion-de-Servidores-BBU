@@ -94,18 +94,15 @@ def generate_auth_token(user_id, role, expires_sec=None):
 
 def verify_auth_token(token, max_age=None):
     """
-    Verifica token firmado. max_age en segundos; si no se pasa, toma SECRET_TOKEN_EXPIRATION o 8h.
-    Devuelve el payload dict si válido, o None si inválido/expirado.
+    Verifica token firmado. Ahora NO aplica expiración: se acepta el token mientras
+    sea válido criptográficamente. Devuelve el payload dict si válido, o None si inválido.
+    (Antes usaba max_age para expirar tokens automáticamente.)
     """
     secret = current_app.config.get('SECRET_KEY', 'dev-secret')
     s = Serializer(secret)
-    if max_age is None:
-        max_age = current_app.config.get('SECRET_TOKEN_EXPIRATION', 60 * 60 * 8)
     try:
-        data = s.loads(token, max_age=max_age)
-    except SignatureExpired:
-        # token válido pero expirado
-        return None
+        # No usamos max_age => el token no caduca automáticamente
+        data = s.loads(token)
     except BadSignature:
         return None
     return data

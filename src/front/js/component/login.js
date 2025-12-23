@@ -103,6 +103,11 @@ const Login = ({ open, onClose }) => {
         }
     };
 
+    const toggleShowPassword = (e) => {
+        e.preventDefault();
+        setShowPassword(prev => !prev);
+    };
+
     if (!open) return null;
 
     return (
@@ -149,9 +154,40 @@ const Login = ({ open, onClose }) => {
                             <label className="form__label">Usuario</label>
                             <input className="form__input" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" />
                         </div>
-                        <div className="form__group">
+                        <div className="form__group input-locked" style={{ position: 'relative' }}>
                             <label className="form__label">Contraseña</label>
-                            <input className="form__input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+                            <input
+                                className="form__input"
+                                type={showPassword ? 'text' : 'password'}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                autoComplete="current-password"
+                            />
+                            {/* botón visible para alternar visibilidad; reutiliza estilos .locked-icon */}
+                            <button
+                                type="button"
+                                className="locked-icon password-toggle"
+                                onClick={toggleShowPassword}
+                                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                                aria-pressed={showPassword}
+                                style={{
+                                    opacity: 1,
+                                    pointerEvents: 'auto',
+                                    position: 'absolute',
+                                    right: 8,
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    padding: 6,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                <Icon name={showPassword ? "visibility_off" : "visibility"} size={18} />
+                            </button>
                         </div>
                         {/* Separación superior entre campos y botones; botones centrados */}
                         <div className="form__actions" style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', borderTop: 'none', marginTop: '1rem', paddingTop: '0.5rem' }}>
