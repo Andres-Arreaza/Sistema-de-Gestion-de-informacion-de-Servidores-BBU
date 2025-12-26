@@ -1973,3 +1973,33 @@
   box-sizing: border-box;
   gap: 0.6rem;
 }
+
+/* === Ocultar detalles en el modal de "Aplicar cambios" cuando se use la clase `apply-confirm` ===
+   - Añadir `customClass: { popup: 'apply-confirm' }` en la llamada a Swal.fire (o la clase 'apply-confirm'
+     al contenedor del modal si es tu modal propio). Con esto sólo se mostrará la primera línea (el título/mensaje),
+     y cualquier detalle extra (líneas/labels) quedará oculto por CSS.
+*/
+.swal2-popup.apply-confirm .swal2-html-container > *:not(:first-child),
+.modal__content.apply-confirm .modal__body > *:not(.always-show):not(.modal__actions) {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Asegurar que el texto principal del modal se centre y se muestre limpio */
+.swal2-popup.apply-confirm .swal2-title,
+.modal__content.apply-confirm .modal__title {
+  text-align: center !important;
+  margin-bottom: 0.6rem !important;
+}
+
+/* Permitir que botones y acciones del modal sigan visibles */
+.swal2-popup.apply-confirm .swal2-actions,
+.modal__content.apply-confirm .modal__actions {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 0.75rem !important;
+}

@@ -617,11 +617,11 @@ const EditorMasivo = () => {
         }).join('<br/>');
 
         const result = await Swal.fire({
-            title: `¿Aplicar cambios a los ${servidores.length} servidores?`,
-            html: `<div style="text-align:left">${resumen}</div>`,
+            title: `¿Desea aplicar cambios en la vista previa de los ${servidores.length} servidores?`,
+            html: ``,
             icon: 'question',
             showCancelButton: true,
-            confirmButtonText: 'Sí, aplicar',
+            confirmButtonText: 'Aplicar Cambios',
             cancelButtonText: 'Cancelar',
             confirmButtonColor: 'var(--color-primario)'
         });
