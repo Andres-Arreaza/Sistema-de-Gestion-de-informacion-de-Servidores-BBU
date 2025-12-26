@@ -658,45 +658,26 @@ const EditorMasivo = () => {
         Swal.fire("Aplicado", "Los cambios han sido aplicados en la vista previa.", "success");
     };
 
-    // Renderiza los controles de edición masiva para las columnas seleccionadas (distribución uniforme)
+    // Renderiza los controles de edición masiva para las columnas seleccionadas (ahora: label a la izquierda, control a la derecha)
     const renderBulkEditControls = () => {
         if (!columnasEditables || columnasEditables.length === 0) return null;
-        // Usar flex-wrap para permitir varias filas y flex en cada campo para que se repartan el espacio disponible.
+
         return (
-            <div
-                className="bulk-edit-controls"
-                style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '0.9rem',
-                    alignItems: 'stretch',
-                    width: '100%'
-                }}
-            >
+            <div className="bulk-edit-controls" style={{ width: '100%' }}>
                 {columnasEditables.map(colKey => {
                     const colDef = opcionesColumnas.find(c => c.value === colKey) || { value: colKey, label: colKey, type: 'input' };
                     const val = bulkEditValues[colKey] ?? '';
+
                     return (
-                        <div
-                            key={colKey}
-                            className="bulk-edit-field"
-                            style={{
-                                flex: '1 1 240px',     // crecer igualmente, base de 240px
-                                minWidth: 160,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.6rem',
-                                padding: '6px 8px',
-                                boxSizing: 'border-box',
-                                borderRadius: 6,
-                                background: 'transparent'
-                            }}
-                        >
-                            <label style={{ width: 140, fontWeight: 600, whiteSpace: 'nowrap', flex: '0 0 auto' }}>{colDef.label}</label>
-                            {colDef.type === 'select' ? (
-                                <div style={{ flex: '1 1 auto', minWidth: 0 }}>
-                                    {/* asegurar que el dropdown ocupe todo el espacio disponible */}
+                        <div key={colKey} className="bulk-edit-field">
+                            {/* Label a la izquierda; .bulk-edit-label controla tamaño y truncado */}
+                            <label className="bulk-edit-label" htmlFor={`bulk_${colKey}`}>{colDef.label}</label>
+
+                            {/* Contenedor flexible para el control */}
+                            <div className="bulk-edit-control">
+                                {colDef.type === 'select' ? (
                                     <BulkEditDropdown
+                                        id={`bulk_${colKey}`}
                                         value={val}
                                         onChange={(v) => handleBulkEditChange(colKey, v)}
                                         options={colDef.options}
@@ -704,16 +685,17 @@ const EditorMasivo = () => {
                                         catalogos={catalogos}
                                         style={{ width: '100%' }}
                                     />
-                                </div>
-                            ) : (
-                                <input
-                                    className="form__input"
-                                    style={{ width: '100%', flex: '1 1 auto', minWidth: 0 }}
-                                    value={val}
-                                    onChange={(e) => handleBulkEditChange(colKey, e.target.value)}
-                                    placeholder={colDef.label}
-                                />
-                            )}
+                                ) : (
+                                    <input
+                                        id={`bulk_${colKey}`}
+                                        className="form__input"
+                                        style={{ width: '100%' }}
+                                        value={val}
+                                        onChange={(e) => handleBulkEditChange(colKey, e.target.value)}
+                                        placeholder={colDef.label}
+                                    />
+                                )}
+                            </div>
                         </div>
                     );
                 })}

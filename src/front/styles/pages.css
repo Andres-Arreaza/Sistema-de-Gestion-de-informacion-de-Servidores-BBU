@@ -234,61 +234,105 @@
   border-top: 1px solid var(--color-borde);
 }
 
+/* Evitar solapamiento: cada campo de edición masiva muestra label a la izquierda y control a la derecha */
 .bulk-edit-controls {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	/* mantener layout en filas con wrap y separación */
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 1rem !important;
+	align-items: flex-start !important;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+/* Cada campo es una caja independiente: evita que su contenido sea invadido por vecinos */
+.bulk-edit-field {
+	display: flex !important;
+	flex-direction: row !important;
+	align-items: center !important;
+	justify-content: flex-start !important;
+	gap: 1rem !important;
+	position: relative !important;
+	box-sizing: border-box !important;
+	min-width: 280px !important;      /* fuerza ancho mínimo razonable */
+	flex: 0 0 auto !important;        /* no permitir encoger para evitar solapamiento */
+	padding: 6px 8px !important;      /* separar visualmente del vecino */
+	min-height: 44px !important;      /* evitar que elementos se sobrepongan verticalmente */
+	background: transparent !important; /* no ocultar fondo por si hay overlays */
+	overflow: visible !important;     /* permitir que paneles se superpongan sin cortar */
+	/* añadir espacio a la derecha entre campos vecinos */
+	margin-right: 0.6rem !important; /* separación extra entre cajas para evitar solapes */
+	box-sizing: border-box !important;
+}
+
+/* Reservar espacio interior al input/trigger para que no llegue hasta el borde derecho */
+.bulk-edit-field .form__input,
+.bulk-edit-field .custom-select__trigger,
+.resultados-editor .bulk-edit-field .form__input,
+.resultados-editor .bulk-edit-field .custom-select__trigger {
+	/* mantener padding lateral existente y añadir más a la derecha */
+	padding-left: 10px !important;
+	padding-right: 20px !important; /* espacio extra para evitar que la label de la siguiente columna se superponga */
+	box-sizing: border-box !important;
+}
+
+/* El contenedor del control deja un pequeño padding derecho para separar visualmente la siguiente label */
+.bulk-edit-field .bulk-edit-control {
+	/* ...existing declarations... */
+	padding-right: 0.6rem !important;
+	overflow: visible !important; /* permitir que paneles se muestren sin cortar */
+}
+
+/* Si el input/trigger incluye un icono al final, evitar que quede encima de la label vecina */
+.bulk-edit-field .custom-select__trigger .chevron,
+.bulk-edit-field .form__input .suffix-icon {
+	margin-left: 8px !important;
+}
+
+/* En desktop (más espacio) aumentar ligeramente la separación entre campos */
+@media (min-width: 1024px) {
+	.bulk-edit-controls { gap: 1.1rem !important; }
+	.bulk-edit-field { margin-right: 0.8rem !important; }
+}
+
+/* --- Estilos para el Editor Masivo --- */
+.editor-masivo-container {
+  padding: var(--espaciado-xl);
+}
+
+.resultados-editor {
+  margin-top: var(--espaciado-xl);
+  background-color: var(--color-superficie);
+  border-radius: var(--radio-borde);
+  padding: var(--espaciado-xl);
+  box-shadow: var(--sombra-caja);
+  border: 1px solid var(--color-borde);
+}
+
+.editor-top-actions {
+  display: flex;
+  justify-content: flex-start; /* Alinea los botones a la izquierda */
+  gap: var(--espaciado-md);
+  margin-bottom: var(--espaciado-xl);
+}
+
+.editor-panel {
+  background-color: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-borde);
+  padding: var(--espaciado-lg);
+  margin-bottom: var(--espaciado-xl);
+  display: flex;
+  flex-direction: column;
   gap: var(--espaciado-lg);
 }
 
-.bulk-edit-field {
+.editor-panel__actions {
   display: flex;
-  align-items: center;
+  justify-content: flex-end;
   gap: var(--espaciado-md);
-}
-
-.bulk-edit-field .btn--apply-bulk {
-  padding: 8px 16px;
-  font-size: 0.9rem;
-  background-color: var(--color-secundario);
-  color: var(--color-superficie);
-  flex-shrink: 0;
-}
-
-.bulk-edit-field .btn--apply-bulk:hover {
-  background-color: #003355;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.selector-columnas-container .custom-select {
-  min-width: 220px;
-}
-
-.selector-columnas-container .disabled-option {
-  color: #9ca3af;
-  cursor: not-allowed;
-  background-color: #f8fafc;
-}
-
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes expandWidth {
-  from {
-    width: 0;
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  padding-top: var(--espaciado-lg);
+  border-top: 1px solid var(--color-borde);
 }
 
 /* =====> ACTIVADOR DE ANIMACIÓN PARA LOS BOTONES <===== */
@@ -792,254 +836,45 @@
   gap: 0.6rem;
   padding: 0.45rem 0.75rem;
   white-space: nowrap;
-  cursor: pointer;
 }
 
-.filter-form .custom-select__option input[type="checkbox"],
-.filter-form .custom-select__option input[type="radio"] {
-  margin: 0;
-  flex: 0 0 auto;
+/* --- Ajustes: evitar que inputs ocupen todo hasta el borde y permitan separación con labels de la derecha --- */
+.bulk-edit-field {
+	/* ...existing declarations... */
+	/* añadir espacio a la derecha entre campos vecinos */
+	margin-right: 0.6rem !important; /* separación extra entre cajas para evitar solapes */
+	box-sizing: border-box !important;
 }
 
-/* Mover la chevron al extremo derecho dentro del trigger sin afectar otros scopes */
-.filter-form .custom-select__trigger .chevron {
-  margin-left: auto;
+/* Reservar espacio interior al input/trigger para que no llegue hasta el borde derecho */
+.bulk-edit-field .form__input,
+.bulk-edit-field .custom-select__trigger,
+.resultados-editor .bulk-edit-field .form__input,
+.resultados-editor .bulk-edit-field .custom-select__trigger {
+	/* mantener padding lateral existente y añadir más a la derecha */
+	padding-left: 10px !important;
+	padding-right: 20px !important; /* espacio extra para evitar que la label de la siguiente columna se superponga */
+	box-sizing: border-box !important;
 }
 
-/* Asegurar que los campos seleccionables del filtro estén a la IZQUIERDA y no afecten a resultados-editor */
-/* Estas reglas están al final para garantizar prioridad sobre reglas anteriores (sin usar !important) */
-
-.filter-form .form__group { 
-  align-items: flex-start; /* etiquetas e inputs alineados al inicio de la celda */
+/* El contenedor del control deja un pequeño padding derecho para separar visualmente la siguiente label */
+.bulk-edit-field .bulk-edit-control {
+	/* ...existing declarations... */
+	padding-right: 0.6rem !important;
+	overflow: visible !important; /* permitir que paneles se muestren sin cortar */
 }
 
-/* Labels del filtro a la izquierda */
-.filter-form .form__label {
-  text-align: left;
-  display: block;
-  width: 100%;
+/* Si el input/trigger incluye un icono al final, evitar que quede encima de la label vecina */
+.bulk-edit-field .custom-select__trigger .chevron,
+.bulk-edit-field .form__input .suffix-icon {
+	margin-left: 8px !important;
 }
 
-/* Triggers (dropdowns) y inputs del filtro ocupan todo el ancho y texto alineado a la izquierda */
-.filter-form .custom-select,
-.filter-form .form__input,
-.filter-form .custom-select__trigger {
-  width: 100%;
-  box-sizing: border-box;
-  text-align: left;
-  justify-content: flex-start;
-  gap: 0.5rem;
+/* En desktop (más espacio) aumentar ligeramente la separación entre campos */
+@media (min-width: 1024px) {
+	.bulk-edit-controls { gap: 1.1rem !important; }
+	.bulk-edit-field { margin-right: 0.8rem !important; }
 }
-
-/* Asegurar que el span dentro del trigger muestre el texto a la izquierda */
-.filter-form .custom-select__trigger > span {
-  display: inline-block;
-  text-align: left;
-}
-
-/* Panel del dropdown: se superpone y toma el ancho del trigger (no afecta el layout) */
-.filter-form .custom-select {
-  position: relative;
-}
-.filter-form .custom-select__panel {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  width: 100%;
-  box-sizing: border-box;
-  z-index: 1300;
-}
-
-/* Mantener chevron a la derecha dentro del trigger */
-.filter-form .custom-select__trigger .chevron {
-  margin-left: auto;
-}
-
-/* Reafirmar centrado en resultados-editor (no tocar) para evitar conflictos: */
-.resultados-editor .form__input,
-.resultados-editor .custom-select__trigger {
-  text-align: center;
-  justify-content: center;
-}
-
-/* Reducir tamaño de los checkboxes SOLO en el formulario de filtros (no afecta .filter-checkbox de la tabla) */
-.filter-form input[type="checkbox"]:not(.filter-checkbox),
-.filter-form .custom-select__option input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
-  margin: 0 0.45rem 0 0; /* espacio a la derecha ligeramente menor */
-  vertical-align: middle;
-  cursor: pointer;
-  border-radius: 3px;
-}
-
-/* Asegurar que la etiqueta que envuelve el checkbox en el filtro mantenga align y no se descuadre */
-.filter-form .custom-select__option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* Checkbox "Coincidencia exacta" (fuera de panels) también reducido y alineado */
-.filter-form #busqueda-exacta {
-  width: 14px;
-  height: 14px;
-  margin-right: 0.5rem;
-  vertical-align: middle;
-}
-
-/* Igualar altura de triggers (dropdowns) y inputs dentro del formulario de filtros
-   y mantenerlos alineados a la izquierda. Scoped a .filter-form para no afectar EditorMasivo. */
-.filter-form .form__input,
-.filter-form .custom-select__trigger {
-  /* Mismo alto visual que los inputs: ajusta 40px si quieres más/menos */
-  min-height: 40px;
-  height: 40px;
-  padding: 8px 10px;
-  box-sizing: border-box;
-}
-
-/* Garantizar que el texto del trigger use todo el espacio disponible y trunque correctamente */
-.filter-form .custom-select__trigger > span {
-  flex: 1 1 auto;
-  display: inline-block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: left;
-}
-
-/* Mantener la chevron centrada verticalmente y al final */
-.filter-form .custom-select__trigger .chevron {
-  align-self: center;
-  margin-left: 0.5rem;
-}
-
-/* Asegurar paneles superpuestos no alteren el flujo */
-.filter-form .custom-select {
-  position: relative;
-}
-
-/* Encabezados de la tabla de RESULTADOS: aumentar altura y usar color AZUL (scope .resultados-editor) */
-.resultados-editor .table thead th {
-  padding: 18px 12px;
-  min-height: 72px;
-  line-height: 1.25;
-  font-weight: 700;
-  color: var(--color-secundario); /* cambiado a azul */
-  background: transparent;
-  vertical-align: middle;
-  white-space: normal;
-}
-
-/* Restaurar encabezados de resultados a VERDE (variable --color-primario) */
-.resultados-editor .table thead th {
-  color: var(--color-primario);
-}
-.resultados-editor .table thead th svg,
-.resultados-editor .table thead th i {
-  color: var(--color-primario);
-  fill: currentColor;
-}
-
-/* Ajuste responsivo para dispositivos pequeños */
-@media (max-width: 800px) {
-  .resultados-editor .table thead th {
-    padding: 14px 8px;
-    min-height: 60px;
-  }
-}
-
-/* Mostrar contenido completo en la tabla de RESULTADOS: quitar truncado/ellipsis */
-.resultados-editor .table th,
-.resultados-editor .table td {
-  white-space: normal !important;   /* permitir varias líneas */
-  overflow: visible !important;     /* no ocultar contenido */
-  text-overflow: clip !important;   /* no usar "..." */
-  word-break: break-word !important;/* romper palabras largas si es necesario */
-}
-
-/* OVERRIDES: permitir que cada columna tome el ancho necesario según su contenido */
-.resultados-editor .table {
-  table-layout: auto !important; /* columnas calculadas por contenido */
-  width: auto !important;        /* no forzar 100% */
-}
-
-/* Celdas: no imponer wrapping por defecto, ancho ajustado al texto */
-.resultados-editor .table th,
-.resultados-editor .table td {
-  white-space: nowrap !important;   /* evitar saltos de línea que cambien la altura */
-  width: auto !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  overflow: visible !important;
-  text-overflow: clip !important;
-  word-break: normal !important;
-}
-
-/* Anular reglas específicas que fijaban min/max-width por columna */
-.resultados-editor .table th:nth-child(n+1),
-.resultados-editor .table td:nth-child(n+1),
-.resultados-editor .table th:nth-child(2),
-.resultados-editor .table td:nth-child(2),
-.resultados-editor .table th:nth-child(3),
-.resultados-editor .table td:nth-child(3),
-.resultados-editor .table th:nth-child(4),
-.resultados-editor .table td:nth-child(4),
-.resultados-editor .table th:nth-child(5),
-.resultados-editor .table td:nth-child(5),
-.resultados-editor .table th:nth-child(6),
-.resultados-editor .table td:nth-child(6),
-.resultados-editor .table th:nth-child(7),
-.resultados-editor .table td:nth-child(7),
-.resultados-editor .table th:nth-child(8),
-.resultados-editor .table td:nth-child(8),
-.resultados-editor .table th:nth-child(18),
-.resultados-editor .table td:nth-child(18),
-.resultados-editor .table th:nth-child(20),
-.resultados-editor .table td:nth-child(20) {
-  min-width: 0 !important;
-  max-width: none !important;
-}
-
-/* Ajustes: hacer la tabla más ancha y ocupar todo el ancho disponible */
-.resultados-editor .table-container {
-  max-width: none !important;    /* permitir que el contenedor crezca */
-  width: 100% !important;
-  padding-left: 8px;
-  padding-right: 8px;
-  overflow-x: auto !important;   /* mantener scroll horizontal si no cabe */
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Forzar la tabla a ser más ancha (ajusta min-width según necesites) */
-.resultados-editor .table {
-  width: 100% !important;
-  min-width: 2600px !important;  /* aumentado: tabla aún más ancha para mostrar más columnas */
-  max-width: none !important;
-  table-layout: auto !important;  /* dejar que el contenido determine anchura de columnas */
-}
-
-/* En pantallas muy grandes permitir aún mayor anchura */
-@media (min-width: 1600px) {
-  .resultados-editor .table {
-    min-width: 3200px !important; /* aún mayor para pantallas muy grandes */
-  }
-}
-
-/* Elementos internos (texto/inputs) se aseguran inline para que el ancho siga al contenido */
-.resultados-editor .table td .cell-text,
-.resultados-editor .table td .cell-empty,
-.resultados-editor .table td input.form__input,
-.resultados-editor .table td .custom-select__trigger {
-  display: inline-block;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-
-/* Si quieres permitir wrapping en textos muy largos sin cambiar el ancho de columna,
-   elimina la regla `white-space: nowrap` arriba y usa estas reglas en su lugar:
-   .resultados-editor .table th, .resultados-editor .table td { white-space: normal; } */
 
 /* ===== Responsive: mejoras para pantallas de PC (>=1024px) ===== */
 @media (min-width: 1024px) {
@@ -1240,7 +1075,6 @@
 /* Contenedor: permitir siempre scroll horizontal si hace falta */
 .resultados-editor .table-container {
   overflow-x: auto !important;
-  -webkit-overflow-scrolling: touch;
 }
 
 /* Tabla: que el navegador calcule anchuras según contenido */
@@ -1291,8 +1125,6 @@
 .resultados-editor .table td:nth-child(7),
 .resultados-editor .table th:nth-child(8),
 .resultados-editor .table td:nth-child(8),
-.resultados-editor .table th:nth-child(17),
-.resultados-editor .table td:nth-child(17),
 .resultados-editor .table th:nth-child(18),
 .resultados-editor .table td:nth-child(18),
 .resultados-editor .table th:nth-child(20),
@@ -1511,7 +1343,7 @@
 .resultados-editor .table,
 .resultados-editor .table th,
 .resultados-editor .table td {
-  font-size: 11px !important;      /* reducido desde 12px a 11px */
+  font-size: 11px !important;
   line-height: 1.2 !important;
 }
 
@@ -2099,6 +1931,7 @@
   top: 4px !important;
   transform: none !important;
  
+
   max-width: calc(100% - 16px) !important;  /* respetar la celda y evitar overflow inesperado */
   width: auto !important;
   box-sizing: border-box !important;
@@ -2120,11 +1953,11 @@
   min-width: 320px !important;              /* suficiente para ver opciones claramente */
   max-width: 90vw !important;
   width: auto !important;
-  max-height: 380px !important;
+  max-height: 360px !important;
   overflow-y: auto !important;              /* scroll funcional si hay muchas opciones */
   -ms-overflow-style: none;  /* ocultar scrollbar visual en IE/Edge si se desea */
   scrollbar-width: thin;     /* Firefox: mantener fino (opcional) */
-  box-shadow: 0 12px 40px rgba(2,6,23,0.18) !important;
+  box-shadow: 0 12px 36px rgba(2,6,23,0.12) !important;
   border-radius: 10px !important;
   z-index: 1400 !important;
   transition: none !important;/* desactivar transición para que no se mueva lateralmente */
@@ -2138,4 +1971,5 @@
   white-space: nowrap;
   padding: 8px 12px;
   box-sizing: border-box;
+  gap: 0.6rem;
 }
