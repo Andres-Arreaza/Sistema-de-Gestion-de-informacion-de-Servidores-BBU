@@ -113,6 +113,8 @@ const EditorMasivo = () => {
 
     // Estado y helpers para edición inline en la tabla
     const [editingCell, setEditingCell] = useState(null); // { id, key, value } o null
+    // Alias para compatibilidad con referencias en español/legado dentro del bundle
+    const editandoCell = editingCell;
     // Añadir ref para evitar closures que lean editingCell cuando es null
     const editingCellRef = useRef(null);
     useEffect(() => { editingCellRef.current = editingCell; }, [editingCell]);

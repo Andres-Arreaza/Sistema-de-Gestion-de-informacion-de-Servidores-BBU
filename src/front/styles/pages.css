@@ -2003,3 +2003,45 @@
   justify-content: center !important;
   gap: 0.75rem !important;
 }
+
+/* Alinear la chevron dentro del trigger al borde derecho (ligeramente inset) */
+/* Reservamos espacio interior para evitar que el texto choque con el icono */
+.custom-select .custom-select__trigger {
+  position: relative !important;      /* contexto para posicionar el icono absolute */
+  padding-right: 36px !important;     /* espacio para el icono (ajusta si necesitas más/menos) */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important; /* mantener texto a la izquierda, icono absolute a la derecha */
+  gap: 0.5rem !important;
+  box-sizing: border-box !important;
+}
+
+/* Si hay reglas más específicas para el formulario de filtros, reforzarlas */
+.filter-form .custom-select .custom-select__trigger {
+  padding-right: 36px !important;
+}
+
+/* Posicionar el chevron al final del trigger, con un pequeño margen interno (inset) */
+.custom-select .custom-select__trigger .chevron {
+  position: absolute !important;
+  right: 10px !important;             /* inset desde el borde derecho (no totalmente pegado) */
+  top: 50% !important;
+  transform: translateY(-50%) rotate(45deg) !important; /* mantener apariencia triangular */
+  transition: transform 0.18s ease, opacity 0.12s ease !important;
+  margin-left: 0 !important;          /* evitar margen extra que empuje el icono */
+  pointer-events: none;               /* que clicks pasen al botón; si quieres que sea clicable cambia a auto */
+}
+
+/* Estado abierto: rotación invertida (coincide con reglas previas) */
+.custom-select .custom-select__trigger .chevron.open {
+  transform: translateY(-50%) rotate(-135deg) !important;
+}
+
+/* Asegurar que el span de texto no colapse ni quede debajo del icono */
+.custom-select .custom-select__trigger > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 4px; /* espacio adicional antes del icono, opcional */
+}
