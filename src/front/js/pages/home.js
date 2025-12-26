@@ -103,16 +103,42 @@ const Home = (props) => {
 
             {/* La clase 'loaded' se aplica aquí cuando isLoaded es true */}
             <div className={`page-container home-page ${isLoaded ? 'loaded' : ''}`}>
-                <section className="hero">
-                    <div className="hero__content">
-                        <h1 className="hero__title audiowide-regular">
+                {/* espacio en blanco intencional arriba del hero */}
+
+                <section className="hero" aria-labelledby="hero-title" role="region">
+                    <div className="hero__content" style={{ position: 'relative', zIndex: 1 }}>
+                        {/* Líneas animadas: top / bottom (crecen horizontalmente desde el centro hacia los lados) */}
+                        <div className="hero__line hero__line--top" aria-hidden="true" />
+                        <div className="hero__line hero__line--bottom" aria-hidden="true" />
+
+                        <h1
+                            id="hero-title"
+                            className="hero__title audiowide-regular hero__title--appear"
+                            // fallback inline para asegurar visibilidad si la animación CSS no se ejecuta
+                            style={{
+                                opacity: isLoaded ? 1 : undefined,
+                                // mantener valor inicial en caso de que CSS no se aplique; la animación principal la controla CSS
+                                transform: isLoaded ? undefined : 'translateY(10px)'
+                            }}
+                        >
                             G.I.B.S.
                         </h1>
-                        <p className="hero__subtitle">
+
+                        {/* línea en blanco entre título y subtítulo */}
+
+                        <p
+                            className="hero__subtitle hero__subtitle--appear"
+                            style={{
+                                opacity: isLoaded ? 1 : undefined,
+                                transform: isLoaded ? undefined : 'translateY(10px)'
+                            }}
+                        >
                             "Gestión de la Información y Búsqueda de servidores"
                         </p>
                     </div>
                 </section>
+
+                {/* espacio en blanco intencional después del hero */}
 
                 <main className="main-content-area">
                     <div className="actions-section">
@@ -157,3 +183,4 @@ const Home = (props) => {
 };
 
 export default Home;
+
