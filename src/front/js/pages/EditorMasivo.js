@@ -1021,7 +1021,15 @@ const EditorMasivo = () => {
             }
         }
         // Si todo ok, ejecutar guardado directo
-        await performSaveChanges();
+        const savedOk = await performSaveChanges();
+
+        // Si se guardó correctamente, resetear columnas seleccionadas y controles de bulk-edit
+        if (savedOk) {
+            setColumnasEditables([]);   // resetear selección de columnas
+            setBulkEditValues({});      // limpiar valores en los controles
+            setIsEditMode(false);       // salir del modo edición
+            setValidationErrors({});    // asegurar limpieza de errores
+        }
     };
 
     // --- FUNCION: ordenar servidores según sortConfig (reinserción para evitar ReferenceError) ---
@@ -1311,7 +1319,7 @@ const EditorMasivo = () => {
                                                                             <span>
                                                                                 {editingCell?.value ? (
                                                                                     // mostrar etiqueta humana si es posible
-                                                                                    (options.find(o => String(o.id) === String(editingCell.value)) || { label: String(editingCell.value) }).label
+                                                                                    (options.find(o => String(o.id) === String(editandoCell.value)) || { label: String(editandoCell.value) }).label
                                                                                 ) : '--'}
                                                                             </span>
                                                                             <div className={`chevron ${isOpen ? "open" : ""}`}></div>
@@ -1321,7 +1329,7 @@ const EditorMasivo = () => {
                                                                             {options.map(opt => (
                                                                                 <div
                                                                                     key={String(opt.id)}
-                                                                                    className={`custom-select__option ${String(editingCell?.value) === String(opt.id) ? 'selected' : ''}`}
+                                                                                    className={`custom-select__option ${String(editandoCell?.value) === String(opt.id) ? 'selected' : ''}`}
                                                                                     role="button"
                                                                                     tabIndex={0}
                                                                                     onClick={async (e) => {
@@ -1622,6 +1630,14 @@ const EditorMasivo = () => {
         return () => document.removeEventListener('keydown', handleKeyDown, true);
     }, [applyInlineEdit, cancelEditing]); // editingCell no en deps para evitar closure stale (usamos ref)
 
+    // add: handler para cancelar edición masiva y resetear selects/valores
+    const handleCancelEdit = () => {
+        setIsEditMode(false);
+        setColumnasEditables([]);   // resetear columnas seleccionadas
+        setBulkEditValues({});      // limpiar valores de bulk-edit
+        setValidationErrors({});    // limpiar errores visuales
+    };
+
     return (
         <div className="page-container">
 
@@ -1752,7 +1768,7 @@ const EditorMasivo = () => {
                                                 handleApplyBulkEdit={handleApplyBulkEdit}
                                             />}
                                             <div className="editor-panel__actions">
-                                                <button className="btn btn--secondary" onClick={() => setIsEditMode(false)}>
+                                                <button className="btn btn--secondary" onClick={handleCancelEdit}>
                                                     Cancelar
                                                 </button>
 
