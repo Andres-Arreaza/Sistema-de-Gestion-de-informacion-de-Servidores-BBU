@@ -21,7 +21,7 @@ const SelectorColumnasEditables = ({ opciones = [], seleccionadas = [], onChange
 
     const containerStyle = {
         display: 'grid',
-        gridTemplateColumns: `repeat(${cols}, 1fr)`,
+        gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', // ahora 6 columnas
         gap: '0.5rem 0.75rem',
         alignItems: 'start',
         width: '100%',
