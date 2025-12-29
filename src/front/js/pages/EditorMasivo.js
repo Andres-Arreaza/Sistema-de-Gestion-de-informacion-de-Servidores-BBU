@@ -1034,6 +1034,35 @@ const EditorMasivo = () => {
         }
     };
 
+    // CONFIRM: mostrar modal antes de guardar cambios en la BD
+    const confirmSaveChanges = async () => {
+        if (!userRole || !['GERENTE', 'ESPECIALISTA'].includes(userRole)) {
+            return Swal.fire('Permiso denegado', 'Debes iniciar sesión con un rol que tenga permisos para guardar cambios.', 'error');
+        }
+        const numCambios = Object.keys(cambios).length;
+        if (numCambios === 0) {
+            return Swal.fire("Sin cambios", "No se ha modificado ningún servidor.", "info");
+        }
+
+        const result = await Swal.fire({
+            title: 'Confirmar guardar cambios',
+            html: `Vas a guardar <strong>${numCambios}</strong> cambio(s) en la base de datos. ¿Deseas continuar?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Guardar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: 'var(--color-primario)',
+            cancelButtonColor: 'var(--color-texto-secundario)',
+            reverseButtons: true,
+            focusCancel: false
+        });
+
+        if (result.isConfirmed) {
+            // Ejecutar la misma lógica que saveChangesDirect
+            await saveChangesDirect();
+        }
+    };
+
     // --- FUNCION: ordenar servidores según sortConfig (reinserción para evitar ReferenceError) ---
     const getSortedServidores = () => {
         if (!sortConfig.key) return servidores;
@@ -1742,7 +1771,7 @@ const EditorMasivo = () => {
 
                                                     <button
                                                         className="btn btn--primary btn--compact"
-                                                        onClick={saveChangesDirect}
+                                                        onClick={confirmSaveChanges}
                                                         disabled={Object.keys(cambios).length === 0 || cargando || !['GERENTE', 'ESPECIALISTA'].includes(userRole)}
                                                         title={Object.keys(cambios).length === 0 ? "No hay cambios para guardar" : "Guardar cambios en la BD"}
                                                     >
