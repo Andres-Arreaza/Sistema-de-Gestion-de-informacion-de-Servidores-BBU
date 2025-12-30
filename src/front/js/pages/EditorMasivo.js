@@ -750,18 +750,40 @@ const EditorMasivo = () => {
         if (!columnasEditables || columnasEditables.length === 0) return null;
 
         return (
-            <div className="bulk-edit-controls" style={{ width: '100%' }}>
+            // usar grid para evitar solapamiento y garantizar wrapping seguro
+            <div
+                className="bulk-edit-controls"
+                style={{
+                    width: '100%',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                    gap: '12px'
+                }}
+            >
                 {columnasEditables.map(colKey => {
                     const colDef = opcionesColumnas.find(c => c.value === colKey) || { value: colKey, label: colKey, type: 'input' };
                     const val = bulkEditValues[colKey] ?? '';
 
+                    // cada campo se coloca en un contenedor relativo para que los paneles absolutos queden contenidos
                     return (
-                        <div key={colKey} className="bulk-edit-field">
-                            {/* Label a la izquierda; .bulk-edit-label controla tamaño y truncado */}
-                            <label className="bulk-edit-label" htmlFor={`bulk_${colKey}`}>{colDef.label}</label>
+                        <div
+                            key={colKey}
+                            className="bulk-edit-field"
+                            style={{
+                                minWidth: 240,
+                                boxSizing: 'border-box',
+                                padding: 6,
+                                position: 'relative', // importante: paneles absolutos se posicionarán respecto a esta caja
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '6px'
+                            }}
+                        >
+                            <label className="bulk-edit-label" htmlFor={`bulk_${colKey}`} style={{ fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {colDef.label}
+                            </label>
 
-                            {/* Contenedor flexible para el control */}
-                            <div className="bulk-edit-control">
+                            <div className="bulk-edit-control" style={{ width: '100%' }}>
                                 {colDef.type === 'select' ? (
                                     <BulkEditDropdown
                                         id={`bulk_${colKey}`}
@@ -770,13 +792,14 @@ const EditorMasivo = () => {
                                         options={colDef.options}
                                         catalog={colDef.catalog}
                                         catalogos={catalogos}
-                                        style={{ width: '100%' }}
+                                        // asegurar que el trigger ocupe todo el ancho y el panel quede contenido
+                                        style={{ width: '100%', boxSizing: 'border-box' }}
                                     />
                                 ) : (
                                     <input
                                         id={`bulk_${colKey}`}
                                         className="form__input"
-                                        style={{ width: '100%' }}
+                                        style={{ width: '100%', boxSizing: 'border-box' }}
                                         value={val}
                                         onChange={(e) => handleBulkEditChange(colKey, e.target.value)}
                                         placeholder={colDef.label}
@@ -1522,7 +1545,7 @@ const EditorMasivo = () => {
                                                                 isServiceCol
                                                                     ? <span className="cell-text" style={{ color: 'var(--color-primario)', fontWeight: 700 }}>{displayValue}</span>
                                                                     : <span className="cell-text">{displayValue}</span>
-                                                              )
+                                                            )
                                                         }
                                                         {errorsInRow[col.key] && (
                                                             <div className="cell-error-message" role="alert" aria-live="polite">{errorsInRow[col.key]}</div>

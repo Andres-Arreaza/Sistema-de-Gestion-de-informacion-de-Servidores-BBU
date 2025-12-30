@@ -287,21 +287,14 @@ box-sizing: border-box;
 /* Cada campo es una caja independiente: evita que su contenido sea invadido por vecinos */
 .bulk-edit-field {
 display: flex !important;
-flex-direction: row !important;
-align-items: center !important;
-justify-content: flex-start !important;
-gap: 1rem !important;
+flex-direction: column !important;  /* label arriba, control abajo */
+align-items: stretch !important;
+gap: 6px !important;                /* separación label -> control */
 position: relative !important;
 box-sizing: border-box !important;
-min-width: 280px !important;      /* fuerza ancho mínimo razonable */
-flex: 0 0 auto !important;        /* no permitir encoger para evitar solapamiento */
+min-width: 220px !important;        /* mantener ancho mínimo razonable */
 padding: 6px 8px !important;      /* separar visualmente del vecino */
-min-height: 44px !important;      /* evitar que elementos se sobrepongan verticalmente */
-background: transparent !important; /* no ocultar fondo por si hay overlays */
-overflow: visible !important;     /* permitir que paneles se superpongan sin cortar */
-/* añadir espacio a la derecha entre campos vecinos */
 margin-right: 0.6rem !important; /* separación extra entre cajas para evitar solapes */
-box-sizing: border-box !important;
 }
 
 /* Reservar espacio interior al input/trigger para que no llegue hasta el borde derecho */
@@ -911,6 +904,67 @@ margin-left: 8px !important;
 @media (min-width: 1024px) {
 .bulk-edit-controls { gap: 1.1rem !important; }
 .bulk-edit-field { margin-right: 0.8rem !important; }
+}
+
+/* ===== FIX: evitar que labels se sobrepongan a inputs / triggers ===== */
+
+/* Etiquetas de formulario siempre en bloque sobre el control y con espacio inferior */
+.form__group .form__label,
+.bulk-edit-field .bulk-edit-label,
+.form__group label {
+  display: block !important;
+  width: 100% !important;
+  margin: 0 0 6px 0 !important;    /* espacio entre label y control para evitar solapamiento */
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  white-space: normal !important;  /* permitir saltos si el texto es largo */
+  font-weight: 600 !important;
+}
+
+/* Forzar que cada campo reserve su propio bloque vertical (label encima del control)
+   evita que el texto de la label invada el área del siguiente input. */
+.bulk-edit-field {
+  display: flex !important;
+  flex-direction: column !important;  /* label arriba, control abajo */
+  align-items: stretch !important;
+  gap: 6px !important;                /* separación label -> control */
+  min-width: 220px !important;        /* mantener ancho mínimo razonable */
+  padding: 6px 8px !important;
+  margin-right: 0.6rem !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+
+/* Asegurar que el control ocupe todo el ancho del contenedor */
+.bulk-edit-field .bulk-edit-control,
+.form__group .form__input,
+.form__group .custom-select {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Si existía regla que forzaba layout en fila, este override la neutraliza
+   para evitar solapamientos. En pantallas muy anchas podemos re-aplicar layout en fila. */
+@media (min-width: 1400px) {
+  /* en pantallas muy grandes permitir dos columnas en el panel de bulk-edit (opcional) */
+  .bulk-edit-controls {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+    gap: 14px !important;
+  }
+  /* pero los campos siguen manteniendo label arriba para mayor robustez */
+  .bulk-edit-field {
+    min-width: 260px !important;
+  }
+}
+
+/* Pequeño ajuste para los dropdown triggers: mantener altura correcta y padding
+   para que la label no se solape visualmente con el icono/chevron. */
+.custom-select__trigger,
+.form__input {
+  min-height: 36px !important;
+  padding: 8px 10px !important;
+  box-sizing: border-box !important;
 }
 
 /* ===== Responsive: mejoras para pantallas de PC (>=1024px) ===== */
@@ -1993,6 +2047,7 @@ margin-left: 8px !important;
   max-height: 360px !important;
   overflow-y: auto !important;              /* scroll funcional si hay muchas opciones */
   -ms-overflow-style: none;  /* ocultar scrollbar visual en IE/Edge si se desea */
+
   scrollbar-width: thin;     /* Firefox: mantener fino (opcional) */
   box-shadow: 0 12px 36px rgba(2,6,23,0.12) !important;
   border-radius: 10px !important;
@@ -2223,5 +2278,76 @@ margin-left: 8px !important;
   .editor-toolbar .toolbar-left,
   .editor-toolbar .toolbar-right { order: 1; justify-content: center; }
   .resultados-editor .table td, .resultados-editor .table thead th { padding: 8px; font-size: 12px; }
+}
+
+/* ===== FIX: desplegables dentro de campos de Bulk Edit no deben sobreponerse a vecinos =====
+   - Cada .bulk-edit-field actúa como contenedor relativo.
+   - El panel .custom-select__panel se posiciona absolute dentro de esa caja,
+     ocupa el ancho del campo y tiene z-index alto para quedar sobre la tabla.
+   - Evitamos transform/translate que cause desplazamientos fuera de la caja. */
+.bulk-edit-field {
+  position: relative !important;   /* contenedor de referencia para panel absoluto */
+  overflow: visible !important;    /* permitir que el panel se muestre fuera sin recortes */
+  z-index: 0 !important;           /* reset base: cada campo controla el z-index de su panel */
+}
+
+/* El trigger ocupa el ancho del campo y no desplaza layout al abrir */
+.bulk-edit-field .custom-select,
+.bulk-edit-field .custom-select .custom-select__trigger {
+  position: relative !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* El panel de opciones se ancla al contenedor del campo y se expande al 100% */
+.bulk-edit-field .custom-select__panel {
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  left: 0 !important;
+  width: 100% !important;            /* ocupar exactamente el ancho del campo */
+  min-width: 0 !important;           /* evitar anchura mínima heredada que provoque overflow */
+  max-width: 100% !important;
+  transform: none !important;        /* evitar transform que desplace el panel fuera de la caja */
+  box-shadow: 0 12px 36px rgba(2,6,23,0.12) !important;
+  border-radius: 10px !important;
+  background: var(--color-superficie) !important;
+  border: 1px solid var(--color-borde) !important;
+  z-index: 2200 !important;           /* suficientemente alto para quedar sobre la tabla/vecinos */
+  overflow-y: auto !important;
+  max-height: 40vh !important;        /* evitar que el panel crezca indefinidamente */
+  padding: 4px 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Opciones dentro del panel llenan el ancho y no se solapan */
+.bulk-edit-field .custom-select__panel .custom-select__option {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  padding: 8px 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+}
+
+/* Si por alguna regla global el panel se renderiza como fixed/portal, forzamos que el z-index sea mayor
+   y que el panel mantenga el ancho del elemento .bulk-edit-field cuando exista la relación DOM. */
+.bulk-edit-field .custom-select__panel[style] {
+  z-index: 2200 !important;
+}
+
+/* Evitar que triggers/panels de diferentes campos se solapen visualmente:
+   cuando un campo tiene focus/abierto, elevar su z-index para que esté encima de otros. */
+.bulk-edit-field.is-open,
+.bulk-edit-field:focus-within {
+  z-index: 2300 !important;
+}
+
+/* Como fallback, si el panel se muestra fuera (por uso de portal), proporcionar una clase
+   utility que pueda aplicarse desde JS si es necesario (no obligatorio, pero útil). */
+.custom-select__panel.portal-anchored {
+  left: auto !important;
+  right: auto !important;
+  width: auto !important;
 }
 
