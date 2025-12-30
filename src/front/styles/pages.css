@@ -2011,75 +2011,217 @@ margin-left: 8px !important;
   gap: 0.6rem;
 }
 
-/* === Ocultar detalles en el modal de "Aplicar cambios" cuando se use la clase `apply-confirm` ===
-   - Añadir `customClass: { popup: 'apply-confirm' }` en la llamada a Swal.fire (o la clase 'apply-confirm'
-     al contenedor del modal si es tu modal propio). Con esto sólo se mostrará la primera línea (el título/mensaje),
-     y cualquier detalle extra (líneas/labels) quedará oculto por CSS.
-*/
-.swal2-popup.apply-confirm .swal2-html-container > *:not(:first-child),
-.modal__content.apply-confirm .modal__body > *:not(.always-show):not(.modal__actions) {
-  display: none !important;
-  visibility: hidden !important;
-  height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: hidden !important;
+/* ===== ADICIONES: mejoras visuales globales para EditorMasivo / Resultados ===== */
+
+/* Toolbar: ligera elevación, padding y separación más consistente */
+.editor-toolbar {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
+  padding: 10px 12px;
+  border-radius: 10px;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 18px rgba(2,6,23,0.04);
 }
 
-/* Asegurar que el texto principal del modal se centre y se muestre limpio */
-.swal2-popup.apply-confirm .swal2-title,
-.modal__content.apply-confirm .modal__title {
-  text-align: center !important;
-  margin-bottom: 0.6rem !important;
+/* Botones: variación visual clara y estados suaves */
+.btn {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.04);
+}
+.btn:hover { transform: translateY(-2px); }
+
+/* Primario / Secundario / Peligro */
+.btn--primary {
+  background: var(--color-primario);
+  color: #fff;
+  border-color: rgba(0,0,0,0.06);
+}
+.btn--primary:hover { background: var(--color-primario-hover); }
+
+.btn--secondary {
+  background: transparent;
+  color: var(--color-texto-principal);
+  border: 1px solid rgba(2,6,23,0.06);
+}
+.btn--secondary:hover {
+  background: rgba(2,6,23,0.04);
 }
 
-/* Permitir que botones y acciones del modal sigan visibles */
-.swal2-popup.apply-confirm .swal2-actions,
-.modal__content.apply-confirm .modal__actions {
-  display: flex !important;
-  justify-content: center !important;
-  gap: 0.75rem !important;
+.btn--danger {
+  background: var(--color-error);
+  color: #fff;
 }
 
-/* Alinear la chevron dentro del trigger al borde derecho (ligeramente inset) */
-/* Reservamos espacio interior para evitar que el texto choque con el icono */
-.custom-select .custom-select__trigger {
-  position: relative !important;      /* contexto para posicionar el icono absolute */
-  padding-right: 36px !important;     /* espacio para el icono (ajusta si necesitas más/menos) */
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important; /* mantener texto a la izquierda, icono absolute a la derecha */
-  gap: 0.5rem !important;
-  box-sizing: border-box !important;
+/* Compactos: mantener proporción y legibilidad */
+.btn--compact {
+  padding: 6px 10px !important;
+  height: 36px !important;
+  border-radius: 8px !important;
 }
 
-/* Si hay reglas más específicas para el formulario de filtros, reforzarlas */
-.filter-form .custom-select .custom-select__trigger {
-  padding-right: 36px !important;
+/* Badge destacado */
+.editor-toolbar .badge {
+  background: linear-gradient(90deg, rgba(0,122,83,0.08), rgba(0,74,119,0.06));
+  color: var(--color-primario);
+  font-weight: 700;
+  border: 1px solid rgba(0,122,83,0.1);
+  padding: 8px 14px;
+  border-radius: 999px;
+  box-shadow: inset 0 -2px 6px rgba(0,0,0,0.02);
 }
 
-/* Posicionar el chevron al final del trigger, con un pequeño margen interno (inset) */
-.custom-select .custom-select__trigger .chevron {
-  position: absolute !important;
-  right: 10px !important;             /* inset desde el borde derecho (no totalmente pegado) */
-  top: 50% !important;
-  transform: translateY(-50%) rotate(45deg) !important; /* mantener apariencia triangular */
-  transition: transform 0.18s ease, opacity 0.12s ease !important;
-  margin-left: 0 !important;          /* evitar margen extra que empuje el icono */
-  pointer-events: none;               /* que clicks pasen al botón; si quieres que sea clicable cambia a auto */
+/* Export dropdown: mayor contraste y sombra */
+.export-dropdown-container .export-menu {
+  background: #fff;
+  border: 1px solid var(--color-borde);
+  box-shadow: 0 18px 40px rgba(2,6,23,0.12);
+  padding: 8px;
+  border-radius: 10px;
 }
 
-/* Estado abierto: rotación invertida (coincide con reglas previas) */
-.custom-select .custom-select__trigger .chevron.open {
-  transform: translateY(-50%) rotate(-135deg) !important;
+/* Items del menú: más aire y focus accesible */
+.export-dropdown-container .export-menu-item {
+  padding: 10px 12px !important;
+  border-radius: 8px;
+}
+.export-dropdown-container .export-menu-item:hover {
+  background: var(--color-primario);
+  color: #fff;
 }
 
-/* Asegurar que el span de texto no colapse ni quede debajo del icono */
-.custom-select .custom-select__trigger > span {
-  display: block;
+/* Contenedor de tabla: tarjeta con borde suave y fondo */
+.resultados-editor {
+  background: linear-gradient(180deg, var(--color-superficie), #fbfdff);
+  border: 1px solid rgba(2,6,23,0.04);
+  box-shadow: 0 14px 40px rgba(2,6,23,0.04);
+  border-radius: 12px;
+}
+
+/* Table: legible, filas alternadas, hover y header sticky */
+.resultados-editor .table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  background: transparent;
+  border-radius: 8px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding-right: 4px; /* espacio adicional antes del icono, opcional */
+}
+
+.resultados-editor .table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  padding: 12px;
+  text-align: left;
+  font-weight: 700;
+  color: var(--color-texto-principal);
+  border-bottom: 1px solid rgba(2,6,23,0.06);
+}
+
+/* Cuerpos: filas zebra y hover */
+.resultados-editor .table tbody tr {
+  transition: background .12s ease, transform .08s ease;
+}
+.resultados-editor .table tbody tr:nth-child(even) {
+  background: rgba(2,6,23,0.015);
+}
+.resultados-editor .table tbody tr:hover {
+  background: rgba(0,122,83,0.04);
+  transform: translateY(-1px);
+}
+
+/* Celdas: padding y tipografía cómoda */
+.resultados-editor .table td {
+  padding: 10px 12px;
+  vertical-align: middle;
+  color: var(--color-texto-principal);
+  font-size: 13px;
+}
+
+/* Inputs/Triggers dentro de celdas: bordes suaves */
+.resultados-editor .table td .form__input,
+.resultados-editor .table td .custom-select__trigger {
+  border-radius: 8px;
+  border: 1px solid rgba(2,6,23,0.06);
+  padding: 8px 10px;
+  background: #fff;
+}
+
+/* Checkbox dentro de la tabla: mejor alineación */
+.resultados-editor .table input.filter-checkbox {
+  transform: scale(1) !important;
+  margin: 0 6px 0 0;
+}
+
+/* Accesible: mensajes de error en celdas con ligeramente más contraste */
+.celda-con-error-validacion {
+  box-shadow: inset 0 0 0 2px rgba(239,68,68,0.12);
+}
+
+/* Editor panel: fondo neutro, bordes redondeados */
+.editor-panel {
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  border: 1px solid rgba(2,6,23,0.04);
+  padding: 14px;
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(2,6,23,0.04);
+}
+
+/* Bulk-edit controls: grid responsive (mejora visual) */
+.bulk-edit-controls {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+  gap: 12px !important;
+  align-items: start !important;
+}
+
+/* Bulk-edit field: card-like appearance */
+.bulk-edit-field {
+  background: rgba(2,6,23,0.02) !important;
+  border-radius: 8px !important;
+  padding: 10px !important;
+  border: 1px solid rgba(2,6,23,0.03) !important;
+}
+
+/* Resultado "no found" message: centrado y con icono/tono */
+.no-results-message {
+  padding: 28px;
+  text-align: center;
+  color: var(--color-texto-secundario);
+  font-size: 1rem;
+}
+
+/* Swal modal (resumen): más legible */
+.swal2-popup {
+  font-size: 14px;
+}
+.swal2-html-container {
+  text-align: left;
+  line-height: 1.45;
+}
+.swal2-title {
+  font-weight: 800;
+  color: var(--color-texto-principal);
+}
+
+/* Ajustes responsivos: compactar toolbar en móvil */
+@media (max-width: 800px) {
+  .editor-toolbar {
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+  }
+  .editor-toolbar .toolbar-center { order: 2; }
+  .editor-toolbar .toolbar-left,
+  .editor-toolbar .toolbar-right { order: 1; justify-content: center; }
+  .resultados-editor .table td, .resultados-editor .table thead th { padding: 8px; font-size: 12px; }
 }
 

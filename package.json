@@ -1,8 +1,5 @@
 {
 	"name": "react-hello-webapp",
-	"engines": {
-		"node": "16.x"
-	},
 	"version": "1.0.1",
 	"description": "",
 	"main": "index.js",
@@ -13,18 +10,8 @@
 	},
 	"author": {
 		"name": "Andrés Eduardo Arreaza D'Antonio",
-		"url": "http://alesanchezr.com/"
+		"url": "https://github.com/Andres-Arreaza"
 	},
-	"contributors": [
-		{
-			"name": "Andrés Eduardo Arreaza D'Antonio",
-			"url": "http://alesanchezr.com/"
-		},
-		{
-			"name": "Ignacio Cordoba",
-			"url": "http://github.com/nachovz"
-		}
-	],
 	"license": "ISC",
 	"devDependencies": {
 		"@babel/cli": "^7.16.0",

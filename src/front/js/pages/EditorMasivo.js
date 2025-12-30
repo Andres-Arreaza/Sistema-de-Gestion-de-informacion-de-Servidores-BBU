@@ -481,6 +481,91 @@ const EditorMasivo = () => {
         }
     };
 
+    // Muestra un resumen con escalonado más marcado (servicio -> ecosistema -> ambiente)
+    const showResumen = () => {
+        const items = seleccionados.size ? servidores.filter(s => seleccionados.has(s.id)) : servidores;
+        if (!items || items.length === 0) {
+            return Swal.fire('Resumen', 'No hay servidores para resumir.', 'info');
+        }
+
+        const totalEncontrados = items.length;
+
+        // Estructura: servicio -> ecosistema -> ambiente -> contador
+        const byService = {};
+        items.forEach(s => {
+            const svcName = (s.servicio && s.servicio.nombre) || (s.servicio_id ? `Servicio ${s.servicio_id}` : 'Sin servicio');
+            const ecoName = (s.ecosistema && s.ecosistema.nombre) || (s.ecosistema_id ? `Ecosistema ${s.ecosistema_id}` : 'Sin ecosistema');
+            const ambName = (s.ambiente && s.ambiente.nombre) || (s.ambiente_id ? `Ambiente ${s.ambiente_id}` : 'Sin ambiente');
+
+            if (!byService[svcName]) byService[svcName] = { total: 0, ecosistemas: {} };
+            byService[svcName].total += 1;
+
+            if (!byService[svcName].ecosistemas[ecoName]) byService[svcName].ecosistemas[ecoName] = { total: 0, ambientes: {} };
+            byService[svcName].ecosistemas[ecoName].total += 1;
+
+            const ambs = byService[svcName].ecosistemas[ecoName].ambientes;
+            ambs[ambName] = (ambs[ambName] || 0) + 1;
+        });
+
+        // Construir HTML con escalonado más marcado (márgenes crecientes)
+        let html = `<div style="margin-bottom:14px;"><strong>Servidores encontrados:</strong> <span style="font-size:1.12rem">${totalEncontrados}</span></div>`;
+
+        const serviciosOrdenados = Object.keys(byService).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+        serviciosOrdenados.forEach(svc => {
+            const svcInfo = byService[svc];
+            html += `<div style="margin-bottom:18px;">`;
+            // Nivel 1: Servicio (más destacado)
+            html += `<div style="font-size:1.06rem; font-weight:800; margin-bottom:8px;">servicio ${svc} <span style="color:#374151; font-weight:700; margin-left:8px;">(${svcInfo.total})</span></div>`;
+
+            // Nivel 2: Ecosistemas (indentación mayor)
+            const ecos = Object.keys(svcInfo.ecosistemas).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+            ecos.forEach(eco => {
+                const ecoInfo = svcInfo.ecosistemas[eco];
+                html += `<div style="margin-left:22px; margin-bottom:10px;">`;
+                html += `<div style="font-weight:700; margin-bottom:6px; color:#2d3748;">${eco} <span style="font-weight:600; margin-left:6px;">— ${ecoInfo.total}</span></div>`;
+
+                // Nivel 3: Ambientes (indentación aún mayor)
+                const ambs = Object.keys(ecoInfo.ambientes).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+                ambs.forEach(amb => {
+                    const count = ecoInfo.ambientes[amb];
+                    html += `<div style="margin-left:20px; margin-bottom:6px; color:#4b5563;">• ${amb}: <strong style="color:#111827">${count}</strong></div>`;
+                });
+
+                html += `</div>`;
+            });
+
+            html += `</div>`;
+        });
+
+        Swal.fire({
+            title: 'Resumen de Servidores',
+            // Contenido con botón de Cerrar dentro del modal (id="swal-close-btn")
+            html: `<div style="text-align:left; max-height:60vh; overflow:auto; padding-right:8px; box-sizing:border-box;">${html}</div>
+                   <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+                     <button id="swal-close-btn" class="swal2-confirm swal2-styled" style="background:var(--color-primario); border:none; padding:8px 12px; border-radius:8px; color:#fff;">
+                       Cerrar
+                     </button>
+                   </div>`,
+            // Uso width en viewport para ser responsive, no tan ancho
+            width: '60vw',
+            showCloseButton: false, // quitamos el close flotante para usar el botón dentro del modal
+            showConfirmButton: false,
+            // al abrir, enlazamos el botón interno y reforzamos el tamaño máximo del popup
+            didOpen: () => {
+                const popup = Swal.getPopup();
+                if (popup) {
+                    popup.style.maxWidth = '60vw';
+                }
+                const btn = document.getElementById('swal-close-btn');
+                if (btn) {
+                    // evitar duplicar listeners
+                    btn.removeEventListener('click', Swal.close);
+                    btn.addEventListener('click', () => Swal.close());
+                }
+            }
+        });
+    };
+
     const opcionesColumnas = [
         { value: 'nombre', label: 'Nombre', type: 'input', disabled: servidores.length > 1 },
         { value: 'tipo', label: 'Tipo', type: 'select', options: [{ id: 'VIRTUAL', nombre: 'Virtual' }, { id: 'FISICO', nombre: 'Físico' }] },
@@ -1224,6 +1309,9 @@ const EditorMasivo = () => {
                                         displayValue = displayValue || 'N/A';
                                     }
 
+                                    // Marcar si es la columna de Servicio para aplicarle color verde
+                                    const isServiceCol = col.key === 'servicio_id';
+
                                     const hasError = !!errorsInRow[col.key];
 
                                     // Determinar clases de celda: error / preview / celda-editada (última clave)
@@ -1345,6 +1433,7 @@ const EditorMasivo = () => {
                                                                                     setEditingCell({ id: servidor.id, key: col.key, value: currentVal });
                                                                                 }
                                                                                 setOpenEditorSelectKey(prev => prev === keyId ? null : keyId);
+
                                                                             }}
                                                                         >
                                                                             <span>
@@ -1361,6 +1450,7 @@ const EditorMasivo = () => {
                                                                                 <div
                                                                                     key={String(opt.id)}
                                                                                     className={`custom-select__option ${String(editandoCell?.value) === String(opt.id) ? 'selected' : ''}`}
+
                                                                                     role="button"
                                                                                     tabIndex={0}
                                                                                     onClick={async (e) => {
@@ -1428,7 +1518,11 @@ const EditorMasivo = () => {
                                                     <>
                                                         {(displayValue === null || displayValue === undefined || String(displayValue).trim() === '')
                                                             ? <span className="cell-empty">N/A</span>
-                                                            : <span className="cell-text">{displayValue}</span>
+                                                            : (
+                                                                isServiceCol
+                                                                    ? <span className="cell-text" style={{ color: 'var(--color-primario)', fontWeight: 700 }}>{displayValue}</span>
+                                                                    : <span className="cell-text">{displayValue}</span>
+                                                              )
                                                         }
                                                         {errorsInRow[col.key] && (
                                                             <div className="cell-error-message" role="alert" aria-live="polite">{errorsInRow[col.key]}</div>
@@ -1717,6 +1811,16 @@ const EditorMasivo = () => {
                                                     <Icon name="edit" /> Editar Masivo
                                                 </button>
                                             )}
+                                            {/* NUEVO: Botón Resumen a la izquierda de Descargar */}
+                                            <button
+                                                className="btn btn--secondary btn--compact"
+                                                onClick={showResumen}
+                                                disabled={servidores.length === 0}
+                                                title="Mostrar resumen por servicio / ecosistema / ambientes"
+                                            >
+                                                <Icon name="summary" /> Resumen
+                                            </button>
+
                                             <div className="export-dropdown-container" ref={exportMenuRef} style={{ position: 'relative' }}>
                                                 <button className="btn btn--primary" onClick={() => setIsExportMenuOpen(!isExportMenuOpen)} aria-haspopup="true" aria-expanded={isExportMenuOpen}>
                                                     <Icon name="upload" /> Descargar
